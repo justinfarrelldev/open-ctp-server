@@ -1,3 +1,5 @@
+This project is neither made nor sponsored by Activision.
+
 Anyone is free to copy, modify, publish, use, compile, or
 distribute this software, either in source code form or as a compiled
 binary, for any non-commercial purpose and by any

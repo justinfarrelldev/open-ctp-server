@@ -4,7 +4,9 @@
 
 This is the Open Call to Power Server project, or Open CTP Server for short.
 
-This is a fan-developed backend for the Call to Power series of games which intends to bring multiplayer to the franchise in a meaningful way. 
+This is a fan-developed backend for the Call to Power series of games which intends to bring multiplayer to the franchise in a meaningful way.
+
+This project is neither made nor sponsored by Activision. See `LICENSE.md` for more details.
 
 ## Goals
 
