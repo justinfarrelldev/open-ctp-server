@@ -3,6 +3,8 @@
         "Apolyton",
         "frontends",
         "Protobuf",
+        "protobuffer",
+        "Protobuffers",
         "Spyroviper"
     ]
 }
