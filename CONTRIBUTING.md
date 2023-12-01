@@ -1,0 +1,85 @@
+# Contributing
+
+All skill levels are welcome to join us on this epic project! We are always open to contributions. We are also open to contributors who only are available once-in-a-while (I am also only available sometimes)!
+
+# Guidelines
+
+**All contributors must be in the Call to Power Discord!**
+
+This is because there are dedicated sections within the Discord for discussions about development. There is also a Trello board linked in the Discord which we are using for our development activities, Kanban-style. 
+
+## Why not Jira?
+
+Most people hate Jira, myself included. In this case, I do not anticipate a large team of developers and there is no Scrum methodology being followed (and no need for extra integrations), so Trello should more than suffice. There is also a Trello webhook for Discord, which is very useful.
+
+## Flow
+
+To change code on this project, you must follow a pull-request workflow. 
+
+That is, you should: 
+- Fork this project
+- Make your changes on that fork
+- Make a pull request on this repo for that fork
+
+Once you make a pull-request, a GitHub Actions pipeline will run (which runs the test suite on your code and checks for formatting issues, among other things). If this fails, you should address the issue on your pull request (otherwise, it will not be accepted). 
+
+You should also make sure to check off the action items on the checklist. These are present as reminders to ease along the review process. 
+
+A contributor will then code-review the changes and will suggest changes to your pull request before eventually merging it in. 
+
+## Pull Request Guidelines for Reviewers
+
+### Remember the Person
+
+Make sure to treat the person being reviewed with respect. Remember, we are all here out of love for a common series of games and all skill levels are welcome to contribute. Mistakes are allowed to be made.
+
+### Try To Phrase Suggestions as Questions
+
+By this, I mean that instead of saying: 
+```
+You need to change this line because it's O(n^3).
+```
+...say instead: 
+```
+Could we change this function call? It's O(n^3), which may be a bit too slow for map generation purposes.
+```
+
+Another example is instead of: 
+```
+Make this publicly exported
+```
+
+...say this instead: 
+```
+Could we make this publicly exported? We will likely consume this variable in a future update, so it would be super useful!
+```
+
+### Don't Get Mad If People Use Emojis
+
+This one is silly, but believe it or not, I've seen it!
+
+Emojis are perfectly okay, and I often use them myself. We may be writing code, but we shouldn't be *too* serious!
+
+### No Swearing / Profanity
+
+This should go without saying, but then again, we may have a Linux kernel contributor amongst us...
+
+## Pipeline Courtesy
+
+If you have recently had a pull request which failed for some reason while being merged to `main`, please attempt to remedy the pipeline. Your code was already approved, so it must be good! If you just leave it in a failed state, it has effectively wasted the code reviewer's time. If you really can't fix the pipeline by yourself, reach out to Ninjaboy on Discord. 
+
+## Use Gofmt
+
+Please use gofmt (Go's built-in formatter) to format your project.
+
+If you are setting up VS Code for the first time, simply install the recommended Go extension for this repo then bring up the command palette and search for "Format Document". Select Format Document and then select "Go" from the formatter list.
+
+To test that you have gofmt set up correctly, add a few lines in a file and then save. The extra lines should disappear.
+
+## Use Gopls
+
+Please use Gopls within your editor to give yourself syntax highlighting and warnings.
+
+## Do Not Install Other Dependencies Without Discussing It First In Discord
+
+This server should stay as small of a size as possible. Not providing extra dependencies also makes understanding the repo a lot easier (gRPC and grpc-gateway are already complicated enough)!
