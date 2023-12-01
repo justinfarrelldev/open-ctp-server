@@ -13,9 +13,9 @@ gRPC is a modern open source high performance Remote Procedure Call (RPC) framew
 
 gRPC can best be thought of as an alternative to HTTPS which uses Protobuffers for communication.
 
-## Okay, what are Protobuffers?
+## Protobuffers
 
-From the protobuffers website (https://protobuf.dev/): 
+One of the best explanations of what protobuffers are is from the protobuffers website (https://protobuf.dev/): 
 ```
 Protocol Buffers are language-neutral, platform-neutral extensible mechanisms for serializing structured data.
 ```
@@ -35,7 +35,7 @@ message Hoplite {
 ```
 
 From this one protobuffer, you can derive a C++ "Hoplite" type: 
-```C++
+```cpp
 Hoplite hoplite;
 fstream input(argv[1], ios::in | ios::binary);
 hoplite.ParseFromIstream(&input);
@@ -57,17 +57,15 @@ output = new FileOutputStream(args[0]);
 hoplite.writeTo(output);
 ```
 
-... or any other language which Protobuffers support. 
+... or similar types / interfaces in any other language which Protobuffers support. 
 
 This will allow Call to Power clients to be built with whichever language is desired by the authors.
-
-## But what about HTTPS? Wasn't there a main goal to be cURL-able?
-
-Yes! To do that, we will use our next technology...
 
 ## gRPC-Gateway
 
 gRPC-Gateway allows you to serve both gRPC and RESTful requests at the same time. You can read more here: https://github.com/grpc-ecosystem/grpc-gateway
+
+This will allow the server to be accessible via cURL or any other fetching library (such as node:fetch in Node.js, for example).
 
 ## What about the server architecture of this project? How will this be deployed?
 
