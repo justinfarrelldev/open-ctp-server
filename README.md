@@ -19,6 +19,15 @@ There are multiple goals this project intends to tackle:
     - Obvious bugs should not be preserved
     - Non-vanilla changes (such as tweaking unit health or adding extra units) should NOT be present
         - Feel free to fork this repo and modify it to your heart's content!
+- Players will be able to choose a different username every game (same as base Call to Power multiplayer did)
+    - Players will be able to password-protect their login to each game (so that others cannot join as them)
+        - These will be temporary and will only last the duration of the game
+        - No actual account will ever be required as this would mean a lot of work client-side for the Apolyton and Spyroviper Editions
+- Additional game modes
+    - Long-turn (with customizable turn timers) similar to Freeciv
+    - Simultaneous Turns (where everyone moves during one turn)
+    - Hybrid Turns (Simultaneous Turns except for when nations are at war, where they take turns in-sequence)
+    - Email game play will not be supported (as this gamemode has since become obsolete)
 
 ## Why Go?
 
