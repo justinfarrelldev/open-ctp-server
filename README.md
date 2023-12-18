@@ -52,7 +52,14 @@ go generate
 
 This will trigger `scripts/deps.sh` which will grab the necessary dependencies and store them in a folder in the project, `bin`.
 
-From here, I recommend adding the `bin` folder to your PATH variable so that you can run them from your command line. Alternatively, you can run them from the command line directly when you need them with, for example, `./bin/task [...args]` (where `./bin/task` is the executable you want to run, and `[...args]` are the arguments you want to supply).
+From here, I **highly** recommend adding the `bin` folder to your PATH variable so that you can run them from your command line. Alternatively, you can run them from the command line directly when you need them with, for example, `./bin/task [...args]` (where `./bin/task` is the executable you want to run, and `[...args]` are the arguments you want to supply).
+
+To add this folder to your PATH, try running the following command from the root of the project (replacing .bashrc with .zshrc if you are using Zsh, etc.). This should append to your PATH at the bottom of your .bashrc file: 
+```
+echo 'export PATH=$PATH:'$(pwd)/bin >> ~/.bashrc
+```
+
+Once you reload your terminal, you should have access to both `protoc` and `task` directly in your terminal (as long as the `bin` folder still exists with those executables inside).
 
 After this, run `go install`. This will install all Go module dependencies.
 
