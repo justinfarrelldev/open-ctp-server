@@ -34,21 +34,25 @@ OS=$(uname)
 case $OS in
   'Linux')
     OS='Linux'
-    curl -o ./bin/protoc https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
+    curl -L -o ./bin/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
     ;;
   'WindowsNT')
     OS='Windows'
-    curl -o ./bin/protoc https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-win64.zip
+    curl -L -o ./bin/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-win64.zip
     ;;
   'Darwin') 
     OS='Mac'
-    curl -o ./bin/protoc https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-osx-universal_binary.zip
+    curl -L -o ./bin/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-osx-universal_binary.zip
     ;;
   *) 
     echo Please manually grab the most relevant release of Protoc v25.1 here and add it to your ./bin folder: https://github.com/protocolbuffers/protobuf/releases
     exit 0
     ;;
 esac
+
+unzip -o ./bin/protoc.zip
+
+rm ./bin/protoc.zip
 
 echo Making the Protoc installer executable...
 chmod +x ./bin/protoc

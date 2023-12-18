@@ -107,6 +107,33 @@ This means that interfacing with this server should be relatively straightforwar
 
 If you are trying to make a client and are struggling with the protobuffer implementation, feel free to reach out to Ninjaboy on Discord!
 
+## What should be handled by this server and what should be handled by the client?
+
+### Responsibilities of this Server
+- Unit moves (though clients should implement their own algorithm for unit move submissions - the server will simply check if moves are valid and then perform them)
+- World generation (the server will generate a world given a set of parameters and then send the world information - such as tiles, ruins, goods, etc. - back as a response)
+- Combat (with both armies' information supplied and the tiles they are on, the server will calculate who is victorious)
+- Fog of War (the server will only return information which the client can see, thus reducing cheating)
+- Chatting
+- Players losing connection, low connectivity, etc.
+- Diplomacy
+- AI at a later point (the goal is to have human players supported first)
+- Minimal downtime
+- Promises made within the "Goals" section
+
+### Clients 
+- Unit graphics and fields associated with them (DefaultIcon, DefaultSprite, etc. from the `Units.txt` file that shipped with the original game will not be present on the types provided by the server). 
+    - The extra fields should be handled by extension of the types provided by the server's types (IE, importing the Abolitionist type from this server's package and then using an AbolitionistClient type which extends that for the extra graphics info)
+- All graphics files / anything related to graphics or sound
+    - Even though "diplomacy", for example, is listed in the "server will handle" section, the client is responsible for handling all graphical portions of the exchange (with the server being responsible for sending the message to the other player involved)
+- Communication with the server (whether via gRPC or via HTTP/S) within the format specified by the API
+
+### A Few Notes
+
+It is notable that this server will NOT function exactly the same as the vanilla CTP / CTP2 servers did, so clients will need to be modified to actually utilize this server. This will likely include a large jump in version for original-source-based repos (such as the Spyroviper Edition and Apolyton Edition) since the protobuffers target newer versions of C++. 
+
+Alternatively, new clients can be coded from scratch into any protobuffer-supported language and may use this server.
+
 ## Tooling
 
 See `TOOLING.md`.
@@ -114,3 +141,7 @@ See `TOOLING.md`.
 ## Contributing
 
 See `CONTRIBUTING.md` for information on how to contribute to this effort. All skill levels are welcome!
+
+## Can I Fork This Repo?
+
+You absolutely can, so long as you follow the license in `LICENSE.md`. I am really looking forward to server-side modifications in the future!

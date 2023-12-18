@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package units;
+
+enum UnitCategory {
+    GENERIC = 0;
+    SETTLER = 1;
+    AERIAL = 2;
+    NAVAL = 3;
+    UNDERSEA = 4;
+    ATTACK = 5;
+    DEFENSE = 6;
+    RANGED = 7;
+    FLANKER = 8;
+    SPECIAL = 9;
+}
+
+message Abolitionist {
+    string description = 1;
+    UnitCategory category = 2; // default "SPECIAL"
+    int32 attack = 3; // default 0
+    // defense 10
+    // zbRangeAttack 0
+    // firepower 1
+    // armor 1
+    // maxHp 10
+    // shieldCost 540
+    // powerPoints 250
+    // shieldHunger 5
+    // foodHunger 0
+    // maxMovePoints 300
+    // visionRange 1
+    // enableAdvance ADVANCE_CLASSICAL_EDUCATION
+    // activeDefenseRange 0
+    // lossMoveToDmgNone
+    // maxFuel 0
+    // ignoreZoc
+    // noZoc
+    // canBeExpelled
+    // cantCaptureCity
+    // noSlaves
+    // isSpecialForces
+    // civilian
+ 
+    // canSee: Standard
+    // canSee: Stealth
+    // movementType: Land
+    // movementType: Mountain
+    // size: Small
+    // visionClass: Stealth
+
+    // SlaveUprising {
+    //    effect SPECEFFECT_SLAVE_UPRISING
+    // }
+ 
+    // UndergroundRailway {
+    //    chance 0.75
+    //    deathChance 0.5
+    //    effect SPECEFFECT_UNDERGROUND_RAILWAY
+    // }
+ }
+ 
