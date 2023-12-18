@@ -45,7 +45,7 @@ case $OS in
     curl -o ./bin/protoc https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-osx-universal_binary.zip
     ;;
   *) 
-    echo Please manually grab the most relevant version of Protoc here and add it to your ./bin folder: https://github.com/protocolbuffers/protobuf/releases
+    echo Please manually grab the most relevant release of Protoc v25.1 here and add it to your ./bin folder: https://github.com/protocolbuffers/protobuf/releases
     exit 0
     ;;
 esac
@@ -55,4 +55,4 @@ chmod +x ./bin/protoc
 
 echo Protoc is in ./bin. Either add this manually to your PATH variable or run the Protoc executable with "./bin/protoc [arguments]".
 
-echo Finished! It is recommended to add the bin folder to your PATH within your .bashrc, .zshrc, etc. to make these binaries available by their name.
+echo Finished! It is recommended to add the bin folder to your PATH within your .bashrc, .zshrc, etc. to make these binaries available by their name. There is an explanation of this process in README.md.
