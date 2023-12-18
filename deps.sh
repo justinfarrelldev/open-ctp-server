@@ -36,10 +36,6 @@ case $OS in
     OS='Linux'
     curl -o ./bin/protoc https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
     ;;
-  'FreeBSD')
-    OS='FreeBSD'
-    echo Please manually grab the most relevant version of Protoc here: https://github.com/protocolbuffers/protobuf/releases
-    ;;
   'WindowsNT')
     OS='Windows'
     curl -o ./bin/protoc https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-win64.zip
@@ -48,15 +44,9 @@ case $OS in
     OS='Mac'
     curl -o ./bin/protoc https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-osx-universal_binary.zip
     ;;
-  'SunOS')
-    OS='Solaris'
-    echo Please manually grab the most relevant version of Protoc here: https://github.com/protocolbuffers/protobuf/releases
-    ;;
-  'AIX') 
-    echo Please manually grab the most relevant version of Protoc here: https://github.com/protocolbuffers/protobuf/releases
-    ;;
   *) 
-    echo Please manually grab the most relevant version of Protoc here: https://github.com/protocolbuffers/protobuf/releases
+    echo Please manually grab the most relevant version of Protoc here and add it to your ./bin folder: https://github.com/protocolbuffers/protobuf/releases
+    exit 0
     ;;
 esac
 
