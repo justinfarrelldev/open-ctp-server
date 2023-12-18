@@ -50,12 +50,18 @@ case $OS in
     ;;
 esac
 
-unzip -o ./bin/protoc.zip
+unzip -o ./bin/protoc.zip -d ./bin/protoc-out
 
 rm ./bin/protoc.zip
 
+mv ./bin/protoc-out/bin/protoc ./bin/protoc
+
+mkdir -p /usr/local/include/google
+
+mv ./bin/protoc-out/include/google /usr/local/include/google
+
 echo Making the Protoc installer executable...
-chmod +x ./bin/protoc
+chmod +x ./bin/protoc-out/bin/protoc
 
 echo Protoc is in ./bin. Either add this manually to your PATH variable or run the Protoc executable with "./bin/protoc [arguments]".
 
