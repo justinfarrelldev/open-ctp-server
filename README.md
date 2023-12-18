@@ -50,7 +50,7 @@ To get all of the binary dependencies, simply run:
 go generate
 ```
 
-This will trigger `deps.sh` which will grab the necessary dependencies and store them in a folder in the project, `bin`.
+This will trigger `scripts/deps.sh` which will grab the necessary dependencies and store them in a folder in the project, `bin`.
 
 From here, I recommend adding the `bin` folder to your PATH variable so that you can run them from your command line. Alternatively, you can run them from the command line directly when you need them with, for example, `./bin/task [...args]` (where `./bin/task` is the executable you want to run, and `[...args]` are the arguments you want to supply).
 
