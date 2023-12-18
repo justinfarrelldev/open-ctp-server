@@ -1,0 +1,11 @@
+version: '3'
+
+tasks:
+  run:
+    cmds:
+      - echo Starting dev server...
+      - go run .
+
+  test:
+    cmds:
+      - go test

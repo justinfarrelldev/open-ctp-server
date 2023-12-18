@@ -12,6 +12,7 @@
         "protobuffer",
         "Protobuffers",
         "Spyroviper",
-        "Supabase"
+        "Supabase",
+        "Taskfile"
     ]
 }

@@ -29,6 +29,57 @@ There are multiple goals this project intends to tackle:
     - Hybrid Turns (Simultaneous Turns except for when nations are at war, where they take turns in-sequence)
     - Email game play will not be supported (as this gamemode has since become obsolete)
 
+## Getting Started
+
+### Requirements
+
+- Environment with Bash
+- Go Language Tools
+- (Optional but highly recommended) Recommended Extensions
+
+To get started, download the Go language tools and install them into an environment with Bash. Bash is necessary to run some of the scripts and is generally a good idea (though development is definitely possible without Bash).
+
+If you are on Windows, one quick way to get Bash is by downloading and running Git Bash (part of Git for Windows): https://git-scm.com/download/win
+
+If you are using VS Code, you should also get some extension recommendations. I highly recommend you install them, the spell checker is very nice and has saved many headaches!
+
+### Getting Dependencies
+
+To get all of the binary dependencies, simply run: 
+```
+go generate
+```
+
+This will trigger `deps.sh` which will grab the necessary dependencies and store them in a folder in the project, `bin`.
+
+From here, I recommend adding the `bin` folder to your PATH variable so that you can run them from your command line. Alternatively, you can run them from the command line directly when you need them with, for example, `./bin/task [...args]` (where `./bin/task` is the executable you want to run, and `[...args]` are the arguments you want to supply).
+
+After this, run `go install`. This will install all Go module dependencies.
+
+## Running Specific Commands
+
+Once you have installed the dependencies, you should have an executable in the `bin` folder called `task`. This is what you can use to run the `Taskfile.yml` file in the root of the project. 
+
+### Starting the Development Server
+
+The Taskfile has multiple commands you can run that can save time. For example, to start the development server, you can run this with `bin` not on your PATH variable: 
+```
+./bin/task run
+```
+Alternatively, you can run this if you have `bin` on your PATH: 
+```
+task run
+```
+
+For the rest of this README, I will refer to the commands as if you have `bin` in your PATH.
+
+### Starting the Test Suite
+
+You can also use this to start the test suite: 
+```
+task test
+```
+
 ## Why Go?
 
 To accomplish these goals with a small footprint, Go was chosen. I chose Go in particular because Go is extremely fast, has very low memory requirements, is able to handle concurrency extremely well. It is also extremely easy to learn, which is important since the programmer fans of this series are diverse in both preferred language and preferred stack. 
