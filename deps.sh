@@ -25,6 +25,44 @@ chmod +x ./bin/taskfile-install.sh
 echo Executing the Taskfile installer...
 ./bin/taskfile-install.sh
 
+echo Removing the Taskfile installer...
+rm ./bin/taskfile-install.sh
+
 echo Task is in ./bin. Either add this manually to your PATH variable or run the Task executable with "./bin/task [arguments]".
 
-echo Finished!
+OS=$(uname)
+case $OS in
+  'Linux')
+    OS='Linux'
+    curl -o ./bin/protoc https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
+    ;;
+  'FreeBSD')
+    OS='FreeBSD'
+    echo Please manually grab the most relevant version of Protoc here: https://github.com/protocolbuffers/protobuf/releases
+    ;;
+  'WindowsNT')
+    OS='Windows'
+    curl -o ./bin/protoc https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-win64.zip
+    ;;
+  'Darwin') 
+    OS='Mac'
+    curl -o ./bin/protoc https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-osx-universal_binary.zip
+    ;;
+  'SunOS')
+    OS='Solaris'
+    echo Please manually grab the most relevant version of Protoc here: https://github.com/protocolbuffers/protobuf/releases
+    ;;
+  'AIX') 
+    echo Please manually grab the most relevant version of Protoc here: https://github.com/protocolbuffers/protobuf/releases
+    ;;
+  *) 
+    echo Please manually grab the most relevant version of Protoc here: https://github.com/protocolbuffers/protobuf/releases
+    ;;
+esac
+
+echo Making the Protoc installer executable...
+chmod +x ./bin/protoc
+
+echo Protoc is in ./bin. Either add this manually to your PATH variable or run the Protoc executable with "./bin/protoc [arguments]".
+
+echo Finished! It is recommended to add the bin folder to your PATH within your .bashrc, .zshrc, etc. to make these binaries available by their name.
