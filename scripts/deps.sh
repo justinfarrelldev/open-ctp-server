@@ -23,7 +23,6 @@ if [ $RESULT -gt 0 ]; then
     mkdir -p ./proto_out/cpp
     mkdir -p ./proto_out/java
     mkdir -p ./proto_out/csharp
-    mkdir -p ./proto_out/dart
     mkdir -p ./proto_out/kotlin
     mkdir -p ./proto_out/python
     mkdir -p ./proto_out/go
