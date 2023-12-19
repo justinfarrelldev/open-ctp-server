@@ -22,17 +22,17 @@ message Abolitionist {
     required string description = 1 [default = "The Abolitionist is your primary weapon against the insidious attacks of foreign <L:DATABASE_UNITS,UNIT_SLAVER>Slavers<e>.  Two actions are at her disposal:  the <L:DATABASE_ORDERS,ORDER_UNDERGROUND_RAILWAY>Free Slave<e> action, which frees any slaves in the target city, and <L:DATABASE_ORDERS,ORDER_INCITE_UPRISING>Aid Uprising<e>, which can help propel a restless enemy city into full-scale <L:DATABASE_CONCEPTS,CONCEPT_RIOTS>Rioting<e>.\n\nBecause the Abolitionist is a <L:DATABASE_CONCEPTS,CONCEPT_STEALTH_UNITS>Stealth Unit<e>, it is able to see other stealth units."];
     required UnitCategory category = 2 [default = SPECIAL];
     required int32 attack = 3 [default = 0];
-    // defense 10
-    // zbRangeAttack 0
-    // firepower 1
-    // armor 1
-    // maxHp 10
-    // shieldCost 540
-    // powerPoints 250
-    // shieldHunger 5
-    // foodHunger 0
-    // maxMovePoints 300
-    // visionRange 1
+    required int32 defense = 4 [default = 10];
+    required int32 zbRangeAttack = 5 [default = 0];
+    required int32 firepower = 6 [default = 1];
+    required int32 armor = 7 [default = 1];
+    required int32 maxHp = 8 [default = 10];
+    required int32 shieldCost = 9 [default = 540];
+    required int32 powerPoints = 10 [default = 250];
+    required int32 shieldHunger = 11 [default = 5];
+    required int32 foodHunger = 12 [default = 0];
+    required int32 maxMovePoints = 13 [default = 300];
+    required int32 visionRange = 14 [default = 1];
     // enableAdvance ADVANCE_CLASSICAL_EDUCATION
     // activeDefenseRange 0
     // lossMoveToDmgNone
