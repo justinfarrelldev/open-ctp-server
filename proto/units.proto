@@ -1,4 +1,4 @@
-syntax = "proto3";
+syntax = "proto2";
 
 package units;
 
@@ -16,9 +16,9 @@ enum UnitCategory {
 }
 
 message Abolitionist {
-    string description = 1;
-    UnitCategory category = 2; // default "SPECIAL"
-    int32 attack = 3; // default 0
+    required string description = 1;
+    required UnitCategory category = 2 [default = SPECIAL]; // default "SPECIAL"
+    required int32 attack = 3 [default = 0]; // default 0
     // defense 10
     // zbRangeAttack 0
     // firepower 1
