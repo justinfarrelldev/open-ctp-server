@@ -45,7 +45,9 @@ If you are using VS Code, you should also get some extension recommendations. I 
 
 ### Getting Dependencies
 
-To get all of the binary dependencies, simply run: 
+First, run `go install`. This will install all Go module dependencies.
+
+To get all of the binary dependencies as well, simply run: 
 ```
 go generate
 ```
@@ -59,9 +61,12 @@ To add this folder to your PATH, try running the following command from the root
 echo 'export PATH=$PATH:'$(pwd)/bin >> ~/.bashrc
 ```
 
-Once you reload your terminal, you should have access to both `protoc` and `task` directly in your terminal (as long as the `bin` folder still exists with those executables inside).
+While adding this, also add the following command (for protoc-gen-go, the Go plugin for protoc): 
+```
+echo 'export PATH=$PATH:'$(go env GOPATH)/bin >> ~/.bashrc
+```
 
-After this, run `go install`. This will install all Go module dependencies.
+Once you reload your terminal, you should have access to both `protoc` and `task` directly in your terminal (as long as the `bin` folder still exists with those executables inside).
 
 ## Running Specific Commands
 
