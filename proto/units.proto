@@ -17,9 +17,11 @@ enum UnitCategory {
 }
 
 message Abolitionist {
-    required string description = 1;
-    required UnitCategory category = 2 [default = SPECIAL]; // default "SPECIAL"
-    required int32 attack = 3 [default = 0]; // default 0
+    // Not sure what this field is actually assigned to, looks like it was initially DESCRIPTION_UNIT_ABOLITIONIST but that value isn't set anywhere
+    // I am leaving in the tags in case a source-based client decides to use this server
+    required string description = 1 [default = "The Abolitionist is your primary weapon against the insidious attacks of foreign <L:DATABASE_UNITS,UNIT_SLAVER>Slavers<e>.  Two actions are at her disposal:  the <L:DATABASE_ORDERS,ORDER_UNDERGROUND_RAILWAY>Free Slave<e> action, which frees any slaves in the target city, and <L:DATABASE_ORDERS,ORDER_INCITE_UPRISING>Aid Uprising<e>, which can help propel a restless enemy city into full-scale <L:DATABASE_CONCEPTS,CONCEPT_RIOTS>Rioting<e>.\n\nBecause the Abolitionist is a <L:DATABASE_CONCEPTS,CONCEPT_STEALTH_UNITS>Stealth Unit<e>, it is able to see other stealth units."];
+    required UnitCategory category = 2 [default = SPECIAL];
+    required int32 attack = 3 [default = 0];
     // defense 10
     // zbRangeAttack 0
     // firepower 1
