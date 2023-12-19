@@ -9,3 +9,6 @@ tasks:
   test:
     cmds:
       - go test
+  protos:
+    cmds:
+      - protoc --proto_path=./proto --cpp_out=./proto_out/cpp ./proto/*.proto
