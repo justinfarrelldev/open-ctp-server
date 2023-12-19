@@ -12,4 +12,11 @@ tasks:
   
   protos:
     cmds:
+      - rm -rf proto_out
+      - mkdir -p ./proto_out/cpp
+      - mkdir -p ./proto_out/java
+      - mkdir -p ./proto_out/csharp
+      - mkdir -p ./proto_out/kotlin
+      - mkdir -p ./proto_out/python
+      - mkdir -p ./proto_out/go
       - find ./proto -name "*.proto" | xargs protoc --proto_path=./proto --cpp_out=./proto_out/cpp --java_out=./proto_out/java --csharp_out=./proto_out/csharp --go_out=./proto_out/go --python_out=./proto_out/python --kotlin_out=./proto_out/kotlin
