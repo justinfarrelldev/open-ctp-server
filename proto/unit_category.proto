@@ -1,0 +1,17 @@
+syntax = "proto2";
+
+package units;
+option go_package = "github.com/justinfarrelldev/open-ctp-server";
+
+enum UnitCategory {
+    GENERIC = 0;
+    SETTLER = 1;
+    AERIAL = 2;
+    NAVAL = 3;
+    UNDERSEA = 4;
+    ATTACK = 5;
+    DEFENSE = 6;
+    RANGED = 7;
+    FLANKER = 8;
+    SPECIAL = 9;
+}
