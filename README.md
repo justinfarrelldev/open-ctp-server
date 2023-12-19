@@ -139,6 +139,11 @@ It is notable that this server will NOT function exactly the same as the vanilla
 
 Alternatively, new clients can be coded from scratch into any protobuffer-supported language and may use this server.
 
+**Another very important note for client developers** - the default values set on the protos are the values the server is set to anticipate. Therefore, even though there are setters, do not set the values on units, structures or any other type within the client unless you really know what you want to do.
+
+Doing so will cause the client to desync from the server and, in the case of bad data being sent to the server, your client may 
+become disconnected from the server (as an attempt to thwart cheating).
+
 ## Tooling
 
 See `TOOLING.md`.
