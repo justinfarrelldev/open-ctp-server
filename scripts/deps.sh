@@ -9,11 +9,24 @@ ls ./bin
 
 RESULT=$?
 
-echo $RESULT
-
 if [ $RESULT -gt 0 ]; then
     echo Creating bin folder to hold the binaries...
     mkdir ./bin
+fi
+
+ls ./proto_out
+
+RESULT=$?
+
+if [ $RESULT -gt 0 ]; then
+    echo Creating proto_out folder to hold the built protos...
+    mkdir -p ./proto_out/cpp
+    mkdir -p ./proto_out/java
+    mkdir -p ./proto_out/csharp
+    mkdir -p ./proto_out/dart
+    mkdir -p ./proto_out/kotlin
+    mkdir -p ./proto_out/python
+    mkdir -p ./proto_out/go
 fi
 
 echo Getting the Taskfile install script...

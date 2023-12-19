@@ -12,4 +12,4 @@ tasks:
   
   protos:
     cmds:
-      - find ./proto -name "*.proto" | xargs protoc --proto_path=./proto --cpp_out=./proto_out/cpp
+      - find ./proto -name "*.proto" | xargs protoc --proto_path=./proto --cpp_out=./proto_out/cpp --java_out=./proto_out/java --csharp_out=./proto_out/csharp --dart_out=./proto_out/dart --go_out=./proto_out/go --python_out=./proto_out/python --kotlin_out=./proto_out/kotlin
