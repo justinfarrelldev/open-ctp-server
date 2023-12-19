@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
         "Apolyton",
+        "cmds",
         "fanbase",
         "Freeciv",
         "frontends",
@@ -13,6 +14,7 @@
         "protobuffer",
         "Protobuffers",
         "protoc",
+        "protos",
         "Spyroviper",
         "Supabase",
         "Taskfile"
