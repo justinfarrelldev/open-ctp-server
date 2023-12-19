@@ -4,7 +4,7 @@ tasks:
   run:
     cmds:
       - echo Starting dev server...
-      - go run .
+      - go run ./src
 
   test:
     cmds:
