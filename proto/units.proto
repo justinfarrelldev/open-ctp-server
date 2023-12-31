@@ -2,11 +2,20 @@ syntax = "proto2";
 
 package units;
 option go_package = "github.com/justinfarrelldev/open-ctp-server";
- 
+
 import "unit_category.proto";
 
-message Abolitionist {
-    // Not sure what this field is actually assigned to, looks like it was initially DESCRIPTION_UNIT_ABOLITIONIST but that value isn't set anywhere
+enum UnitType {
+    ABOLITIONIST = 0;
+    AIRCRAFT_CARRIER = 1;
+}
+
+message UnitInfo {
+    optional UnitType type = 1;
+}
+
+message Unit {
+    // Not sure what this field is actually assigned to, looks like it was initially DESCRIPTION_UNIT_ABOLITIONIST for Abolitionist but that value isn't set anywhere
     // I am leaving in the tags in case a source-based client decides to use this server
     optional string description = 1 [default = "The Abolitionist is your primary weapon against the insidious attacks of foreign <L:DATABASE_UNITS,UNIT_SLAVER>Slavers<e>.  Two actions are at her disposal:  the <L:DATABASE_ORDERS,ORDER_UNDERGROUND_RAILWAY>Free Slave<e> action, which frees any slaves in the target city, and <L:DATABASE_ORDERS,ORDER_INCITE_UPRISING>Aid Uprising<e>, which can help propel a restless enemy city into full-scale <L:DATABASE_CONCEPTS,CONCEPT_RIOTS>Rioting<e>.\n\nBecause the Abolitionist is a <L:DATABASE_CONCEPTS,CONCEPT_STEALTH_UNITS>Stealth Unit<e>, it is able to see other stealth units."];
     optional UnitCategory category = 2 [default = SPECIAL];
@@ -50,5 +59,8 @@ message Abolitionist {
     //    deathChance 0.5
     //    effect SPECEFFECT_UNDERGROUND_RAILWAY
     // }
- }
- 
+}
+
+service UnitService {
+    rpc GetUnit(UnitInfo) returns (Unit);
+} 
