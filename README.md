@@ -4,28 +4,27 @@
 
 This is the Open Call to Power Server project, or Open CTP Server for short.
 
-This is a fan-developed server for the Call to Power series of games which intends to bring multiplayer to the franchise in a meaningful way (eventually supporting both Call to Power and Call to Power 2).
+This is a fan-developed server for the Call to Power series of games which intends to bring multiplayer to the franchise in a meaningful way (eventually supporting both Call to Power and Call to Power II).
 
-This project is neither made nor sponsored by Activision. See `LICENSE.md` for more details.
+This project is **neither made nor sponsored by Activision**. See `LICENSE.md` for more details.
 
 ## Goals
 
 There are multiple goals this project intends to tackle: 
-- Create a proper backend for the Call to Power games series
-    - Both Call to Power 1 and Call to Power 2
-- Support fan-made frontends (such as the Apolyton Edition and the Spyroviper Edition of the games, or future fan remakes) with minimal requirements
-    - The server should be accessible and completely usable using cURL or gRPC
+- Create a proper backend for the Call to Power game series
+- Support fan-made frontends (such as the Apolyton Edition and the Spyroviper Edition of the games) with minimal requirements
+    - The server should be accessible and usable using cURL or gRPC
 - Allow for a vanilla+ experience for the games
     - Obvious bugs should not be preserved
     - Non-vanilla changes (such as tweaking unit health or adding extra units) should NOT be present
         - Feel free to fork this repo and modify it to your heart's content!
-- Players will be able to choose a different username every game (same as base Call to Power multiplayer did)
+- Players will be able to choose a different username every game (the same as the base Call to Power multiplayer did)
     - Players will be able to password-protect their login to each game (so that others cannot join as them)
         - These will be temporary and will only last the duration of the game
         - No actual account will ever be required as this would mean a lot of work client-side for the Apolyton and Spyroviper Editions
 - Additional game modes
     - Long-turn (with customizable turn timers) similar to Freeciv
-    - Simultaneous Turns (where everyone moves during one turn)
+    - Simultaneous Turns (everyone moves during one turn)
     - Hybrid Turns (Simultaneous Turns except for when nations are at war, where they take turns in-sequence)
     - Email game play will not be supported (as this gamemode has since become obsolete)
 
@@ -37,6 +36,8 @@ There are multiple goals this project intends to tackle:
 - Go Language Tools
 - (Optional but highly recommended) Recommended Extensions
 
+Quick Note: Please leave an issue on GitHub if you run into any problems with the setup process! This setup process is meant to be largely OS-agnostic (supporting Windows, MacOS and Debian-flavored Linux distros).
+
 To get started, download the Go language tools and install them into an environment with Bash. Bash is necessary to run some of the scripts and is generally a good idea (though development is definitely possible without Bash).
 
 If you are on Windows, one quick way to get Bash is by downloading and running Git Bash (part of Git for Windows): https://git-scm.com/download/win
@@ -47,7 +48,7 @@ If you are using VS Code, you should also get some extension recommendations. I 
 
 First, run `go install`. This will install all Go module dependencies.
 
-To get all of the binary dependencies as well, simply run: 
+To get all of the binary dependencies as well, simply run this command **inside the src folder of this repo** (next to main.go): 
 ```
 go generate
 ```
@@ -94,7 +95,7 @@ task test
 
 ## Why Go?
 
-To accomplish these goals with a small footprint, Go was chosen. I chose Go in particular because Go is extremely fast, has very low memory requirements, is able to handle concurrency extremely well. It is also extremely easy to learn, which is important since the programmer fans of this series are diverse in both preferred language and preferred stack. 
+To accomplish these goals with a small footprint, Go was chosen. Go was chosen in particular because Go is extremely fast, has very low memory requirements and is able to handle concurrency extremely well. It is also extremely easy to learn, which is important since the fans of this series whom are programmers are diverse in both preferred language and preferred stack. 
 
 Go also has an excellent gRPC connector as well as great Protobuf support which should enable the following languages to interface with the server (many other languages are supported as well by third-party tools): 
 - C++
@@ -135,14 +136,11 @@ If you are trying to make a client and are struggling with the protobuffer imple
 
 ### A Few Notes
 
-It is notable that this server will NOT function exactly the same as the vanilla CTP / CTP2 servers did, so clients will need to be modified to actually utilize this server. This will likely include a large jump in version for original-source-based repos (such as the Spyroviper Edition and Apolyton Edition) since the protobuffers target newer versions of C++. 
+**This server will NOT work with either of the base, unmodified games**.
+
+It is notable that this server will NOT function exactly the same as the vanilla CTP / CTP2 servers did, so clients will need to be modified to actually utilize this server. This will likely include a large jump in version for original-source-based repos (such as the Spyroviper Edition and Apolyton Edition) since the protobuffers target newer versions of C++ (according to [this](https://github.com/google/oss-policies-info/blob/main/foundational-cxx-support-matrix.md), C++ 14 or greater is required for protobuffers as protobuffers [track the Foundational C++ Support Matrix](https://protobuf.dev/support/version-support/)). 
 
 Alternatively, new clients can be coded from scratch into any protobuffer-supported language and may use this server.
-
-**Another very important note for client developers** - the default values set on the protos are the values the server is set to anticipate. Therefore, even though there are setters, do not set the values on units, structures or any other type within the client unless you really know what you want to do.
-
-Doing so will cause the client to desync from the server and, in the case of bad data being sent to the server, your client may 
-become disconnected from the server (as an attempt to thwart cheating).
 
 ## Tooling
 

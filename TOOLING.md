@@ -1,6 +1,6 @@
 # Tooling
 
-There are many tools which are used within this project. This document seeks to de-mystify many of the tools that are used (or which will be used) during this process.
+There are many tools which are used within this project. This document seeks to de-mystify the tools which are used (or which will be used).
 
 ## gRPC
 
@@ -15,7 +15,7 @@ gRPC can best be thought of as an alternative to HTTPS which uses Protobuffers f
 
 ## Protobuffers
 
-One of the best explanations of what protobuffers are is from the protobuffers website (https://protobuf.dev/): 
+One of the best explanations of protobuffers is from the protobuffers website (https://protobuf.dev/): 
 ```
 Protocol Buffers are language-neutral, platform-neutral extensible mechanisms for serializing structured data.
 ```
