@@ -61,6 +61,6 @@ message Unit {
     // }
 }
 
-service UnitService {
+service Units {
     rpc GetUnit(UnitInfo) returns (Unit);
 } 

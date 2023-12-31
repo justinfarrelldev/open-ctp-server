@@ -19,89 +19,89 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	UnitService_GetUnit_FullMethodName = "/units.UnitService/GetUnit"
+	Units_GetUnit_FullMethodName = "/units.Units/GetUnit"
 )
 
-// UnitServiceClient is the client API for UnitService service.
+// UnitsClient is the client API for Units service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type UnitServiceClient interface {
+type UnitsClient interface {
 	GetUnit(ctx context.Context, in *UnitInfo, opts ...grpc.CallOption) (*Unit, error)
 }
 
-type unitServiceClient struct {
+type unitsClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewUnitServiceClient(cc grpc.ClientConnInterface) UnitServiceClient {
-	return &unitServiceClient{cc}
+func NewUnitsClient(cc grpc.ClientConnInterface) UnitsClient {
+	return &unitsClient{cc}
 }
 
-func (c *unitServiceClient) GetUnit(ctx context.Context, in *UnitInfo, opts ...grpc.CallOption) (*Unit, error) {
+func (c *unitsClient) GetUnit(ctx context.Context, in *UnitInfo, opts ...grpc.CallOption) (*Unit, error) {
 	out := new(Unit)
-	err := c.cc.Invoke(ctx, UnitService_GetUnit_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Units_GetUnit_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// UnitServiceServer is the server API for UnitService service.
-// All implementations must embed UnimplementedUnitServiceServer
+// UnitsServer is the server API for Units service.
+// All implementations must embed UnimplementedUnitsServer
 // for forward compatibility
-type UnitServiceServer interface {
+type UnitsServer interface {
 	GetUnit(context.Context, *UnitInfo) (*Unit, error)
-	mustEmbedUnimplementedUnitServiceServer()
+	mustEmbedUnimplementedUnitsServer()
 }
 
-// UnimplementedUnitServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedUnitServiceServer struct {
+// UnimplementedUnitsServer must be embedded to have forward compatible implementations.
+type UnimplementedUnitsServer struct {
 }
 
-func (UnimplementedUnitServiceServer) GetUnit(context.Context, *UnitInfo) (*Unit, error) {
+func (UnimplementedUnitsServer) GetUnit(context.Context, *UnitInfo) (*Unit, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUnit not implemented")
 }
-func (UnimplementedUnitServiceServer) mustEmbedUnimplementedUnitServiceServer() {}
+func (UnimplementedUnitsServer) mustEmbedUnimplementedUnitsServer() {}
 
-// UnsafeUnitServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to UnitServiceServer will
+// UnsafeUnitsServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to UnitsServer will
 // result in compilation errors.
-type UnsafeUnitServiceServer interface {
-	mustEmbedUnimplementedUnitServiceServer()
+type UnsafeUnitsServer interface {
+	mustEmbedUnimplementedUnitsServer()
 }
 
-func RegisterUnitServiceServer(s grpc.ServiceRegistrar, srv UnitServiceServer) {
-	s.RegisterService(&UnitService_ServiceDesc, srv)
+func RegisterUnitsServer(s grpc.ServiceRegistrar, srv UnitsServer) {
+	s.RegisterService(&Units_ServiceDesc, srv)
 }
 
-func _UnitService_GetUnit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Units_GetUnit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UnitInfo)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UnitServiceServer).GetUnit(ctx, in)
+		return srv.(UnitsServer).GetUnit(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: UnitService_GetUnit_FullMethodName,
+		FullMethod: Units_GetUnit_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UnitServiceServer).GetUnit(ctx, req.(*UnitInfo))
+		return srv.(UnitsServer).GetUnit(ctx, req.(*UnitInfo))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// UnitService_ServiceDesc is the grpc.ServiceDesc for UnitService service.
+// Units_ServiceDesc is the grpc.ServiceDesc for Units service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var UnitService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "units.UnitService",
-	HandlerType: (*UnitServiceServer)(nil),
+var Units_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "units.Units",
+	HandlerType: (*UnitsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetUnit",
-			Handler:    _UnitService_GetUnit_Handler,
+			Handler:    _Units_GetUnit_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
