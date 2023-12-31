@@ -10,6 +10,8 @@
         "gamemode",
         "gofmt",
         "Gopls",
+        "healthcheck",
+        "healthgrpc",
         "Ninjaboy",
         "proto",
         "Protobuf",

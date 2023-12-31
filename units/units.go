@@ -11,7 +11,7 @@ type Server struct {
 
 // TODO add args once protobuffers are compiled and available here
 func (s *Server) GetUnit(ctx context.Context, unitInfo *UnitInfo) (*Unit, error) {
-	fmt.Printf("got a request to GetUnit with supplied '%v'", unitInfo)
+	fmt.Printf("got a request to GetUnit with supplied '%v'\n", unitInfo)
 	if *unitInfo.Type == UnitType_ABOLITIONIST {
 		return &Abolitionist, nil
 	}
