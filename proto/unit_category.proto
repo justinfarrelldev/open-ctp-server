@@ -1,7 +1,7 @@
 syntax = "proto2";
 
 package units;
-option go_package = "github.com/justinfarrelldev/open-ctp-server";
+option go_package = "github.com/justinfarrelldev/open-ctp-server/unit_category";
 
 enum UnitCategory {
     GENERIC = 0;
