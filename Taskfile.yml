@@ -4,7 +4,7 @@ tasks:
   run:
     cmds:
       - echo Starting dev server...
-      - (cd src && go run .)
+      - go run .
 
   build:
     cmds: 

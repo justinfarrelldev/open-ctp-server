@@ -10,6 +10,9 @@ import (
 	"google.golang.org/grpc"
 )
 
+type Server struct {
+}
+
 func main() {
 	port := 9000
 
