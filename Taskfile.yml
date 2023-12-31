@@ -30,4 +30,4 @@ tasks:
       # Compile all protobuffers to the output directory for distribution
       - find ./proto -name "*.proto" | xargs protoc --proto_path=./proto --cpp_out=./proto_out/cpp --java_out=./proto_out/java --csharp_out=./proto_out/csharp --go_out=./proto_out/go --python_out=./proto_out/python --kotlin_out=./proto_out/kotlin
       # Compile the Go gRPC definitions for use within the server
-      - find ./proto -name "*.proto" | xargs protoc --proto_path=./proto --go-grpc_out=paths=source_relative:./src --go_out=paths=source_relative:./src
+      - find ./proto -name "*.proto" | xargs protoc --proto_path=./proto --go-grpc_out=paths=source_relative:. --go_out=paths=source_relative:.
