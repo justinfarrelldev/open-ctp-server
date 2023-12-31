@@ -1,2 +1,3 @@
 bin
 proto_out
+src/google/*
