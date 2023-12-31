@@ -1,3 +1,4 @@
 bin
 proto_out
 src/google/*
+build_output

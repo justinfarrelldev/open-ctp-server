@@ -6,6 +6,12 @@ tasks:
       - echo Starting dev server...
       - (cd src && go run .)
 
+  build:
+    cmds: 
+      - task protos
+      - mkdir -p build_output
+      - (cd src && go build -o ../build_output/open-ctp-server)
+
   test:
     cmds:
       - go test
