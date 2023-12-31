@@ -1,4 +1,4 @@
-syntax = "proto2";
+syntax = "proto3";
 
 package units;
 option go_package = "github.com/justinfarrelldev/open-ctp-server/units";
@@ -17,20 +17,20 @@ message UnitInfo {
 message Unit {
     // Not sure what this field is actually assigned to, looks like it was initially DESCRIPTION_UNIT_ABOLITIONIST for Abolitionist but that value isn't set anywhere
     // I am leaving in the tags in case a source-based client decides to use this server
-    optional string description = 1 [default = "The Abolitionist is your primary weapon against the insidious attacks of foreign <L:DATABASE_UNITS,UNIT_SLAVER>Slavers<e>.  Two actions are at her disposal:  the <L:DATABASE_ORDERS,ORDER_UNDERGROUND_RAILWAY>Free Slave<e> action, which frees any slaves in the target city, and <L:DATABASE_ORDERS,ORDER_INCITE_UPRISING>Aid Uprising<e>, which can help propel a restless enemy city into full-scale <L:DATABASE_CONCEPTS,CONCEPT_RIOTS>Rioting<e>.\n\nBecause the Abolitionist is a <L:DATABASE_CONCEPTS,CONCEPT_STEALTH_UNITS>Stealth Unit<e>, it is able to see other stealth units."];
-    optional UnitCategory category = 2 [default = SPECIAL];
-    optional int32 attack = 3 [default = 0];
-    optional int32 defense = 4 [default = 10];
-    optional int32 zbRangeAttack = 5 [default = 0];
-    optional int32 firepower = 6 [default = 1];
-    optional int32 armor = 7 [default = 1];
-    optional int32 maxHp = 8 [default = 10];
-    optional int32 shieldCost = 9 [default = 540];
-    optional int32 powerPoints = 10 [default = 250];
-    optional int32 shieldHunger = 11 [default = 5];
-    optional int32 foodHunger = 12 [default = 0];
-    optional int32 maxMovePoints = 13 [default = 300];
-    optional int32 visionRange = 14 [default = 1];
+    optional string description = 1;
+    optional UnitCategory category = 2;
+    optional int32 attack = 3;
+    optional int32 defense = 4;
+    optional int32 zbRangeAttack = 5;
+    optional int32 firepower = 6;
+    optional int32 armor = 7;
+    optional int32 maxHp = 8;
+    optional int32 shieldCost = 9;
+    optional int32 powerPoints = 10;
+    optional int32 shieldHunger = 11;
+    optional int32 foodHunger = 12;
+    optional int32 maxMovePoints = 13;
+    optional int32 visionRange = 14;
     // enableAdvance ADVANCE_CLASSICAL_EDUCATION
     // activeDefenseRange 0
     // lossMoveToDmgNone
