@@ -20,4 +20,5 @@ tasks:
       - mkdir -p ./proto_out/python
       - mkdir -p ./proto_out/go
       - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+      - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
       - find ./proto -name "*.proto" | xargs protoc --proto_path=./proto --cpp_out=./proto_out/cpp --java_out=./proto_out/java --csharp_out=./proto_out/csharp --go_out=./proto_out/go --python_out=./proto_out/python --kotlin_out=./proto_out/kotlin
