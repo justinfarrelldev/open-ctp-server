@@ -86,6 +86,28 @@ task run
 
 For the rest of this README, I will refer to the commands as if you have `bin` in your PATH.
 
+#### How do I know if my development server is working?
+
+You can use the following `gRPCurl` request while the server is running in a different terminal to check if the server is running:
+
+```
+grpcurl -d '{"type": 0}' -plaintext localhost:9000 units.Units.GetUnit
+```
+
+You should see unit information about the Abolitionist unit as a response.
+
+### How can I see the services exposed by the server?
+
+You can use the following `gRPCurl` command while the development server is running to see the exposed services:
+```
+grpcurl -plaintext localhost:9000 list
+```
+
+You can then list a specific service to see handlers on that service (this example is using the `units.Units` service): 
+```
+grpcurl -plaintext localhost:9000 list units.Units
+```
+
 ### Starting the Test Suite
 
 You can also use this to start the test suite: 
