@@ -31,6 +31,9 @@ message Unit {
     optional int32 foodHunger = 12;
     optional int32 maxMovePoints = 13;
     optional int32 visionRange = 14;
+
+    // TODO add the rest of these fields into the Abolitionist, creating advances and stuff while we go
+
     // enableAdvance ADVANCE_CLASSICAL_EDUCATION
     // activeDefenseRange 0
     // lossMoveToDmgNone
