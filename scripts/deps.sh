@@ -23,7 +23,7 @@ if [ $RESULT -gt 0]; then
   exit 1
 fi
 
-ls ../bin
+ls ./bin
 
 RESULT=$?
 
@@ -32,31 +32,31 @@ if [ $RESULT -gt 0 ]; then
     mkdir ../bin
 fi
 
-ls ../proto_out
+ls ./proto_out
 
 RESULT=$?
 
 if [ $RESULT -gt 0 ]; then
     echo Creating proto_out folder to hold the built protos...
-    mkdir -p ../proto_out/cpp
-    mkdir -p ../proto_out/java
-    mkdir -p ../proto_out/csharp
-    mkdir -p ../proto_out/kotlin
-    mkdir -p ../proto_out/python
-    mkdir -p ../proto_out/go
+    mkdir -p ./proto_out/cpp
+    mkdir -p ./proto_out/java
+    mkdir -p ./proto_out/csharp
+    mkdir -p ./proto_out/kotlin
+    mkdir -p ./proto_out/python
+    mkdir -p ./proto_out/go
 fi
 
 echo Getting the Taskfile install script...
-curl -o ../bin/taskfile-install.sh https://taskfile.dev/install.sh
+curl -o ./bin/taskfile-install.sh https://taskfile.dev/install.sh
 
 echo Making the Taskfile installer executable...
-chmod +x ../bin/taskfile-install.sh
+chmod +x ./bin/taskfile-install.sh
 
 echo Executing the Taskfile installer...
-(cd .. && ./bin/taskfile-install.sh)
+(./bin/taskfile-install.sh)
 
 echo Removing the Taskfile installer...
-rm ../bin/taskfile-install.sh
+rm ./bin/taskfile-install.sh
 
 echo Task is in ./bin. Either add this manually to your PATH variable or run the Task executable with "./bin/task [arguments]".
 
@@ -64,15 +64,15 @@ OS=$(uname)
 case $OS in
   'Linux')
     OS='Linux'
-    curl -L -o ../bin/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
+    curl -L -o ./bin/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
     ;;
   'WindowsNT')
     OS='Windows'
-    curl -L -o ../bin/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-win64.zip
+    curl -L -o ./bin/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-win64.zip
     ;;
   'Darwin') 
     OS='Mac'
-    curl -L -o ../bin/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-osx-universal_binary.zip
+    curl -L -o ./bin/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-osx-universal_binary.zip
     ;;
   *) 
     echo Please manually grab the most relevant release of Protoc v25.1 here and add it to your ./bin folder: https://github.com/protocolbuffers/protobuf/releases
@@ -80,18 +80,14 @@ case $OS in
     ;;
 esac
 
-unzip -o ../bin/protoc.zip -d ../bin/protoc-out
+unzip -o ./bin/protoc.zip -d ./bin/protoc-out
 
-rm ../bin/protoc.zip
+rm ./bin/protoc.zip
 
-mv ../bin/protoc-out/bin/protoc ../bin/protoc
-
-mkdir -p /usr/local/include/google
-
-mv ../bin/protoc-out/include/google /usr/local/include/google
+mv ./bin/protoc-out/bin/protoc ./bin/protoc
 
 echo Making the Protoc installer executable...
-chmod +x ../bin/protoc
+chmod +x ./bin/protoc
 
 echo Protoc is in ./bin. Either add this manually to your PATH variable or run the Protoc executable with "./bin/protoc [arguments]".
 

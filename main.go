@@ -1,4 +1,4 @@
-//go:generate ../scripts/deps.sh
+//go:generate ./scripts/deps.sh
 
 package main
 
