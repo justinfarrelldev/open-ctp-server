@@ -3,7 +3,7 @@ syntax = "proto2";
 package units;
 option go_package = "github.com/justinfarrelldev/open-ctp-server/units";
 
-import "unit_category.proto";
+import "units/unit_category.proto";
 
 enum UnitType {
     ABOLITIONIST = 0;
