@@ -4,7 +4,7 @@ This document aims to explain the server architecture behind this project.
 
 ## Deployment
 
-The server is automatically deployed to Fly.io (https://fly.io/) and is accessible at <TODO />.
+The server will be automatically deployed to Fly.io (https://fly.io/).
 
 Fly.io was chosen mainly because of ease-of-use - deploying is incredibly easy. They also have built-in Sentry integration for errors.
 
@@ -13,6 +13,8 @@ If you wish to have a setting changed on Fly.io, please message Ninjaboy on Disc
 You are also free to host your own instance of this repo wherever you would like (with the only condition being that it cannot be sold or make money in any way, as per the license - it must be for personal, non-commercial use only). If you want to use this server code wholesale on your own server (or modify this server, then host it), that is fine for non-commercial use.
 
 ## Database
+
+**This is intended for future planning. This section is not accurate.**
 
 This server necessitates a Postgres database. Postgres was chosen in particular since a lot of the game information is highly relational.
 
