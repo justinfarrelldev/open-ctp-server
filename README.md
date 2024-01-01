@@ -48,7 +48,7 @@ If you are using VS Code, you should also get some extension recommendations. I 
 
 First, run `go install`. This will install all Go module dependencies.
 
-To get all of the binary dependencies as well, simply run this command **inside the src folder of this repo** (next to main.go): 
+To get all of the binary dependencies as well, simply run this command **inside top-level folder of this repo** (next to main.go): 
 ```
 go generate
 ```
