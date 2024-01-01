@@ -6,11 +6,43 @@ All skill levels are welcome to join us on this epic project! We are always open
 
 **All contributors must be in the Call to Power Discord!**
 
-This is because there are dedicated sections within the Discord for discussions about development. There is also a Trello board linked in the Discord which we are using for our development activities, Kanban-style. 
+This is because there are dedicated sections within the Discord for discussions about development. There is also a Trello board linked in the Discord which we are using for our development activities, Kanban-style.
 
 ## Why not Jira?
 
 Most people hate Jira, myself included. In this case, I do not anticipate a large team of developers and there is no Scrum methodology being followed (and no need for extra integrations), so Trello should more than suffice. There is also a Trello webhook for Discord, which is very useful.
+
+## Trello Etiquette
+
+You can: 
+- Add comments (please comment your branch name on the ticket in case someone else needs to pick it up for some reason)
+- Assign yourself to tickets (so long as someone else isn't already assigned)
+- Move tickets between columns as progress is updated (see column meanings below)
+
+You should ask before: 
+- Unassigning someone else from a ticket (or taking over their ticket)
+- Archiving a ticket
+- Modifying the Acceptance Criteria for a ticket
+- Modifying the Description of a ticket
+- Creating a new ticket
+    - We should focus our effort into a few key places to avoid stale tickets
+    - New tickets **MUST** have a thorough Description and Acceptance Criteria section
+
+You should **not**:
+- Unassign someone from a ticket without consulting them first
+- Archive a ticket without bringing it up
+- Archive a Trello list for **ANY** reason
+- Modifying the Acceptance Criteria for a ticket without asking first
+- Modifying the Description of a ticket without asking first
+- Share any links to the Trello board outside of the Discord
+    - All server developers should be in the Discord for collaboration purposes - it's basically our form of Slack or Teams
+
+Explanations of the columns: 
+- To Do: These tickets have been created but have not been assigned / picked up by anyone
+- In Progress: These tickets are currently being worked on (or are partially finished)
+- PR Created: These tickets have an open Pull-Request in the GitHub repo
+- Help Needed: These tickets are "blocked". They need some assistance to be completed. If you are moving your ticket into this section, please also link any relevant GitHub Issues or Discord #development-questions posts so that assistance can come swiftly
+- Done: These tickets are done and are queued to be archived once all of the tickets on the board are finished
 
 ## Flow
 
@@ -25,7 +57,17 @@ Once you make a pull-request, a GitHub Actions pipeline will run (which runs the
 
 You should also make sure to check off the action items on the checklist. These are present as reminders to ease along the review process. 
 
-A contributor will then code-review the changes and will suggest changes to your pull request before eventually merging it in. 
+A contributor will then code-review the changes and will suggest changes to your pull request before eventually merging it in.
+
+## Code Spell Checker
+
+There is a Code Spell Checker in the recommended extensions. This will highlight typos with a blue underline to prevent typos from causing problems.
+
+If a word is legitimate correctly spelled, don't hesitate to add it to the dictionary and commit it. These are the steps to do so: 
+- Hover over the word with the blue underline
+- Click Quick Fix...
+- Click on 'Add: "___" to workspace settings'
+- Commit this change with your other changes
 
 ## Pull Request Guidelines for Reviewers
 

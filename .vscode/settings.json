@@ -21,6 +21,7 @@
         "protos",
         "Spyroviper",
         "Supabase",
-        "Taskfile"
+        "Taskfile",
+        "Unassigning"
     ]
 }
