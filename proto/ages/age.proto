@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package ages;
+option go_package = "github.com/justinfarrelldev/open-ctp-server/ages";
+
+message Age {
+    // This ID is 0 - 4 (or however many modded ages)
+    optional int32 id = 1;
+    // The name of the age, eg. Modern Age
+    optional string name = 2;
+}
