@@ -4,6 +4,7 @@ package units;
 option go_package = "github.com/justinfarrelldev/open-ctp-server/units";
 
 import "units/unit_category.proto";
+import "advances/advance.proto";
 
 enum UnitType {
     ABOLITIONIST = 0;
@@ -34,7 +35,8 @@ message Unit {
 
     // TODO add the rest of these fields into the Abolitionist, creating advances and stuff while we go
 
-    // enableAdvance ADVANCE_CLASSICAL_EDUCATION
+    // This is known as "enableAdvance" in the original source. This is the advance required to craft the unit.
+    optional advances.Advance requiredAdvance = 15; //ADVANCE_CLASSICAL_EDUCATION
     // activeDefenseRange 0
     // lossMoveToDmgNone
     // maxFuel 0
