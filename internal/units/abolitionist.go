@@ -19,7 +19,7 @@ var (
 
 var Abolitionist Unit = Unit{
 	Description:     &description,
-	Category:        UnitCategory.Enum(UnitCategory_SPECIAL),
+	Category:        SpecialUnit,
 	Attack:          &attack,
 	Defense:         &defense,
 	ZbRangeAttack:   &zbRangeAttack,
