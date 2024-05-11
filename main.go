@@ -3,19 +3,14 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
-	"log"
-	"net"
+	"os"
+	"strings"
 	"time"
 
-	unitService "github.com/justinfarrelldev/open-ctp-server/units"
-	"google.golang.org/grpc"
-
-	"google.golang.org/grpc/health"
-	"google.golang.org/grpc/reflection"
-
-	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
+	"net/http"
 )
 
 type Server struct {
@@ -28,40 +23,33 @@ var (
 	system = "" // empty string represents the health of the system
 )
 
+func getAllUnitInfo(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Got request to /units!")
+	fmt.Printf("\nHttp request: %v", r)
+}
+
+func getUnitInfo(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	unitType := parts[len(parts)-1]
+
+	fmt.Printf("\nGot request to /units/%v!", unitType)
+	fmt.Printf("\nHttp request: %v", r)
+}
+
 func main() {
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if err != nil {
-		log.Fatalf("Failed to listen on port %d", port)
-	}
 
-	fmt.Printf("Listening to TCP on port %d\n", port)
+	mux := http.NewServeMux()
 
-	s := grpc.NewServer()
+	mux.HandleFunc("/units", getAllUnitInfo)
+	mux.HandleFunc("/units/", getUnitInfo)
 
-	healthcheck := health.NewServer()
-	healthgrpc.RegisterHealthServer(s, healthcheck)
-	unitService.RegisterUnitsServer(s, &unitService.Server{})
+	fmt.Printf("\nNow serving on port %d\n", port)
+	err := http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 
-	reflection.Register(s)
-
-	go func() {
-		// asynchronously inspect dependencies and toggle serving status as needed
-		next := healthgrpc.HealthCheckResponse_SERVING
-
-		for {
-			healthcheck.SetServingStatus(system, next)
-
-			if next == healthgrpc.HealthCheckResponse_SERVING {
-				next = healthgrpc.HealthCheckResponse_NOT_SERVING
-			} else {
-				next = healthgrpc.HealthCheckResponse_SERVING
-			}
-
-			time.Sleep(*sleep)
-		}
-	}()
-
-	if err := s.Serve(listener); err != nil {
-		log.Fatalf("Failed to serve gRPC over port %d: %v", port, err)
+	if errors.Is(err, http.ErrServerClosed) {
+		fmt.Printf("server closed\n")
+	} else if err != nil {
+		fmt.Printf("error starting server: %s\n", err)
+		os.Exit(1)
 	}
 }
