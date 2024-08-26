@@ -68,6 +68,15 @@ After that, run `supabase start` to start the Supabase dashboard for local devel
 
 Once you have run `supabase start`, you can visit http://localhost:54323 to see your local Supabase dashboard.
 
+In your `.env` file, fill out the following with the values gotten from the end of the `supabase start` command: 
+```
+SUPABASE_PROJECT_URL=(API URL)
+SUPABASE_API_KEY=(anon key)
+SUPABASE_SERVICE_ROLE=(service_role key)
+```
+
+Now, when you start the server, you should be able to successfully connect to the local database. If you create a game, for example, you should see it show up in your local Supabase dashboard under the Table Editor.
+
 #### Using the Supabase Dashboard
 
 After setting up your Supabase account and project (both are free), you must add these values to a `.env` file located at the root of the project (next to `main.go`):
