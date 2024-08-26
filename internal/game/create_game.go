@@ -21,6 +21,7 @@ type CreateGameArgs struct {
 }
 
 const ERROR_PASSWORD_TOO_SHORT = "password must be longer than 6 characters"
+const ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD = "password is required when password_protected is true"
 
 // CreateGame handles the creation of a new game.
 //
@@ -55,7 +56,7 @@ func CreateGame(w http.ResponseWriter, r *http.Request) error {
 	if game.PasswordProtected && game.Password == "" {
 		w.WriteHeader(http.StatusBadRequest)
 
-		return errors.New("password is required when password_protected is true")
+		return errors.New(ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD)
 	}
 
 	if !game.PasswordProtected && len(game.Password) > 0 {
