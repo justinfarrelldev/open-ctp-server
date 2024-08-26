@@ -9,6 +9,48 @@
         }
     },
     "paths": {
+        "/game/create_game": {
+            "post": {
+                "description": "This endpoint creates a new multiplayer game, optionally protected by a password.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Create a new game",
+                "parameters": [
+                    {
+                        "description": "Game creation request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.CreateGameArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Game successfully created",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Returns the status of the service.",
@@ -38,6 +80,20 @@
         }
     },
     "definitions": {
+        "game.CreateGameArgs": {
+            "description": "Structure for the game creation request payload.",
+            "type": "object",
+            "properties": {
+                "password": {
+                    "description": "Password is the password for the game.\nThis field is required if PasswordProtected is true.\nIt must be longer than 6 characters.",
+                    "type": "string"
+                },
+                "password_protected": {
+                    "description": "PasswordProtected indicates whether the game is password-protected.\nIf true, a password must be provided.",
+                    "type": "boolean"
+                }
+            }
+        },
         "health.Response": {
             "type": "object",
             "properties": {

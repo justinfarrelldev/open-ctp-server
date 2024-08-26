@@ -10,7 +10,7 @@ import (
 
 func TestCreateGame_PasswordTooShort(t *testing.T) {
 	// Create a test request with a password that is less than 6 characters
-	body := ExpectedBody{
+	body := CreateGameArgs{
 		PasswordProtected: true,
 		Password:          "123", // This password is less than 6 characters
 	}
