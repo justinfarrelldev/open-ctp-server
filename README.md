@@ -73,6 +73,7 @@ In your `.env` file, fill out the following with the values gotten from the end 
 SUPABASE_PROJECT_URL=(API URL)
 SUPABASE_API_KEY=(anon key)
 SUPABASE_SERVICE_ROLE=(service_role key)
+SUPABASE_DB_URL=(DB URL)
 ```
 
 Now, when you start the server, you should be able to successfully connect to the local database. If you create a game, for example, you should see it show up in your local Supabase dashboard under the Table Editor.

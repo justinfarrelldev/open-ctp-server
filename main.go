@@ -1,11 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	_ "embed"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -19,6 +21,8 @@ import (
 	"github.com/flowchartsman/swaggerui"
 
 	"github.com/didip/tollbooth/v7"
+
+	_ "github.com/lib/pq"
 )
 
 //	@title			Open Call to Power Server
@@ -46,7 +50,7 @@ var (
 var spec []byte
 
 func main() {
-
+	// Tollbooth
 	message := Message{
 		Status: "Request Failed",
 		Body:   "The API is at capacity, try again later.",
@@ -57,14 +61,23 @@ func main() {
 	tollboothLimiter.SetMessageContentType("application/json")
 	tollboothLimiter.SetMessage(string(jsonMessage))
 
+	// Postgres
+	db, err := sql.Open("postgres", os.Getenv("SUPABASE_DB_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Handlers
 	mux := http.NewServeMux()
 
-	mux.Handle("/game/create_game", tollbooth.LimitFuncHandler(tollboothLimiter, game.GameHandler))
+	mux.Handle("/game/create_game", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+		game.GameHandler(w, r, db)
+	}))
 	mux.Handle("/health", tollbooth.LimitFuncHandler(tollboothLimiter, health.HealthCheckHandler))
 	mux.Handle("/docs/", http.StripPrefix("/docs", swaggerui.Handler(spec)))
 
 	fmt.Printf("\nNow serving on port %d\n", port)
-	err := http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 
 	if errors.Is(err, http.ErrServerClosed) {
 		fmt.Printf("server closed\n")

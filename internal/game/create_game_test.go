@@ -2,6 +2,7 @@ package game
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -23,8 +24,11 @@ func TestCreateGame_PasswordTooShort(t *testing.T) {
 	// Create a ResponseRecorder to capture the response
 	rr := httptest.NewRecorder()
 
+	// DB is not needed for this test
+	var mockDB *sql.DB = nil
+
 	// Call the function to test
-	err = CreateGame(rr, req)
+	err = CreateGame(rr, req, mockDB)
 
 	// Check if the error is what we expect
 	expectedError := ERROR_PASSWORD_TOO_SHORT
@@ -47,8 +51,11 @@ func TestCreateGame_PasswordRequiredWhenPasswordProtectedIsTrue(t *testing.T) {
 	// Create a ResponseRecorder to capture the response
 	rr := httptest.NewRecorder()
 
+	// DB is not needed for this test
+	var mockDB *sql.DB = nil
+
 	// Call the function to test
-	err = CreateGame(rr, req)
+	err = CreateGame(rr, req, mockDB)
 
 	// Check if the error is what we expect
 	expectedError := ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD

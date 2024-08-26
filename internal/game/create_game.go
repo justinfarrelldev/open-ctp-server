@@ -1,6 +1,7 @@
 package game
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -35,7 +36,7 @@ const ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD = "password is required when passw
 // @Failure 400 {object} error "Bad Request"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /game/create_game [post]
-func CreateGame(w http.ResponseWriter, r *http.Request) error {
+func CreateGame(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 
 	if r.Method != "POST" {
 		return errors.New("invalid request; request must be a POST request")
