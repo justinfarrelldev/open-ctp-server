@@ -96,11 +96,7 @@ Make this publicly exported
 Could we make this publicly exported? We will likely consume this variable in a future update, so it would be super useful!
 ```
 
-### Don't Get Mad If People Use Emojis
-
-This one is silly, but believe it or not, I've seen it!
-
-Emojis are perfectly okay, and I often use them myself. We may be writing code, but we shouldn't be *too* serious!
+Just generally try to be kind to each other.
 
 ### No Swearing / Profanity
 
@@ -108,7 +104,7 @@ This should go without saying, but then again, we may have a Linux kernel contri
 
 ## Pipeline Courtesy
 
-If you have recently had a pull request which failed for some reason while being merged to `main`, please attempt to remedy the pipeline. Your code was already approved, so it must be good! If you just leave it in a failed state, it has effectively wasted the code reviewer's time. If you really can't fix the pipeline by yourself, reach out to Ninjaboy on Discord. 
+If you have recently had a pull request which failed for some reason while being merged to `main`, please attempt to remedy the pipeline. Your code was already approved, so it must be good! If you really can't fix the pipeline by yourself, reach out to Ninjaboy on Discord. 
 
 ## Use Gofmt
 

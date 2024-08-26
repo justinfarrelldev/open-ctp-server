@@ -1,12 +1,14 @@
 # Open CTP Server
 
+[API Documentation](https://open-ctp-server.fly.dev/docs/)
+
 ## What is this?
 
 This is the Open Call to Power Server project, or Open CTP Server for short.
 
-This is a fan-developed server for the Call to Power series of games which intends to bring multiplayer to the franchise in a meaningful way (eventually supporting both Call to Power and Call to Power II).
+This is a fan-developed server for the Call to Power series of games which intends to bring multiplayer to the franchise in a meaningful way (eventually supporting both Call to Power and Call to Power II). It is still a massive work-in-progress, as I only rarely have time to work on it. Contributions of all kinds are welcome, as long as they adhere to the guidelines outlined in `CONTRIBUTING.md` and as long as the contributions are done with other contributors in mind.
 
-This project is **neither made nor sponsored by Activision**. See `LICENSE.md` for more details.
+This project is **neither made nor sponsored by Activision**. This is a fan-made server with no affiliation to Activision. See `LICENSE.md` for more details.
 
 ## Endpoint
 
@@ -133,9 +135,7 @@ If you are trying to make a client and are struggling with using this server, fe
 
 **This server will NOT work with either of the base, unmodified games**.
 
-It is notable that this server will NOT function exactly the same as the vanilla CTP / CTP2 servers did, so clients will need to be modified to actually utilize this server. This will likely include a large jump in version for original-source-based repos (such as the Spyroviper Edition and Apolyton Edition) since the protobuffers target newer versions of C++ (according to [this](https://github.com/google/oss-policies-info/blob/main/foundational-cxx-support-matrix.md), C++ 14 or greater is required for protobuffers as protobuffers [track the Foundational C++ Support Matrix](https://protobuf.dev/support/version-support/)). 
-
-Alternatively, new clients can be coded from scratch into any protobuffer-supported language and may use this server.
+It is notable that this server will NOT function exactly the same as the vanilla CTP / CTP2 servers did, so clients will need to be modified to actually utilize this server.
 
 ## Tooling
 
