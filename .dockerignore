@@ -1,0 +1,7 @@
+# flyctl launch added from .gitignore
+**/bin
+**/proto_out
+**/google/*
+**/build_output
+**/.env
+fly.toml

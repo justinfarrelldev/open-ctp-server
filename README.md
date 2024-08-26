@@ -8,6 +8,10 @@ This is a fan-developed server for the Call to Power series of games which inten
 
 This project is **neither made nor sponsored by Activision**. See `LICENSE.md` for more details.
 
+## Endpoint
+
+The server is currently deployed at https://open-ctp-server.fly.dev. To test connectivity, send a GET request to https://open-ctp-server.fly.dev/health and you should get back a JSON response of '{status:"OK"}'.
+
 ## Goals
 
 There are multiple goals this project intends to tackle: 
