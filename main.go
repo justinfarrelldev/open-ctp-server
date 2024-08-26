@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"net/http"
+
+	game "github.com/justinfarrelldev/open-ctp-server/internal/game"
 )
 
 type Server struct {
@@ -23,6 +25,8 @@ var (
 func main() {
 
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("/game/create_game", game.GameHandler)
 
 	// mux.HandleFunc("/units", units.GetAllUnitInfo)
 	// mux.HandleFunc("/units/", units.GetUnitInfo)
