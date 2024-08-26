@@ -124,12 +124,4 @@ Please use Gopls within your editor to give yourself syntax highlighting and war
 
 ## Do Not Install Other Dependencies Without Discussing It First In Discord
 
-This server should stay as small of a size as possible. Not providing extra dependencies also makes understanding the repo a lot easier (gRPC and grpc-gateway are already complicated enough)!
-
-## DO NOT USE "REQUIRED" IN PROTOBUFFERS
-
-See "required" in this section: https://protobuf.dev/programming-guides/proto2/#field-labels
-
-## Follow the Protobuffer Guidelines For Field Numbers
-
-The field numbers are very unintuitive and should definitely be handled with caution. See this section and especially pay attention to the field numbers sections within it: https://protobuf.dev/programming-guides/proto2/#simple
+This server should stay as small of a size as possible. Not providing extra dependencies also makes understanding the repo a lot easier.

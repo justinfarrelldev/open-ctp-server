@@ -1,5 +1,3 @@
-//go:generate ./scripts/deps.sh
-
 package main
 
 import (
@@ -10,8 +8,6 @@ import (
 	"time"
 
 	"net/http"
-
-	units "github.com/justinfarrelldev/open-ctp-server/internal/units"
 )
 
 type Server struct {
@@ -28,8 +24,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/units", units.GetAllUnitInfo)
-	mux.HandleFunc("/units/", units.GetUnitInfo)
+	// mux.HandleFunc("/units", units.GetAllUnitInfo)
+	// mux.HandleFunc("/units/", units.GetUnitInfo)
 
 	fmt.Printf("\nNow serving on port %d\n", port)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), mux)

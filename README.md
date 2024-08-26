@@ -13,7 +13,7 @@ This project is **neither made nor sponsored by Activision**. See `LICENSE.md` f
 There are multiple goals this project intends to tackle: 
 - Create a proper backend for the Call to Power game series
 - Support fan-made frontends (such as the Apolyton Edition and the Spyroviper Edition of the games) with minimal requirements
-    - The server should be accessible and usable using cURL or gRPC
+    - The server should be accessible and usable using cURL
 - Allow for a vanilla+ experience for the games
     - Obvious bugs should not be preserved
     - Non-vanilla changes (such as tweaking unit health or adding extra units) should NOT be present
@@ -46,66 +46,15 @@ If you are using VS Code, you should also get some extension recommendations. I 
 
 ### Getting Dependencies
 
-First, run `go install`. This will install all Go module dependencies.
+Run `go install`. This will install all Go module dependencies.
 
-To get all of the binary dependencies as well, simply run this command **inside top-level folder of this repo** (next to main.go): 
-```
-go generate
-```
-
-This will trigger `scripts/deps.sh` which will grab the necessary dependencies and store them in a folder in the project, `bin`.
-
-From here, I **highly** recommend adding the `bin` folder to your PATH variable so that you can run them from your command line. Alternatively, you can run them from the command line directly when you need them with, for example, `./bin/task [...args]` (where `./bin/task` is the executable you want to run, and `[...args]` are the arguments you want to supply).
-
-To add this folder to your PATH, try running the following command from the root of the project (replacing .bashrc with .zshrc if you are using Zsh, etc.). This should append to your PATH at the bottom of your .bashrc file: 
-```
-echo 'export PATH=$PATH:'$(pwd)/bin >> ~/.bashrc
-```
-
-While adding this, also add the following command (for protoc-gen-go, the Go plugin for protoc): 
-```
-echo 'export PATH=$PATH:'$(go env GOPATH)/bin >> ~/.bashrc
-```
-
-Once you reload your terminal, you should have access to both `protoc` and `task` directly in your terminal (as long as the `bin` folder still exists with those executables inside).
-
-## Running Specific Commands
-
-Once you have installed the dependencies, you should have an executable in the `bin` folder called `task`. This is what you can use to run the `Taskfile.yml` file in the root of the project. 
+You can also make use of the provided Taskfile by downloading Task from https://taskfile.dev if you would like (this is optional, but recommended). You can also just run the commands specified in the Taskfile directly, of course. For the rest of this README, the Task commands will be used in lieu of the commands they call. 
 
 ### Starting the Development Server
 
 The Taskfile has multiple commands you can run that can save time. For example, to start the development server, you can run this with `bin` not on your PATH variable: 
 ```
-./bin/task run
-```
-Alternatively, you can run this if you have `bin` on your PATH: 
-```
 task run
-```
-
-For the rest of this README, I will refer to the commands as if you have `bin` in your PATH.
-
-#### How do I know if my development server is working?
-
-You can use the following `gRPCurl` request while the server is running in a different terminal to check if the server is running:
-
-```
-grpcurl -d '{"type": 0}' -plaintext localhost:9000 units.Units.GetUnit
-```
-
-You should see unit information about the Abolitionist unit as a response.
-
-### How can I see the services exposed by the server?
-
-You can use the following `gRPCurl` command while the development server is running to see the exposed services:
-```
-grpcurl -plaintext localhost:9000 list
-```
-
-You can then list a specific service to see handlers on that service (this example is using the `units.Units` service): 
-```
-grpcurl -plaintext localhost:9000 list units.Units
 ```
 
 ### Starting the Test Suite
@@ -119,21 +68,7 @@ task test
 
 To accomplish these goals with a small footprint, Go was chosen. Go was chosen in particular because Go is extremely fast, has very low memory requirements and is able to handle concurrency extremely well. It is also extremely easy to learn, which is important since the fans of this series whom are programmers are diverse in both preferred language and preferred stack. 
 
-Go also has an excellent gRPC connector as well as great Protobuf support which should enable the following languages to interface with the server (many other languages are supported as well by third-party tools): 
-- C++
-- C#
-- Java
-- Kotlin
-- Objective-C
-- PHP
-- Python
-- Ruby
-- Dart
-- Go
-
-This means that interfacing with this server should be relatively straightforward if a client is written in any of the above languages. See the Protocol Buffers documentation for more details on how this is possible, and see the "Tooling" section for more info on how this technology is implemented in this repository.
-
-If you are trying to make a client and are struggling with the protobuffer implementation, feel free to reach out to Ninjaboy on Discord!
+If you are trying to make a client and are struggling with using this server, feel free to reach out to Ninjaboy on Discord!
 
 ## What should be handled by this server and what should be handled by the client?
 
@@ -154,7 +89,7 @@ If you are trying to make a client and are struggling with the protobuffer imple
     - The extra fields should be handled by extension of the types provided by the server's types (IE, importing the Abolitionist type from this server's package and then using an AbolitionistClient type which extends that for the extra graphics info)
 - All graphics files / anything related to graphics or sound
     - Even though "diplomacy", for example, is listed in the "server will handle" section, the client is responsible for handling all graphical portions of the exchange (with the server being responsible for sending the message to the other player involved)
-- Communication with the server (whether via gRPC or via HTTP/S) within the format specified by the API
+- Communication with the server (via HTTP/S) within the format specified by the API
 
 ### A Few Notes
 
