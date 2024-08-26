@@ -59,6 +59,10 @@ You should also make sure to check off the action items on the checklist. These 
 
 A contributor will then code-review the changes and will suggest changes to your pull request before eventually merging it in.
 
+## Husky
+
+Husky is added to this repo to ensure that documentation is automatically up-to-date. If you commit and an error comes up, you may have messed up documentation somewhere! Since this repo uses Swagger, code comments are important - they are the reason you see what you see when you go to /docs. Please keep this in mind.
+
 ## Code Spell Checker
 
 There is a Code Spell Checker in the recommended extensions. This will highlight typos with a blue underline to prevent typos from causing problems.
