@@ -1,0 +1,9 @@
+info:
+  contact:
+    email: justinfarrellwebdev@gmail.com
+    name: API Support
+  description: This is the open-source Call to Power and Call to Power 2 server project.
+    This project is not sponsored, maintainer or affiliated with Activision.
+  title: Open Call to Power Server
+paths: {}
+swagger: "2.0"

@@ -1,0 +1,13 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "This is the open-source Call to Power and Call to Power 2 server project. This project is not sponsored, maintainer or affiliated with Activision.",
+    "title": "Open Call to Power Server",
+    "contact": {
+      "name": "API Support",
+      "email": "justinfarrellwebdev@gmail.com"
+    },
+    "version": "0.1"
+  },
+  "paths": {}
+}
