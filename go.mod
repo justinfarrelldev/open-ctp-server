@@ -9,6 +9,9 @@ require (
 
 require (
 	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/nedpals/postgrest-go v0.1.3 // indirect
+	github.com/nedpals/supabase-go v0.4.0 // indirect
 	golang.org/x/net v0.16.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
