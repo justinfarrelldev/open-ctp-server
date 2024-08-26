@@ -19,7 +19,7 @@ import (
 )
 
 //	@title			Open Call to Power Server
-//	@description	This is the open-source Call to Power and Call to Power 2 server project. This project is not sponsored, maintainer or affiliated with Activision.
+//	@description	This is the open-source Call to Power and Call to Power 2 server project. This project is not sponsored, maintained or affiliated with Activision.
 
 //	@contact.name	API Support
 //	@contact.email	justinfarrellwebdev@gmail.com

@@ -1,13 +1,51 @@
 {
-  "swagger": "2.0",
-  "info": {
-    "description": "This is the open-source Call to Power and Call to Power 2 server project. This project is not sponsored, maintainer or affiliated with Activision.",
-    "title": "Open Call to Power Server",
-    "contact": {
-      "name": "API Support",
-      "email": "justinfarrellwebdev@gmail.com"
+    "swagger": "2.0",
+    "info": {
+        "description": "This is the open-source Call to Power and Call to Power 2 server project. This project is not sponsored, maintained or affiliated with Activision.",
+        "title": "Open Call to Power Server",
+        "contact": {
+            "name": "API Support",
+            "email": "justinfarrellwebdev@gmail.com"
+        }
     },
-    "version": "0.1"
-  },
-  "paths": {}
+    "paths": {
+        "/health": {
+            "get": {
+                "description": "Returns the status of the service.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Health check endpoint",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/health.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "health.Response": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "OK"
+                }
+            }
+        }
+    }
 }

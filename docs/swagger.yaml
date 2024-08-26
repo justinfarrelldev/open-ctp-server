@@ -1,9 +1,34 @@
+definitions:
+  health.Response:
+    properties:
+      status:
+        example: OK
+        type: string
+    type: object
 info:
   contact:
     email: justinfarrellwebdev@gmail.com
     name: API Support
   description: This is the open-source Call to Power and Call to Power 2 server project.
-    This project is not sponsored, maintainer or affiliated with Activision.
+    This project is not sponsored, maintained or affiliated with Activision.
   title: Open Call to Power Server
-paths: {}
+paths:
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Returns the status of the service.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/health.Response'
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Health check endpoint
+      tags:
+      - health
 swagger: "2.0"
