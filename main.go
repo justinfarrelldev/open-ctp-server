@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	game "github.com/justinfarrelldev/open-ctp-server/internal/game"
+	health "github.com/justinfarrelldev/open-ctp-server/internal/health"
 )
 
 type Server struct {
@@ -27,9 +28,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/game/create_game", game.GameHandler)
-
-	// mux.HandleFunc("/units", units.GetAllUnitInfo)
-	// mux.HandleFunc("/units/", units.GetUnitInfo)
+	mux.HandleFunc("/health", health.HealthCheckHandler)
 
 	fmt.Printf("\nNow serving on port %d\n", port)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
