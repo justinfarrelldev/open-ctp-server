@@ -1,24 +1,9 @@
 package lobby
 
-type ExperienceLevel int
-
-const (
-	Beginner ExperienceLevel = iota
-	Easy
-	Medium
-	Hard
-	Very_Hard
-	Impossible
+import (
+	account "github.com/justinfarrelldev/open-ctp-server/internal/account"
 )
 
-type Player struct {
-	name             string
-	info             string
-	location         string
-	email            string
-	experience_level ExperienceLevel
-}
-
 type Lobby struct {
-	players []Player
+	players []account.Account
 }
