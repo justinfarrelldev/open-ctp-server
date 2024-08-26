@@ -36,6 +36,10 @@ func CreateGame(w http.ResponseWriter, r *http.Request) error {
 		return errors.New("password was provided despite password_protected being set to false")
 	}
 
+	if len(game.Password) < 6 {
+		return errors.New("password must be longer than 6 characters")
+	}
+
 	// TODO salt & hash password here / handle it in Supabase or something then actually store the game somewhere
 
 	fmt.Println("Successfully created game!")
