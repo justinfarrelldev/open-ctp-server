@@ -56,7 +56,19 @@ You can also make use of the provided Taskfile by downloading Task from https://
 
 ### Starting the Development Server
 
+
+
 Before you can start the development server and effectively use it, you must either set up a Supabase account or use the Supabase CLI to mimic the database.
+
+#### Using the Supabase CLI (recommended)
+
+To use the Supabase CLI for database development on your local machine, first download the Supabase CLI app from here: https://supabase.com/docs/guides/cli/getting-started?queryGroups=platform&platform=linux
+
+(optional) After you have downloaded the application and it is in your $PATH, log in if you have a Supabase account: `supabase login`
+
+After that, run `supabase start` to start the Supabase dashboard for local development. This will allow you to interact with the database as a local copy without needing credentials to do so.
+
+#### Using the Supabase Dashboard
 
 After setting up your Supabase account and project (both are free), you must add these values to a `.env` file located at the root of the project (next to `main.go`):
 
