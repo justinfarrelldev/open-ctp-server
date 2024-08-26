@@ -12,7 +12,9 @@ type ExpectedBody struct {
 	Password          string `json:"password"`
 }
 
-func CreateGame(w http.ResponseWriter, r *http.Request) error {
+const ERROR_PASSWORD_TOO_SHORT = "password must be longer than 6 characters"
+
+func CreateGame(_ http.ResponseWriter, r *http.Request) error {
 
 	if r.Method != "POST" {
 		return errors.New("invalid request; request must be a POST request")
@@ -37,7 +39,7 @@ func CreateGame(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if len(game.Password) < 6 {
-		return errors.New("password must be longer than 6 characters")
+		return errors.New(ERROR_PASSWORD_TOO_SHORT)
 	}
 
 	// TODO salt & hash password here / handle it in Supabase or something then actually store the game somewhere
