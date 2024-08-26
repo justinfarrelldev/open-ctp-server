@@ -7,21 +7,21 @@ app = 'open-ctp-server'
 primary_region = 'atl'
 
 [build]
-  [build.args]
-    GO_VERSION = '1.21.4'
+[build.args]
+GO_VERSION = '1.21.4'
 
 [env]
-  PORT = '8080'
+PORT = '9000'
 
 [http_service]
-  internal_port = 8080
-  force_https = true
-  auto_stop_machines = 'stop'
-  auto_start_machines = true
-  min_machines_running = 0
-  processes = ['app']
+internal_port = 9000
+force_https = true
+auto_stop_machines = 'stop'
+auto_start_machines = true
+min_machines_running = 0
+processes = ['app']
 
 [[vm]]
-  memory = '512mb'
-  cpu_kind = 'shared'
-  cpus = 1
+memory = '512mb'
+cpu_kind = 'shared'
+cpus = 1
