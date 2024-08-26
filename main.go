@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -16,6 +17,8 @@ import (
 	_ "github.com/justinfarrelldev/open-ctp-server/docs"
 
 	"github.com/flowchartsman/swaggerui"
+
+	"github.com/didip/tollbooth/v7"
 )
 
 //	@title			Open Call to Power Server
@@ -25,6 +28,11 @@ import (
 //	@contact.email	justinfarrellwebdev@gmail.com
 
 type Server struct {
+}
+
+type Message struct {
+	Status string `json:"status"`
+	Body   string `json:"body"`
 }
 
 var (
@@ -39,10 +47,20 @@ var spec []byte
 
 func main() {
 
+	message := Message{
+		Status: "Request Failed",
+		Body:   "The API is at capacity, try again later.",
+	}
+	jsonMessage, _ := json.Marshal(message)
+
+	tollboothLimiter := tollbooth.NewLimiter(5, nil)
+	tollboothLimiter.SetMessageContentType("application/json")
+	tollboothLimiter.SetMessage(string(jsonMessage))
+
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/game/create_game", game.GameHandler)
-	mux.HandleFunc("/health", health.HealthCheckHandler)
+	mux.Handle("/game/create_game", tollbooth.LimitFuncHandler(tollboothLimiter, game.GameHandler))
+	mux.Handle("/health", tollbooth.LimitFuncHandler(tollboothLimiter, health.HealthCheckHandler))
 	mux.Handle("/docs/", http.StripPrefix("/docs", swaggerui.Handler(spec)))
 
 	fmt.Printf("\nNow serving on port %d\n", port)
