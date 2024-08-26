@@ -56,8 +56,6 @@ You can also make use of the provided Taskfile by downloading Task from https://
 
 ### Starting the Development Server
 
-
-
 Before you can start the development server and effectively use it, you must either set up a Supabase account or use the Supabase CLI to mimic the database.
 
 #### Using the Supabase CLI (recommended)
@@ -67,6 +65,8 @@ To use the Supabase CLI for database development on your local machine, first do
 (optional) After you have downloaded the application and it is in your $PATH, log in if you have a Supabase account: `supabase login`
 
 After that, run `supabase start` to start the Supabase dashboard for local development. This will allow you to interact with the database as a local copy without needing credentials to do so.
+
+Once you have run `supabase start`, you can visit http://localhost:54323 to see your local Supabase dashboard.
 
 #### Using the Supabase Dashboard
 
