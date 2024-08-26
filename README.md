@@ -52,6 +52,18 @@ You can also make use of the provided Taskfile by downloading Task from https://
 
 ### Starting the Development Server
 
+Before you can start the development server and effectively use it, you must either set up a Supabase account or use the Supabase CLI to mimic the database.
+
+After setting up your Supabase account and project (both are free), you must add these values to a `.env` file located at the root of the project (next to `main.go`):
+
+```
+SUPABASE_PROJECT_URL=(your project URL here)
+SUPABASE_API_KEY=(your API key here)
+SUPABASE_SERVICE_ROLE=(your service role here)
+```
+
+Once you do this, you should be able to write to the database.
+
 The Taskfile has multiple commands you can run that can save time. For example, to start the development server, you can run this with `bin` not on your PATH variable: 
 ```
 task run
