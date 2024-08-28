@@ -1,4 +1,11 @@
 definitions:
+  account.CreateAccountArgs:
+    description: Structure for the account creation request payload.
+    properties:
+      password:
+        description: The password for the account to be created
+        type: string
+    type: object
   game.CreateGameArgs:
     description: Structure for the game creation request payload.
     properties:
@@ -28,6 +35,35 @@ info:
     This project is not sponsored, maintained or affiliated with Activision.
   title: Open Call to Power Server
 paths:
+  /account/create_account:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint creates a new multiplayer account, protected by a
+        password.
+      parameters:
+      - description: account creation request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/account.CreateAccountArgs'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Account successfully created
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Create a new account
+      tags:
+      - account
   /game/create_game:
     post:
       consumes:

@@ -9,6 +9,48 @@
         }
     },
     "paths": {
+        "/account/create_account": {
+            "post": {
+                "description": "This endpoint creates a new multiplayer account, protected by a password.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "account"
+                ],
+                "summary": "Create a new account",
+                "parameters": [
+                    {
+                        "description": "account creation request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/account.CreateAccountArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Account successfully created",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/game/create_game": {
             "post": {
                 "description": "This endpoint creates a new multiplayer game, optionally protected by a password.",
@@ -80,6 +122,16 @@
         }
     },
     "definitions": {
+        "account.CreateAccountArgs": {
+            "description": "Structure for the account creation request payload.",
+            "type": "object",
+            "properties": {
+                "password": {
+                    "description": "The password for the account to be created",
+                    "type": "string"
+                }
+            }
+        },
         "game.CreateGameArgs": {
             "description": "Structure for the game creation request payload.",
             "type": "object",
