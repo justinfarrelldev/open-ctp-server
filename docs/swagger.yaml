@@ -1,11 +1,52 @@
 definitions:
+  account.Account:
+    description: Structure for representing a player account.
+    properties:
+      email:
+        description: Email is the email address of the player.
+        type: string
+      experience_level:
+        allOf:
+        - $ref: '#/definitions/account.ExperienceLevel'
+        description: ExperienceLevel represents the player's experience level (0=beginner,
+          1=easy, 2=medium, 3=hard, 4=very hard, 5=impossible)
+      info:
+        description: Info contains additional information about the player.
+        type: string
+      location:
+        description: Location indicates the player's real-life location.
+        type: string
+      name:
+        description: Name is the name of the player.
+        type: string
+    type: object
   account.CreateAccountArgs:
     description: Structure for the account creation request payload.
     properties:
+      account:
+        allOf:
+        - $ref: '#/definitions/account.Account'
+        description: The account to create.
       password:
         description: The password for the account to be created
         type: string
     type: object
+  account.ExperienceLevel:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    type: integer
+    x-enum-varnames:
+    - Beginner
+    - Easy
+    - Medium
+    - Hard
+    - Very_Hard
+    - Impossible
   game.CreateGameArgs:
     description: Structure for the game creation request payload.
     properties:

@@ -131,15 +131,72 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "account.Account": {
+            "description": "Structure for representing a player account.",
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "Email is the email address of the player.",
+                    "type": "string"
+                },
+                "experience_level": {
+                    "description": "ExperienceLevel represents the player's experience level (0=beginner, 1=easy, 2=medium, 3=hard, 4=very hard, 5=impossible)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/account.ExperienceLevel"
+                        }
+                    ]
+                },
+                "info": {
+                    "description": "Info contains additional information about the player.",
+                    "type": "string"
+                },
+                "location": {
+                    "description": "Location indicates the player's real-life location.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name is the name of the player.",
+                    "type": "string"
+                }
+            }
+        },
         "account.CreateAccountArgs": {
             "description": "Structure for the account creation request payload.",
             "type": "object",
             "properties": {
+                "account": {
+                    "description": "The account to create.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/account.Account"
+                        }
+                    ]
+                },
                 "password": {
                     "description": "The password for the account to be created",
                     "type": "string"
                 }
             }
+        },
+        "account.ExperienceLevel": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            "x-enum-varnames": [
+                "Beginner",
+                "Easy",
+                "Medium",
+                "Hard",
+                "Very_Hard",
+                "Impossible"
+            ]
         },
         "game.CreateGameArgs": {
             "description": "Structure for the game creation request payload.",

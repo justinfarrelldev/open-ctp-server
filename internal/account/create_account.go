@@ -17,7 +17,7 @@ import (
 // @Description Structure for the account creation request payload.
 type CreateAccountArgs struct {
 	// The account to create.
-	account Account `json:"account"`
+	Account Account `json:"account"`
 	// The password for the account to be created
 	Password string `json:"password"`
 }

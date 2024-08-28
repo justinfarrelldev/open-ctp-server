@@ -27,6 +27,6 @@ type Account struct {
 	// Email is the email address of the player.
 	Email string `json:"email"`
 
-	// ExperienceLevel represents the player's experience level.
+	// ExperienceLevel represents the player's experience level (0=beginner, 1=easy, 2=medium, 3=hard, 4=very hard, 5=impossible)
 	ExperienceLevel ExperienceLevel `json:"experience_level"`
 }
