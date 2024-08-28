@@ -130,7 +130,7 @@ If you are trying to make a client and are struggling with using this server, fe
 - All graphics files / anything related to graphics or sound
     - Even though "diplomacy", for example, is listed in the "server will handle" section, the client is responsible for handling all graphical portions of the exchange (with the server being responsible for sending the message to the other player involved)
 - Communication with the server (via HTTP/S) within the format specified by the API
-- Addition of password fields for use with account creation (creating)
+- Addition of password fields for use with account creation (creating online accounts will require a password)
 
 ### A Few Notes
 
