@@ -33,6 +33,36 @@ type HashSalt struct {
 const ERROR_PASSWORD_TOO_SHORT = "password must be longer than 6 characters"
 const ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD = "password is required"
 
+func isEmailValid(email string, w *http.ResponseWriter, db *sql.DB) (bool, error) {
+	result, err := db.Query("SELECT * from account where email = (email)", email)
+
+	dereferencedWriter := *w
+
+	if err != nil {
+
+		dereferencedWriter.WriteHeader(http.StatusInternalServerError)
+
+		return false, errors.New("an error occurred while checking whether the email for the account is unique:" + err.Error())
+	}
+
+	cols, err := result.Columns()
+
+	if err != nil {
+
+		dereferencedWriter.WriteHeader(http.StatusInternalServerError)
+
+		return false, errors.New("an error occurred while getting the columns from the database response (while checking whether the email for the account is unique):" + err.Error())
+	}
+
+	if len(cols) > 0 {
+		dereferencedWriter.WriteHeader(http.StatusForbidden)
+
+		return false, nil
+	}
+
+	return true, nil
+}
+
 // CreateAccount handles the creation of a new account.
 //
 // @Summary Create a new account
@@ -75,12 +105,20 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		return errors.New(ERROR_PASSWORD_TOO_SHORT)
 	}
 
-	// TODO check if the account name is already taken in Supabase
+	isValidEmail, err := isEmailValid(account.Account.Email, &w, db)
+
+	if err != nil {
+		return err
+	}
+
+	if !isValidEmail {
+		return errors.New("the provided email is not valid")
+	}
 
 	// TODO salt & hash password here / handle it in Supabase or something then actually store the game somewhere
 
 	w.WriteHeader(http.StatusCreated)
-	fmt.Println("Successfully created game!")
+	fmt.Println("Successfully created account!")
 	return nil
 }
 
