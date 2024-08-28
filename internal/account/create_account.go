@@ -115,7 +115,16 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		return errors.New("the provided email is not valid")
 	}
 
-	// TODO salt & hash password here / handle it in Supabase or something then actually store the game somewhere
+	hashSalt, err := NewArgon2idHash(1, 32, 64*1024, 32, 256).GenerateHash([]byte(account.Password), nil)
+	if err != nil {
+		return errors.New("an error occurred while saving the password. Please try again later")
+	}
+
+	err = storeHashAndSalt(hashSalt, account.Account.Email, db)
+	if err != nil {
+		// Different from the one above for debugging purposes
+		return errors.New("an error occurred while saving the password. Please try again at a later time")
+	}
 
 	w.WriteHeader(http.StatusCreated)
 	fmt.Println("Successfully created account!")
@@ -202,5 +211,14 @@ func (a *Argon2idHash) Compare(hash, salt, password []byte) error {
 		return errors.New("hash doesn't match")
 
 	}
+	return nil
+}
+
+func storeHashAndSalt(hashSalt *HashSalt, accountEmail string, db *sql.DB) error {
+	_, err := db.Query("INSERT INTO passwords (account_id, hash, salt) VALUES ($1, $2)", accountEmail, hashSalt.hash, hashSalt.salt)
+	if err != nil {
+		return errors.New("an error occurred while inserting a hash-salt pair into the database: " + err.Error())
+	}
+
 	return nil
 }
