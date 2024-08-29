@@ -163,95 +163,95 @@ You absolutely can, so long as you follow the license in `LICENSE.md`. I am real
 - [x] Supabase set up for local development
 - [x] Supabase set up remotely
 - [x] Husky set up for automatic documentation generation after each commit
-- [] Health check is used in Fly.io
-- [] Blue-green deploys are used in Fly.io
-- [] Versioning done automatically on push to master (need to research how to do this)
-- [] CTP2 version games are able to be booted into
-- [] CTP2 version games are able to be completed
-- [] CTP1 version games are able to be booted into
-- [] CTP1 version games are able to be completed
+- [ ] Health check is used in Fly.io
+- [ ] Blue-green deploys are used in Fly.io
+- [ ] Versioning done automatically on push to master (need to research how to do this)
+- [ ] CTP2 version games are able to be booted into
+- [ ] CTP2 version games are able to be completed
+- [ ] CTP1 version games are able to be booted into
+- [ ] CTP1 version games are able to be completed
 
 ### Accounts (/account)
 - [x] Accounts can be created
-- [] Accounts can be deleted
-- [] Accounts can be updated
-- [] Passwords can be reset
-- [] Passwords can be compared to find if passwords are correct
-- [] Accounts can be logged into (and will provide a valid JWT token / session for future calls) [I need to research JWTs vs session-based auth for this task]
-- [] All account endpoints are rate-limited appropriately
+- [ ] Accounts can be deleted
+- [ ] Accounts can be updated
+- [ ] Passwords can be reset
+- [ ] Passwords can be compared to find if passwords are correct
+- [ ] Accounts can be logged into (and will provide a valid JWT token / session for future calls) [I need to research JWTs vs session-based auth for this task]
+- [ ] All account endpoints are rate-limited appropriately
 
 ### Lobbies (/lobby)
 
-- [] Lobbies can be created
-- [] Lobbies can be deleted
-- [] Lobbies can be updated
-- [] Lobby name can be changed
-- [] Lobby can be "muted"
-- [] Lobby can be set to "public"
-- [] Lobbies will auto-close after a period of inactivity
-- [] Valid accounts can connect via streams to the lobbies (via streams so chats and events can be sent in the future)
-- [] Valid accounts can leave any lobbies they are in
-- [] Accounts can only be in one lobby at once
-- [] "Player connected" event is sent when players join the lobby
-- [] Chats can be sent in lobbies
-- [] All lobby endpoints are rate-limited appropriately
+- [ ] Lobbies can be created
+- [ ] Lobbies can be deleted
+- [ ] Lobbies can be updated
+- [ ] Lobby name can be changed
+- [ ] Lobby can be "muted"
+- [ ] Lobby can be set to "public"
+- [ ] Lobbies will auto-close after a period of inactivity
+- [ ] Valid accounts can connect via streams to the lobbies (via streams so chats and events can be sent in the future)
+- [ ] Valid accounts can leave any lobbies they are in
+- [ ] Accounts can only be in one lobby at once
+- [ ] "Player connected" event is sent when players join the lobby
+- [ ] Chats can be sent in lobbies
+- [ ] All lobby endpoints are rate-limited appropriately
 
 ### Games (/game)
 *Note: profiles can be changed in the game (as seen in the UI), but this should be handled client-side using the account endpoints.
 
-- [] Games can be created
-- [] Games can be deleted
-- [] Games can be updated
-- [] Games can be renamed
-- [] Games can be "locked"
-- [] Games can be set to "public"
-- [] Game style can be changed
-- [] Game rules can be changed
-- [] Game exclusions can be changed
-- [] "Add AI" endpoint should exist, but should only return 404 (since AI may be added later). This should still exist in the docs for this reason
-- [] Games should allow the owner to kick players
-- [] Games should allow players to change their country
-- [] Games should allow players to choose their number of settlers (is this an owner-only privilege?)
-- [] Games should allow players to choose their starting gold (is this an owner-only privilege?)
-- [] Games should return player ping
-- [] Games should be able to be started
-- [] Chats can be sent in games via the lobby above (chat messages should come in through the lobby chats, not via the game endpoint itself)
+- [ ] Games can be created
+- [ ] Games can be deleted
+- [ ] Games can be updated
+- [ ] Games can be renamed
+- [ ] Games can be "locked"
+- [ ] Games can be set to "public"
+- [ ] Game style can be changed
+- [ ] Game rules can be changed
+- [ ] Game exclusions can be changed
+- [ ] "Add AI" endpoint should exist, but should only return 404 (since AI may be added later). This should still exist in the docs for this reason
+- [ ] Games should allow the owner to kick players
+- [ ] Games should allow players to change their country
+- [ ] Games should allow players to choose their number of settlers (is this an owner-only privilege?)
+- [ ] Games should allow players to choose their starting gold (is this an owner-only privilege?)
+- [ ] Games should return player ping
+- [ ] Games should be able to be started
+- [ ] Chats can be sent in games via the lobby above (chat messages should come in through the lobby chats, not via the game endpoint itself)
 
 ### World (/world)
 
-- [] World generation should be available (and done the same way as within the Spyroviper Edition, as checked via seeding and automated testing)
-- [] Players should spawn in the same locations as the Spyroviper Edition (checked via seeding and automated testing)
-- [] Chats can be sent in active games via the lobby above (chat messages should come in through the lobby chats, not via the game endpoint itself)
-- [] "Space Layer" endpoint should exist, but should only return 404 (since it will be added later with the addition of CTP1 mechanics). This should still exist in the docs for this reason
-- [] Endpoints should exist for ratings (overall, science, etc.)
-- [] Endpoint should exist to get world pollution
-- [] World is recalculated each turn in the same way as the Spyroviper Edition (for pollution, events, creating units & buildings in cities, etc.)
-- [] All world endpoints are rate-limited appropriately
+- [ ] World generation should be available (and done the same way as within the Spyroviper Edition, as checked via seeding and automated testing)
+- [ ] Players should spawn in the same locations as the Spyroviper Edition (checked via seeding and automated testing)
+- [ ] Chats can be sent in active games via the lobby above (chat messages should come in through the lobby chats, not via the game endpoint itself)
+- [ ] "Space Layer" endpoint should exist, but should only return 404 (since it will be added later with the addition of CTP1 mechanics). This should still exist in the docs for this reason
+- [ ] Endpoints should exist for ratings (overall, science, etc.)
+- [ ] Endpoint should exist to get world pollution
+- [ ] World is recalculated each turn in the same way as the Spyroviper Edition (for pollution, events, creating units & buildings in cities, etc.)
+- [ ] All world endpoints are rate-limited appropriately
 
 ### GamePlay (/game)
-- [] Players should be able to pass turns
-- [] Games should save every turn (Supabase)
-- [] Players should be able to move units
-- [] Players should be able to disband units
-- [] Players should be able to embark units
-- [] Players should be able to fortify units
-- [] Settlers should be able to settle cities
-- [] Separate combat endpoint for determining victories and defeats in combat (returned immediately, but clients play out the animation - check original source code to verify how it worked in multiplayer)
-- [] Special Forces units act as they do in the base game
-- [] Unit movement should be the same as the base game (zone of control)
-- [] Special unit actions should be able to be done (Embassies, Soothsaying, Stealing Tech)
-- [] Players should be able to terraform terrain
-- [] Buildings affect cities properly
-- [] Wonders affect nations properly
-- [] Players can build armies
-- [] Players should have a "Player disconnected" event when they leave the game
-- [] All channels and database handles relevant to the player should be defer-closed when a player leaves the game
-- [] Clients should only be able to access information about tiles they can see (view distances)
-- [] Clients should be able to see previous information they knew about for tiles they have seen before but do not see now (fog of war)
-- [] Game owner should be able to end the game early
-- [] When players leave an in-progress game, follow the same rules as the Spyroviper Edition (or original game version, if that code has been ripped out)
-- [] All game endpoints are rate-limited appropriately
+- [ ] Players should be able to pass turns
+- [ ] Games should save every turn (Supabase)
+- [ ] Players should be able to move units
+- [ ] Players should be able to disband units
+- [ ] Players should be able to embark units
+- [ ] Players should be able to fortify units
+- [ ] Settlers should be able to settle cities
+- [ ] Separate combat endpoint for determining victories and defeats in combat (returned immediately, but clients play out the animation - check original source code to verify how it worked in multiplayer)
+- [ ] Special Forces units act as they do in the base game
+- [ ] Unit movement should be the same as the base game (zone of control)
+- [ ] Special unit actions should be able to be done (Embassies, Soothsaying, Stealing Tech)
+- [ ] Players should be able to terraform terrain
+- [ ] Buildings affect cities properly
+- [ ] Wonders affect nations properly
+- [ ] Players can build armies
+- [ ] Players should have a "Player disconnected" event when they leave the game
+- [ ] All channels and database handles relevant to the player should be defer-closed when a player leaves the game
+- [ ] Clients should only be able to access information about tiles they can see (view distances)
+- [ ] Clients should be able to see previous information they knew about for tiles they have seen before but do not see now (fog of war)
+- [ ] Game owner should be able to end the game early
+- [ ] When players leave an in-progress game, follow the same rules as the Spyroviper Edition (or original game version, if that code has been ripped out)
+- [ ] All game endpoints are rate-limited appropriately
 
 ### Convenience Endpoints
-- [] Great Library details should be available via a separate endpoint (/great-library)
-- [] All convenience endpoints are rate-limited appropriately
+- [ ] Great Library details should be available via a separate endpoint (/great-library)
+- [ ] All convenience endpoints are rate-limited appropriately
