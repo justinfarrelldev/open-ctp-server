@@ -53,10 +53,12 @@ var (
 var spec []byte
 
 func main() {
-	// Load .env file
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file")
+	if os.Getenv("SUPABASE_DB_URL") == "" {
+		// Load .env file
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatalf("Error loading .env file")
+		}
 	}
 
 	// Tollbooth
