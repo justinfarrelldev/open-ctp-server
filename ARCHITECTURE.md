@@ -4,7 +4,7 @@ This document aims to explain the server architecture behind this project.
 
 ## Deployment
 
-The server will be automatically deployed to Fly.io (https://fly.io/).
+The server is automatically deployed to Fly.io (https://fly.io/).
 
 Fly.io was chosen mainly because of ease-of-use - deploying is incredibly easy. They also have built-in Sentry integration for errors.
 
@@ -14,17 +14,6 @@ You are also free to host your own instance of this repo wherever you would like
 
 ## Database
 
-**This is intended for future planning. This section is not accurate.**
+This server uses Supabase for its database. Supabase uses Postgres.
 
-This server necessitates a Postgres database. Postgres was chosen in particular since a lot of the game information is highly relational.
-
-The server deployed to Fly.io is connected to a Supabase instance. There are environment variables which correlate to the Supabase instance in the cloud, these are as follows: 
-```
-DATABASE_ENDPOINT=<Database Endpoint Here>
-DATABASE_KEY=<Public Database Key Here>
-DATABASE_SECRET=<Private Secret Here>
-```
-
-To work with Postgres for this repo, you must set up a local Postgres instance and ensure that is started before beginning the relevant development. From there, set DATABASE_ENDPOINT to your localhost URL of your development database. This will ensure you have the same database as supplied by Supabase without actually requiring any Supabase authentication. 
-
-
+For details on how to set up Supabase for local development (so you do not have to create an account), see README.md. If you would like to add tables to the database, please message Ninjaboy on Discord.
