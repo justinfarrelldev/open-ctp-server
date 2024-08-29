@@ -113,6 +113,13 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		return errors.New("an error occurred while saving the password. Please try again later")
 	}
 
+	err = storeAccount(&account.Account, db)
+	if err != nil {
+		log.Println("error saving an account: ", err.Error())
+		// Different from the one above for debugging purposes
+		return errors.New("an error occurred while creating the account. Please try again at a later time")
+	}
+
 	err = storeHashAndSalt(hashSalt, account.Account.Email, db)
 	if err != nil {
 		log.Println("error saving a password: ", err.Error())
@@ -212,6 +219,15 @@ func storeHashAndSalt(hashSalt *HashSalt, accountEmail string, db *sql.DB) error
 	_, err := db.Query("INSERT INTO passwords (account_email, hash, salt) VALUES ($1, $2, $3)", accountEmail, hex.EncodeToString(hashSalt.hash), hex.EncodeToString(hashSalt.salt))
 	if err != nil {
 		return errors.New("an error occurred while inserting a hash-salt pair into the database: " + err.Error())
+	}
+
+	return nil
+}
+
+func storeAccount(account *Account, db *sql.DB) error {
+	_, err := db.Query("INSERT INTO account (name, info, location, email, experience_level) VALUES ($1, $2, $3, $4, $5)", account.Name, account.Info, account.Location, account.Email, account.ExperienceLevel)
+	if err != nil {
+		return errors.New("an error occurred while inserting an account into the database: " + err.Error())
 	}
 
 	return nil
