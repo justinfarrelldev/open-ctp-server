@@ -70,6 +70,10 @@ func main() {
 	tollboothLimiter.SetMessageContentType("application/json")
 	tollboothLimiter.SetMessage(string(jsonMessage))
 
+	tollboothLimiterMinute := tollbooth.NewLimiter(1.0/60.0, nil)
+	tollboothLimiterMinute.SetMessageContentType("application/json")
+	tollboothLimiterMinute.SetMessage(string(jsonMessage))
+
 	fmt.Println("env: ", os.Getenv("SUPABASE_DB_URL"))
 
 	// Postgres
@@ -87,7 +91,7 @@ func main() {
 		game.GameHandler(w, r, db)
 	}))
 
-	mux.Handle("/account/create_account", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/account/create_account", tollbooth.LimitFuncHandler(tollboothLimiterMinute, func(w http.ResponseWriter, r *http.Request) {
 		account.AccountHandler(w, r, db)
 	}))
 
