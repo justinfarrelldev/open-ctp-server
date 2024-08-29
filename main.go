@@ -93,8 +93,6 @@ func main() {
 	tollboothLimiterHealth.SetBasicAuthExpirationTTL(time.Hour)
 	tollboothLimiterHealth.SetHeaderEntryExpirationTTL(time.Hour)
 
-	fmt.Println("env: ", os.Getenv("SUPABASE_DB_URL"))
-
 	// Postgres
 	db, err := sql.Open("postgres", os.Getenv("SUPABASE_DB_URL"))
 	if err != nil {
