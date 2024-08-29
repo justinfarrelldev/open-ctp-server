@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/mail"
 
 	"encoding/hex"
 
@@ -37,10 +38,15 @@ const ERROR_PASSWORD_TOO_SHORT = "password must be longer than 6 characters"
 const ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD = "password is required"
 
 func isEmailValid(email string, db *sql.DB) (bool, error) {
+	_, err := mail.ParseAddress(email)
+	if err != nil {
+		return false, errors.New("an error occurred while checking whether the email for the account is valid: " + err.Error())
+	}
+
 	result, err := db.Query("SELECT * from account WHERE email = $1", email)
 
 	if err != nil {
-		return false, errors.New("an error occurred while checking whether the email for the account is unique:" + err.Error())
+		return false, errors.New("an error occurred while checking whether the email for the account is unique: " + err.Error())
 	}
 
 	defer result.Close()
