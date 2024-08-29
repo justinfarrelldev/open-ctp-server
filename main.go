@@ -66,13 +66,30 @@ func main() {
 	}
 	jsonMessage, _ := json.Marshal(message)
 
+	// TODO move these tollbooth initializations to its own module to clean up the code path
+	// Limiter for standard operations
 	tollboothLimiter := tollbooth.NewLimiter(5, nil)
 	tollboothLimiter.SetMessageContentType("application/json")
 	tollboothLimiter.SetMessage(string(jsonMessage))
+	tollboothLimiter.SetTokenBucketExpirationTTL(time.Hour)
+	tollboothLimiter.SetBasicAuthExpirationTTL(time.Hour)
+	tollboothLimiter.SetHeaderEntryExpirationTTL(time.Hour)
 
+	// Limiter for DB operations
 	tollboothLimiterMinute := tollbooth.NewLimiter(1.0/60.0, nil)
 	tollboothLimiterMinute.SetMessageContentType("application/json")
 	tollboothLimiterMinute.SetMessage(string(jsonMessage))
+	tollboothLimiterMinute.SetTokenBucketExpirationTTL(time.Hour)
+	tollboothLimiterMinute.SetBasicAuthExpirationTTL(time.Hour)
+	tollboothLimiterMinute.SetHeaderEntryExpirationTTL(time.Hour)
+
+	// Limiter for the health check
+	tollboothLimiterHealth := tollbooth.NewLimiter(12.0/60.0, nil)
+	tollboothLimiterHealth.SetMessageContentType("application/json")
+	tollboothLimiterHealth.SetMessage(string(jsonMessage))
+	tollboothLimiterHealth.SetTokenBucketExpirationTTL(time.Hour)
+	tollboothLimiterHealth.SetBasicAuthExpirationTTL(time.Hour)
+	tollboothLimiterHealth.SetHeaderEntryExpirationTTL(time.Hour)
 
 	fmt.Println("env: ", os.Getenv("SUPABASE_DB_URL"))
 
@@ -95,7 +112,7 @@ func main() {
 		account.AccountHandler(w, r, db)
 	}))
 
-	mux.Handle("/health", tollbooth.LimitFuncHandler(tollboothLimiter, health.HealthCheckHandler))
+	mux.Handle("/health", tollbooth.LimitFuncHandler(tollboothLimiterHealth, health.HealthCheckHandler))
 	mux.Handle("/docs/", http.StripPrefix("/docs", swaggerui.Handler(spec)))
 
 	fmt.Printf("\nNow serving on port %d\n", port)
