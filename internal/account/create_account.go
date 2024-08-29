@@ -216,19 +216,21 @@ func (a *Argon2idHash) Compare(hash, salt, password []byte) error {
 }
 
 func storeHashAndSalt(hashSalt *HashSalt, accountEmail string, db *sql.DB) error {
-	_, err := db.Query("INSERT INTO passwords (account_email, hash, salt) VALUES ($1, $2, $3)", accountEmail, hex.EncodeToString(hashSalt.hash), hex.EncodeToString(hashSalt.salt))
+	result, err := db.Query("INSERT INTO passwords (account_email, hash, salt) VALUES ($1, $2, $3)", accountEmail, hex.EncodeToString(hashSalt.hash), hex.EncodeToString(hashSalt.salt))
 	if err != nil {
 		return errors.New("an error occurred while inserting a hash-salt pair into the database: " + err.Error())
 	}
 
+	defer result.Close()
 	return nil
 }
 
 func storeAccount(account *Account, db *sql.DB) error {
-	_, err := db.Query("INSERT INTO account (name, info, location, email, experience_level) VALUES ($1, $2, $3, $4, $5)", account.Name, account.Info, account.Location, account.Email, account.ExperienceLevel)
+	result, err := db.Query("INSERT INTO account (name, info, location, email, experience_level) VALUES ($1, $2, $3, $4, $5)", account.Name, account.Info, account.Location, account.Email, account.ExperienceLevel)
 	if err != nil {
 		return errors.New("an error occurred while inserting an account into the database: " + err.Error())
 	}
 
+	defer result.Close()
 	return nil
 }
