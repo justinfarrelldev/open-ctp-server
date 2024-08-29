@@ -70,6 +70,7 @@ func isEmailValid(email string, db *sql.DB) (bool, error) {
 // @Param body body CreateAccountArgs true "account creation request body"
 // @Success 201 {string} string "Account successfully created"
 // @Failure 400 {object} error "Bad Request"
+// @Failure 403 {object} error "Forbidden"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /account/create_account [post]
 func CreateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
@@ -88,6 +89,12 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		w.WriteHeader(http.StatusInternalServerError)
 
 		return errors.New("an error occurred while decoding the request body:" + err.Error())
+	}
+
+	if account.Account.ExperienceLevel < 0 || account.Account.ExperienceLevel > 5 {
+		w.WriteHeader(http.StatusBadRequest)
+
+		return errors.New("experience_level must be between 0 and 5 (0=easy, 5=impossible)")
 	}
 
 	if account.Password == "" {
