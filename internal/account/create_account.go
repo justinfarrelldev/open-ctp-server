@@ -7,7 +7,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
+
+	"encoding/hex"
 
 	argon2 "golang.org/x/crypto/argon2"
 )
@@ -33,33 +36,21 @@ type HashSalt struct {
 const ERROR_PASSWORD_TOO_SHORT = "password must be longer than 6 characters"
 const ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD = "password is required"
 
-func isEmailValid(email string, w *http.ResponseWriter, db *sql.DB) (bool, error) {
-	result, err := db.Query("SELECT * from account where email = (email)", email)
-
-	dereferencedWriter := *w
+func isEmailValid(email string, db *sql.DB) (bool, error) {
+	result, err := db.Query("SELECT * from account WHERE email = $1", email)
 
 	if err != nil {
-
-		dereferencedWriter.WriteHeader(http.StatusInternalServerError)
-
 		return false, errors.New("an error occurred while checking whether the email for the account is unique:" + err.Error())
 	}
 
-	cols, err := result.Columns()
+	defer result.Close()
 
-	if err != nil {
-
-		dereferencedWriter.WriteHeader(http.StatusInternalServerError)
-
-		return false, errors.New("an error occurred while getting the columns from the database response (while checking whether the email for the account is unique):" + err.Error())
-	}
-
-	if len(cols) > 0 {
-		dereferencedWriter.WriteHeader(http.StatusForbidden)
-
+	if result.Next() {
+		// If result.Next() returns true, there is at least one row, so the email is not unique.
 		return false, nil
 	}
 
+	// If no rows were found, the email is unique (or not in the database).
 	return true, nil
 }
 
@@ -105,9 +96,10 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		return errors.New(ERROR_PASSWORD_TOO_SHORT)
 	}
 
-	isValidEmail, err := isEmailValid(account.Account.Email, &w, db)
+	isValidEmail, err := isEmailValid(account.Account.Email, db)
 
 	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
 		return err
 	}
 
@@ -117,11 +109,13 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 
 	hashSalt, err := NewArgon2idHash(1, 32, 64*1024, 32, 256).GenerateHash([]byte(account.Password), nil)
 	if err != nil {
+		log.Println("error saving a password: ", err.Error())
 		return errors.New("an error occurred while saving the password. Please try again later")
 	}
 
 	err = storeHashAndSalt(hashSalt, account.Account.Email, db)
 	if err != nil {
+		log.Println("error saving a password: ", err.Error())
 		// Different from the one above for debugging purposes
 		return errors.New("an error occurred while saving the password. Please try again at a later time")
 	}
@@ -215,7 +209,7 @@ func (a *Argon2idHash) Compare(hash, salt, password []byte) error {
 }
 
 func storeHashAndSalt(hashSalt *HashSalt, accountEmail string, db *sql.DB) error {
-	_, err := db.Query("INSERT INTO passwords (account_id, hash, salt) VALUES ($1, $2)", accountEmail, hashSalt.hash, hashSalt.salt)
+	_, err := db.Query("INSERT INTO passwords (account_email, hash, salt) VALUES ($1, $2, $3)", accountEmail, hex.EncodeToString(hashSalt.hash), hex.EncodeToString(hashSalt.salt))
 	if err != nil {
 		return errors.New("an error occurred while inserting a hash-salt pair into the database: " + err.Error())
 	}

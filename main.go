@@ -13,6 +13,7 @@ import (
 
 	"net/http"
 
+	account "github.com/justinfarrelldev/open-ctp-server/internal/account"
 	game "github.com/justinfarrelldev/open-ctp-server/internal/game"
 	health "github.com/justinfarrelldev/open-ctp-server/internal/health"
 
@@ -23,6 +24,8 @@ import (
 	"github.com/didip/tollbooth/v7"
 
 	_ "github.com/lib/pq"
+
+	"github.com/joho/godotenv"
 )
 
 //	@title			Open Call to Power Server
@@ -50,6 +53,12 @@ var (
 var spec []byte
 
 func main() {
+	// Load .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+
 	// Tollbooth
 	message := Message{
 		Status: "Request Failed",
@@ -61,11 +70,15 @@ func main() {
 	tollboothLimiter.SetMessageContentType("application/json")
 	tollboothLimiter.SetMessage(string(jsonMessage))
 
+	fmt.Println("env: ", os.Getenv("SUPABASE_DB_URL"))
+
 	// Postgres
 	db, err := sql.Open("postgres", os.Getenv("SUPABASE_DB_URL"))
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Println("opened connection to database successfully")
 
 	// Handlers
 	mux := http.NewServeMux()
@@ -73,6 +86,11 @@ func main() {
 	mux.Handle("/game/create_game", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
 		game.GameHandler(w, r, db)
 	}))
+
+	mux.Handle("/account/create_account", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+		account.AccountHandler(w, r, db)
+	}))
+
 	mux.Handle("/health", tollbooth.LimitFuncHandler(tollboothLimiter, health.HealthCheckHandler))
 	mux.Handle("/docs/", http.StripPrefix("/docs", swaggerui.Handler(spec)))
 
