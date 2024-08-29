@@ -30,7 +30,9 @@ jobs:
         run: go test ./...
 
   deploy:
-    needs: test
+    needs:
+      - test
+      - security
     name: Deploy app
     runs-on: ubuntu-latest
     concurrency: deploy-group # optional: ensure only one action runs at a time
