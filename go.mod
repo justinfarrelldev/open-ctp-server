@@ -1,6 +1,6 @@
 module github.com/justinfarrelldev/open-ctp-server
 
-go 1.21.4
+go 1.23.0
 
 require (
 	github.com/didip/tollbooth/v7 v7.0.2

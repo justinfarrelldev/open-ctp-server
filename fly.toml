@@ -8,7 +8,7 @@ primary_region = 'atl'
 
 [build]
 [build.args]
-GO_VERSION = '1.21.4'
+GO_VERSION = '1.23.0'
 
 [env]
 PORT = '9000'
