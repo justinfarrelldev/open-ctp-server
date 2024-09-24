@@ -47,6 +47,13 @@ definitions:
     - Hard
     - Very_Hard
     - Impossible
+  account.GetAccountArgs:
+    description: Structure for the account acquisition request payload.
+    properties:
+      account_id:
+        description: The account ID for the account that will be retrieved.
+        type: integer
+    type: object
   game.CreateGameArgs:
     description: Structure for the game creation request payload.
     properties:
@@ -106,6 +113,37 @@ paths:
           description: Internal Server Error
           schema: {}
       summary: Create a new account
+      tags:
+      - account
+  /account/get_account:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint gets a multiplayer account's info.
+      parameters:
+      - description: account acquisition request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/account.GetAccountArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Account successfully retrieved
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Gets an account
       tags:
       - account
   /game/create_game:
