@@ -64,6 +64,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/account/get_account": {
+            "get": {
+                "description": "This endpoint gets a multiplayer account's info.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "account"
+                ],
+                "summary": "Gets an account",
+                "parameters": [
+                    {
+                        "description": "account acquisition request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/account.GetAccountArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Account successfully retrieved",
+                        "schema": {
+                            "$ref": "#/definitions/account.Account"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/game/create_game": {
             "post": {
                 "description": "This endpoint creates a new multiplayer game, optionally protected by a password.",
@@ -201,6 +247,16 @@ const docTemplate = `{
                 "Very_Hard",
                 "Impossible"
             ]
+        },
+        "account.GetAccountArgs": {
+            "description": "Structure for the account acquisition request payload.",
+            "type": "object",
+            "properties": {
+                "account_id": {
+                    "description": "The account ID for the account that will be retrieved.",
+                    "type": "integer"
+                }
+            }
         },
         "game.CreateGameArgs": {
             "description": "Structure for the game creation request payload.",
