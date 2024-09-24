@@ -24,7 +24,9 @@ type GetAccountArgs struct {
 // @Accept json
 // @Produce json
 // @Param body body GetAccountArgs true "account acquisition request body"
-// @Success 200 {string} string "Account successfully retrieved"
+//
+//	@Success 200 {object} account.Account "Account successfully retrieved"
+//
 // @Failure 400 {object} error "Bad Request"
 // @Failure 403 {object} error "Forbidden"
 // @Failure 500 {object} error "Internal Server Error"

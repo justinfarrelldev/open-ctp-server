@@ -92,7 +92,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Account successfully retrieved",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/account.Account"
                         }
                     },
                     "400": {
