@@ -116,6 +116,10 @@ func main() {
 		account.GetAccountHandler(w, r, db)
 	}))
 
+	mux.Handle("/account/update_account", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+		account.UpdateAccountHandler(w, r, db)
+	}))
+
 	mux.Handle("/health", tollbooth.LimitFuncHandler(tollboothLimiterHealth, health.HealthCheckHandler))
 	mux.Handle("/docs/", http.StripPrefix("/docs", swaggerui.Handler(spec)))
 
