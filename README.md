@@ -174,7 +174,7 @@ You absolutely can, so long as you follow the license in `LICENSE.md`. I am real
 ### Accounts (/account)
 - [x] Accounts can be created
 - [x] Accounts can be read
-- [ ] Accounts can be updated
+- [x] Accounts can be updated
 - [ ] Accounts can be deleted
 - [ ] Passwords can be reset
 - [ ] Passwords can be compared to find if passwords are correct

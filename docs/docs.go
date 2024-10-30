@@ -110,6 +110,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/account/update_account": {
+            "put": {
+                "description": "This endpoint updates an account's info.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "account"
+                ],
+                "summary": "Updates an account",
+                "parameters": [
+                    {
+                        "description": "account update request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/account.UpdateAccountArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated account!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "account_id must be specified",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "an error occurred while decoding the request body: \u003cerror message\u003e",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/game/create_game": {
             "post": {
                 "description": "This endpoint creates a new multiplayer game, optionally protected by a password.",
@@ -255,6 +301,36 @@ const docTemplate = `{
                 "account_id": {
                     "description": "The account ID for the account that will be retrieved.",
                     "type": "integer"
+                }
+            }
+        },
+        "account.UpdateAccountArgs": {
+            "description": "Structure for the account update request payload.",
+            "type": "object",
+            "properties": {
+                "account_id": {
+                    "description": "The account ID for the account that will be updated.",
+                    "type": "integer"
+                },
+                "email": {
+                    "description": "The new email for the account.",
+                    "type": "string"
+                },
+                "experience_level": {
+                    "description": "The new experience level for the account.",
+                    "type": "integer"
+                },
+                "info": {
+                    "description": "The new info for the account.",
+                    "type": "string"
+                },
+                "location": {
+                    "description": "The new location for the account.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "The new name for the account.",
+                    "type": "string"
                 }
             }
         },
