@@ -13,18 +13,12 @@ import (
 //
 // @Description Structure for the account update request payload.
 type UpdateAccountArgs struct {
+	// The account to create.
+	Account *AccountParam `json:"account"`
+	// The password for the account to be created
+	Password *string `json:"password"`
 	// The account ID for the account that will be updated.
-	AccountId int64 `json:"account_id"`
-	// The new name for the account.
-	Name *string `json:"name,omitempty"`
-	// The new info for the account.
-	Info *string `json:"info,omitempty"`
-	// The new location for the account.
-	Location *string `json:"location,omitempty"`
-	// The new email for the account.
-	Email *string `json:"email,omitempty"`
-	// The new experience level for the account.
-	ExperienceLevel *int `json:"experience_level,omitempty"`
+	AccountId *int64 `json:"account_id"`
 }
 
 // UpdateAccount updates an account by the account ID.
@@ -56,9 +50,19 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		return errors.New("an error occurred while decoding the request body:" + err.Error())
 	}
 
-	if args.AccountId == 0 {
+	if args.AccountId == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return errors.New("account_id must be specified")
+	}
+
+	if args.Password == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return errors.New("the password for the account must be specified")
+	}
+
+	if args.Account == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return errors.New("account must be specified")
 	}
 
 	// Use reflection to check if at least one field other than AccountId is set
@@ -83,29 +87,29 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 	params := []interface{}{}
 	paramIndex := 1
 
-	if args.Name != nil {
+	if args.Account.Name != nil {
 		query += fmt.Sprintf("name = $%d, ", paramIndex)
-		params = append(params, *args.Name)
+		params = append(params, args.Account.Name)
 		paramIndex++
 	}
-	if args.Info != nil {
+	if args.Account.Info != nil {
 		query += fmt.Sprintf("info = $%d, ", paramIndex)
-		params = append(params, *args.Info)
+		params = append(params, args.Account.Info)
 		paramIndex++
 	}
-	if args.Location != nil {
+	if args.Account.Location != nil {
 		query += fmt.Sprintf("location = $%d, ", paramIndex)
-		params = append(params, *args.Location)
+		params = append(params, args.Account.Location)
 		paramIndex++
 	}
-	if args.Email != nil {
+	if args.Account.Email != nil {
 		query += fmt.Sprintf("email = $%d, ", paramIndex)
-		params = append(params, *args.Email)
+		params = append(params, args.Account.Email)
 		paramIndex++
 	}
-	if args.ExperienceLevel != nil {
+	if args.Account.ExperienceLevel != nil {
 		query += fmt.Sprintf("experience_level = $%d, ", paramIndex)
-		params = append(params, *args.ExperienceLevel)
+		params = append(params, args.Account.ExperienceLevel)
 		paramIndex++
 	}
 
