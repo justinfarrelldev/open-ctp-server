@@ -173,8 +173,9 @@ You absolutely can, so long as you follow the license in `LICENSE.md`. I am real
 
 ### Accounts (/account)
 - [x] Accounts can be created
-- [ ] Accounts can be deleted
+- [x] Accounts can be read
 - [ ] Accounts can be updated
+- [ ] Accounts can be deleted
 - [ ] Passwords can be reset
 - [ ] Passwords can be compared to find if passwords are correct
 - [ ] Accounts can be logged into (and will provide a valid JWT token / session for future calls) [I need to research JWTs vs session-based auth for this task]
@@ -183,8 +184,9 @@ You absolutely can, so long as you follow the license in `LICENSE.md`. I am real
 ### Lobbies (/lobby)
 
 - [ ] Lobbies can be created
-- [ ] Lobbies can be deleted
+- [ ] Lobbies can be read
 - [ ] Lobbies can be updated
+- [ ] Lobbies can be deleted
 - [ ] Lobby name can be changed
 - [ ] Lobby can be "muted"
 - [ ] Lobby can be set to "public"
@@ -200,8 +202,9 @@ You absolutely can, so long as you follow the license in `LICENSE.md`. I am real
 *Note: profiles can be changed in the game (as seen in the UI), but this should be handled client-side using the account endpoints.
 
 - [ ] Games can be created
-- [ ] Games can be deleted
+- [ ] Games can be read
 - [ ] Games can be updated
+- [ ] Games can be deleted
 - [ ] Games can be renamed
 - [ ] Games can be "locked"
 - [ ] Games can be set to "public"
