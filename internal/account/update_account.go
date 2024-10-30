@@ -29,17 +29,14 @@ type UpdateAccountArgs struct {
 // UpdateAccount updates an account by the account ID.
 //
 // @Summary Updates an account
-// @Description This endpoint updates a multiplayer account's info.
+// @Description This endpoint updates an account's info.
 // @Tags account
 // @Accept json
 // @Produce json
 // @Param body body UpdateAccountArgs true "account update request body"
-//
-//	@Success 200 {object} account.Account "Account successfully updated"
-//
-// @Failure 400 {object} error "Bad Request"
-// @Failure 403 {object} error "Forbidden"
-// @Failure 500 {object} error "Internal Server Error"
+// @Success 200 {string} string "Successfully updated account!"
+// @Failure 400 {string} string "account_id must be specified"
+// @Failure 500 {string} string "an error occurred while decoding the request body: <error message>"
 // @Router /account/update_account [put]
 func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 
@@ -103,23 +100,8 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		return fmt.Errorf("an error occurred while updating the account with the ID %d: %v", args.AccountId, err)
 	}
 
-	// Now assemble the variables into the Account struct
-	account := Account{
-		Name:            getStringValue(args.Name),
-		Info:            getStringValue(args.Info),
-		Location:        getStringValue(args.Location),
-		Email:           getStringValue(args.Email),
-		ExperienceLevel: ExperienceLevel(getIntValue(args.ExperienceLevel)),
-	}
-
-	accountBytes, err := json.Marshal(account)
-	if err != nil {
-		return fmt.Errorf("Error marshalling struct: %v", err)
-	}
-
-	w.Write(accountBytes)
-
-	fmt.Println("Successfully updated account!")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Successfully updated account!"))
 	return nil
 }
 
