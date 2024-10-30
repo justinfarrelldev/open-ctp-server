@@ -28,6 +28,7 @@ There are multiple goals this project intends to tackle:
     - Players will be able to password-protect their login to each game (so that others cannot join as them)
         - These will be temporary and will only last the duration of the game
         - No actual account will ever be required as this would mean a lot of work client-side for the Apolyton and Spyroviper Editions
+            - Despite this, the feature will be available in case someone decides to use it
 - Additional game modes
     - Long-turn (with customizable turn timers) similar to Freeciv
     - Simultaneous Turns (everyone moves during one turn)
