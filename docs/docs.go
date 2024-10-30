@@ -112,7 +112,7 @@ const docTemplate = `{
         },
         "/account/update_account": {
             "put": {
-                "description": "This endpoint updates a multiplayer account's info.",
+                "description": "This endpoint updates an account's info.",
                 "consumes": [
                     "application/json"
                 ],
@@ -136,22 +136,22 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Account successfully updated",
+                        "description": "Successfully updated account!",
                         "schema": {
-                            "$ref": "#/definitions/account.Account"
+                            "type": "string"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {}
+                        "description": "account_id must be specified",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "an error occurred while decoding the request body: \u003cerror message\u003e",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }

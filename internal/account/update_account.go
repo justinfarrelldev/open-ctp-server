@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 )
 
 // UpdateAccountArgs represents the expected structure of the request body for updating an account.
@@ -58,6 +59,24 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 	if args.AccountId == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return errors.New("account_id must be specified")
+	}
+
+	// Use reflection to check if at least one field other than AccountId is set
+	v := reflect.ValueOf(args)
+	numFields := v.NumField()
+	anyFieldSet := false
+
+	for i := 0; i < numFields; i++ {
+		field := v.Field(i)
+		if field.Kind() == reflect.Ptr && !field.IsNil() && v.Type().Field(i).Name != "AccountId" {
+			anyFieldSet = true
+			break
+		}
+	}
+
+	if !anyFieldSet {
+		w.WriteHeader(http.StatusBadRequest)
+		return errors.New("at least one field to update must be specified")
 	}
 
 	query := "UPDATE account SET "

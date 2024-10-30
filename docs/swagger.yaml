@@ -172,7 +172,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: This endpoint updates a multiplayer account's info.
+      description: This endpoint updates an account's info.
       parameters:
       - description: account update request body
         in: body
@@ -184,18 +184,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: Account successfully updated
+          description: Successfully updated account!
           schema:
-            $ref: '#/definitions/account.Account'
+            type: string
         "400":
-          description: Bad Request
-          schema: {}
-        "403":
-          description: Forbidden
-          schema: {}
+          description: account_id must be specified
+          schema:
+            type: string
         "500":
-          description: Internal Server Error
-          schema: {}
+          description: 'an error occurred while decoding the request body: <error
+            message>'
+          schema:
+            type: string
       summary: Updates an account
       tags:
       - account
