@@ -257,6 +257,36 @@ const docTemplate = `{
                 }
             }
         },
+        "account.AccountParam": {
+            "description": "Structure for representing a player account with non-required fields.",
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "Email is the email address of the player.",
+                    "type": "string"
+                },
+                "experience_level": {
+                    "description": "ExperienceLevel represents the player's experience level (0=beginner, 1=easy, 2=medium, 3=hard, 4=very hard, 5=impossible)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/account.ExperienceLevel"
+                        }
+                    ]
+                },
+                "info": {
+                    "description": "Info contains additional information about the player.",
+                    "type": "string"
+                },
+                "location": {
+                    "description": "Location indicates the player's real-life location.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name is the name of the player.",
+                    "type": "string"
+                }
+            }
+        },
         "account.CreateAccountArgs": {
             "description": "Structure for the account creation request payload.",
             "type": "object",
@@ -308,28 +338,20 @@ const docTemplate = `{
             "description": "Structure for the account update request payload.",
             "type": "object",
             "properties": {
+                "account": {
+                    "description": "The account to create.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/account.AccountParam"
+                        }
+                    ]
+                },
                 "account_id": {
                     "description": "The account ID for the account that will be updated.",
                     "type": "integer"
                 },
-                "email": {
-                    "description": "The new email for the account.",
-                    "type": "string"
-                },
-                "experience_level": {
-                    "description": "The new experience level for the account.",
-                    "type": "integer"
-                },
-                "info": {
-                    "description": "The new info for the account.",
-                    "type": "string"
-                },
-                "location": {
-                    "description": "The new location for the account.",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "The new name for the account.",
+                "password": {
+                    "description": "The password for the account to be created",
                     "type": "string"
                 }
             }
