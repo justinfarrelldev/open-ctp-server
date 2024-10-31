@@ -86,7 +86,7 @@ func main() {
 	tollboothLimiterMinute.SetHeaderEntryExpirationTTL(time.Hour)
 
 	// Limiter for the health check
-	tollboothLimiterHealth := tollbooth.NewLimiter(12.0/60.0, nil)
+	tollboothLimiterHealth := tollbooth.NewLimiter(5, nil)
 	tollboothLimiterHealth.SetMessageContentType("application/json")
 	tollboothLimiterHealth.SetMessage(string(jsonMessage))
 	tollboothLimiterHealth.SetTokenBucketExpirationTTL(time.Hour)
