@@ -11,6 +11,7 @@
     "gamemode",
     "gofmt",
     "Gopls",
+    "Hasher",
     "healthcheck",
     "healthgrpc",
     "Ninjaboy",

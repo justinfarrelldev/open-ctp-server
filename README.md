@@ -178,7 +178,7 @@ You absolutely can, so long as you follow the license in `LICENSE.md`. I am real
 - [x] Accounts can be updated
 - [ ] Accounts can be deleted
 - [ ] Passwords can be reset
-- [ ] Passwords can be compared to find if passwords are correct
+- [x] Passwords can be compared to find if passwords are correct
 - [ ] Accounts can be logged into (and will provide a valid JWT token / session for future calls) [I need to research JWTs vs session-based auth for this task]
 - [ ] All account endpoints are rate-limited appropriately
 
