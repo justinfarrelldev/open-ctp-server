@@ -2,6 +2,7 @@ package account
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -63,6 +64,31 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 	if args.Account == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return errors.New("account must be specified")
+	}
+
+	// Get the current password hash and salt from the database
+	var storedHash, storedSalt string
+	err = db.QueryRow("SELECT hash, salt FROM passwords WHERE id = $1", args.AccountId).Scan(&storedHash, &storedSalt)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return fmt.Errorf("error retrieving account credentials: %v", err)
+	}
+
+	storedHashBytes, err := base64.StdEncoding.DecodeString(storedHash)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return fmt.Errorf("error decoding stored hash: %v", err)
+	}
+	storedSaltBytes, err := base64.StdEncoding.DecodeString(storedSalt)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return fmt.Errorf("error decoding stored salt: %v", err)
+	}
+
+	err = Hasher.Compare(storedHashBytes, storedSaltBytes, []byte(*args.Password))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return fmt.Errorf("error comparing passwords: %v", err)
 	}
 
 	// Use reflection to check if at least one field other than AccountId is set

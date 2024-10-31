@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"net/mail"
-
-	"encoding/hex"
 
 	argon2 "golang.org/x/crypto/argon2"
 )
@@ -59,6 +58,8 @@ func isEmailValid(email string, db *sql.DB) (bool, error) {
 	// If no rows were found, the email is unique (or not in the database).
 	return true, nil
 }
+
+var Hasher = NewArgon2idHash(1, 32, 64*1024, 32, 256)
 
 // CreateAccount handles the creation of a new account.
 //
@@ -120,7 +121,7 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		return errors.New("the provided email is not valid")
 	}
 
-	hashSalt, err := NewArgon2idHash(1, 32, 64*1024, 32, 256).GenerateHash([]byte(account.Password), nil)
+	hashSalt, err := Hasher.GenerateHash([]byte(account.Password), nil)
 	if err != nil {
 		log.Println("error saving a password: ", err.Error())
 		return errors.New("an error occurred while saving the password. Please try again later")
@@ -229,7 +230,7 @@ func (a *Argon2idHash) Compare(hash, salt, password []byte) error {
 }
 
 func storeHashAndSalt(hashSalt *HashSalt, accountEmail string, db *sql.DB) error {
-	result, err := db.Query("INSERT INTO passwords (account_email, hash, salt) VALUES ($1, $2, $3)", accountEmail, hex.EncodeToString(hashSalt.hash), hex.EncodeToString(hashSalt.salt))
+	result, err := db.Query("INSERT INTO passwords (account_email, hash, salt) VALUES ($1, $2, $3)", accountEmail, base64.StdEncoding.EncodeToString(hashSalt.hash), base64.StdEncoding.EncodeToString(hashSalt.salt))
 	if err != nil {
 		return errors.New("an error occurred while inserting a hash-salt pair into the database: " + err.Error())
 	}
