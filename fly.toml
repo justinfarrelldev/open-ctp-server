@@ -21,6 +21,21 @@ auto_start_machines = true
 min_machines_running = 0
 processes = ['app']
 
+[deploy]
+strategy = "bluegreen"
+
+[checks]
+[checks.http]
+type = "http"
+port = 9000
+interval = "10s"
+timeout = "2s"
+method = "GET"
+path = "/health"
+protocol = "http"
+grace_period = "5s"
+restart_limit = 0
+
 [[vm]]
 memory = '512mb'
 cpu_kind = 'shared'

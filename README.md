@@ -164,8 +164,8 @@ You absolutely can, so long as you follow the license in `LICENSE.md`. I am real
 - [x] Supabase set up for local development
 - [x] Supabase set up remotely
 - [x] Husky set up for automatic documentation generation after each commit
-- [ ] Health check is used in Fly.io
-- [ ] Blue-green deploys are used in Fly.io
+- [x] Health check is used in Fly.io
+- [x] Blue-green deploys are used in Fly.io
 - [ ] Versioning done automatically on push to master (need to research how to do this)
 - [ ] CTP2 version games are able to be booted into
 - [ ] CTP2 version games are able to be completed
