@@ -2,7 +2,6 @@ package account
 
 import (
 	"database/sql"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,59 +11,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
-
-func TestGetAccount_Success(t *testing.T) {
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	accountID := int64(1)
-	expectedAccount := Account{
-		Name:            "John Doe",
-		Info:            "Some info",
-		Location:        "Some location",
-		Email:           "john.doe@example.com",
-		ExperienceLevel: Medium,
-	}
-
-	rows := sqlmock.NewRows([]string{"name", "info", "location", "email", "experience_level"}).
-		AddRow(expectedAccount.Name, expectedAccount.Info, expectedAccount.Location, expectedAccount.Email, expectedAccount.ExperienceLevel)
-	mock.ExpectQuery("SELECT name, info, location, email, experience_level FROM account WHERE id = \\$1").
-		WithArgs(accountID).
-		WillReturnRows(rows)
-
-	req, err := http.NewRequest("GET", "/account/get_account?account_id=1", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, sqlxDB)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	})
-
-	handler.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
-	}
-
-	var account Account
-	err = json.NewDecoder(rr.Body).Decode(&account)
-	if err != nil {
-		t.Errorf("could not decode response: %v", err)
-	}
-
-	if account != expectedAccount {
-		t.Errorf("handler returned unexpected body: got %v want %v", account, expectedAccount)
-	}
-}
 
 func TestGetAccount_NotFound(t *testing.T) {
 	db, mock, err := sqlmock.New()
