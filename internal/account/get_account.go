@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 )
 
 // GetAccountArgs represents the expected structure of the request body for getting an account.
@@ -23,9 +24,9 @@ type GetAccountArgs struct {
 // @Tags account
 // @Accept json
 // @Produce json
-// @Param body body GetAccountArgs true "account acquisition request body"
+// @Param account_id query int true "account ID"
 //
-//	@Success 200 {object} account.Account "Account successfully retrieved"
+// @Success 200 {object} account.Account "Account successfully retrieved"
 //
 // @Failure 400 {object} error "Bad Request"
 // @Failure 403 {object} error "Forbidden"
@@ -33,20 +34,25 @@ type GetAccountArgs struct {
 // @Router /account/get_account [get]
 func GetAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 
+	fmt.Println("Getting account...")
+
 	if r.Method != "GET" {
 		return errors.New("invalid request; request must be a GET request")
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
+	queryParams := r.URL.Query()
+	accountIdStr := queryParams.Get("account_id")
+	if accountIdStr == "" {
+		http.Error(w, "account_id is required", http.StatusBadRequest)
+		return errors.New("account_id is required")
+	}
 
-	argsGotten := GetAccountArgs{}
-	err := decoder.Decode(&argsGotten)
+	fmt.Println("account id is", accountIdStr)
 
+	accountId, err := strconv.ParseInt(accountIdStr, 10, 64)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-
-		return errors.New("an error occurred while decoding the request body:" + err.Error())
+		http.Error(w, "invalid account_id", http.StatusBadRequest)
+		return errors.New("invalid account_id")
 	}
 
 	// TODO add sqlx so we don't have to manually provision row results from .Scan
@@ -58,12 +64,14 @@ func GetAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		experienceLevel int
 	)
 
-	if err := db.QueryRow("SELECT name, info, location, email, experience_level FROM account WHERE id = $1", argsGotten.AccountId).
+	fmt.Println("account id is", accountId)
+
+	if err := db.QueryRow("SELECT name, info, location, email, experience_level FROM account WHERE id = $1", accountId).
 		Scan(&name, &info, &location, &email, &experienceLevel); err != nil {
 		if err == sql.ErrNoRows {
-			return fmt.Errorf("no account exists with the ID %d", argsGotten.AccountId)
+			return fmt.Errorf("no account exists with the ID %d", accountId)
 		}
-		return fmt.Errorf("an error occurred while getting the account with the ID %d: %v", argsGotten.AccountId, err)
+		return fmt.Errorf("an error occurred while getting the account with the ID %d: %v", accountId, err)
 	}
 
 	// Now assemble the variables into the Account struct

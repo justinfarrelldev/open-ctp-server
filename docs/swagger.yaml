@@ -68,13 +68,6 @@ definitions:
     - Hard
     - Very_Hard
     - Impossible
-  account.GetAccountArgs:
-    description: Structure for the account acquisition request payload.
-    properties:
-      account_id:
-        description: The account ID for the account that will be retrieved.
-        type: integer
-    type: object
   account.UpdateAccountArgs:
     description: Structure for the account update request payload.
     properties:
@@ -198,12 +191,11 @@ paths:
       - application/json
       description: This endpoint gets a multiplayer account's info.
       parameters:
-      - description: account acquisition request body
-        in: body
-        name: body
+      - description: account ID
+        in: query
+        name: account_id
         required: true
-        schema:
-          $ref: '#/definitions/account.GetAccountArgs'
+        type: integer
       produces:
       - application/json
       responses:

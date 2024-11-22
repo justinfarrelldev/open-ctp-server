@@ -79,13 +79,11 @@ const docTemplate = `{
                 "summary": "Gets an account",
                 "parameters": [
                     {
-                        "description": "account acquisition request body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/account.GetAccountArgs"
-                        }
+                        "type": "integer",
+                        "description": "account ID",
+                        "name": "account_id",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -415,16 +413,6 @@ const docTemplate = `{
                 "Very_Hard",
                 "Impossible"
             ]
-        },
-        "account.GetAccountArgs": {
-            "description": "Structure for the account acquisition request payload.",
-            "type": "object",
-            "properties": {
-                "account_id": {
-                    "description": "The account ID for the account that will be retrieved.",
-                    "type": "integer"
-                }
-            }
         },
         "account.UpdateAccountArgs": {
             "description": "Structure for the account update request payload.",
