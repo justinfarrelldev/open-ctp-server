@@ -2,11 +2,12 @@ package account
 
 import (
 	"database/sql"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/jmoiron/sqlx"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
@@ -24,14 +25,13 @@ func TestGetAccount_Success(t *testing.T) {
 		Info:            "Some info",
 		Location:        "Some location",
 		Email:           "john.doe@example.com",
-		ExperienceLevel: Medium,
+		ExperienceLevel: ExperienceLevel(5),
 	}
 
-	rows := sqlmock.NewRows([]string{"name", "info", "location", "email", "experience_level"}).
-		AddRow(expectedAccount.Name, expectedAccount.Info, expectedAccount.Location, expectedAccount.Email, expectedAccount.ExperienceLevel)
 	mock.ExpectQuery("SELECT name, info, location, email, experience_level FROM account WHERE id = \\$1").
 		WithArgs(accountID).
-		WillReturnRows(rows)
+		WillReturnRows(sqlmock.NewRows([]string{"name", "info", "location", "email", "experience_level"}).
+			AddRow(expectedAccount.Name, expectedAccount.Info, expectedAccount.Location, expectedAccount.Email, int(expectedAccount.ExperienceLevel)))
 
 	req, err := http.NewRequest("GET", "/account/get_account?account_id=1", nil)
 	if err != nil {
@@ -39,8 +39,9 @@ func TestGetAccount_Success(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, db)
+		err := GetAccount(w, r, sqlxDB)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -52,14 +53,9 @@ func TestGetAccount_Success(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	var account Account
-	err = json.NewDecoder(rr.Body).Decode(&account)
-	if err != nil {
-		t.Errorf("could not decode response: %v", err)
-	}
-
-	if account != expectedAccount {
-		t.Errorf("handler returned unexpected body: got %v want %v", account, expectedAccount)
+	expectedResponse := `{"name":"John Doe","info":"Some info","location":"Some location","email":"john.doe@example.com","experience_level":5}`
+	if rr.Body.String() != expectedResponse {
+		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expectedResponse)
 	}
 }
 
@@ -82,8 +78,9 @@ func TestGetAccount_NotFound(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, db)
+		err := GetAccount(w, r, sqlxDB)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -114,8 +111,9 @@ func TestGetAccount_InvalidMethod(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, db)
+		err := GetAccount(w, r, sqlxDB)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -146,8 +144,9 @@ func TestGetAccount_DecodeError(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, db)
+		err := GetAccount(w, r, sqlxDB)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}

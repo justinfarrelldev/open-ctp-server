@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	_ "embed"
 	"encoding/json"
 	"errors"
@@ -13,6 +12,7 @@ import (
 
 	"net/http"
 
+	"github.com/jmoiron/sqlx"
 	account "github.com/justinfarrelldev/open-ctp-server/internal/account"
 	game "github.com/justinfarrelldev/open-ctp-server/internal/game"
 	health "github.com/justinfarrelldev/open-ctp-server/internal/health"
@@ -95,7 +95,7 @@ func main() {
 	tollboothLimiterHealth.SetHeaderEntryExpirationTTL(time.Hour)
 
 	// Postgres
-	db, err := sql.Open("postgres", os.Getenv("SUPABASE_DB_URL"))
+	db, err := sqlx.Open("postgres", os.Getenv("SUPABASE_DB_URL"))
 	if err != nil {
 		log.Fatal(err)
 	}

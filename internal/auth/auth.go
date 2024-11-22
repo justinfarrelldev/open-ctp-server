@@ -3,10 +3,10 @@ package auth
 import (
 	"bytes"
 	"crypto/rand"
-	"database/sql"
 	"encoding/base64"
 	"errors"
 
+	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/argon2"
 )
 
@@ -101,7 +101,7 @@ func (a *argon2idHash) Compare(hash, salt, password []byte) error {
 	return nil
 }
 
-func StoreHashAndSalt(hashSalt *hashSalt, accountEmail string, db *sql.DB) error {
+func StoreHashAndSalt(hashSalt *hashSalt, accountEmail string, db *sqlx.DB) error {
 	result, err := db.Query("INSERT INTO passwords (account_email, hash, salt) VALUES ($1, $2, $3)", accountEmail, base64.StdEncoding.EncodeToString(hashSalt.hash), base64.StdEncoding.EncodeToString(hashSalt.salt))
 	if err != nil {
 		return errors.New("an error occurred while inserting a hash-salt pair into the database: " + err.Error())
