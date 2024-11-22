@@ -5,7 +5,7 @@ package lobby
 // @Description Structure for representing a player lobby.
 type Lobby struct {
 	// ID is the unique identifier for the lobby.
-	ID string `json:"id"`
+	ID string `json:"id,omitempty"`
 
 	// Name is the name of the lobby.
 	Name string `json:"name"`

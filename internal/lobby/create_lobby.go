@@ -14,6 +14,8 @@ import (
 type CreateLobbyArgs struct {
 	// The lobby to create.
 	Lobby Lobby `json:"lobby"`
+
+	// FIXME make passwords actually get stored with lobbies
 	// The password for the lobby to be created
 	Password string `json:"password"`
 }
@@ -87,14 +89,23 @@ func CreateLobby(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		return errors.New(ERROR_PASSWORD_TOO_SHORT)
 	}
 
+	err = storeLobby(&lobby.Lobby, db)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return errors.New("an error occurred while storing the lobby in the database: " + err.Error())
+	}
+
+	w.WriteHeader(http.StatusCreated)
+
 	// TODO store password if needed
 	return nil
 }
 
 func storeLobby(lobby *Lobby, db *sql.DB) error {
 	result, err := db.Query(
-		"INSERT INTO lobby (id, name, owner_name, is_closed, is_muted, is_public) VALUES ($1, $2, $3, $4, $5, $6)",
-		lobby.ID, lobby.Name, lobby.OwnerName, lobby.IsClosed, lobby.IsMuted, lobby.IsPublic,
+		"INSERT INTO lobby (name, owner_name, is_closed, is_muted, is_public) VALUES ($1, $2, $3, $4, $5)",
+		lobby.Name, lobby.OwnerName, lobby.IsClosed, lobby.IsMuted, lobby.IsPublic,
 	)
 	if err != nil {
 		return errors.New("an error occurred while inserting a lobby into the database: " + err.Error())

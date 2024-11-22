@@ -16,6 +16,7 @@ import (
 	account "github.com/justinfarrelldev/open-ctp-server/internal/account"
 	game "github.com/justinfarrelldev/open-ctp-server/internal/game"
 	health "github.com/justinfarrelldev/open-ctp-server/internal/health"
+	lobby "github.com/justinfarrelldev/open-ctp-server/internal/lobby"
 
 	_ "github.com/justinfarrelldev/open-ctp-server/docs"
 
@@ -119,6 +120,18 @@ func main() {
 	mux.Handle("/account/update_account", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.UpdateAccountHandler(w, r, db)
 	}))
+
+	mux.Handle("/lobby/create_lobby", tollbooth.LimitFuncHandler(tollboothLimiterMinute, func(w http.ResponseWriter, r *http.Request) {
+		lobby.CreateLobbyHandler(w, r, db)
+	}))
+
+	mux.Handle("/lobby/get_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+		lobby.GetLobbyHandler(w, r, db)
+	}))
+
+	// mux.Handle("/lobby/update_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+	// 	lobby.UpdateLobbyHandler(w, r, db)
+	// }))
 
 	mux.Handle("/health", tollbooth.LimitFuncHandler(tollboothLimiterHealth, health.HealthCheckHandler))
 	mux.Handle("/docs/", http.StripPrefix("/docs", swaggerui.Handler(spec)))
