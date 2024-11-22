@@ -8,11 +8,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
 func TestGetAccount_Success(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
@@ -40,7 +43,7 @@ func TestGetAccount_Success(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, db)
+		err := GetAccount(w, r, sqlxDB)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -82,8 +85,9 @@ func TestGetAccount_NotFound(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, db)
+		err := GetAccount(w, r, sqlxDB)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -114,8 +118,9 @@ func TestGetAccount_InvalidMethod(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, db)
+		err := GetAccount(w, r, sqlxDB)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -146,8 +151,9 @@ func TestGetAccount_DecodeError(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, db)
+		err := GetAccount(w, r, sqlxDB)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}

@@ -2,11 +2,12 @@ package game
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/jmoiron/sqlx"
 )
 
 func TestCreateGame_PasswordTooShort(t *testing.T) {
@@ -25,7 +26,7 @@ func TestCreateGame_PasswordTooShort(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// DB is not needed for this test
-	var mockDB *sql.DB = nil
+	var mockDB *sqlx.DB = nil
 
 	// Call the function to test
 	err = CreateGame(rr, req, mockDB)
@@ -52,7 +53,7 @@ func TestCreateGame_PasswordRequiredWhenPasswordProtectedIsTrue(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// DB is not needed for this test
-	var mockDB *sql.DB = nil
+	var mockDB *sqlx.DB = nil
 
 	// Call the function to test
 	err = CreateGame(rr, req, mockDB)
