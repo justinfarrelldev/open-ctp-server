@@ -5,22 +5,22 @@ package lobby
 // @Description Structure for representing a player lobby.
 type Lobby struct {
 	// ID is the unique identifier for the lobby.
-	ID int64 `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty" db:"id"`
 
 	// Name is the name of the lobby.
-	Name string `json:"name"`
+	Name string `json:"name" db:"name"`
 
 	// OwnerName is the name of the lobby owner.
-	OwnerName string `json:"owner_name"`
+	OwnerName string `json:"owner_name" db:"owner_name"`
 
 	// IsClosed indicates if the lobby is closed.
-	IsClosed bool `json:"is_closed"`
+	IsClosed bool `json:"is_closed" db:"is_closed"`
 
 	// IsMuted indicates if the lobby is muted.
-	IsMuted bool `json:"is_muted"`
+	IsMuted bool `json:"is_muted" db:"is_muted"`
 
 	// IsPublic indicates if the lobby is public.
-	IsPublic bool `json:"is_public"`
+	IsPublic bool `json:"is_public" db:"is_public"`
 }
 
 // LobbyParam represents a player lobby with non-required fields.
@@ -28,20 +28,20 @@ type Lobby struct {
 // @Description Structure for representing a player lobby with non-required fields.
 type LobbyParam struct {
 	// ID is the unique identifier for the lobby.
-	ID *int64 `json:"id,omitempty"`
+	ID *int64 `json:"id,omitempty" db:"id"`
 
 	// Name is the name of the lobby.
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name,omitempty" db:"name"`
 
 	// OwnerName is the name of the lobby owner.
-	OwnerName *string `json:"owner_name,omitempty"`
+	OwnerName *string `json:"owner_name,omitempty" db:"owner_name"`
 
 	// IsClosed indicates if the lobby is closed.
-	IsClosed *bool `json:"is_closed,omitempty"`
+	IsClosed *bool `json:"is_closed,omitempty" db:"is_closed"`
 
 	// IsMuted indicates if the lobby is muted.
-	IsMuted *bool `json:"is_muted,omitempty"`
+	IsMuted *bool `json:"is_muted,omitempty" db:"is_muted"`
 
 	// IsPublic indicates if the lobby is public.
-	IsPublic *bool `json:"is_public,omitempty"`
+	IsPublic *bool `json:"is_public,omitempty" db:"is_public"`
 }

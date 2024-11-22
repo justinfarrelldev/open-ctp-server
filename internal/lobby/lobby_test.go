@@ -11,6 +11,54 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+func TestGetLobby_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	lobbyID := int64(1)
+	expectedLobby := Lobby{
+		ID:        lobbyID,
+		Name:      "Test Lobby",
+		OwnerName: "Owner",
+		IsClosed:  false,
+		IsMuted:   false,
+		IsPublic:  true,
+	}
+
+	mock.ExpectQuery("SELECT id, name, owner_name, is_closed, is_muted, is_public FROM lobby WHERE id = \\$1").
+		WithArgs(lobbyID).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "is_closed", "is_muted", "is_public"}).
+			AddRow(expectedLobby.ID, expectedLobby.Name, expectedLobby.OwnerName, expectedLobby.IsClosed, expectedLobby.IsMuted, expectedLobby.IsPublic))
+
+	req, err := http.NewRequest("GET", "/lobby/get_lobby", strings.NewReader(`{"lobby_id": 1}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := GetLobby(w, r, sqlxDB)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	expectedResponse := `{"id":1,"name":"Test Lobby","owner_name":"Owner","is_closed":false,"is_muted":false,"is_public":true}`
+	if strings.TrimSpace(rr.Body.String()) != expectedResponse {
+		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedResponse)
+	}
+}
+
 func TestGetLobby_NotFound(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
