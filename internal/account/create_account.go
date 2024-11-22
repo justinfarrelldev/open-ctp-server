@@ -1,7 +1,6 @@
 package account
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"net/http"
 	"net/mail"
 
+	"github.com/jmoiron/sqlx"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
@@ -25,7 +25,7 @@ type CreateAccountArgs struct {
 const ERROR_PASSWORD_TOO_SHORT = "password must be longer than 6 characters"
 const ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD = "password is required"
 
-func isEmailValid(email string, db *sql.DB) (bool, error) {
+func isEmailValid(email string, db *sqlx.DB) (bool, error) {
 	_, err := mail.ParseAddress(email)
 	if err != nil {
 		return false, errors.New("an error occurred while checking whether the email for the account is valid: " + err.Error())
@@ -61,7 +61,7 @@ func isEmailValid(email string, db *sql.DB) (bool, error) {
 // @Failure 403 {object} error "Forbidden"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /account/create_account [post]
-func CreateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
+func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 
 	if r.Method != "POST" {
 		return errors.New("invalid request; request must be a POST request")
@@ -133,7 +133,7 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 	return nil
 }
 
-func storeAccount(account *Account, db *sql.DB) error {
+func storeAccount(account *Account, db *sqlx.DB) error {
 	result, err := db.Query("INSERT INTO account (name, info, location, email, experience_level) VALUES ($1, $2, $3, $4, $5)", account.Name, account.Info, account.Location, account.Email, account.ExperienceLevel)
 	if err != nil {
 		return errors.New("an error occurred while inserting an account into the database: " + err.Error())

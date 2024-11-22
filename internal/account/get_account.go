@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // GetAccountArgs represents the expected structure of the request body for getting an account.
@@ -32,7 +34,7 @@ type GetAccountArgs struct {
 // @Failure 403 {object} error "Forbidden"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /account/get_account [get]
-func GetAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
+func GetAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 	if r.Method != "GET" {
 		return errors.New("invalid request; request must be a GET request")
 	}

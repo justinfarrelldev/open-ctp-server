@@ -1,7 +1,6 @@
 package account
 
 import (
-	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -9,6 +8,7 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/jmoiron/sqlx"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
@@ -36,7 +36,7 @@ type UpdateAccountArgs struct {
 // @Failure 400 {string} string "account_id must be specified"
 // @Failure 500 {string} string "an error occurred while decoding the request body: <error message>"
 // @Router /account/update_account [put]
-func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
+func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 
 	if r.Method != http.MethodPut {
 		return errors.New("invalid request; request must be a PUT request")
