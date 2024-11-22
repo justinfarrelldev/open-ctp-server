@@ -48,8 +48,6 @@ func isEmailValid(email string, db *sql.DB) (bool, error) {
 	return true, nil
 }
 
-var Hasher = auth.NewArgon2idHash(1, 32, 64*1024, 32, 256)
-
 // CreateAccount handles the creation of a new account.
 //
 // @Summary Create a new account
@@ -110,7 +108,7 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		return errors.New("the provided email is not valid")
 	}
 
-	hashSalt, err := Hasher.GenerateHash([]byte(account.Password), nil)
+	hashSalt, err := auth.Hasher.GenerateHash([]byte(account.Password), nil)
 	if err != nil {
 		log.Println("error saving a password: ", err.Error())
 		return errors.New("an error occurred while saving the password. Please try again later")

@@ -110,3 +110,5 @@ func StoreHashAndSalt(hashSalt *hashSalt, accountEmail string, db *sql.DB) error
 	defer result.Close()
 	return nil
 }
+
+var Hasher = NewArgon2idHash(1, 32, 64*1024, 32, 256)
