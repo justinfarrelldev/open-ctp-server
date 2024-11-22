@@ -128,7 +128,7 @@ definitions:
     properties:
       lobby_id:
         description: The lobby ID for the lobby that will be retrieved.
-        type: string
+        type: integer
     type: object
   lobby.Lobby:
     description: Structure for representing a player lobby.

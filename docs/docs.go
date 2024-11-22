@@ -495,7 +495,7 @@ const docTemplate = `{
             "properties": {
                 "lobby_id": {
                     "description": "The lobby ID for the lobby that will be retrieved.",
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },
