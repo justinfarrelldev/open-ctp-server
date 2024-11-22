@@ -110,6 +110,39 @@ definitions:
         example: OK
         type: string
     type: object
+  lobby.CreateLobbyArgs:
+    description: Structure for the lobby creation request payload.
+    properties:
+      lobby:
+        allOf:
+        - $ref: '#/definitions/lobby.Lobby'
+        description: The lobby to create.
+      password:
+        description: The password for the lobby to be created
+        type: string
+    type: object
+  lobby.Lobby:
+    description: Structure for representing a player lobby.
+    properties:
+      id:
+        description: ID is the unique identifier for the lobby.
+        type: string
+      is_closed:
+        description: IsClosed indicates if the lobby is closed.
+        type: boolean
+      is_muted:
+        description: IsMuted indicates if the lobby is muted.
+        type: boolean
+      is_public:
+        description: IsPublic indicates if the lobby is public.
+        type: boolean
+      name:
+        description: Name is the name of the lobby.
+        type: string
+      owner_name:
+        description: OwnerName is the name of the lobby owner.
+        type: string
+    type: object
 info:
   contact:
     email: justinfarrellwebdev@gmail.com
@@ -259,4 +292,35 @@ paths:
       summary: Health check endpoint
       tags:
       - health
+  /lobby/create_lobby:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint creates a new multiplayer lobby, protected by a password.
+      parameters:
+      - description: lobby creation request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/lobby.CreateLobbyArgs'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Lobby successfully created
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Create a new lobby
+      tags:
+      - lobby
 swagger: "2.0"
