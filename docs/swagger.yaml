@@ -118,7 +118,9 @@ definitions:
         - $ref: '#/definitions/lobby.Lobby'
         description: The lobby to create.
       password:
-        description: The password for the lobby to be created
+        description: |-
+          FIXME make passwords actually get stored with lobbies
+          The password for the lobby to be created
         type: string
     type: object
   lobby.GetLobbyArgs:

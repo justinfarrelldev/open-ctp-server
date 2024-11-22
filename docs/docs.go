@@ -484,7 +484,7 @@ const docTemplate = `{
                     ]
                 },
                 "password": {
-                    "description": "The password for the lobby to be created",
+                    "description": "FIXME make passwords actually get stored with lobbies\nThe password for the lobby to be created",
                     "type": "string"
                 }
             }
