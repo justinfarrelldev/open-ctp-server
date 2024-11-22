@@ -1,11 +1,9 @@
 package lobby
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
-	"net/mail"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -24,29 +22,6 @@ type CreateLobbyArgs struct {
 
 const ERROR_PASSWORD_TOO_SHORT = "password must be longer than 6 characters"
 const ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD = "password is required"
-
-func isEmailValid(email string, db *sql.DB) (bool, error) {
-	_, err := mail.ParseAddress(email)
-	if err != nil {
-		return false, errors.New("an error occurred while checking whether the email for the lobby is valid: " + err.Error())
-	}
-
-	result, err := db.Query("SELECT * from lobby WHERE email = $1", email)
-
-	if err != nil {
-		return false, errors.New("an error occurred while checking whether the email for the lobby is unique: " + err.Error())
-	}
-
-	defer result.Close()
-
-	if result.Next() {
-		// If result.Next() returns true, there is at least one row, so the email is not unique.
-		return false, nil
-	}
-
-	// If no rows were found, the email is unique (or not in the database).
-	return true, nil
-}
 
 // CreateLobby handles the creation of a new lobby.
 //
