@@ -33,9 +33,6 @@ type GetAccountArgs struct {
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /account/get_account [get]
 func GetAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
-
-	fmt.Println("Getting account...")
-
 	if r.Method != "GET" {
 		return errors.New("invalid request; request must be a GET request")
 	}
@@ -46,8 +43,6 @@ func GetAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		http.Error(w, "account_id is required", http.StatusBadRequest)
 		return errors.New("account_id is required")
 	}
-
-	fmt.Println("account id is", accountIdStr)
 
 	accountId, err := strconv.ParseInt(accountIdStr, 10, 64)
 	if err != nil {
