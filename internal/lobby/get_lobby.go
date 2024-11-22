@@ -60,9 +60,9 @@ func GetLobby(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 	if err := db.QueryRow("SELECT id, name, owner_name, is_closed, is_muted, is_public FROM lobby WHERE id = $1", argsGotten.LobbyId).
 		Scan(&id, &name, &ownerName, &isClosed, &isMuted, &isPublic); err != nil {
 		if err == sql.ErrNoRows {
-			return fmt.Errorf("no lobby exists with the ID %s", argsGotten.LobbyId)
+			return fmt.Errorf("no lobby exists with the ID %d", argsGotten.LobbyId)
 		}
-		return fmt.Errorf("an error occurred while getting the lobby with the ID %s: %v", argsGotten.LobbyId, err)
+		return fmt.Errorf("an error occurred while getting the lobby with the ID %d: %v", argsGotten.LobbyId, err)
 	}
 
 	// Now assemble the variables into the Lobby struct
