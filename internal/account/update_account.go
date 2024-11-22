@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+
+	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
 // UpdateAccountArgs represents the expected structure of the request body for updating an account.
@@ -85,7 +87,7 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		return fmt.Errorf("error decoding stored salt: %v", err)
 	}
 
-	err = Hasher.Compare(storedHashBytes, storedSaltBytes, []byte(*args.Password))
+	err = auth.Hasher.Compare(storedHashBytes, storedSaltBytes, []byte(*args.Password))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return fmt.Errorf("error comparing passwords: %v", err)

@@ -224,6 +224,98 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/lobby/create_lobby": {
+            "post": {
+                "description": "This endpoint creates a new multiplayer lobby, protected by a password.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lobby"
+                ],
+                "summary": "Create a new lobby",
+                "parameters": [
+                    {
+                        "description": "lobby creation request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/lobby.CreateLobbyArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Lobby successfully created",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/lobby/get_lobby": {
+            "get": {
+                "description": "This endpoint gets a multiplayer lobby's info.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lobby"
+                ],
+                "summary": "Gets a lobby",
+                "parameters": [
+                    {
+                        "description": "lobby acquisition request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/lobby.GetLobbyArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lobby successfully retrieved",
+                        "schema": {
+                            "$ref": "#/definitions/lobby.Lobby"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -376,6 +468,64 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "OK"
+                }
+            }
+        },
+        "lobby.CreateLobbyArgs": {
+            "description": "Structure for the lobby creation request payload.",
+            "type": "object",
+            "properties": {
+                "lobby": {
+                    "description": "The lobby to create.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/lobby.Lobby"
+                        }
+                    ]
+                },
+                "password": {
+                    "description": "FIXME make passwords actually get stored with lobbies\nThe password for the lobby to be created",
+                    "type": "string"
+                }
+            }
+        },
+        "lobby.GetLobbyArgs": {
+            "description": "Structure for the lobby acquisition request payload.",
+            "type": "object",
+            "properties": {
+                "lobby_id": {
+                    "description": "The lobby ID for the lobby that will be retrieved.",
+                    "type": "string"
+                }
+            }
+        },
+        "lobby.Lobby": {
+            "description": "Structure for representing a player lobby.",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "ID is the unique identifier for the lobby.",
+                    "type": "string"
+                },
+                "is_closed": {
+                    "description": "IsClosed indicates if the lobby is closed.",
+                    "type": "boolean"
+                },
+                "is_muted": {
+                    "description": "IsMuted indicates if the lobby is muted.",
+                    "type": "boolean"
+                },
+                "is_public": {
+                    "description": "IsPublic indicates if the lobby is public.",
+                    "type": "boolean"
+                },
+                "name": {
+                    "description": "Name is the name of the lobby.",
+                    "type": "string"
+                },
+                "owner_name": {
+                    "description": "OwnerName is the name of the lobby owner.",
+                    "type": "string"
                 }
             }
         }
