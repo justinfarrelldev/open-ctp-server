@@ -40,13 +40,11 @@ func GetAccount(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 	queryParams := r.URL.Query()
 	accountIdStr := queryParams.Get("account_id")
 	if accountIdStr == "" {
-		http.Error(w, "account_id is required", http.StatusBadRequest)
 		return errors.New("account_id is required")
 	}
 
 	accountId, err := strconv.ParseInt(accountIdStr, 10, 64)
 	if err != nil {
-		http.Error(w, "invalid account_id", http.StatusBadRequest)
 		return errors.New("invalid account_id")
 	}
 

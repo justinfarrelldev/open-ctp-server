@@ -1,7 +1,6 @@
 package account
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -34,9 +33,7 @@ func TestGetAccount_Success(t *testing.T) {
 		WithArgs(accountID).
 		WillReturnRows(rows)
 
-	args := GetAccountArgs{AccountId: accountID}
-	body, _ := json.Marshal(args)
-	req, err := http.NewRequest("GET", "/account/get_account", bytes.NewBuffer(body))
+	req, err := http.NewRequest("GET", "/account/get_account?account_id=1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,9 +76,7 @@ func TestGetAccount_NotFound(t *testing.T) {
 		WithArgs(accountID).
 		WillReturnError(sql.ErrNoRows)
 
-	args := GetAccountArgs{AccountId: accountID}
-	body, _ := json.Marshal(args)
-	req, err := http.NewRequest("GET", "/account/get_account", bytes.NewBuffer(body))
+	req, err := http.NewRequest("GET", "/account/get_account?account_id=1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +108,7 @@ func TestGetAccount_InvalidMethod(t *testing.T) {
 	}
 	defer db.Close()
 
-	req, err := http.NewRequest("POST", "/account/get_account", nil)
+	req, err := http.NewRequest("POST", "/account/get_account?account_id=1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +140,7 @@ func TestGetAccount_DecodeError(t *testing.T) {
 	}
 	defer db.Close()
 
-	req, err := http.NewRequest("GET", "/account/get_account", bytes.NewBuffer([]byte("invalid json")))
+	req, err := http.NewRequest("GET", "/account/get_account?account_id=invalid", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -164,8 +159,8 @@ func TestGetAccount_DecodeError(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
 	}
 
-	expectedError := "an error occurred while decoding the request body:invalid character 'i' looking for beginning of value"
-	if strings.TrimSpace(rr.Body.String()) != expectedError {
-		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedError)
+	expectedError := "invalid account_id"
+	if strings.ReplaceAll(strings.TrimSpace(rr.Body.String()), "\n", "") != expectedError {
+		t.Errorf("handler returned unexpected body: got %v want %v", strings.ReplaceAll(strings.TrimSpace(rr.Body.String()), "\n", ""), expectedError)
 	}
 }
