@@ -270,6 +270,52 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/lobby/get_lobby": {
+            "get": {
+                "description": "This endpoint gets a multiplayer lobby's info.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lobby"
+                ],
+                "summary": "Gets a lobby",
+                "parameters": [
+                    {
+                        "description": "lobby acquisition request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/lobby.GetLobbyArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lobby successfully retrieved",
+                        "schema": {
+                            "$ref": "#/definitions/lobby.Lobby"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -439,6 +485,16 @@ const docTemplate = `{
                 },
                 "password": {
                     "description": "The password for the lobby to be created",
+                    "type": "string"
+                }
+            }
+        },
+        "lobby.GetLobbyArgs": {
+            "description": "Structure for the lobby acquisition request payload.",
+            "type": "object",
+            "properties": {
+                "lobby_id": {
+                    "description": "The lobby ID for the lobby that will be retrieved.",
                     "type": "string"
                 }
             }

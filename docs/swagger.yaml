@@ -121,6 +121,13 @@ definitions:
         description: The password for the lobby to be created
         type: string
     type: object
+  lobby.GetLobbyArgs:
+    description: Structure for the lobby acquisition request payload.
+    properties:
+      lobby_id:
+        description: The lobby ID for the lobby that will be retrieved.
+        type: string
+    type: object
   lobby.Lobby:
     description: Structure for representing a player lobby.
     properties:
@@ -321,6 +328,37 @@ paths:
           description: Internal Server Error
           schema: {}
       summary: Create a new lobby
+      tags:
+      - lobby
+  /lobby/get_lobby:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint gets a multiplayer lobby's info.
+      parameters:
+      - description: lobby acquisition request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/lobby.GetLobbyArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lobby successfully retrieved
+          schema:
+            $ref: '#/definitions/lobby.Lobby'
+        "400":
+          description: Bad Request
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Gets a lobby
       tags:
       - lobby
 swagger: "2.0"
