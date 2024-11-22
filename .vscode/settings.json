@@ -23,6 +23,7 @@
     "protos",
     "Spyroviper",
     "sqlmock",
+    "sqlx",
     "Supabase",
     "Taskfile",
     "Unassigning"

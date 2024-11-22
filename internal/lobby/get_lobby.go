@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // GetLobbyArgs represents the expected structure of the request body for getting a lobby.
@@ -30,7 +32,7 @@ type GetLobbyArgs struct {
 // @Failure 403 {object} error "Forbidden"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /lobby/get_lobby [get]
-func GetLobby(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
+func GetLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 
 	if r.Method != "GET" {
 		return errors.New("invalid request; request must be a GET request")
@@ -47,32 +49,14 @@ func GetLobby(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 		return errors.New("an error occurred while decoding the request body: " + err.Error())
 	}
 
-	// TODO add sqlx so we don't have to manually provision row results from .Scan
-	var (
-		id        string
-		name      string
-		ownerName string
-		isClosed  bool
-		isMuted   bool
-		isPublic  bool
-	)
+	var lobby Lobby
 
-	if err := db.QueryRow("SELECT id, name, owner_name, is_closed, is_muted, is_public FROM lobby WHERE id = $1", argsGotten.LobbyId).
-		Scan(&id, &name, &ownerName, &isClosed, &isMuted, &isPublic); err != nil {
+	query := "SELECT id, name, owner_name, is_closed, is_muted, is_public FROM lobby WHERE id = $1"
+	if err := db.Get(&lobby, query, argsGotten.LobbyId); err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("no lobby exists with the ID %d", argsGotten.LobbyId)
 		}
 		return fmt.Errorf("an error occurred while getting the lobby with the ID %d: %v", argsGotten.LobbyId, err)
-	}
-
-	// Now assemble the variables into the Lobby struct
-	lobby := Lobby{
-		ID:        id,
-		Name:      name,
-		OwnerName: ownerName,
-		IsClosed:  isClosed,
-		IsMuted:   isMuted,
-		IsPublic:  isPublic,
 	}
 
 	lobbyBytes, err := json.Marshal(lobby)
