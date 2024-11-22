@@ -493,7 +493,7 @@ const docTemplate = `{
             "properties": {
                 "id": {
                     "description": "ID is the unique identifier for the lobby.",
-                    "type": "string"
+                    "type": "integer"
                 },
                 "is_closed": {
                     "description": "IsClosed indicates if the lobby is closed.",
