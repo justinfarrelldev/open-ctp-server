@@ -13,7 +13,7 @@ import (
 // @Description Structure for the lobby acquisition request payload.
 type GetLobbyArgs struct {
 	// The lobby ID for the lobby that will be retrieved.
-	LobbyId string `json:"lobby_id"`
+	LobbyId int8 `json:"lobby_id"`
 }
 
 // GetLobby gets a lobby by the lobby ID.
