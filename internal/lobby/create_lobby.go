@@ -6,6 +6,8 @@ import (
 	"errors"
 	"net/http"
 	"net/mail"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // CreateLobbyArgs represents the expected structure of the request body for creating a lobby for use within the server.
@@ -59,7 +61,7 @@ func isEmailValid(email string, db *sql.DB) (bool, error) {
 // @Failure 403 {object} error "Forbidden"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /lobby/create_lobby [post]
-func CreateLobby(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
+func CreateLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 
 	if r.Method != "POST" {
 		return errors.New("invalid request; request must be a POST request")
@@ -102,7 +104,7 @@ func CreateLobby(w http.ResponseWriter, r *http.Request, db *sql.DB) error {
 	return nil
 }
 
-func storeLobby(lobby *Lobby, db *sql.DB) error {
+func storeLobby(lobby *Lobby, db *sqlx.DB) error {
 	result, err := db.Query(
 		"INSERT INTO lobby (name, owner_name, is_closed, is_muted, is_public) VALUES ($1, $2, $3, $4, $5)",
 		lobby.Name, lobby.OwnerName, lobby.IsClosed, lobby.IsMuted, lobby.IsPublic,
