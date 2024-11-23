@@ -40,6 +40,8 @@ const ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD = "password is required when passw
 func CreateGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 
 	if r.Method != "POST" {
+		w.WriteHeader(http.StatusBadRequest)
+
 		return errors.New("invalid request; request must be a POST request")
 	}
 

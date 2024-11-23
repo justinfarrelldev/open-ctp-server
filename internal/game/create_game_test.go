@@ -168,3 +168,58 @@ func TestGameHandler_Failure(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 }
+
+func TestCreateGame_InvalidMethod(t *testing.T) {
+	// Create a test request with a method other than POST
+	req, err := http.NewRequest("GET", "/game/create_game", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a ResponseRecorder to capture the response
+	rr := httptest.NewRecorder()
+
+	// DB is not needed for this test
+	var mockDB *sqlx.DB = nil
+
+	// Call the function to test
+	err = CreateGame(rr, req, mockDB)
+
+	// Check if the error is what we expect
+	expectedError := "invalid request; request must be a POST request"
+	if err == nil || err.Error() != expectedError {
+		t.Errorf("CreateGame() error = %v, wantErr %v", err, expectedError)
+	}
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+}
+
+func TestCreateGame_DecodeError(t *testing.T) {
+	// Create a test request with an invalid JSON body
+	invalidJSON := `{"password_protected": true, "password": 123}`
+	req, err := http.NewRequest("POST", "/game/create_game", bytes.NewBufferString(invalidJSON))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a ResponseRecorder to capture the response
+	rr := httptest.NewRecorder()
+
+	// DB is not needed for this test
+	var mockDB *sqlx.DB = nil
+
+	// Call the function to test
+	err = CreateGame(rr, req, mockDB)
+
+	// Check if the error is what we expect
+	expectedError := "an error occurred while decoding the request body:json: cannot unmarshal number into Go struct field CreateGameArgs.password of type string"
+	if err == nil || err.Error() != expectedError {
+		t.Errorf("CreateGame() error = %v, wantErr %v", err, expectedError)
+	}
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+}
