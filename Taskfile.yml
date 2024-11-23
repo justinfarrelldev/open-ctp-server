@@ -18,7 +18,7 @@ tasks:
 
   test-coverage:
     cmds:
-      - go test -cover ./...
+      - go test -cover ./internal/...
 
 
   docs:
