@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -62,5 +63,43 @@ func TestCreateGame_PasswordRequiredWhenPasswordProtectedIsTrue(t *testing.T) {
 	expectedError := ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD
 	if err == nil || err.Error() != expectedError {
 		t.Errorf("CreateGame() error = %v, wantErr %v", err, expectedError)
+	}
+}
+
+func TestCreateGame_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	game := CreateGameArgs{
+		PasswordProtected: true,
+		Password:          "password123",
+	}
+
+	mock.ExpectQuery("INSERT INTO game \\(password_protected, password\\) VALUES \\(\\$1, \\$2\\)").
+		WithArgs(game.PasswordProtected, game.Password).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+	jsonBody, _ := json.Marshal(game)
+	req, err := http.NewRequest("POST", "/game/create_game", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := CreateGame(w, r, sqlxDB)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusCreated {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusCreated)
 	}
 }
