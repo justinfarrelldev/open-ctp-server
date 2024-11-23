@@ -17,4 +17,4 @@ jobs:
       - name: Install dependencies
         run: go install
       - name: Check code coverage
-        run: task test-coverage
+        run: go test -cover ./...
