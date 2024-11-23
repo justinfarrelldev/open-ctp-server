@@ -64,6 +64,8 @@ func isEmailValid(email string, db *sqlx.DB) (bool, error) {
 func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 
 	if r.Method != "POST" {
+		w.WriteHeader(http.StatusBadRequest)
+
 		return errors.New("invalid request; request must be a POST request")
 	}
 
