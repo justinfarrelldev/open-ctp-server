@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 	if rc == 0 && testing.CoverMode() != "" {
 		c := testing.Coverage()
 		if c < 0.8 {
-			fmt.Println("Tests passed but coverage failed at", c)
+			fmt.Printf("Tests passed but coverage failed at %.2f%%\n", c*100)
 			rc = -1
 		}
 	}
