@@ -195,3 +195,89 @@ func TestUpdateAccount_Success(t *testing.T) {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
+
+func TestUpdateAccount_MissingPassword(t *testing.T) {
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	accountID := int64(1)
+	name := "Updated Name"
+
+	updateArgs := UpdateAccountArgs{
+		AccountId: &accountID,
+		Account: &AccountParam{
+			Name: &name,
+		},
+	}
+
+	body, _ := json.Marshal(updateArgs)
+	req, err := http.NewRequest("PUT", "/account/update_account", bytes.NewBuffer(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := UpdateAccount(w, r, sqlxDB)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+
+	expectedError := "the password for the account must be specified"
+	if strings.TrimSpace(rr.Body.String()) != expectedError {
+		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedError)
+	}
+}
+
+func TestUpdateAccount_MissingAccount(t *testing.T) {
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	accountID := int64(1)
+	password := "password123"
+
+	updateArgs := UpdateAccountArgs{
+		AccountId: &accountID,
+		Password:  &password,
+	}
+
+	body, _ := json.Marshal(updateArgs)
+	req, err := http.NewRequest("PUT", "/account/update_account", bytes.NewBuffer(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := UpdateAccount(w, r, sqlxDB)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+
+	expectedError := "account must be specified"
+	if strings.TrimSpace(rr.Body.String()) != expectedError {
+		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedError)
+	}
+}
