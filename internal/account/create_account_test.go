@@ -170,3 +170,102 @@ func TestCreateAccount_Success(t *testing.T) {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
+
+func TestCreateAccount_ExperienceLevelTooLow(t *testing.T) {
+	account := CreateAccountArgs{
+		Account: Account{
+			Name:            "Test User",
+			Info:            "Test Info",
+			Location:        "Test Location",
+			Email:           "test@example.com",
+			ExperienceLevel: -1,
+		},
+		Password: "password123",
+	}
+
+	jsonBody, _ := json.Marshal(account)
+	req, err := http.NewRequest("POST", "/account/create_account", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	var mockDB *sqlx.DB = nil
+
+	err = CreateAccount(rr, req, mockDB)
+
+	expectedError := "experience_level must be between 0 and 5 (0=easy, 5=impossible)"
+	if err == nil || err.Error() != expectedError {
+		t.Errorf("CreateAccount() error = %v, wantErr %v", err, expectedError)
+	}
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+}
+
+func TestCreateAccount_ExperienceLevelTooHigh(t *testing.T) {
+	account := CreateAccountArgs{
+		Account: Account{
+			Name:            "Test User",
+			Info:            "Test Info",
+			Location:        "Test Location",
+			Email:           "test@example.com",
+			ExperienceLevel: 6,
+		},
+		Password: "password123",
+	}
+
+	jsonBody, _ := json.Marshal(account)
+	req, err := http.NewRequest("POST", "/account/create_account", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	var mockDB *sqlx.DB = nil
+
+	err = CreateAccount(rr, req, mockDB)
+
+	expectedError := "experience_level must be between 0 and 5 (0=easy, 5=impossible)"
+	if err == nil || err.Error() != expectedError {
+		t.Errorf("CreateAccount() error = %v, wantErr %v", err, expectedError)
+	}
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+}
+
+func TestCreateAccount_InvalidEmail(t *testing.T) {
+	account := CreateAccountArgs{
+		Account: Account{
+			Name:            "Test User",
+			Info:            "Test Info",
+			Location:        "Test Location",
+			Email:           "invalid-email",
+			ExperienceLevel: 3,
+		},
+		Password: "password123",
+	}
+
+	jsonBody, _ := json.Marshal(account)
+	req, err := http.NewRequest("POST", "/account/create_account", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	var mockDB *sqlx.DB = nil
+
+	err = CreateAccount(rr, req, mockDB)
+
+	expectedError := "an error occurred while checking whether the email for the account is valid: mail: missing '@' or angle-addr"
+	if err == nil || err.Error() != expectedError {
+		t.Errorf("CreateAccount() error = %v, wantErr %v", err, expectedError)
+	}
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+}

@@ -102,7 +102,7 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 	isValidEmail, err := isEmailValid(account.Account.Email, db)
 
 	if err != nil {
-		w.WriteHeader(http.StatusForbidden)
+		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
 
