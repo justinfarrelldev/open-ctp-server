@@ -107,17 +107,20 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 	}
 
 	if !isValidEmail {
+		w.WriteHeader(http.StatusBadRequest)
 		return errors.New("the provided email is not valid")
 	}
 
 	hashSalt, err := auth.Hasher.GenerateHash([]byte(account.Password), nil)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		log.Println("error saving a password: ", err.Error())
 		return errors.New("an error occurred while saving the password. Please try again later")
 	}
 
 	err = storeAccount(&account.Account, db)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		log.Println("error saving an account: ", err.Error())
 		// Different from the one above for debugging purposes
 		return errors.New("an error occurred while creating the account. Please try again at a later time")
@@ -125,6 +128,8 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 
 	err = auth.StoreHashAndSalt(hashSalt, account.Account.Email, db)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
 		log.Println("error saving a password: ", err.Error())
 		// Different from the one above for debugging purposes
 		return errors.New("an error occurred while saving the password. Please try again at a later time")
