@@ -155,17 +155,3 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 	w.Write([]byte("Successfully updated account!"))
 	return nil
 }
-
-func getStringValue(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
-
-func getIntValue(i *int) int {
-	if i == nil {
-		return 0
-	}
-	return *i
-}
