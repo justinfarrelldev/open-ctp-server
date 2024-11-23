@@ -163,3 +163,36 @@ func TestGetAccount_DecodeError(t *testing.T) {
 		t.Errorf("handler returned unexpected body: got %v want %v", strings.ReplaceAll(strings.TrimSpace(rr.Body.String()), "\n", ""), expectedError)
 	}
 }
+
+func TestGetAccount_MissingAccountID(t *testing.T) {
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	req, err := http.NewRequest("GET", "/account/get_account", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := GetAccount(w, r, sqlxDB)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	expectedError := "account_id is required"
+	if strings.TrimSpace(rr.Body.String()) != expectedError {
+		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedError)
+	}
+}

@@ -14,8 +14,8 @@ import (
 //
 // @Description Structure containing both a salt and a hash for password storage.
 type hashSalt struct {
-	hash []byte
-	salt []byte
+	Hash []byte
+	Salt []byte
 }
 
 type argon2idHash struct {
@@ -79,7 +79,7 @@ func (a *argon2idHash) GenerateHash(password, salt []byte) (*hashSalt, error) {
 	hash := argon2.IDKey(password, salt, a.time, a.memory, a.threads, a.keyLen)
 
 	// Return the generated hash and salt used for storage.
-	return &hashSalt{hash: hash, salt: salt}, nil
+	return &hashSalt{Hash: hash, Salt: salt}, nil
 
 }
 
@@ -94,7 +94,7 @@ func (a *argon2idHash) Compare(hash, salt, password []byte) error {
 
 	// Compare the generated hash with the stored hash.
 	// If they don't match return error.
-	if !bytes.Equal(hash, hashSalt.hash) {
+	if !bytes.Equal(hash, hashSalt.Hash) {
 		return errors.New("hash doesn't match")
 
 	}
@@ -102,7 +102,7 @@ func (a *argon2idHash) Compare(hash, salt, password []byte) error {
 }
 
 func StoreHashAndSalt(hashSalt *hashSalt, accountEmail string, db *sqlx.DB) error {
-	result, err := db.Query("INSERT INTO passwords (account_email, hash, salt) VALUES ($1, $2, $3)", accountEmail, base64.StdEncoding.EncodeToString(hashSalt.hash), base64.StdEncoding.EncodeToString(hashSalt.salt))
+	result, err := db.Query("INSERT INTO passwords (account_email, hash, salt) VALUES ($1, $2, $3)", accountEmail, base64.StdEncoding.EncodeToString(hashSalt.Hash), base64.StdEncoding.EncodeToString(hashSalt.Salt))
 	if err != nil {
 		return errors.New("an error occurred while inserting a hash-salt pair into the database: " + err.Error())
 	}

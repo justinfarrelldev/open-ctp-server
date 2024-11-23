@@ -50,7 +50,6 @@ func GetAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 		return errors.New("invalid account_id")
 	}
 
-	// TODO add sqlx so we don't have to manually provision row results from .Scan
 	var (
 		name            string
 		info            string

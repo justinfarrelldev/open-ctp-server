@@ -16,6 +16,11 @@ tasks:
     cmds:
       - go test ./...
 
+  test-coverage:
+    cmds:
+      - go test -cover ./internal/...
+
+
   docs:
     cmds:
       - swag init # Regenerates docs according to the Swagger specs

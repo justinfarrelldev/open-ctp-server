@@ -1,8 +1,9 @@
 {
-    "recommendations": [
-        "golang.go",
-        "streetsidesoftware.code-spell-checker",
-        "sankethdev.vscode-proto",
-        "wayou.vscode-todo-highlight"
-    ]
+  "recommendations": [
+    "golang.go",
+    "streetsidesoftware.code-spell-checker",
+    "sankethdev.vscode-proto",
+    "wayou.vscode-todo-highlight",
+    "soren.go-coverage-viewer"
+  ]
 }
