@@ -1,0 +1,20 @@
+# example 2: on merge to master from pull request (recommended)
+name: Check test coverage
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go 1.23.x
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.0"
+      - name: Install dependencies
+        run: go install
+      - name: Check code coverage
+        run: task test-coverage
