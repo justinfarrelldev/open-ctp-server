@@ -19,12 +19,12 @@ func TestGenerateHash(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	if len(hashSalt.hash) == 0 {
+	if len(hashSalt.Hash) == 0 {
 		t.Error("expected hash to be generated")
 	}
 
-	if len(hashSalt.salt) != int(hasher.saltLen) {
-		t.Errorf("expected salt length to be %d, got %d", hasher.saltLen, len(hashSalt.salt))
+	if len(hashSalt.Salt) != int(hasher.saltLen) {
+		t.Errorf("expected salt length to be %d, got %d", hasher.saltLen, len(hashSalt.Salt))
 	}
 }
 
@@ -37,13 +37,13 @@ func TestCompare(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	err = hasher.Compare(hashSalt.hash, hashSalt.salt, password)
+	err = hasher.Compare(hashSalt.Hash, hashSalt.Salt, password)
 	if err != nil {
 		t.Errorf("expected hashes to match, got error %v", err)
 	}
 
 	wrongPassword := []byte("wrongpassword")
-	err = hasher.Compare(hashSalt.hash, hashSalt.salt, wrongPassword)
+	err = hasher.Compare(hashSalt.Hash, hashSalt.Salt, wrongPassword)
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -68,7 +68,7 @@ func TestStoreHashAndSalt(t *testing.T) {
 
 	accountEmail := "test@example.com"
 	mock.ExpectQuery("INSERT INTO passwords").
-		WithArgs(accountEmail, base64.StdEncoding.EncodeToString(hashSalt.hash), base64.StdEncoding.EncodeToString(hashSalt.salt)).
+		WithArgs(accountEmail, base64.StdEncoding.EncodeToString(hashSalt.Hash), base64.StdEncoding.EncodeToString(hashSalt.Salt)).
 		WillReturnRows(sqlmock.NewRows([]string{"account_email"}))
 
 	err = StoreHashAndSalt(hashSalt, accountEmail, sqlxDB)
