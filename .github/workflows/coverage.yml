@@ -22,7 +22,7 @@ jobs:
           go test ./... -coverprofile=coverage.out
           total_coverage=$(go tool cover -func=coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+')
           echo "Total coverage: $total_coverage"
-          if (( $(echo $total_coverage 0.8 | awk '{print ($1 > $2)}' ) )); then
+          if (( $(echo $total_coverage 0.8 | awk '{print ($1 < $2)}' ) )); then
             echo "Code coverage is above 80%!"
           else
             echo "Code coverage is below 80%!"
