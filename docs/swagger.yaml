@@ -116,6 +116,13 @@ definitions:
           The password for the lobby to be created
         type: string
     type: object
+  lobby.DeleteLobbyArgs:
+    description: Structure for the lobby deletion request payload.
+    properties:
+      lobby_id:
+        description: The lobby ID for the lobby that will be deleted.
+        type: integer
+    type: object
   lobby.GetLobbyArgs:
     description: Structure for the lobby acquisition request payload.
     properties:
@@ -355,6 +362,37 @@ paths:
           description: Internal Server Error
           schema: {}
       summary: Create a new lobby
+      tags:
+      - lobby
+  /lobby/delete_lobby:
+    delete:
+      consumes:
+      - application/json
+      description: This endpoint deletes a multiplayer lobby.
+      parameters:
+      - description: lobby deletion request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/lobby.DeleteLobbyArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted lobby!
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Deletes a lobby
       tags:
       - lobby
   /lobby/get_lobby:

@@ -133,6 +133,10 @@ func main() {
 		lobby.UpdateLobbyHandler(w, r, db)
 	}))
 
+	mux.Handle("/lobby/delete_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+		lobby.DeleteLobbyHandler(w, r, db)
+	}))
+
 	mux.Handle("/health", tollbooth.LimitFuncHandler(tollboothLimiterHealth, health.HealthCheckHandler))
 	mux.Handle("/docs/", http.StripPrefix("/docs", swaggerui.Handler(spec)))
 

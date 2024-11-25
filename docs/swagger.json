@@ -260,6 +260,52 @@
                 }
             }
         },
+        "/lobby/delete_lobby": {
+            "delete": {
+                "description": "This endpoint deletes a multiplayer lobby.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lobby"
+                ],
+                "summary": "Deletes a lobby",
+                "parameters": [
+                    {
+                        "description": "lobby deletion request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/lobby.DeleteLobbyArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted lobby!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/lobby/get_lobby": {
             "get": {
                 "description": "This endpoint gets a multiplayer lobby's info.",
@@ -511,6 +557,16 @@
                 "password": {
                     "description": "FIXME make passwords actually get stored with lobbies\nThe password for the lobby to be created",
                     "type": "string"
+                }
+            }
+        },
+        "lobby.DeleteLobbyArgs": {
+            "description": "Structure for the lobby deletion request payload.",
+            "type": "object",
+            "properties": {
+                "lobby_id": {
+                    "description": "The lobby ID for the lobby that will be deleted.",
+                    "type": "integer"
                 }
             }
         },
