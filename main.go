@@ -129,9 +129,9 @@ func main() {
 		lobby.GetLobbyHandler(w, r, db)
 	}))
 
-	// mux.Handle("/lobby/update_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
-	// 	lobby.UpdateLobbyHandler(w, r, db)
-	// }))
+	mux.Handle("/lobby/update_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+		lobby.UpdateLobbyHandler(w, r, db)
+	}))
 
 	mux.Handle("/health", tollbooth.LimitFuncHandler(tollboothLimiterHealth, health.HealthCheckHandler))
 	mux.Handle("/docs/", http.StripPrefix("/docs", swaggerui.Handler(spec)))

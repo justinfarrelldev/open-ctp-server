@@ -314,6 +314,52 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/lobby/update_lobby": {
+            "put": {
+                "description": "This endpoint updates a lobby's info.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lobby"
+                ],
+                "summary": "Updates a lobby",
+                "parameters": [
+                    {
+                        "description": "lobby update request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/lobby.UpdateLobbyArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated lobby!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "lobby_id must be specified",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "an error occurred while decoding the request body: \u003cerror message\u003e",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -514,6 +560,54 @@ const docTemplate = `{
                 "owner_name": {
                     "description": "OwnerName is the name of the lobby owner.",
                     "type": "string"
+                }
+            }
+        },
+        "lobby.LobbyParam": {
+            "description": "Structure for representing a player lobby with non-required fields.",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "ID is the unique identifier for the lobby.",
+                    "type": "integer"
+                },
+                "is_closed": {
+                    "description": "IsClosed indicates if the lobby is closed.",
+                    "type": "boolean"
+                },
+                "is_muted": {
+                    "description": "IsMuted indicates if the lobby is muted.",
+                    "type": "boolean"
+                },
+                "is_public": {
+                    "description": "IsPublic indicates if the lobby is public.",
+                    "type": "boolean"
+                },
+                "name": {
+                    "description": "Name is the name of the lobby.",
+                    "type": "string"
+                },
+                "owner_name": {
+                    "description": "OwnerName is the name of the lobby owner.",
+                    "type": "string"
+                }
+            }
+        },
+        "lobby.UpdateLobbyArgs": {
+            "description": "Structure for the lobby update request payload.",
+            "type": "object",
+            "properties": {
+                "lobby": {
+                    "description": "The lobby to update.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/lobby.LobbyParam"
+                        }
+                    ]
+                },
+                "lobby_id": {
+                    "description": "The lobby ID for the lobby that will be updated.",
+                    "type": "integer"
                 }
             }
         }
