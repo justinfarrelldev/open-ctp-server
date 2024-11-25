@@ -145,6 +145,39 @@ definitions:
         description: OwnerName is the name of the lobby owner.
         type: string
     type: object
+  lobby.LobbyParam:
+    description: Structure for representing a player lobby with non-required fields.
+    properties:
+      id:
+        description: ID is the unique identifier for the lobby.
+        type: integer
+      is_closed:
+        description: IsClosed indicates if the lobby is closed.
+        type: boolean
+      is_muted:
+        description: IsMuted indicates if the lobby is muted.
+        type: boolean
+      is_public:
+        description: IsPublic indicates if the lobby is public.
+        type: boolean
+      name:
+        description: Name is the name of the lobby.
+        type: string
+      owner_name:
+        description: OwnerName is the name of the lobby owner.
+        type: string
+    type: object
+  lobby.UpdateLobbyArgs:
+    description: Structure for the lobby update request payload.
+    properties:
+      lobby:
+        allOf:
+        - $ref: '#/definitions/lobby.LobbyParam'
+        description: The lobby to update.
+      lobby_id:
+        description: The lobby ID for the lobby that will be updated.
+        type: integer
+    type: object
 info:
   contact:
     email: justinfarrellwebdev@gmail.com
@@ -353,6 +386,37 @@ paths:
           description: Internal Server Error
           schema: {}
       summary: Gets a lobby
+      tags:
+      - lobby
+  /lobby/update_lobby:
+    put:
+      consumes:
+      - application/json
+      description: This endpoint updates a lobby's info.
+      parameters:
+      - description: lobby update request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/lobby.UpdateLobbyArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated lobby!
+          schema:
+            type: string
+        "400":
+          description: lobby_id must be specified
+          schema:
+            type: string
+        "500":
+          description: 'an error occurred while decoding the request body: <error
+            message>'
+          schema:
+            type: string
+      summary: Updates a lobby
       tags:
       - lobby
 swagger: "2.0"
