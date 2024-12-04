@@ -9,6 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
+	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
 func TestCreateAccount_InvalidMethod(t *testing.T) {
@@ -19,8 +20,9 @@ func TestCreateAccount_InvalidMethod(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	var mockDB *sqlx.DB = nil
+	var mockStore *auth.SessionStore = nil
 
-	err = CreateAccount(rr, req, mockDB)
+	_, err = CreateAccount(rr, req, mockDB, mockStore)
 
 	expectedError := "invalid request; request must be a POST request"
 	if err == nil || err.Error() != expectedError {
@@ -28,7 +30,7 @@ func TestCreateAccount_InvalidMethod(t *testing.T) {
 	}
 
 	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 }
 
@@ -41,8 +43,9 @@ func TestCreateAccount_DecodeError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	var mockDB *sqlx.DB = nil
+	var mockStore *auth.SessionStore = nil
 
-	err = CreateAccount(rr, req, mockDB)
+	_, err = CreateAccount(rr, req, mockDB, mockStore)
 
 	expectedError := "an error occurred while decoding the request body:json: cannot unmarshal number into Go struct field CreateAccountArgs.password of type string"
 	if err == nil || err.Error() != expectedError {
@@ -74,8 +77,9 @@ func TestCreateAccount_PasswordTooShort(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	var mockDB *sqlx.DB = nil
+	var mockStore *auth.SessionStore = nil
 
-	err = CreateAccount(rr, req, mockDB)
+	_, err = CreateAccount(rr, req, mockDB, mockStore)
 
 	expectedError := ERROR_PASSWORD_TOO_SHORT
 	if err == nil || err.Error() != expectedError {
@@ -106,8 +110,9 @@ func TestCreateAccount_PasswordRequired(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	var mockDB *sqlx.DB = nil
+	var mockStore *auth.SessionStore = nil
 
-	err = CreateAccount(rr, req, mockDB)
+	_, err = CreateAccount(rr, req, mockDB, mockStore)
 
 	expectedError := ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD
 	if err == nil || err.Error() != expectedError {
@@ -118,6 +123,7 @@ func TestCreateAccount_PasswordRequired(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 }
+
 func TestCreateAccount_Success(t *testing.T) {
 	account := CreateAccountArgs{
 		Account: Account{
@@ -152,12 +158,15 @@ func TestCreateAccount_Success(t *testing.T) {
 
 	mock.ExpectQuery("INSERT INTO account \\(name, info, location, email, experience_level\\) VALUES \\(\\$1, \\$2, \\$3, \\$4, \\$5\\)").
 		WithArgs(account.Account.Name, account.Account.Info, account.Account.Location, account.Account.Email, account.Account.ExperienceLevel).
-		WillReturnRows(sqlmock.NewRows(nil))
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
 	mock.ExpectQuery("INSERT INTO passwords \\(account_email, hash, salt\\) VALUES \\(\\$1, \\$2, \\$3\\)").
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
-	err = CreateAccount(rr, req, sqlxDB)
+	mockStore := &auth.SessionStore{}
+
+	_, err = CreateAccount(rr, req, sqlxDB, mockStore)
 	if err != nil {
 		t.Errorf("CreateAccount() error = %v, wantErr %v", err, nil)
 	}
@@ -191,8 +200,9 @@ func TestCreateAccount_ExperienceLevelTooLow(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	var mockDB *sqlx.DB = nil
+	var mockStore *auth.SessionStore = nil
 
-	err = CreateAccount(rr, req, mockDB)
+	_, err = CreateAccount(rr, req, mockDB, mockStore)
 
 	expectedError := "experience_level must be between 0 and 5 (0=easy, 5=impossible)"
 	if err == nil || err.Error() != expectedError {
@@ -224,8 +234,9 @@ func TestCreateAccount_ExperienceLevelTooHigh(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	var mockDB *sqlx.DB = nil
+	var mockStore *auth.SessionStore = nil
 
-	err = CreateAccount(rr, req, mockDB)
+	_, err = CreateAccount(rr, req, mockDB, mockStore)
 
 	expectedError := "experience_level must be between 0 and 5 (0=easy, 5=impossible)"
 	if err == nil || err.Error() != expectedError {
@@ -257,8 +268,9 @@ func TestCreateAccount_InvalidEmail(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	var mockDB *sqlx.DB = nil
+	var mockStore *auth.SessionStore = nil
 
-	err = CreateAccount(rr, req, mockDB)
+	_, err = CreateAccount(rr, req, mockDB, mockStore)
 
 	expectedError := "an error occurred while checking whether the email for the account is valid: mail: missing '@' or angle-addr"
 	if err == nil || err.Error() != expectedError {
