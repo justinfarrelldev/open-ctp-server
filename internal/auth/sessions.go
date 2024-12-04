@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"time"
 
+	"log"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -40,6 +42,7 @@ func NewSessionStore(db *sqlx.DB) *SessionStore {
 func (s *SessionStore) CreateSession(accountID int) (*Session, error) {
 	sessionID, err := generateSessionID()
 	if err != nil {
+		log.Printf("Error generating session ID: %v", err)
 		return nil, err
 	}
 
@@ -53,9 +56,11 @@ func (s *SessionStore) CreateSession(accountID int) (*Session, error) {
 	query := `INSERT INTO sessions (id, account_id, created_at, expires_at) VALUES (:id, :account_id, :created_at, :expires_at)`
 	_, err = s.db.NamedExec(query, session)
 	if err != nil {
+		log.Printf("Error creating session for account ID %d: %v", accountID, err)
 		return nil, err
 	}
 
+	log.Printf("Session created: %v", session)
 	return session, nil
 }
 
@@ -75,10 +80,14 @@ func (s *SessionStore) GetSession(sessionID string) (*Session, error) {
 	err := s.db.Get(&session, query, sessionID)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			log.Printf("Session not found: %s", sessionID)
 			return nil, nil
 		}
+		log.Printf("Error retrieving session %s: %v", sessionID, err)
 		return nil, err
 	}
+
+	log.Printf("Session retrieved: %v", session)
 	return &session, nil
 }
 
@@ -97,8 +106,11 @@ func (s *SessionStore) DeleteSession(sessionID string) error {
 	query := `DELETE FROM sessions WHERE id = $1`
 	_, err := s.db.Exec(query, sessionID)
 	if err != nil {
+		log.Printf("Error deleting session %s: %v", sessionID, err)
 		return err
 	}
+
+	log.Printf("Session deleted: %s", sessionID)
 	return nil
 }
 
