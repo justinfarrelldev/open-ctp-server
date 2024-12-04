@@ -104,7 +104,7 @@ func (s *SessionStore) DeleteSession(sessionID string) error {
 
 // generateSessionID generates a unique session ID
 func generateSessionID() (string, error) {
-	bytes := make([]byte, 16)
+	bytes := make([]byte, 64)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}
