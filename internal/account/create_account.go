@@ -61,12 +61,12 @@ func isEmailValid(email string, db *sqlx.DB) (bool, error) {
 // @Failure 403 {object} error "Forbidden"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /account/create_account [post]
-func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
+func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) (*string, error) {
 
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusBadRequest)
 
-		return errors.New("invalid request; request must be a POST request")
+		return nil, errors.New("invalid request; request must be a POST request")
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -78,52 +78,52 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
-		return errors.New("an error occurred while decoding the request body:" + err.Error())
+		return nil, errors.New("an error occurred while decoding the request body:" + err.Error())
 	}
 
 	if account.Account.ExperienceLevel < 0 || account.Account.ExperienceLevel > 5 {
 		w.WriteHeader(http.StatusBadRequest)
 
-		return errors.New("experience_level must be between 0 and 5 (0=easy, 5=impossible)")
+		return nil, errors.New("experience_level must be between 0 and 5 (0=easy, 5=impossible)")
 	}
 
 	if account.Password == "" {
 		w.WriteHeader(http.StatusBadRequest)
 
-		return errors.New(ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD)
+		return nil, errors.New(ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD)
 	}
 
 	if len(account.Password) < 6 {
 		w.WriteHeader(http.StatusBadRequest)
 
-		return errors.New(ERROR_PASSWORD_TOO_SHORT)
+		return nil, errors.New(ERROR_PASSWORD_TOO_SHORT)
 	}
 
 	isValidEmail, err := isEmailValid(account.Account.Email, db)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		return err
+		return nil, err
 	}
 
 	if !isValidEmail {
 		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("the provided email is not valid")
+		return nil, errors.New("the provided email is not valid")
 	}
 
 	hashSalt, err := auth.Hasher.GenerateHash([]byte(account.Password), nil)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println("error saving a password: ", err.Error())
-		return errors.New("an error occurred while saving the password. Please try again later")
+		return nil, errors.New("an error occurred while saving the password. Please try again later")
 	}
 
-	err = storeAccount(&account.Account, db)
+	accountId, err := storeAccount(&account.Account, db)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println("error saving an account: ", err.Error())
 		// Different from the one above for debugging purposes
-		return errors.New("an error occurred while creating the account. Please try again at a later time")
+		return nil, errors.New("an error occurred while creating the account. Please try again at a later time")
 	}
 
 	err = auth.StoreHashAndSalt(hashSalt, account.Account.Email, db)
@@ -132,20 +132,36 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 
 		log.Println("error saving a password: ", err.Error())
 		// Different from the one above for debugging purposes
-		return errors.New("an error occurred while saving the password. Please try again at a later time")
+		return nil, errors.New("an error occurred while saving the password. Please try again at a later time")
+	}
+
+	session, err := store.CreateSession(*accountId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		log.Println("error creating a session: ", err.Error())
+		return nil, errors.New("an error occurred while creating a session. Please try again at a later time")
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	fmt.Println("Successfully created account!")
-	return nil
+	return &session.ID, nil
 }
 
-func storeAccount(account *Account, db *sqlx.DB) error {
+func storeAccount(account *Account, db *sqlx.DB) (accountId *int, err error) {
 	result, err := db.Query("INSERT INTO account (name, info, location, email, experience_level) VALUES ($1, $2, $3, $4, $5)", account.Name, account.Info, account.Location, account.Email, account.ExperienceLevel)
 	if err != nil {
-		return errors.New("an error occurred while inserting an account into the database: " + err.Error())
+		return nil, errors.New("an error occurred while inserting an account into the database: " + err.Error())
+	}
+
+	var id *int
+	if result.Next() {
+		err = result.Scan(&id)
+		if err != nil {
+			return nil, errors.New("an error occurred while retrieving the account ID: " + err.Error())
+		}
 	}
 
 	defer result.Close()
-	return nil
+	return id, nil
 }
