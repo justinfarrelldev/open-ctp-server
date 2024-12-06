@@ -131,3 +131,13 @@ func generateSessionID() (string, error) {
 	}
 	return hex.EncodeToString(bytes), nil
 }
+
+// IsExpired checks if the session has expired
+// @Summary Check if session is expired
+// @Description Returns true if the session has expired, false otherwise
+// @Tags sessions
+// @Accept json
+// @Produce json
+func (s *Session) IsExpired() bool {
+	return time.Now().After(s.ExpiresAt)
+}

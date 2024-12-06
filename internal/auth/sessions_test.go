@@ -176,3 +176,43 @@ func TestDeleteSession_Error(t *testing.T) {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
+
+func TestIsExpired(t *testing.T) {
+	tests := []struct {
+		name      string
+		expiresAt time.Time
+		want      bool
+	}{
+		{
+			name:      "not expired - future time",
+			expiresAt: time.Now().Add(1 * time.Hour),
+			want:      false,
+		},
+		{
+			name:      "expired - past time",
+			expiresAt: time.Now().Add(-1 * time.Hour),
+			want:      true,
+		},
+		{
+			name:      "expired - current time",
+			expiresAt: time.Now(),
+			want:      true,
+		},
+		{
+			name:      "not expired - far future",
+			expiresAt: time.Now().Add(24 * time.Hour),
+			want:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			session := &Session{
+				ExpiresAt: tt.expiresAt,
+			}
+			if got := session.IsExpired(); got != tt.want {
+				t.Errorf("Session.IsExpired() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
