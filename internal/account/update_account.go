@@ -22,6 +22,8 @@ type UpdateAccountArgs struct {
 	Password *string `json:"password"`
 	// The account ID for the account that will be updated.
 	AccountId *int64 `json:"account_id"`
+	// A valid session ID for the account (so we know they are signed in)
+	SessionId *int64 `json:"session_id"`
 }
 
 // UpdateAccount updates an account by the account ID.
@@ -36,7 +38,7 @@ type UpdateAccountArgs struct {
 // @Failure 400 {string} string "account_id must be specified"
 // @Failure 500 {string} string "an error occurred while decoding the request body: <error message>"
 // @Router /account/update_account [put]
-func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
+func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 
 	if r.Method != http.MethodPut {
 		return errors.New("invalid request; request must be a PUT request")
@@ -56,6 +58,29 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 	if args.AccountId == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return errors.New("account_id must be specified")
+	}
+
+	if args.SessionId == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return errors.New("a valid session_id must be specified")
+	}
+
+	session, err := store.GetSession(string(*args.SessionId))
+
+	if err != nil {
+
+		w.WriteHeader(http.StatusInternalServerError)
+		return errors.New("an error occurred while retrieving the session: " + err.Error())
+	}
+
+	if session == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return errors.New("session not found")
+	}
+
+	if session.IsExpired() {
+		w.WriteHeader(http.StatusForbidden)
+		return errors.New("session has expired")
 	}
 
 	if args.Password == nil {
