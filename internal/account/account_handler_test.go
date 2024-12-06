@@ -65,7 +65,7 @@ func TestCreateAccountHandler_InvalidMethod(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	store := auth.NewSessionStore(sqlxDB)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		CreateAccount(w, r, sqlxDB, store)
+		CreateAccountHandler(w, r, sqlxDB, store)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -96,7 +96,7 @@ func TestCreateAccountHandler_DecodeError(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	store := auth.NewSessionStore(sqlxDB)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		CreateAccount(w, r, sqlxDB, store)
+		CreateAccountHandler(w, r, sqlxDB, store)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -127,7 +127,7 @@ func TestCreateAccountHandler_EmailRequired(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	store := auth.NewSessionStore(sqlxDB)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		CreateAccount(w, r, sqlxDB, store)
+		CreateAccountHandler(w, r, sqlxDB, store)
 	})
 
 	handler.ServeHTTP(rr, req)
