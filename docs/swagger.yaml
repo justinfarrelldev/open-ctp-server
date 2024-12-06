@@ -81,6 +81,10 @@ definitions:
       password:
         description: The password for the account to be created
         type: string
+      session_id:
+        description: A valid session ID for the account (so we know they are signed
+          in)
+        type: integer
     type: object
   auth.Session:
     properties:
