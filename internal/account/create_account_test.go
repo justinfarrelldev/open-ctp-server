@@ -123,7 +123,6 @@ func TestCreateAccount_PasswordRequired(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 }
-
 func TestCreateAccount_Success(t *testing.T) {
 	account := CreateAccountArgs{
 		Account: Account{
@@ -163,6 +162,10 @@ func TestCreateAccount_Success(t *testing.T) {
 	mock.ExpectQuery("INSERT INTO passwords \\(account_email, hash, salt\\) VALUES \\(\\$1, \\$2, \\$3\\)").
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+	mock.ExpectExec("INSERT INTO sessions \\(id, account_id, created_at, expires_at\\) VALUES \\(\\?, \\?, \\?, \\?\\)").
+		WithArgs(sqlmock.AnyArg(), 1, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	mockStore := &auth.SessionStore{
 		DB: sqlxDB,
