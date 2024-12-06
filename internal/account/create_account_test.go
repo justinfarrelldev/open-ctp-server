@@ -164,7 +164,9 @@ func TestCreateAccount_Success(t *testing.T) {
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
-	mockStore := &auth.SessionStore{}
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
 
 	_, err = CreateAccount(rr, req, sqlxDB, mockStore)
 	if err != nil {

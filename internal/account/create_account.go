@@ -149,19 +149,11 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 }
 
 func storeAccount(account *Account, db *sqlx.DB) (accountId *int, err error) {
-	result, err := db.Query("INSERT INTO account (name, info, location, email, experience_level) VALUES ($1, $2, $3, $4, $5)", account.Name, account.Info, account.Location, account.Email, account.ExperienceLevel)
+	var id int
+	err = db.QueryRow("INSERT INTO account (name, info, location, email, experience_level) VALUES ($1, $2, $3, $4, $5) RETURNING id", account.Name, account.Info, account.Location, account.Email, account.ExperienceLevel).Scan(&id)
 	if err != nil {
 		return nil, errors.New("an error occurred while inserting an account into the database: " + err.Error())
 	}
 
-	var id *int
-	if result.Next() {
-		err = result.Scan(&id)
-		if err != nil {
-			return nil, errors.New("an error occurred while retrieving the account ID: " + err.Error())
-		}
-	}
-
-	defer result.Close()
-	return id, nil
+	return &id, nil
 }

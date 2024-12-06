@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"errors"
 	"time"
 
 	"log"
@@ -21,12 +22,15 @@ type Session struct {
 
 // SessionStore handles session-related database operations
 type SessionStore struct {
-	db *sqlx.DB
+	DB *sqlx.DB
 }
 
 // NewSessionStore creates a new SessionStore
 func NewSessionStore(db *sqlx.DB) *SessionStore {
-	return &SessionStore{db: db}
+	if db == nil {
+		log.Println("Database connection is nil")
+	}
+	return &SessionStore{DB: db}
 }
 
 // CreateSession creates a new session for a user
@@ -46,6 +50,11 @@ func (s *SessionStore) CreateSession(accountID int) (*Session, error) {
 		return nil, err
 	}
 
+	if s.DB == nil {
+		log.Println("Database connection is nil")
+		return nil, errors.New("Database connection is nil")
+	}
+
 	session := &Session{
 		ID:        sessionID,
 		AccountID: accountID,
@@ -54,7 +63,7 @@ func (s *SessionStore) CreateSession(accountID int) (*Session, error) {
 	}
 
 	query := `INSERT INTO sessions (id, account_id, created_at, expires_at) VALUES (:id, :account_id, :created_at, :expires_at)`
-	_, err = s.db.NamedExec(query, session)
+	_, err = s.DB.NamedExec(query, session)
 	if err != nil {
 		log.Printf("Error creating session for account ID %d: %v", accountID, err)
 		return nil, err
@@ -77,7 +86,7 @@ func (s *SessionStore) CreateSession(accountID int) (*Session, error) {
 func (s *SessionStore) GetSession(sessionID string) (*Session, error) {
 	var session Session
 	query := `SELECT * FROM sessions WHERE id = $1`
-	err := s.db.Get(&session, query, sessionID)
+	err := s.DB.Get(&session, query, sessionID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Printf("Session not found: %s", sessionID)
@@ -104,7 +113,7 @@ func (s *SessionStore) GetSession(sessionID string) (*Session, error) {
 // @Router /sessions/{id} [delete]
 func (s *SessionStore) DeleteSession(sessionID string) error {
 	query := `DELETE FROM sessions WHERE id = $1`
-	_, err := s.db.Exec(query, sessionID)
+	_, err := s.DB.Exec(query, sessionID)
 	if err != nil {
 		log.Printf("Error deleting session %s: %v", sessionID, err)
 		return err
