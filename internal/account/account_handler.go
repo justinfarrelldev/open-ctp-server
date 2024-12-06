@@ -24,8 +24,8 @@ func GetAccountHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	}
 }
 
-func UpdateAccountHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
-	if err := UpdateAccount(w, r, db); err != nil {
+func UpdateAccountHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	if err := UpdateAccount(w, r, db, store); err != nil {
 		// Handle the error, e.g., log it and send an appropriate response to the client
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
