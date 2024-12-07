@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -58,6 +59,11 @@ func CreateLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 		w.WriteHeader(http.StatusBadRequest)
 
 		return errors.New(ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD)
+	}
+
+	if _, err := strconv.ParseInt(lobby.Lobby.OwnerAccountId, 10, 64); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return errors.New("OwnerAccountId must be a valid number")
 	}
 
 	if len(lobby.Password) < 6 {

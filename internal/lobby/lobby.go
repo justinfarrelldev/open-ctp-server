@@ -14,7 +14,7 @@ type Lobby struct {
 	OwnerName string `json:"owner_name" db:"owner_name"`
 
 	// OwnerAccountId is the account ID of the lobby owner.
-	OwnerAccountId int64 `json:"owner_account_id" db:"owner_account_id"`
+	OwnerAccountId string `json:"owner_account_id" db:"owner_account_id"`
 
 	// IsClosed indicates if the lobby is closed.
 	IsClosed bool `json:"is_closed" db:"is_closed"`
@@ -40,7 +40,7 @@ type LobbyParam struct {
 	OwnerName *string `json:"owner_name,omitempty" db:"owner_name"`
 
 	// OwnerAccountId is the account ID of the lobby owner.
-	OwnerAccountId *int64 `json:"owner_account_id,omitempty" db:"owner_account_id"`
+	OwnerAccountId *string `json:"owner_account_id,omitempty" db:"owner_account_id"`
 
 	// IsClosed indicates if the lobby is closed.
 	IsClosed *bool `json:"is_closed,omitempty" db:"is_closed"`
