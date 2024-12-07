@@ -88,8 +88,8 @@ func CreateLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *aut
 
 func storeLobby(lobby *Lobby, db *sqlx.DB) error {
 	result, err := db.Query(
-		"INSERT INTO lobby (name, owner_name, is_closed, is_muted, is_public) VALUES ($1, $2, $3, $4, $5)",
-		lobby.Name, lobby.OwnerName, lobby.IsClosed, lobby.IsMuted, lobby.IsPublic,
+		"INSERT INTO lobby (name, owner_name, owner_account_id, is_closed, is_muted, is_public) VALUES ($1, $2, $3, $4, $5, $6)",
+		lobby.Name, lobby.OwnerName, lobby.OwnerAccountId, lobby.IsClosed, lobby.IsMuted, lobby.IsPublic,
 	)
 	if err != nil {
 		return errors.New("an error occurred while inserting a lobby into the database: " + err.Error())
