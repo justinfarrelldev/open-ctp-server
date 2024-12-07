@@ -125,19 +125,19 @@ func main() {
 	}))
 
 	mux.Handle("/lobby/create_lobby", tollbooth.LimitFuncHandler(tollboothLimiterMinute, func(w http.ResponseWriter, r *http.Request) {
-		lobby.CreateLobbyHandler(w, r, db)
+		lobby.CreateLobbyHandler(w, r, db, sessionStore)
 	}))
 
 	mux.Handle("/lobby/get_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.GetLobbyHandler(w, r, db)
+		lobby.GetLobbyHandler(w, r, db, sessionStore)
 	}))
 
 	mux.Handle("/lobby/update_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.UpdateLobbyHandler(w, r, db)
+		lobby.UpdateLobbyHandler(w, r, db, sessionStore)
 	}))
 
 	mux.Handle("/lobby/delete_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.DeleteLobbyHandler(w, r, db)
+		lobby.DeleteLobbyHandler(w, r, db, sessionStore)
 	}))
 
 	mux.Handle("/health", tollbooth.LimitFuncHandler(tollboothLimiterHealth, health.HealthCheckHandler))

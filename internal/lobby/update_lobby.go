@@ -8,6 +8,7 @@ import (
 	"reflect"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
 // UpdateLobbyArgs represents the expected structure of the request body for updating a lobby.
@@ -32,7 +33,7 @@ type UpdateLobbyArgs struct {
 // @Failure 400 {string} string "lobby_id must be specified"
 // @Failure 500 {string} string "an error occurred while decoding the request body: <error message>"
 // @Router /lobby/update_lobby [put]
-func UpdateLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
+func UpdateLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 
 	if r.Method != http.MethodPut {
 		return errors.New("invalid request; request must be a PUT request")

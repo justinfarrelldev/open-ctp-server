@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
 // GetLobbyArgs represents the expected structure of the request body for getting a lobby.
@@ -32,7 +33,7 @@ type GetLobbyArgs struct {
 // @Failure 403 {object} error "Forbidden"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /lobby/get_lobby [get]
-func GetLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
+func GetLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 
 	if r.Method != "GET" {
 		return errors.New("invalid request; request must be a GET request")
