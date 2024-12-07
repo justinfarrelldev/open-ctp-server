@@ -4,12 +4,15 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
 func TestGetAccount_Success(t *testing.T) {
@@ -20,6 +23,8 @@ func TestGetAccount_Success(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
+	sessionID := "1"
+
 	expectedAccount := Account{
 		Name:            "John Doe",
 		Info:            "Some info",
@@ -28,20 +33,32 @@ func TestGetAccount_Success(t *testing.T) {
 		ExperienceLevel: ExperienceLevel(5),
 	}
 
+	createdAt := time.Now()
+	expiresAt := time.Now().Add(6 * time.Hour)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
+		WithArgs(sessionID).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
+			AddRow(sessionID, accountID, createdAt, expiresAt))
+
 	mock.ExpectQuery("SELECT name, info, location, email, experience_level FROM account WHERE id = \\$1").
 		WithArgs(accountID).
 		WillReturnRows(sqlmock.NewRows([]string{"name", "info", "location", "email", "experience_level"}).
 			AddRow(expectedAccount.Name, expectedAccount.Info, expectedAccount.Location, expectedAccount.Email, int(expectedAccount.ExperienceLevel)))
 
-	req, err := http.NewRequest("GET", "/account/get_account?account_id=1", nil)
+	req, err := http.NewRequest("GET", "/account/get_account?account_id=1&session_id=1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, sqlxDB)
+		err := GetAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -67,20 +84,33 @@ func TestGetAccount_NotFound(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
+	sessionID := "1"
+
+	createdAt := time.Now()
+	expiresAt := time.Now().Add(6 * time.Hour)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
+		WithArgs(sessionID).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
+			AddRow(sessionID, accountID, createdAt, expiresAt))
 
 	mock.ExpectQuery("SELECT name, info, location, email, experience_level FROM account WHERE id = \\$1").
 		WithArgs(accountID).
 		WillReturnError(sql.ErrNoRows)
 
-	req, err := http.NewRequest("GET", "/account/get_account?account_id=1", nil)
+	req, err := http.NewRequest("GET", "/account/get_account?account_id=1&session_id=1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, sqlxDB)
+		err := GetAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -105,15 +135,19 @@ func TestGetAccount_InvalidMethod(t *testing.T) {
 	}
 	defer db.Close()
 
-	req, err := http.NewRequest("POST", "/account/get_account?account_id=1", nil)
+	req, err := http.NewRequest("POST", "/account/get_account?account_id=1&session_id=1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, sqlxDB)
+		err := GetAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -138,15 +172,19 @@ func TestGetAccount_DecodeError(t *testing.T) {
 	}
 	defer db.Close()
 
-	req, err := http.NewRequest("GET", "/account/get_account?account_id=invalid", nil)
+	req, err := http.NewRequest("GET", "/account/get_account?account_id=invalid&session_id=1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, sqlxDB)
+		err := GetAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -171,15 +209,19 @@ func TestGetAccount_MissingAccountID(t *testing.T) {
 	}
 	defer db.Close()
 
-	req, err := http.NewRequest("GET", "/account/get_account", nil)
+	req, err := http.NewRequest("GET", "/account/get_account?session_id=1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, sqlxDB)
+		err := GetAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
