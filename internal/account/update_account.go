@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strconv"
 
 	"github.com/jmoiron/sqlx"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
@@ -65,7 +66,7 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 		return errors.New("a valid session_id must be specified")
 	}
 
-	session, err := store.GetSession(string(*args.SessionId))
+	session, err := store.GetSession(strconv.FormatInt(*args.SessionId, 10))
 
 	if err != nil {
 

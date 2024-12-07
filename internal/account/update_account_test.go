@@ -29,8 +29,13 @@ func TestUpdateAccount_InvalidMethod(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateAccount(w, r, sqlxDB)
+		err := UpdateAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -62,8 +67,13 @@ func TestUpdateAccount_DecodeError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateAccount(w, r, sqlxDB)
+		err := UpdateAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -101,8 +111,13 @@ func TestUpdateAccount_MissingAccountID(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateAccount(w, r, sqlxDB)
+		err := UpdateAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -128,6 +143,7 @@ func TestUpdateAccount_Success(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
+	sessionID := int64(1)
 	password := "password123"
 	name := "Updated Name"
 	info := "Updated Info"
@@ -145,6 +161,7 @@ func TestUpdateAccount_Success(t *testing.T) {
 			Email:           &email,
 			ExperienceLevel: (*ExperienceLevel)(&experienceLevel),
 		},
+		SessionId: &sessionID,
 	}
 
 	body, _ := json.Marshal(updateArgs)
@@ -173,8 +190,12 @@ func TestUpdateAccount_Success(t *testing.T) {
 		WithArgs(name, info, location, email, experienceLevel, accountID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateAccount(w, r, sqlxDB)
+		err := UpdateAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -204,6 +225,7 @@ func TestUpdateAccount_MissingPassword(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
+	sessionID := int64(1)
 	name := "Updated Name"
 
 	updateArgs := UpdateAccountArgs{
@@ -211,6 +233,7 @@ func TestUpdateAccount_MissingPassword(t *testing.T) {
 		Account: &AccountParam{
 			Name: &name,
 		},
+		SessionId: &sessionID,
 	}
 
 	body, _ := json.Marshal(updateArgs)
@@ -221,8 +244,13 @@ func TestUpdateAccount_MissingPassword(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateAccount(w, r, sqlxDB)
+		err := UpdateAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -248,11 +276,13 @@ func TestUpdateAccount_MissingAccount(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
+	sessionID := int64(1)
 	password := "password123"
 
 	updateArgs := UpdateAccountArgs{
 		AccountId: &accountID,
 		Password:  &password,
+		SessionId: &sessionID,
 	}
 
 	body, _ := json.Marshal(updateArgs)
@@ -263,8 +293,13 @@ func TestUpdateAccount_MissingAccount(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateAccount(w, r, sqlxDB)
+		err := UpdateAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
