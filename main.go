@@ -117,7 +117,7 @@ func main() {
 	}))
 
 	mux.Handle("/account/get_account", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
-		account.GetAccountHandler(w, r, db)
+		account.GetAccountHandler(w, r, db, sessionStore)
 	}))
 
 	mux.Handle("/account/update_account", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
