@@ -748,7 +748,7 @@ const docTemplate = `{
                 },
                 "owner_account_id": {
                     "description": "OwnerAccountId is the account ID of the lobby owner.",
-                    "type": "integer"
+                    "type": "string"
                 },
                 "owner_name": {
                     "description": "OwnerName is the name of the lobby owner.",
@@ -782,7 +782,7 @@ const docTemplate = `{
                 },
                 "owner_account_id": {
                     "description": "OwnerAccountId is the account ID of the lobby owner.",
-                    "type": "integer"
+                    "type": "string"
                 },
                 "owner_name": {
                     "description": "OwnerName is the name of the lobby owner.",
