@@ -746,6 +746,10 @@ const docTemplate = `{
                     "description": "Name is the name of the lobby.",
                     "type": "string"
                 },
+                "owner_account_id": {
+                    "description": "OwnerAccountId is the account ID of the lobby owner.",
+                    "type": "integer"
+                },
                 "owner_name": {
                     "description": "OwnerName is the name of the lobby owner.",
                     "type": "string"
@@ -775,6 +779,10 @@ const docTemplate = `{
                 "name": {
                     "description": "Name is the name of the lobby.",
                     "type": "string"
+                },
+                "owner_account_id": {
+                    "description": "OwnerAccountId is the account ID of the lobby owner.",
+                    "type": "integer"
                 },
                 "owner_name": {
                     "description": "OwnerName is the name of the lobby owner.",
