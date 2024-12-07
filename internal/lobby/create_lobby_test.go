@@ -148,7 +148,22 @@ func TestCreateLobby_PasswordTooShort(t *testing.T) {
 	}
 	defer db.Close()
 
-	req, err := http.NewRequest("POST", "/lobby/create_lobby", strings.NewReader(`{"lobby": {"name": "Test Lobby", "owner_name": "Owner", "is_closed": false, "is_muted": false, "is_public": true}, "password": "123"}`))
+	lobby := Lobby{
+		Name:           "Test Lobby",
+		OwnerName:      "Owner",
+		OwnerAccountId: "1",
+		IsClosed:       false,
+		IsMuted:        false,
+		IsPublic:       true,
+	}
+
+	lobbyBytes, err := json.Marshal(lobby)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lobbyJSON := fmt.Sprintf(`{"lobby": %s, "password": "123"}`, string(lobbyBytes))
+
+	req, err := http.NewRequest("POST", "/lobby/create_lobby", strings.NewReader(lobbyJSON))
 	if err != nil {
 		t.Fatal(err)
 	}
