@@ -9,6 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
+	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
 func TestCreateLobbyHandler_Success(t *testing.T) {
@@ -37,8 +38,13 @@ func TestCreateLobbyHandler_Success(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		CreateLobbyHandler(w, r, sqlxDB)
+		CreateLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -62,8 +68,13 @@ func TestCreateLobbyHandler_InvalidMethod(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		CreateLobbyHandler(w, r, sqlxDB)
+		CreateLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -92,8 +103,13 @@ func TestCreateLobbyHandler_DecodeError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		CreateLobbyHandler(w, r, sqlxDB)
+		CreateLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -122,8 +138,13 @@ func TestCreateLobbyHandler_PasswordTooShort(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		CreateLobbyHandler(w, r, sqlxDB)
+		CreateLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -152,8 +173,13 @@ func TestCreateLobbyHandler_PasswordRequired(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		CreateLobbyHandler(w, r, sqlxDB)
+		CreateLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -196,8 +222,13 @@ func TestGetLobbyHandler_Success(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		GetLobbyHandler(w, r, sqlxDB)
+		GetLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -221,8 +252,13 @@ func TestGetLobbyHandler_InvalidMethod(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		GetLobbyHandler(w, r, sqlxDB)
+		GetLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -251,8 +287,13 @@ func TestGetLobbyHandler_DecodeError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		GetLobbyHandler(w, r, sqlxDB)
+		GetLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -266,7 +307,6 @@ func TestGetLobbyHandler_DecodeError(t *testing.T) {
 		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedError)
 	}
 }
-
 func TestGetLobbyHandler_LobbyNotFound(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -285,8 +325,13 @@ func TestGetLobbyHandler_LobbyNotFound(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		GetLobbyHandler(w, r, sqlxDB)
+		GetLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -319,8 +364,13 @@ func TestDeleteLobbyHandler_Success(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		DeleteLobbyHandler(w, r, sqlxDB)
+		DeleteLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -349,8 +399,13 @@ func TestDeleteLobbyHandler_InvalidMethod(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		DeleteLobbyHandler(w, r, sqlxDB)
+		DeleteLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -379,8 +434,13 @@ func TestDeleteLobbyHandler_DecodeError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		DeleteLobbyHandler(w, r, sqlxDB)
+		DeleteLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -413,8 +473,13 @@ func TestDeleteLobbyHandler_LobbyNotFound(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		DeleteLobbyHandler(w, r, sqlxDB)
+		DeleteLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -443,8 +508,13 @@ func TestDeleteLobbyHandler_LobbyIdRequired(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		DeleteLobbyHandler(w, r, sqlxDB)
+		DeleteLobbyHandler(w, r, sqlxDB, mockStore)
 	})
 
 	handler.ServeHTTP(rr, req)
