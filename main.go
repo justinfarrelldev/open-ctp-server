@@ -14,6 +14,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	account "github.com/justinfarrelldev/open-ctp-server/internal/account"
+	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 	game "github.com/justinfarrelldev/open-ctp-server/internal/game"
 	health "github.com/justinfarrelldev/open-ctp-server/internal/health"
 	lobby "github.com/justinfarrelldev/open-ctp-server/internal/lobby"
@@ -102,6 +103,8 @@ func main() {
 
 	fmt.Println("opened connection to database successfully")
 
+	sessionStore := auth.NewSessionStore(db)
+
 	// Handlers
 	mux := http.NewServeMux()
 
@@ -110,31 +113,31 @@ func main() {
 	}))
 
 	mux.Handle("/account/create_account", tollbooth.LimitFuncHandler(tollboothLimiterMinute, func(w http.ResponseWriter, r *http.Request) {
-		account.CreateAccountHandler(w, r, db)
+		account.CreateAccountHandler(w, r, db, sessionStore)
 	}))
 
 	mux.Handle("/account/get_account", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
-		account.GetAccountHandler(w, r, db)
+		account.GetAccountHandler(w, r, db, sessionStore)
 	}))
 
 	mux.Handle("/account/update_account", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
-		account.UpdateAccountHandler(w, r, db)
+		account.UpdateAccountHandler(w, r, db, sessionStore)
 	}))
 
 	mux.Handle("/lobby/create_lobby", tollbooth.LimitFuncHandler(tollboothLimiterMinute, func(w http.ResponseWriter, r *http.Request) {
-		lobby.CreateLobbyHandler(w, r, db)
+		lobby.CreateLobbyHandler(w, r, db, sessionStore)
 	}))
 
 	mux.Handle("/lobby/get_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.GetLobbyHandler(w, r, db)
+		lobby.GetLobbyHandler(w, r, db, sessionStore)
 	}))
 
 	mux.Handle("/lobby/update_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.UpdateLobbyHandler(w, r, db)
+		lobby.UpdateLobbyHandler(w, r, db, sessionStore)
 	}))
 
 	mux.Handle("/lobby/delete_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.DeleteLobbyHandler(w, r, db)
+		lobby.DeleteLobbyHandler(w, r, db, sessionStore)
 	}))
 
 	mux.Handle("/health", tollbooth.LimitFuncHandler(tollboothLimiterHealth, health.HealthCheckHandler))

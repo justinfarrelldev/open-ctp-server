@@ -8,6 +8,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
+
+	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
 // func TestCreateAccountHandler_Success(t *testing.T) {
@@ -61,8 +63,9 @@ func TestCreateAccountHandler_InvalidMethod(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	store := auth.NewSessionStore(sqlxDB)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		CreateAccountHandler(w, r, sqlxDB)
+		CreateAccountHandler(w, r, sqlxDB, store)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -91,8 +94,9 @@ func TestCreateAccountHandler_DecodeError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	store := auth.NewSessionStore(sqlxDB)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		CreateAccountHandler(w, r, sqlxDB)
+		CreateAccountHandler(w, r, sqlxDB, store)
 	})
 
 	handler.ServeHTTP(rr, req)
@@ -121,8 +125,9 @@ func TestCreateAccountHandler_EmailRequired(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	store := auth.NewSessionStore(sqlxDB)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		CreateAccountHandler(w, r, sqlxDB)
+		CreateAccountHandler(w, r, sqlxDB, store)
 	})
 
 	handler.ServeHTTP(rr, req)

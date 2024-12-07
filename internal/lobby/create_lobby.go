@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
 // CreateLobbyArgs represents the expected structure of the request body for creating a lobby for use within the server.
@@ -36,7 +38,7 @@ const ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD = "password is required"
 // @Failure 403 {object} error "Forbidden"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /lobby/create_lobby [post]
-func CreateLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
+func CreateLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 
 	if r.Method != "POST" {
 		return errors.New("invalid request; request must be a POST request")
@@ -60,6 +62,11 @@ func CreateLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 		return errors.New(ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD)
 	}
 
+	if _, err := strconv.ParseInt(lobby.Lobby.OwnerAccountId, 10, 64); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return errors.New("OwnerAccountId must be a valid number")
+	}
+
 	if len(lobby.Password) < 6 {
 		w.WriteHeader(http.StatusBadRequest)
 
@@ -81,8 +88,8 @@ func CreateLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 
 func storeLobby(lobby *Lobby, db *sqlx.DB) error {
 	result, err := db.Query(
-		"INSERT INTO lobby (name, owner_name, is_closed, is_muted, is_public) VALUES ($1, $2, $3, $4, $5)",
-		lobby.Name, lobby.OwnerName, lobby.IsClosed, lobby.IsMuted, lobby.IsPublic,
+		"INSERT INTO lobby (name, owner_name, owner_account_id, is_closed, is_muted, is_public) VALUES ($1, $2, $3, $4, $5, $6)",
+		lobby.Name, lobby.OwnerName, lobby.OwnerAccountId, lobby.IsClosed, lobby.IsMuted, lobby.IsPublic,
 	)
 	if err != nil {
 		return errors.New("an error occurred while inserting a lobby into the database: " + err.Error())

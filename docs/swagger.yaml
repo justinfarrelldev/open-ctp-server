@@ -81,6 +81,21 @@ definitions:
       password:
         description: The password for the account to be created
         type: string
+      session_id:
+        description: A valid session ID for the account (so we know they are signed
+          in)
+        type: integer
+    type: object
+  auth.Session:
+    properties:
+      account_id:
+        type: integer
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
     type: object
   game.CreateGameArgs:
     description: Structure for the game creation request payload.
@@ -148,6 +163,9 @@ definitions:
       name:
         description: Name is the name of the lobby.
         type: string
+      owner_account_id:
+        description: OwnerAccountId is the account ID of the lobby owner.
+        type: string
       owner_name:
         description: OwnerName is the name of the lobby owner.
         type: string
@@ -169,6 +187,9 @@ definitions:
         type: boolean
       name:
         description: Name is the name of the lobby.
+        type: string
+      owner_account_id:
+        description: OwnerAccountId is the account ID of the lobby owner.
         type: string
       owner_name:
         description: OwnerName is the name of the lobby owner.
@@ -234,6 +255,11 @@ paths:
       - description: account ID
         in: query
         name: account_id
+        required: true
+        type: integer
+      - description: session ID
+        in: query
+        name: session_id
         required: true
         type: integer
       produces:
@@ -457,4 +483,74 @@ paths:
       summary: Updates a lobby
       tags:
       - lobby
+  /sessions:
+    post:
+      consumes:
+      - application/json
+      description: Create a new session for a user. Expires 12 hours from last interaction.
+      parameters:
+      - description: User ID
+        in: body
+        name: account_id
+        required: true
+        schema:
+          type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.Session'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Create a new session
+      tags:
+      - sessions
+  /sessions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a session by its ID
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema: {}
+      summary: Delete a session
+      tags:
+      - sessions
+    get:
+      consumes:
+      - application/json
+      description: Get a session by its ID
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.Session'
+        "404":
+          description: Not Found
+          schema: {}
+      summary: Get a session
+      tags:
+      - sessions
 swagger: "2.0"

@@ -10,6 +10,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
+	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
 func TestUpdateLobby_InvalidMethod(t *testing.T) {
@@ -26,8 +27,12 @@ func TestUpdateLobby_InvalidMethod(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateLobby(w, r, sqlxDB)
+		err := UpdateLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -59,8 +64,12 @@ func TestUpdateLobby_DecodeError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateLobby(w, r, sqlxDB)
+		err := UpdateLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -100,8 +109,12 @@ func TestUpdateLobby_MissingLobbyID(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateLobby(w, r, sqlxDB)
+		err := UpdateLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -139,8 +152,12 @@ func TestUpdateLobby_MissingLobby(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateLobby(w, r, sqlxDB)
+		err := UpdateLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -191,13 +208,16 @@ func TestUpdateLobby_Success(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
 
 	mock.ExpectExec("UPDATE lobby SET name = \\$1, owner_name = \\$2, is_closed = \\$3, is_muted = \\$4, is_public = \\$5 WHERE id = \\$6").
 		WithArgs(name, ownerName, isClosed, isMuted, isPublic, lobbyID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateLobby(w, r, sqlxDB)
+		err := UpdateLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}

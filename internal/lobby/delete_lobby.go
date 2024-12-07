@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
 // DeleteLobbyArgs represents the expected structure of the request body for deleting a lobby.
@@ -30,7 +31,7 @@ type DeleteLobbyArgs struct {
 // @Failure 403 {object} error "Forbidden"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /lobby/delete_lobby [delete]
-func DeleteLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
+func DeleteLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 
 	if r.Method != http.MethodDelete {
 		return errors.New("invalid request; request must be a DELETE request")

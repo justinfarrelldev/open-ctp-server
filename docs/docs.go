@@ -84,6 +84,13 @@ const docTemplate = `{
                         "name": "account_id",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "session ID",
+                        "name": "session_id",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -406,6 +413,111 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/sessions": {
+            "post": {
+                "description": "Create a new session for a user. Expires 12 hours from last interaction.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "Create a new session",
+                "parameters": [
+                    {
+                        "description": "User ID",
+                        "name": "account_id",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auth.Session"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/sessions/{id}": {
+            "get": {
+                "description": "Get a session by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "Get a session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auth.Session"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a session by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "Delete a session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -525,6 +637,27 @@ const docTemplate = `{
                 "password": {
                     "description": "The password for the account to be created",
                     "type": "string"
+                },
+                "session_id": {
+                    "description": "A valid session ID for the account (so we know they are signed in)",
+                    "type": "integer"
+                }
+            }
+        },
+        "auth.Session": {
+            "type": "object",
+            "properties": {
+                "account_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
                 }
             }
         },
@@ -613,6 +746,10 @@ const docTemplate = `{
                     "description": "Name is the name of the lobby.",
                     "type": "string"
                 },
+                "owner_account_id": {
+                    "description": "OwnerAccountId is the account ID of the lobby owner.",
+                    "type": "string"
+                },
                 "owner_name": {
                     "description": "OwnerName is the name of the lobby owner.",
                     "type": "string"
@@ -641,6 +778,10 @@ const docTemplate = `{
                 },
                 "name": {
                     "description": "Name is the name of the lobby.",
+                    "type": "string"
+                },
+                "owner_account_id": {
+                    "description": "OwnerAccountId is the account ID of the lobby owner.",
                     "type": "string"
                 },
                 "owner_name": {

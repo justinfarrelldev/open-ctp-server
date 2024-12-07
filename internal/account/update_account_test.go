@@ -6,8 +6,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
@@ -29,8 +32,13 @@ func TestUpdateAccount_InvalidMethod(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateAccount(w, r, sqlxDB)
+		err := UpdateAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -62,8 +70,13 @@ func TestUpdateAccount_DecodeError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateAccount(w, r, sqlxDB)
+		err := UpdateAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -101,8 +114,13 @@ func TestUpdateAccount_MissingAccountID(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateAccount(w, r, sqlxDB)
+		err := UpdateAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -119,7 +137,6 @@ func TestUpdateAccount_MissingAccountID(t *testing.T) {
 		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedError)
 	}
 }
-
 func TestUpdateAccount_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -128,12 +145,18 @@ func TestUpdateAccount_Success(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
+	sessionID := "1"
 	password := "password123"
 	name := "Updated Name"
 	info := "Updated Info"
 	location := "Updated Location"
 	email := "updated@example.com"
 	experienceLevel := 2
+
+	sessionIDInt, err := strconv.ParseInt(sessionID, 10, 64)
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when converting sessionID to int64", err)
+	}
 
 	updateArgs := UpdateAccountArgs{
 		AccountId: &accountID,
@@ -145,6 +168,7 @@ func TestUpdateAccount_Success(t *testing.T) {
 			Email:           &email,
 			ExperienceLevel: (*ExperienceLevel)(&experienceLevel),
 		},
+		SessionId: &sessionIDInt,
 	}
 
 	body, _ := json.Marshal(updateArgs)
@@ -165,6 +189,14 @@ func TestUpdateAccount_Success(t *testing.T) {
 	storedHash := base64.StdEncoding.EncodeToString(hashSalt.Hash)
 	storedSalt := base64.StdEncoding.EncodeToString(hashSalt.Salt)
 
+	createdAt := time.Now()
+	expiresAt := time.Now().Add(6 * time.Hour)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
+		WithArgs(sessionID).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
+			AddRow(sessionID, accountID, createdAt, expiresAt))
+
 	mock.ExpectQuery("SELECT hash, salt FROM passwords WHERE id = \\$1").
 		WithArgs(accountID).
 		WillReturnRows(sqlmock.NewRows([]string{"hash", "salt"}).AddRow(storedHash, storedSalt))
@@ -173,8 +205,12 @@ func TestUpdateAccount_Success(t *testing.T) {
 		WithArgs(name, info, location, email, experienceLevel, accountID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateAccount(w, r, sqlxDB)
+		err := UpdateAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -197,20 +233,27 @@ func TestUpdateAccount_Success(t *testing.T) {
 }
 
 func TestUpdateAccount_MissingPassword(t *testing.T) {
-	db, _, err := sqlmock.New()
+	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer db.Close()
 
 	accountID := int64(1)
+	sessionID := "1"
 	name := "Updated Name"
+
+	sessionIDInt, err := strconv.ParseInt(sessionID, 10, 64)
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when converting sessionID to int64", err)
+	}
 
 	updateArgs := UpdateAccountArgs{
 		AccountId: &accountID,
 		Account: &AccountParam{
 			Name: &name,
 		},
+		SessionId: &sessionIDInt,
 	}
 
 	body, _ := json.Marshal(updateArgs)
@@ -221,8 +264,21 @@ func TestUpdateAccount_MissingPassword(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	createdAt := time.Now()
+	expiresAt := time.Now().Add(6 * time.Hour)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
+		WithArgs(sessionID).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
+			AddRow(sessionID, accountID, createdAt, expiresAt))
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateAccount(w, r, sqlxDB)
+		err := UpdateAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -241,18 +297,25 @@ func TestUpdateAccount_MissingPassword(t *testing.T) {
 }
 
 func TestUpdateAccount_MissingAccount(t *testing.T) {
-	db, _, err := sqlmock.New()
+	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer db.Close()
 
 	accountID := int64(1)
+	sessionID := "1"
 	password := "password123"
+
+	sessionIDInt, err := strconv.ParseInt(sessionID, 10, 64)
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when converting sessionID to int64", err)
+	}
 
 	updateArgs := UpdateAccountArgs{
 		AccountId: &accountID,
 		Password:  &password,
+		SessionId: &sessionIDInt,
 	}
 
 	body, _ := json.Marshal(updateArgs)
@@ -263,8 +326,21 @@ func TestUpdateAccount_MissingAccount(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	createdAt := time.Now()
+	expiresAt := time.Now().Add(6 * time.Hour)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
+		WithArgs(sessionID).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
+			AddRow(sessionID, accountID, createdAt, expiresAt))
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := UpdateAccount(w, r, sqlxDB)
+		err := UpdateAccount(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
