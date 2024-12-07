@@ -8,6 +8,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
+	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
 func TestDeleteLobby_Success(t *testing.T) {
@@ -30,8 +31,13 @@ func TestDeleteLobby_Success(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := DeleteLobby(w, r, sqlxDB)
+		err := DeleteLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -63,8 +69,13 @@ func TestDeleteLobby_InvalidMethod(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := DeleteLobby(w, r, sqlxDB)
+		err := DeleteLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -96,8 +107,13 @@ func TestDeleteLobby_DecodeError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := DeleteLobby(w, r, sqlxDB)
+		err := DeleteLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -129,8 +145,13 @@ func TestDeleteLobby_LobbyIDNotSpecified(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := DeleteLobby(w, r, sqlxDB)
+		err := DeleteLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
@@ -168,8 +189,13 @@ func TestDeleteLobby_NoRowsAffected(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := DeleteLobby(w, r, sqlxDB)
+		err := DeleteLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}

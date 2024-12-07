@@ -9,6 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
+	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
 func TestGetLobby_Success(t *testing.T) {
@@ -40,8 +41,13 @@ func TestGetLobby_Success(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetLobby(w, r, sqlxDB)
+		err := GetLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -79,8 +85,13 @@ func TestGetLobby_NotFound(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetLobby(w, r, sqlxDB)
+		err := GetLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -112,8 +123,13 @@ func TestGetLobby_InvalidMethod(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetLobby(w, r, sqlxDB)
+		err := GetLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -145,8 +161,13 @@ func TestGetLobby_DecodeError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetLobby(w, r, sqlxDB)
+		err := GetLobby(w, r, sqlxDB, mockStore)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
