@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
@@ -188,9 +189,13 @@ func TestUpdateAccount_Success(t *testing.T) {
 	storedHash := base64.StdEncoding.EncodeToString(hashSalt.Hash)
 	storedSalt := base64.StdEncoding.EncodeToString(hashSalt.Salt)
 
+	createdAt := time.Now()
+	expiresAt := time.Now().Add(6 * time.Hour)
+
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
 		WithArgs(sessionID).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id"}).AddRow(sessionID, accountID))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
+			AddRow(sessionID, accountID, createdAt, expiresAt))
 
 	mock.ExpectQuery("SELECT hash, salt FROM passwords WHERE id = \\$1").
 		WithArgs(accountID).
@@ -260,9 +265,13 @@ func TestUpdateAccount_MissingPassword(t *testing.T) {
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
+	createdAt := time.Now()
+	expiresAt := time.Now().Add(6 * time.Hour)
+
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
 		WithArgs(sessionID).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id"}).AddRow(sessionID, accountID))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
+			AddRow(sessionID, accountID, createdAt, expiresAt))
 
 	mockStore := &auth.SessionStore{
 		DB: sqlxDB,
@@ -318,9 +327,13 @@ func TestUpdateAccount_MissingAccount(t *testing.T) {
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
+	createdAt := time.Now()
+	expiresAt := time.Now().Add(6 * time.Hour)
+
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
 		WithArgs(sessionID).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id"}).AddRow(sessionID, accountID))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
+			AddRow(sessionID, accountID, createdAt, expiresAt))
 
 	mockStore := &auth.SessionStore{
 		DB: sqlxDB,
