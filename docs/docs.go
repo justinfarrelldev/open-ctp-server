@@ -84,6 +84,13 @@ const docTemplate = `{
                         "name": "account_id",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "session ID",
+                        "name": "session_id",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {

@@ -251,6 +251,11 @@ paths:
         name: account_id
         required: true
         type: integer
+      - description: session ID
+        in: query
+        name: session_id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
