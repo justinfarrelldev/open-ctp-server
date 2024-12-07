@@ -21,18 +21,19 @@ func TestGetLobby_Success(t *testing.T) {
 
 	lobbyID := int64(1)
 	expectedLobby := Lobby{
-		ID:        lobbyID,
-		Name:      "Test Lobby",
-		OwnerName: "Owner",
-		IsClosed:  false,
-		IsMuted:   false,
-		IsPublic:  true,
+		ID:             lobbyID,
+		Name:           "Test Lobby",
+		OwnerName:      "Owner",
+		OwnerAccountId: "1",
+		IsClosed:       false,
+		IsMuted:        false,
+		IsPublic:       true,
 	}
 
 	mock.ExpectQuery("SELECT id, name, owner_name, is_closed, is_muted, is_public FROM lobby WHERE id = \\$1").
 		WithArgs(lobbyID).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "is_closed", "is_muted", "is_public"}).
-			AddRow(expectedLobby.ID, expectedLobby.Name, expectedLobby.OwnerName, expectedLobby.IsClosed, expectedLobby.IsMuted, expectedLobby.IsPublic))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public"}).
+			AddRow(expectedLobby.ID, expectedLobby.Name, expectedLobby.OwnerName, expectedLobby.OwnerAccountId, expectedLobby.IsClosed, expectedLobby.IsMuted, expectedLobby.IsPublic))
 
 	req, err := http.NewRequest("GET", "/lobby/get_lobby", strings.NewReader(`{"lobby_id": 1}`))
 	if err != nil {
@@ -59,7 +60,7 @@ func TestGetLobby_Success(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	expectedResponse := `{"id":1,"name":"Test Lobby","owner_name":"Owner","is_closed":false,"is_muted":false,"is_public":true}`
+	expectedResponse := `{"id":1,"name":"Test Lobby","owner_name":"Owner","owner_account_id":"1","is_closed":false,"is_muted":false,"is_public":true}`
 	if strings.TrimSpace(rr.Body.String()) != expectedResponse {
 		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedResponse)
 	}
