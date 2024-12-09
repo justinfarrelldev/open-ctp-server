@@ -124,6 +124,10 @@ func main() {
 		account.UpdateAccountHandler(w, r, db, sessionStore)
 	}))
 
+	mux.Handle("/account/delete_account", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+		account.DeleteAccountHandler(w, r, db, sessionStore)
+	}))
+
 	mux.Handle("/lobby/create_lobby", tollbooth.LimitFuncHandler(tollboothLimiterMinute, func(w http.ResponseWriter, r *http.Request) {
 		lobby.CreateLobbyHandler(w, r, db, sessionStore)
 	}))
