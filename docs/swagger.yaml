@@ -52,6 +52,17 @@ definitions:
         description: The password for the account to be created
         type: string
     type: object
+  account.DeleteAccountArgs:
+    description: Structure for the account deletion request payload.
+    properties:
+      account_id:
+        description: The account ID for the account that will be deleted.
+        type: integer
+      session_id:
+        description: A valid session ID for the account (so we know they are signed
+          in)
+        type: integer
+    type: object
   account.ExperienceLevel:
     enum:
     - 0
@@ -244,6 +255,37 @@ paths:
           description: Internal Server Error
           schema: {}
       summary: Create a new account
+      tags:
+      - account
+  /account/delete_account:
+    delete:
+      consumes:
+      - application/json
+      description: This endpoint deletes a player account.
+      parameters:
+      - description: account deletion request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/account.DeleteAccountArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted account!
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Deletes an account
       tags:
       - account
   /account/get_account:
