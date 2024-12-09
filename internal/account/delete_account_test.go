@@ -144,8 +144,10 @@ func TestDeleteAccount_MissingSessionID(t *testing.T) {
 	}
 	defer db.Close()
 
+	var acctId int64 = 1
+
 	deleteArgs := DeleteAccountArgs{
-		AccountId: 1,
+		AccountId: &acctId,
 	}
 
 	body, _ := json.Marshal(deleteArgs)
@@ -188,9 +190,11 @@ func TestDeleteAccount_SessionNotFound(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
+	var acctId int64 = accountID
+
 	sessionID := int64(1)
 	deleteArgs := DeleteAccountArgs{
-		AccountId: accountID,
+		AccountId: &acctId,
 		SessionId: &sessionID,
 	}
 
@@ -220,8 +224,8 @@ func TestDeleteAccount_SessionNotFound(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 
 	expectedError := "session not found"
@@ -238,9 +242,11 @@ func TestDeleteAccount_SessionExpired(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
+	var acctId int64 = accountID
+
 	sessionID := int64(1)
 	deleteArgs := DeleteAccountArgs{
-		AccountId: accountID,
+		AccountId: &acctId,
 		SessionId: &sessionID,
 	}
 
@@ -292,9 +298,11 @@ func TestDeleteAccount_Success(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
+	var acctId int64 = accountID
+
 	sessionID := int64(1)
 	deleteArgs := DeleteAccountArgs{
-		AccountId: accountID,
+		AccountId: &acctId,
 		SessionId: &sessionID,
 	}
 
@@ -354,9 +362,12 @@ func TestDeleteAccount_NoAccountExists(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
+	var acctId int64 = accountID
+
+	fmt.Println("Account id: ", acctId)
 	sessionID := int64(1)
 	deleteArgs := DeleteAccountArgs{
-		AccountId: accountID,
+		AccountId: &acctId,
 		SessionId: &sessionID,
 	}
 
@@ -398,7 +409,7 @@ func TestDeleteAccount_NoAccountExists(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
 	}
 
-	expectedError := "no account exists with the ID 1"
+	expectedError := "no rows were affected when the DELETE query ran for the account with ID 1"
 	if strings.TrimSpace(rr.Body.String()) != expectedError {
 		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedError)
 	}

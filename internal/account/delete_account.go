@@ -16,7 +16,7 @@ import (
 // @Description Structure for the account deletion request payload.
 type DeleteAccountArgs struct {
 	// The account ID for the account that will be deleted.
-	AccountId int64 `json:"account_id"`
+	AccountId *int64 `json:"account_id,omitempty"`
 	// A valid session ID for the account (so we know they are signed in)
 	SessionId *int64 `json:"session_id,omitempty"`
 }
@@ -51,7 +51,7 @@ func DeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 		return errors.New("an error occurred while decoding the request body: " + err.Error())
 	}
 
-	if args.AccountId == 0 {
+	if args.AccountId == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return errors.New("account_id must be specified")
 	}
@@ -61,6 +61,8 @@ func DeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 		return errors.New("a valid session_id must be specified")
 	}
 
+	fmt.Println("args: ", *args.AccountId)
+
 	session, err := store.GetSession(strconv.FormatInt(*args.SessionId, 10))
 
 	if err != nil {
@@ -69,7 +71,7 @@ func DeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 	}
 
 	if session == nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
 		return errors.New("session not found")
 	}
 
@@ -90,7 +92,7 @@ func DeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("no account exists with the ID %d", args.AccountId)
+		return fmt.Errorf("no rows were affected when the DELETE query ran for the account with ID %d", *args.AccountId)
 	}
 
 	w.WriteHeader(http.StatusOK)

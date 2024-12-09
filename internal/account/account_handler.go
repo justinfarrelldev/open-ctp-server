@@ -31,3 +31,11 @@ func UpdateAccountHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, s
 		return
 	}
 }
+
+func DeleteAccountHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	if err := DeleteAccount(w, r, db, store); err != nil {
+		// Handle the error, e.g., log it and send an appropriate response to the client
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
