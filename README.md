@@ -180,7 +180,7 @@ You absolutely can, so long as you follow the license in `LICENSE.md`. I am real
 - [ ] Passwords can be reset
 - [x] Passwords can be compared to find if passwords are correct
 - [ ] Accounts can be logged into (and will provide a valid JWT token / session for future calls) [I need to research JWTs vs session-based auth for this task]
-- [ ] Account updates require proof of ownership
+- [x] Account updates require proof of ownership
 - [ ] All account endpoints are rate-limited appropriately
 
 ### Lobbies (/lobby)
@@ -199,7 +199,7 @@ You absolutely can, so long as you follow the license in `LICENSE.md`. I am real
 - [ ] "Player connected" event is sent when players join the lobby
 - [ ] Chats can be sent in lobbies
 - [ ] All lobby endpoints are rate-limited appropriately
-- [ ] Lobby updates require proof of ownership
+- [x] Lobby updates require proof of ownership
 
 ### Games (/game)
 *Note: profiles can be changed in the game (as seen in the UI), but this should be handled client-side using the account endpoints.
