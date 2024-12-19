@@ -498,6 +498,42 @@ const docTemplate = `{
                 }
             }
         },
+        "/sessions/refresh/{account_id}": {
+            "put": {
+                "description": "Refresh the session token for a given account ID. Extends the expiration by 12 hours.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "Refresh a session",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Account ID",
+                        "name": "account_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auth.Session"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/sessions/{id}": {
             "get": {
                 "description": "Get a session by its ID",
