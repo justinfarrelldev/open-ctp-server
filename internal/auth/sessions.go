@@ -141,3 +141,38 @@ func generateSessionID() (string, error) {
 func (s *Session) IsExpired() bool {
 	return time.Now().After(s.ExpiresAt)
 }
+
+// RefreshSession refreshes the session token for a given account ID
+// @Summary Refresh a session
+// @Description Refresh the session token for a given account ID. Extends the expiration by 12 hours.
+// @Tags sessions
+// @Accept json
+// @Produce json
+// @Param account_id path int true "Account ID"
+// @Success 200 {object} Session
+// @Failure 404 {object} error
+// @Router /sessions/refresh/{account_id} [put]
+func (s *SessionStore) RefreshSession(accountID int) (*Session, error) {
+	var session Session
+	query := `SELECT * FROM sessions WHERE account_id = $1 ORDER BY created_at DESC LIMIT 1`
+	err := s.DB.Get(&session, query, accountID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("No session found for account ID %d", accountID)
+			return nil, errors.New("No session found")
+		}
+		log.Printf("Error retrieving session for account ID %d: %v", accountID, err)
+		return nil, err
+	}
+
+	session.ExpiresAt = time.Now().Add(12 * time.Hour)
+	updateQuery := `UPDATE sessions SET expires_at = :expires_at WHERE id = :id`
+	_, err = s.DB.NamedExec(updateQuery, session)
+	if err != nil {
+		log.Printf("Error refreshing session for account ID %d: %v", accountID, err)
+		return nil, err
+	}
+
+	log.Printf("Session refreshed: %v", session)
+	return &session, nil
+}
