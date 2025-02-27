@@ -34,7 +34,7 @@ type UpdateAccountArgs struct {
 // @Accept json
 // @Produce json
 // @Param body body UpdateAccountArgs true "account update request body"
-// @Success 200 {string} string "Successfully updated account!"
+// @Success 200 {object} nil "Successfully updated account!"
 // @Failure 400 {string} string "account_id must be specified"
 // @Failure 500 {string} string "an error occurred while decoding the request body: <error message>"
 // @Router /account/update_account [put]

@@ -340,8 +340,6 @@ paths:
       responses:
         "200":
           description: Successfully updated account!
-          schema:
-            type: string
         "400":
           description: account_id must be specified
           schema:

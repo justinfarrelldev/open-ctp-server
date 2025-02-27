@@ -187,10 +187,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully updated account!",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "description": "Successfully updated account!"
                     },
                     "400": {
                         "description": "account_id must be specified",
