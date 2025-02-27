@@ -513,7 +513,7 @@ const docTemplate = `{
                 "summary": "Get a session",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Session ID",
                         "name": "id",
                         "in": "path",
@@ -717,7 +717,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },

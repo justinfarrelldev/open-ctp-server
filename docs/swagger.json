@@ -504,7 +504,7 @@
                 "summary": "Get a session",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Session ID",
                         "name": "id",
                         "in": "path",
@@ -708,7 +708,7 @@
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },

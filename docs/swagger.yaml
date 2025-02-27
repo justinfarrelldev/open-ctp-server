@@ -106,7 +106,7 @@ definitions:
       expires_at:
         type: string
       id:
-        type: string
+        type: integer
     type: object
   game.CreateGameArgs:
     description: Structure for the game creation request payload.
@@ -581,7 +581,7 @@ paths:
         in: path
         name: id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
