@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
@@ -63,7 +62,7 @@ func DeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 
 	fmt.Println("args: ", *args.AccountId)
 
-	session, err := store.GetSession(strconv.FormatInt(*args.SessionId, 10))
+	session, err := store.GetSession(*args.SessionId)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

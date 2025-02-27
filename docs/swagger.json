@@ -37,7 +37,7 @@
                     "201": {
                         "description": "Account successfully created",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     "400": {
@@ -178,10 +178,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully updated account!",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "description": "Successfully updated account!"
                     },
                     "400": {
                         "description": "account_id must be specified",
@@ -504,7 +501,7 @@
                 "summary": "Get a session",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Session ID",
                         "name": "id",
                         "in": "path",
@@ -708,7 +705,7 @@
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },

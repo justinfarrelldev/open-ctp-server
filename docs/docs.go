@@ -46,7 +46,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Account successfully created",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     "400": {
@@ -187,10 +187,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully updated account!",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "description": "Successfully updated account!"
                     },
                     "400": {
                         "description": "account_id must be specified",
@@ -513,7 +510,7 @@ const docTemplate = `{
                 "summary": "Get a session",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Session ID",
                         "name": "id",
                         "in": "path",
@@ -717,7 +714,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },

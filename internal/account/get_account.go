@@ -64,7 +64,7 @@ func GetAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth
 		return errors.New("invalid session_id")
 	}
 
-	session, err := store.GetSession(strconv.FormatInt(sessionId, 10))
+	session, err := store.GetSession(sessionId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return errors.New("an error occurred while retrieving the session: " + err.Error())

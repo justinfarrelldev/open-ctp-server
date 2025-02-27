@@ -106,7 +106,7 @@ definitions:
       expires_at:
         type: string
       id:
-        type: string
+        type: integer
     type: object
   game.CreateGameArgs:
     description: Structure for the game creation request payload.
@@ -244,7 +244,7 @@ paths:
         "201":
           description: Account successfully created
           schema:
-            type: string
+            type: integer
         "400":
           description: Bad Request
           schema: {}
@@ -340,8 +340,6 @@ paths:
       responses:
         "200":
           description: Successfully updated account!
-          schema:
-            type: string
         "400":
           description: account_id must be specified
           schema:
@@ -581,7 +579,7 @@ paths:
         in: path
         name: id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:

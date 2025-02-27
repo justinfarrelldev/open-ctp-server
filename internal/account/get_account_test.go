@@ -23,7 +23,7 @@ func TestGetAccount_Success(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
-	sessionID := "1"
+	var sessionID int64 = 1
 
 	expectedAccount := Account{
 		Name:            "John Doe",
@@ -84,7 +84,7 @@ func TestGetAccount_NotFound(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
-	sessionID := "1"
+	var sessionID int64 = 1
 
 	createdAt := time.Now()
 	expiresAt := time.Now().Add(6 * time.Hour)

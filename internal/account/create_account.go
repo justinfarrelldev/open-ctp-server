@@ -56,12 +56,12 @@ func isEmailValid(email string, db *sqlx.DB) (bool, error) {
 // @Accept json
 // @Produce json
 // @Param body body CreateAccountArgs true "account creation request body"
-// @Success 201 {string} string "Account successfully created"
+// @Success 201 {integer} int64 "Account successfully created"
 // @Failure 400 {object} error "Bad Request"
 // @Failure 403 {object} error "Forbidden"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /account/create_account [post]
-func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) (*string, error) {
+func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) (*int64, error) {
 
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusBadRequest)

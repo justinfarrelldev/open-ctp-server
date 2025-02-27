@@ -208,7 +208,7 @@ func TestDeleteAccount_SessionNotFound(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
-		WithArgs(fmt.Sprint(sessionID)).
+		WithArgs(sessionID).
 		WillReturnRows(sqlmock.NewRows(nil))
 
 	mockStore := &auth.SessionStore{
@@ -263,7 +263,7 @@ func TestDeleteAccount_SessionExpired(t *testing.T) {
 	expiresAt := time.Now().Add(-1 * time.Hour)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
-		WithArgs(fmt.Sprintf("%d", sessionID)).
+		WithArgs(sessionID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
 			AddRow(sessionID, accountID, createdAt, expiresAt))
 
@@ -319,7 +319,7 @@ func TestDeleteAccount_Success(t *testing.T) {
 	expiresAt := time.Now().Add(6 * time.Hour)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
-		WithArgs(fmt.Sprintf("%d", sessionID)).
+		WithArgs(sessionID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
 			AddRow(sessionID, accountID, createdAt, expiresAt))
 
@@ -384,7 +384,7 @@ func TestDeleteAccount_NoAccountExists(t *testing.T) {
 	expiresAt := time.Now().Add(6 * time.Hour)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
-		WithArgs(fmt.Sprintf("%d", sessionID)).
+		WithArgs(sessionID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
 			AddRow(sessionID, accountID, createdAt, expiresAt))
 

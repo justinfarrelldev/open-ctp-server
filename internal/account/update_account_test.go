@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -145,7 +144,7 @@ func TestUpdateAccount_Success(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
-	sessionID := "1"
+	var sessionID int64 = 1
 	password := "password123"
 	name := "Updated Name"
 	info := "Updated Info"
@@ -153,7 +152,6 @@ func TestUpdateAccount_Success(t *testing.T) {
 	email := "updated@example.com"
 	experienceLevel := 2
 
-	sessionIDInt, err := strconv.ParseInt(sessionID, 10, 64)
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when converting sessionID to int64", err)
 	}
@@ -168,7 +166,7 @@ func TestUpdateAccount_Success(t *testing.T) {
 			Email:           &email,
 			ExperienceLevel: (*ExperienceLevel)(&experienceLevel),
 		},
-		SessionId: &sessionIDInt,
+		SessionId: &sessionID,
 	}
 
 	body, _ := json.Marshal(updateArgs)
@@ -240,20 +238,15 @@ func TestUpdateAccount_MissingPassword(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
-	sessionID := "1"
+	var sessionID int64 = 1
 	name := "Updated Name"
-
-	sessionIDInt, err := strconv.ParseInt(sessionID, 10, 64)
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when converting sessionID to int64", err)
-	}
 
 	updateArgs := UpdateAccountArgs{
 		AccountId: &accountID,
 		Account: &AccountParam{
 			Name: &name,
 		},
-		SessionId: &sessionIDInt,
+		SessionId: &sessionID,
 	}
 
 	body, _ := json.Marshal(updateArgs)
@@ -304,18 +297,13 @@ func TestUpdateAccount_MissingAccount(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
-	sessionID := "1"
+	var sessionID int64 = 1
 	password := "password123"
-
-	sessionIDInt, err := strconv.ParseInt(sessionID, 10, 64)
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when converting sessionID to int64", err)
-	}
 
 	updateArgs := UpdateAccountArgs{
 		AccountId: &accountID,
 		Password:  &password,
-		SessionId: &sessionIDInt,
+		SessionId: &sessionID,
 	}
 
 	body, _ := json.Marshal(updateArgs)
