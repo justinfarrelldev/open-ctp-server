@@ -244,7 +244,7 @@ paths:
         "201":
           description: Account successfully created
           schema:
-            type: string
+            type: integer
         "400":
           description: Bad Request
           schema: {}

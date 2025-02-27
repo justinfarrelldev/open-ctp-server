@@ -46,7 +46,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Account successfully created",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     "400": {
