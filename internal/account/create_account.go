@@ -61,7 +61,7 @@ func isEmailValid(email string, db *sqlx.DB) (bool, error) {
 // @Failure 403 {object} error "Forbidden"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /account/create_account [post]
-func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) (*string, error) {
+func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) (*int64, error) {
 
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusBadRequest)

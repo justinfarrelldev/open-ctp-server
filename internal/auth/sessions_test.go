@@ -73,7 +73,7 @@ func TestGetSession_Success(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	store := NewSessionStore(sqlxDB)
 
-	sessionID := "test-session-id"
+	var sessionID int64 = 12345678
 	accountID := 1
 	createdAt := time.Now()
 	expiresAt := createdAt.Add(12 * time.Hour)
@@ -90,7 +90,7 @@ func TestGetSession_Success(t *testing.T) {
 	}
 
 	if session.ID != sessionID {
-		t.Errorf("expected session ID %s, got %s", sessionID, session.ID)
+		t.Errorf("expected session ID %d, got %d", sessionID, session.ID)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -108,7 +108,7 @@ func TestGetSession_NotFound(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	store := NewSessionStore(sqlxDB)
 
-	sessionID := "non-existent-session-id"
+	var sessionID int64 = 87654321
 	mock.ExpectQuery("SELECT \\* FROM sessions WHERE id = \\$1").
 		WithArgs(sessionID).
 		WillReturnError(sql.ErrNoRows)

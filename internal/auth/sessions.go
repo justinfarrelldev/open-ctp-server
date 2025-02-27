@@ -3,7 +3,6 @@ package auth
 import (
 	"crypto/rand"
 	"database/sql"
-	"encoding/hex"
 	"errors"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 
 // Session represents a user session
 type Session struct {
-	ID        string    `db:"id" json:"id"`
+	ID        int64     `db:"id" json:"id"`
 	AccountID int       `db:"account_id" json:"account_id"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 	ExpiresAt time.Time `db:"expires_at" json:"expires_at"`
@@ -79,20 +78,20 @@ func (s *SessionStore) CreateSession(accountID int) (*Session, error) {
 // @Tags sessions
 // @Accept json
 // @Produce json
-// @Param id path string true "Session ID"
+// @Param id path int64 true "Session ID"
 // @Success 200 {object} Session
 // @Failure 404 {object} error
 // @Router /sessions/{id} [get]
-func (s *SessionStore) GetSession(sessionID string) (*Session, error) {
+func (s *SessionStore) GetSession(sessionID int64) (*Session, error) {
 	var session Session
 	query := `SELECT * FROM sessions WHERE id = $1`
 	err := s.DB.Get(&session, query, sessionID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("Session not found: %s", sessionID)
+			log.Printf("Session not found: %d", sessionID)
 			return nil, nil
 		}
-		log.Printf("Error retrieving session %s: %v", sessionID, err)
+		log.Printf("Error retrieving session %d: %v", sessionID, err)
 		return nil, err
 	}
 
@@ -123,13 +122,29 @@ func (s *SessionStore) DeleteSession(sessionID string) error {
 	return nil
 }
 
-// generateSessionID generates a unique session ID
-func generateSessionID() (string, error) {
-	bytes := make([]byte, 64)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
+// generateSessionID creates a cryptographically secure random session ID
+// by generating 8 random bytes and converting them to a 64-bit integer.
+func generateSessionID() (int64, error) {
+	// Create a byte array to store our random bytes
+	var randomBytes [8]byte
+
+	// Read 8 random bytes using crypto/rand
+	// This is more secure than using math/rand
+	if _, err := rand.Read(randomBytes[:]); err != nil {
+		return 0, err
 	}
-	return hex.EncodeToString(bytes), nil
+
+	// Convert 8 bytes to int64 by shifting each byte to its position
+	// and combining them with bitwise OR operations
+	sessionID := int64(0)
+	for i, b := range randomBytes {
+		// Shift each byte to its position (most significant to least)
+		// and combine with the running total
+		shift := uint(56 - (i * 8)) // 56, 48, 40, 32, 24, 16, 8, 0
+		sessionID |= int64(b) << shift
+	}
+
+	return sessionID, nil
 }
 
 // IsExpired checks if the session has expired
