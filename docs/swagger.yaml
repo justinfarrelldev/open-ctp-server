@@ -593,4 +593,29 @@ paths:
       summary: Get a session
       tags:
       - sessions
+  /sessions/refresh/{account_id}:
+    put:
+      consumes:
+      - application/json
+      description: Refresh the session token for a given account ID. Extends the expiration
+        by 12 hours.
+      parameters:
+      - description: Account ID
+        in: path
+        name: account_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.Session'
+        "404":
+          description: Not Found
+          schema: {}
+      summary: Refresh a session
+      tags:
+      - sessions
 swagger: "2.0"

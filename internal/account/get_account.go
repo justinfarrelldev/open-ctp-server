@@ -80,6 +80,13 @@ func GetAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth
 		return errors.New("session has expired")
 	}
 
+	// Refresh the session
+	_, err = store.RefreshSession(session.AccountID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return errors.New("an error occurred while refreshing the session: " + err.Error())
+	}
+
 	var (
 		name            string
 		info            string
