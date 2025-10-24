@@ -8,7 +8,7 @@ COPY . .
 RUN go build -v -o /run-app .
 
 
-FROM debian:12.11
+FROM debian:bookworm-20250929
 
 COPY --from=builder /run-app /usr/local/bin/
 CMD ["run-app"]
