@@ -49,11 +49,11 @@ func TestCreateSession_Error(t *testing.T) {
 	store := NewSessionStore(sqlxDB)
 
 	accountID := 1
-	mock.ExpectExec("INSERT INTO sessions").
-		WithArgs(sqlmock.AnyArg(), accountID, sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnError(sql.ErrConnDone)
+	mock.ExpectQuery("SELECT \\* FROM sessions WHERE account_id = \\$1 ORDER BY created_at DESC LIMIT 1").
+		WithArgs(accountID).
+		WillReturnError(sql.ErrNoRows)
 
-	_, err = store.CreateSession(accountID)
+	_, err = store.RefreshSession(accountID)
 	if err == nil {
 		t.Errorf("expected error, got nil")
 	}
@@ -214,5 +214,107 @@ func TestIsExpired(t *testing.T) {
 				t.Errorf("Session.IsExpired() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+func TestRefreshSession_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	store := NewSessionStore(sqlxDB)
+
+	accountID := 1
+	sessionID := "test-session-id"
+	createdAt := time.Now().Add(-1 * time.Hour)
+	expiresAt := createdAt.Add(12 * time.Hour)
+
+	rows := sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
+		AddRow(sessionID, accountID, createdAt, expiresAt)
+	mock.ExpectQuery("SELECT \\* FROM sessions WHERE account_id = \\$1 ORDER BY created_at DESC LIMIT 1").
+		WithArgs(accountID).
+		WillReturnRows(rows)
+
+	mock.ExpectExec("UPDATE sessions SET expires_at = \\? WHERE id = \\?").
+		WithArgs(sqlmock.AnyArg(), sessionID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	session, err := store.RefreshSession(accountID)
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+
+	if session.AccountID != accountID {
+		t.Errorf("expected account ID %d, got %d", accountID, session.AccountID)
+	}
+
+	if session.ID != sessionID {
+		t.Errorf("expected session ID %s, got %s", sessionID, session.ID)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestRefreshSession_NotFound(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	store := NewSessionStore(sqlxDB)
+
+	accountID := 1
+	mock.ExpectQuery("SELECT \\* FROM sessions WHERE account_id = \\$1 ORDER BY created_at DESC LIMIT 1").
+		WithArgs(accountID).
+		WillReturnError(sql.ErrNoRows)
+
+	_, err = store.RefreshSession(accountID)
+	if err == nil {
+		t.Errorf("expected error, got nil")
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestRefreshSession_Error(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	store := NewSessionStore(sqlxDB)
+
+	accountID := 1
+	sessionID := "test-session-id"
+	createdAt := time.Now().Add(-1 * time.Hour)
+	expiresAt := createdAt.Add(12 * time.Hour)
+
+	rows := sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
+		AddRow(sessionID, accountID, createdAt, expiresAt)
+	mock.ExpectQuery("SELECT \\* FROM sessions WHERE account_id = \\$1 ORDER BY created_at DESC LIMIT 1").
+		WithArgs(accountID).
+		WillReturnRows(rows)
+
+	mock.ExpectExec("UPDATE sessions SET expires_at = \\? WHERE id = \\?").
+		WithArgs(sqlmock.AnyArg(), sessionID).
+		WillReturnError(sql.ErrConnDone)
+
+	_, err = store.RefreshSession(accountID)
+	if err == nil {
+		t.Errorf("expected error, got nil")
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
