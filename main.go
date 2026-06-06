@@ -12,6 +12,7 @@ import (
 	"net/http"
 
 	"github.com/didip/tollbooth/v7"
+	"github.com/flowchartsman/swaggerui"
 	"github.com/jmoiron/sqlx"
 	account "github.com/justinfarrelldev/open-ctp-server/internal/account"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
@@ -20,13 +21,9 @@ import (
 	lobby "github.com/justinfarrelldev/open-ctp-server/internal/lobby"
 	ratelimit "github.com/justinfarrelldev/open-ctp-server/internal/ratelimit"
 
-	_ "github.com/justinfarrelldev/open-ctp-server/docs"
-
-	"github.com/flowchartsman/swaggerui"
-
-	_ "github.com/lib/pq"
-
 	"github.com/joho/godotenv"
+	_ "github.com/justinfarrelldev/open-ctp-server/docs"
+	_ "github.com/lib/pq"
 )
 
 //	@title			Open Call to Power Server
@@ -41,7 +38,7 @@ var (
 	port  = 9000
 	sleep = flag.Duration("sleep", time.Second*5, "duration between changes in health")
 
-	system = "" // empty string represents the health of the system
+	system = ""
 )
 
 //go:embed docs/swagger.json
@@ -49,20 +46,17 @@ var spec []byte
 
 func main() {
 	if os.Getenv("SUPABASE_DB_URL") == "" {
-		// Load .env file
 		err := godotenv.Load()
 		if err != nil {
 			log.Fatalf("Error loading .env file")
 		}
 	}
 
-	// Tollbooth
 	authWriteLimiter := ratelimit.NewAuthWriteLimiter()
 	accountLimiter := ratelimit.NewAccountLimiter()
 	lobbyGameLimiter := ratelimit.NewLobbyGameLimiter()
 	healthLimiter := ratelimit.NewHealthLimiter()
 
-	// Postgres
 	db, err := sqlx.Open("postgres", os.Getenv("SUPABASE_DB_URL"))
 	if err != nil {
 		log.Fatal(err)
@@ -71,8 +65,6 @@ func main() {
 	fmt.Println("opened connection to database successfully")
 
 	sessionStore := auth.NewSessionStore(db)
-
-	// Handlers
 	mux := http.NewServeMux()
 
 	mux.Handle("/game/create_game", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
@@ -82,23 +74,18 @@ func main() {
 	mux.Handle("/account/create_account", tollbooth.LimitFuncHandler(authWriteLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.CreateAccountHandler(w, r, db, sessionStore)
 	}))
-
 	mux.Handle("/account/login", tollbooth.LimitFuncHandler(authWriteLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.LoginAccountHandler(w, r, db, sessionStore)
 	}))
-
 	mux.Handle("/account/reset_password", tollbooth.LimitFuncHandler(authWriteLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.ResetPasswordHandler(w, r, db, sessionStore)
 	}))
-
 	mux.Handle("/account/get_account", tollbooth.LimitFuncHandler(accountLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.GetAccountHandler(w, r, db, sessionStore)
 	}))
-
 	mux.Handle("/account/update_account", tollbooth.LimitFuncHandler(accountLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.UpdateAccountHandler(w, r, db, sessionStore)
 	}))
-
 	mux.Handle("/account/delete_account", tollbooth.LimitFuncHandler(accountLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.DeleteAccountHandler(w, r, db, sessionStore)
 	}))
@@ -106,17 +93,26 @@ func main() {
 	mux.Handle("/lobby/create_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
 		lobby.CreateLobbyHandler(w, r, db, sessionStore)
 	}))
-
 	mux.Handle("/lobby/get_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
 		lobby.GetLobbyHandler(w, r, db, sessionStore)
 	}))
-
 	mux.Handle("/lobby/update_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
 		lobby.UpdateLobbyHandler(w, r, db, sessionStore)
 	}))
-
 	mux.Handle("/lobby/delete_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
 		lobby.DeleteLobbyHandler(w, r, db, sessionStore)
+	}))
+	mux.Handle("/lobby/join_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		lobby.JoinLobbyHandler(w, r, db, sessionStore)
+	}))
+	mux.Handle("/lobby/leave_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		lobby.LeaveLobbyHandler(w, r, db, sessionStore)
+	}))
+	mux.Handle("/lobby/connect_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		lobby.ConnectLobbyHandler(w, r, db, sessionStore)
+	}))
+	mux.Handle("/lobby/send_chat", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		lobby.SendChatHandler(w, r, db, sessionStore)
 	}))
 
 	mux.Handle("/health", tollbooth.LimitFuncHandler(healthLimiter, health.HealthCheckHandler))
