@@ -18,3 +18,5 @@
 - Kept the implementation untouched and added only contract-level coverage in `internal/game/world_contract_test.go`; this preserves the existing lobby chat surface while making the active-game chat claim explicit for review.
 - Captured the verification as evidence files under `.sisyphus/evidence/` instead of broadening into new endpoints or StartGame/world-generation changes.
 - For the R3 follow-up, keep seed generation outside NormalizeWorldGenerationInput and inside the StartGame flow so production uses a server-only start-time seed while tests can inject a fixed seed through the package seam without reintroducing public determinism.
+- Reuse  for setup-only mutators instead of adding a second concurrency mechanism, so StartGame and pre-start setup writes share one row-lock serialization discipline.
+- Reuse getGameByIDForUpdate(...) for setup-only mutators instead of adding a second concurrency mechanism, so StartGame and pre-start setup writes share one row-lock serialization discipline.

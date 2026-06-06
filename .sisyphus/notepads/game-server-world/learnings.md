@@ -22,3 +22,4 @@
 - T9 verification now has an explicit `TestActiveGameChatUsesLobby` alias over the route-surface contract, so the README World chat bullet can be defended directly without changing any runtime chat handlers.
 - The proof remains focused on `/lobby/send_chat`: the lobby chat test still passes, and `main.go` continues to omit `/game/chat` and `/world/chat`.
 - R3 seed blocker fix: StartGame now generates the initial world seed from a server-only crypto/rand source at start time and passes it through normalization/persistence without deriving it from public values like game IDs.
+- R3 race blocker fix: all setup-only mutators that can change pre-start game state now lock the game row before validating setup status, matching StartGame's serialization point and preventing stale setup writes from committing after world creation begins.

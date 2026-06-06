@@ -358,7 +358,7 @@ func applyGamePatch(w http.ResponseWriter, db *sqlx.DB, store *auth.SessionStore
 		}
 	}()
 
-	game, err := getGameByID(tx, gameID)
+	game, err := getGameByIDForUpdate(tx, gameID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return writeGameStatusError(w, http.StatusNotFound, fmt.Sprintf("no game exists with the ID %d", gameID))

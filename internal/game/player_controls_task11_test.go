@@ -186,7 +186,7 @@ func TestKickPlayer_RemovesPlayerAndKickedPlayerCanNoLongerReadGame(t *testing.T
 
 	expectGameSessionLookup(mock, 55, 7)
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
+	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRowWithLobby(44, 7, nil, DefaultGameStatus, "Task 11 Game", nil, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, DefaultStartingSettlers, DefaultStartingGold))
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 AND account_id = $2`)).
@@ -255,7 +255,7 @@ func TestSelectCountry_RejectsDuplicateAndStartedGameChanges(t *testing.T) {
 
 		expectGameSessionLookup(mock, 88, 8)
 		mock.ExpectBegin()
-		mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
+		mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
 			WithArgs(int64(44)).
 			WillReturnRows(gameRowWithLobby(44, 7, nil, DefaultGameStatus, "Task 11 Game", nil, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, DefaultStartingSettlers, DefaultStartingGold))
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 AND account_id = $2`)).
@@ -295,7 +295,7 @@ func TestSelectCountry_RejectsDuplicateAndStartedGameChanges(t *testing.T) {
 
 		expectGameSessionLookup(mock, 88, 8)
 		mock.ExpectBegin()
-		mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
+		mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
 			WithArgs(int64(44)).
 			WillReturnRows(gameRowWithLobby(44, 7, nil, "started", "Task 11 Game", &startedAt, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, DefaultStartingSettlers, DefaultStartingGold))
 		mock.ExpectRollback()
@@ -323,7 +323,7 @@ func TestUpdateStartingResources_RequireOwnerAndNonNegativeValues(t *testing.T) 
 
 		expectGameSessionLookup(mock, 88, 8)
 		mock.ExpectBegin()
-		mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
+		mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
 			WithArgs(int64(44)).
 			WillReturnRows(gameRowWithLobby(44, 7, nil, DefaultGameStatus, "Task 11 Game", nil, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, DefaultStartingSettlers, DefaultStartingGold))
 		mock.ExpectRollback()
@@ -457,7 +457,7 @@ func TestStartGame_StartsSetupGameAndBlocksLaterSetupMutations(t *testing.T) {
 
 	expectGameSessionLookup(mock, 55, 7)
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
+	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRowWithLobby(44, 7, &lobbyID, "started", "Task 11 Game", &startedAt, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, 2, 250))
 	mock.ExpectRollback()

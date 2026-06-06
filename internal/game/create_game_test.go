@@ -332,7 +332,7 @@ func TestUpdateGame_PersistsAndReturnsUpdatedSetupFields(t *testing.T) {
 
 	expectGameSessionLookup(mock, 55, 7)
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
+	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRow(44, 7, DefaultGameStatus, "Original", false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON))
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE games SET name = $1, is_locked = $2, is_public = $3, style = $4, rules_json = $5, exclusions_json = $6, updated_at = NOW() WHERE id = $7`)).
@@ -383,7 +383,7 @@ func TestDeleteGame_RemovesGameAndFutureGetReturnsNotFound(t *testing.T) {
 
 	expectGameSessionLookup(mock, 55, 7)
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
+	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRow(44, 7, DefaultGameStatus, "Delete Me", false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON))
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM games WHERE id = $1`)).
@@ -440,7 +440,7 @@ func TestGameMutations_RejectNonOwners(t *testing.T) {
 
 			expectGameSessionLookup(mock, 55, 7)
 			mock.ExpectBegin()
-			mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
+			mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
 				WithArgs(int64(44)).
 				WillReturnRows(gameRow(44, 8, DefaultGameStatus, "Owned by someone else", false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON))
 			mock.ExpectRollback()
@@ -467,7 +467,7 @@ func TestGameMutations_RejectNonSetupGames(t *testing.T) {
 
 	expectGameSessionLookup(mock, 55, 7)
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
+	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRow(44, 7, "active", "No Longer Mutable", false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON))
 	mock.ExpectRollback()

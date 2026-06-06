@@ -249,7 +249,7 @@ func DeleteGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth
 		}
 	}()
 
-	game, err := getGameByID(tx, args.GameId)
+	game, err := getGameByIDForUpdate(tx, args.GameId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return writeGameStatusError(w, http.StatusNotFound, fmt.Sprintf("no game exists with the ID %d", args.GameId))
