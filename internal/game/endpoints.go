@@ -162,7 +162,7 @@ func GetGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.Se
 // @Tags game
 // @Accept json
 // @Produce json
-// @Param body body UpdateGameArgs true "game update request body"
+// @Param body body UpdateGameDocsArgs true "game update request body"
 // @Success 200 {object} Game
 // @Failure 400 {object} error "Bad Request"
 // @Failure 401 {object} error "Unauthorized"
@@ -425,7 +425,7 @@ func UpdateStyle(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *aut
 // @Tags game
 // @Accept json
 // @Produce json
-// @Param body body UpdateRulesArgs true "game rules update request body"
+// @Param body body UpdateRulesDocsArgs true "game rules update request body"
 // @Success 200 {object} Game
 // @Failure 400 {object} error "Bad Request"
 // @Failure 401 {object} error "Unauthorized"
@@ -457,7 +457,7 @@ func UpdateRules(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *aut
 // @Tags game
 // @Accept json
 // @Produce json
-// @Param body body UpdateExclusionsArgs true "game exclusions update request body"
+// @Param body body UpdateExclusionsDocsArgs true "game exclusions update request body"
 // @Success 200 {object} Game
 // @Failure 400 {object} error "Bad Request"
 // @Failure 401 {object} error "Unauthorized"
@@ -489,9 +489,8 @@ func UpdateExclusions(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store
 // @Tags game
 // @Accept json
 // @Produce json
-// @Success 404 {object} error "AI players are not supported yet"
 // @Failure 400 {object} error "Bad Request"
-// @Failure 404 {object} error "Not Found"
+// @Failure 404 {object} error "AI players are not supported yet"
 // @Router /game/add_ai [post]
 func AddAI(w http.ResponseWriter, r *http.Request, _ *sqlx.DB, _ *auth.SessionStore) error {
 	if r.Method != http.MethodPost {

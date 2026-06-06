@@ -178,12 +178,12 @@ You absolutely can, so long as you follow the license in `LICENSE.md`. I am real
 - [x] Accounts can be created
 - [x] Accounts can be read
 - [x] Accounts can be updated
-- [ ] Accounts can be deleted
-- [ ] Passwords can be reset
+- [x] Accounts can be deleted
+- [x] Passwords can be reset
 - [x] Passwords can be compared to find if passwords are correct
-- [ ] Accounts can be logged into (and will provide a valid JWT token / session for future calls) [I need to research JWTs vs session-based auth for this task]
+- [x] Accounts can be logged into and provide a valid session for future calls
 - [x] Account updates require proof of ownership
-- [ ] All account endpoints are rate-limited appropriately
+- [x] All account endpoints are rate-limited appropriately
 
 ### Lobbies (/lobby)
 
@@ -191,40 +191,40 @@ You absolutely can, so long as you follow the license in `LICENSE.md`. I am real
 - [x] Lobbies can be read
 - [x] Lobbies can be updated
 - [x] Lobbies can be deleted
-- [ ] Lobby name can be changed
-- [ ] Lobby can be "muted"
-- [ ] Lobby can be set to "public"
-- [ ] Lobbies will auto-close after a period of inactivity
-- [ ] Valid accounts can connect via streams to the lobbies (via streams so chats and events can be sent in the future)
-- [ ] Valid accounts can leave any lobbies they are in
-- [ ] Accounts can only be in one lobby at once
-- [ ] "Player connected" event is sent when players join the lobby
-- [ ] Chats can be sent in lobbies
-- [ ] All lobby endpoints are rate-limited appropriately
+- [x] Lobby name can be changed
+- [x] Lobby can be "muted"
+- [x] Lobby can be set to "public"
+- [x] Lobbies will auto-close after a period of inactivity
+- [x] Valid accounts can connect via streams to the lobbies (via streams so chats and events can be sent in the future)
+- [x] Valid accounts can leave any lobbies they are in
+- [x] Accounts can only be in one lobby at once
+- [x] "Player connected" event is sent when players join the lobby
+- [x] Chats can be sent in lobbies
+- [x] All lobby endpoints are rate-limited appropriately
 - [x] Lobby updates require proof of ownership
 
 ### Games (/game)
 *Note: profiles can be changed in the game (as seen in the UI), but this should be handled client-side using the account endpoints.
 
-- [ ] Games can be created
-- [ ] Games can be read
-- [ ] Games can be updated
-- [ ] Games can be deleted
-- [ ] Games can be renamed
-- [ ] Games can be "locked"
-- [ ] Games can be set to "public"
-- [ ] Game style can be changed
-- [ ] Game rules can be changed
-- [ ] Game exclusions can be changed
-- [ ] "Add AI" endpoint should exist, but should only return 404 (since AI may be added later). This should still exist in the docs for this reason
-- [ ] Games should allow the owner to kick players
-- [ ] Games should allow players to change their country
-- [ ] Games should allow players to choose their number of settlers (is this an owner-only privilege?)
-- [ ] Games should allow players to choose their starting gold (is this an owner-only privilege?)
-- [ ] Games should return player ping
-- [ ] Games should be able to be started
-- [ ] Chats can be sent in games via the lobby above (chat messages should come in through the lobby chats, not via the game endpoint itself)
-- [ ] Game updates require proof of ownership
+- [x] Games can be created
+- [x] Games can be read
+- [x] Games can be updated
+- [x] Games can be deleted
+- [x] Games can be renamed
+- [x] Games can be "locked"
+- [x] Games can be set to "public"
+- [x] Game style can be changed
+- [x] Game rules can be changed
+- [x] Game exclusions can be changed
+- [x] "Add AI" endpoint exists and currently returns 404 (since AI may be added later). This remains documented intentionally
+- [x] Games allow the owner to kick players
+- [x] Games allow joined players to change their country during setup
+- [x] Games allow the owner to choose the starting number of settlers during setup
+- [x] Games allow the owner to choose starting gold during setup
+- [x] Games return player ping
+- [x] Games can be started
+- [x] Chats can be sent in games via the lobby above (chat messages come in through lobby chat, not via a `/game/chat` endpoint)
+- [x] Game updates require proof of ownership
 
 ### World (/world)
 

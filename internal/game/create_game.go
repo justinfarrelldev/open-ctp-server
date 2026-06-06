@@ -206,7 +206,7 @@ func normalizeJSONObject(raw json.RawMessage, defaultValue []byte) (string, erro
 // @Tags game
 // @Accept json
 // @Produce json
-// @Param body body CreateGameArgs true "Game creation request body"
+// @Param body body CreateGameDocsArgs true "Game creation request body"
 // @Success 201 {object} Game
 // @Failure 400 {object} error "Bad Request"
 // @Failure 401 {object} error "Unauthorized"
