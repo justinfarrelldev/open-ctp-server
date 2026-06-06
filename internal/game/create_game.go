@@ -243,12 +243,22 @@ func CreateGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth
 		}
 	}()
 
+	gamePlayerAccountIDs, err := resolveGamePlayerAccountIDs(tx, record.OwnerAccountID, record.LobbyID)
+	if err != nil {
+		return err
+	}
+
+	var lobbyIDArg any
+	if record.LobbyID != nil {
+		lobbyIDArg = *record.LobbyID
+	}
+
 	var gameID int64
 	if err := tx.QueryRowx(
 		insertGameQuery,
 		record.Name,
 		record.OwnerAccountID,
-		record.LobbyID,
+		lobbyIDArg,
 		record.PasswordProtected,
 		record.Password,
 		record.IsLocked,
@@ -263,7 +273,11 @@ func CreateGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth
 		return fmt.Errorf("an error occurred while storing the game in the database: %v", err)
 	}
 
-	game, err := getGameByID(tx, gameID)
+	if err := seedGamePlayers(tx, gameID, gamePlayerAccountIDs); err != nil {
+		return err
+	}
+
+	game, err := getGameWithPlayers(tx, gameID)
 	if err != nil {
 		return err
 	}

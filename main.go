@@ -101,6 +101,24 @@ func main() {
 	mux.Handle("/game/add_ai", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
 		game.AddAIHandler(w, r, db, sessionStore)
 	}))
+	mux.Handle("/game/kick_player", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		game.KickGamePlayerHandler(w, r, db, sessionStore)
+	}))
+	mux.Handle("/game/select_country", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		game.SelectGameCountryHandler(w, r, db, sessionStore)
+	}))
+	mux.Handle("/game/update_starting_settlers", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		game.UpdateGameStartingSettlersHandler(w, r, db, sessionStore)
+	}))
+	mux.Handle("/game/update_starting_gold", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		game.UpdateGameStartingGoldHandler(w, r, db, sessionStore)
+	}))
+	mux.Handle("/game/update_ping", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		game.UpdateGamePingHandler(w, r, db, sessionStore)
+	}))
+	mux.Handle("/game/start_game", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		game.StartGameHandler(w, r, db, sessionStore)
+	}))
 
 	mux.Handle("/account/create_account", tollbooth.LimitFuncHandler(authWriteLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.CreateAccountHandler(w, r, db, sessionStore)

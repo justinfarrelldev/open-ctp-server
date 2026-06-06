@@ -8,19 +8,41 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
-const ErrorGameOwnerRequired = "only the game owner may perform this action"
+const (
+	ErrorGameOwnerRequired   = "only the game owner may perform this action"
+	ErrorGamePlayerRequired  = "only joined game players may perform this action"
+	ErrorCountryAlreadyTaken = "country has already been selected by another player"
+)
 
 const gameSelectByID = `SELECT id, created_at, updated_at, started_at, lobby_id, owner_account_id, name, password_protected, password, is_locked, is_public, style, rules_json, exclusions_json, status, starting_settlers, starting_gold
 FROM games
 WHERE id = $1`
 
+const gamePlayersSelectByGameID = `SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 ORDER BY joined_at ASC, id ASC`
+
+const gamePlayerByAccountQuery = `SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 AND account_id = $2`
+
+const lobbyByIDForGameQuery = `SELECT id, closed_at FROM lobbies WHERE id = $1`
+
+const lobbyMembersForGameQuery = `SELECT account_id FROM lobby_members WHERE lobby_id = $1 ORDER BY joined_at ASC, id ASC`
+
 type gameGetter interface {
 	Get(dest any, query string, args ...any) error
+}
+
+type gameSelector interface {
+	Select(dest any, query string, args ...any) error
+}
+
+type gameReader interface {
+	gameGetter
+	gameSelector
 }
 
 type gamePatch struct {
@@ -32,6 +54,11 @@ type gamePatch struct {
 	HasRulesJSON      bool
 	ExclusionsJSON    json.RawMessage
 	HasExclusionsJSON bool
+}
+
+type lobbyDependency struct {
+	ID       int64      `db:"id"`
+	ClosedAt *time.Time `db:"closed_at"`
 }
 
 func (p gamePatch) hasAnyField() bool {
@@ -67,11 +94,55 @@ func getGameByID(executor gameGetter, gameID int64) (*Game, error) {
 	return &game, nil
 }
 
+func listGamePlayersByGameID(executor gameSelector, gameID int64) ([]GamePlayer, error) {
+	players := make([]GamePlayer, 0)
+	if err := executor.Select(&players, gamePlayersSelectByGameID, gameID); err != nil {
+		return nil, fmt.Errorf("an error occurred while getting game players for the game with the ID %d: %v", gameID, err)
+	}
+	return players, nil
+}
+
+func getGamePlayerByAccount(executor gameGetter, gameID int64, accountID int64) (*GamePlayer, error) {
+	var player GamePlayer
+	if err := executor.Get(&player, gamePlayerByAccountQuery, gameID, accountID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("an error occurred while getting the game player for the game with the ID %d and account with the ID %d: %v", gameID, accountID, err)
+	}
+	return &player, nil
+}
+
+func getGameWithPlayers(executor gameReader, gameID int64) (*Game, error) {
+	game, err := getGameByID(executor, gameID)
+	if err != nil {
+		return nil, err
+	}
+
+	players, err := listGamePlayersByGameID(executor, gameID)
+	if err != nil {
+		return nil, err
+	}
+	game.Players = players
+	return game, nil
+}
+
 func ensureGameOwner(w http.ResponseWriter, session *auth.Session, game *Game) error {
 	if game.OwnerAccountID == nil || int64(session.AccountID) != *game.OwnerAccountID {
 		return writeGameStatusError(w, http.StatusForbidden, ErrorGameOwnerRequired)
 	}
 	return nil
+}
+
+func ensureGamePlayer(w http.ResponseWriter, executor gameGetter, gameID int64, accountID int64) (*GamePlayer, error) {
+	player, err := getGamePlayerByAccount(executor, gameID, accountID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, writeGameStatusError(w, http.StatusForbidden, ErrorGamePlayerRequired)
+		}
+		return nil, err
+	}
+	return player, nil
 }
 
 func ensureGameSetupMutable(w http.ResponseWriter, game *Game) error {
@@ -167,6 +238,88 @@ func buildGamePatchUpdate(patch gamePatch) (string, []any, error) {
 	return strings.Join(fields, ", "), params, nil
 }
 
+func validateLobbyDependency(executor gameGetter, lobbyID int64) error {
+	var lobby lobbyDependency
+	if err := executor.Get(&lobby, lobbyByIDForGameQuery, lobbyID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("lobby %d is unavailable", lobbyID)
+		}
+		return fmt.Errorf("an error occurred while getting the lobby with the ID %d: %v", lobbyID, err)
+	}
+	if lobby.ClosedAt != nil {
+		return fmt.Errorf("lobby %d is unavailable", lobbyID)
+	}
+	return nil
+}
+
+func listLobbyAccountIDs(executor gameSelector, lobbyID int64) ([]int64, error) {
+	rows := make([]struct {
+		AccountID int64 `db:"account_id"`
+	}, 0)
+	if err := executor.Select(&rows, lobbyMembersForGameQuery, lobbyID); err != nil {
+		return nil, fmt.Errorf("an error occurred while getting lobby members for the lobby with the ID %d: %v", lobbyID, err)
+	}
+
+	accountIDs := make([]int64, 0, len(rows))
+	for _, row := range rows {
+		accountIDs = append(accountIDs, row.AccountID)
+	}
+	return accountIDs, nil
+}
+
+func insertGamePlayer(tx *sqlx.Tx, gameID int64, accountID int64) error {
+	if _, err := tx.Exec(`INSERT INTO game_players (game_id, account_id) VALUES ($1, $2)`, gameID, accountID); err != nil {
+		return fmt.Errorf("an error occurred while storing the game player in the database: %v", err)
+	}
+	return nil
+}
+
+func resolveGamePlayerAccountIDs(executor gameReader, ownerAccountID int64, lobbyID *int64) ([]int64, error) {
+	accountIDs := []int64{ownerAccountID}
+	if lobbyID != nil {
+		if err := validateLobbyDependency(executor, *lobbyID); err != nil {
+			return nil, err
+		}
+		lobbyAccountIDs, err := listLobbyAccountIDs(executor, *lobbyID)
+		if err != nil {
+			return nil, err
+		}
+		if len(lobbyAccountIDs) > 0 {
+			accountIDs = lobbyAccountIDs
+		}
+		ownerPresent := false
+		for _, accountID := range accountIDs {
+			if accountID == ownerAccountID {
+				ownerPresent = true
+				break
+			}
+		}
+		if !ownerPresent {
+			accountIDs = append([]int64{ownerAccountID}, accountIDs...)
+		}
+	}
+
+	seen := make(map[int64]struct{}, len(accountIDs))
+	uniqueAccountIDs := make([]int64, 0, len(accountIDs))
+	for _, accountID := range accountIDs {
+		if _, ok := seen[accountID]; ok {
+			continue
+		}
+		seen[accountID] = struct{}{}
+		uniqueAccountIDs = append(uniqueAccountIDs, accountID)
+	}
+	return uniqueAccountIDs, nil
+}
+
+func seedGamePlayers(tx *sqlx.Tx, gameID int64, accountIDs []int64) error {
+	for _, accountID := range accountIDs {
+		if err := insertGamePlayer(tx, gameID, accountID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func applyGamePatch(w http.ResponseWriter, db *sqlx.DB, store *auth.SessionStore, sessionBody auth.SessionIDBody, gameID int64, patch gamePatch) error {
 	session, err := requireGameSession(w, store, sessionBody)
 	if err != nil {
@@ -210,7 +363,7 @@ func applyGamePatch(w http.ResponseWriter, db *sqlx.DB, store *auth.SessionStore
 		return fmt.Errorf("an error occurred while updating the game with the ID %d: %v", gameID, err)
 	}
 
-	updatedGame, err := getGameByID(tx, gameID)
+	updatedGame, err := getGameWithPlayers(tx, gameID)
 	if err != nil {
 		return err
 	}

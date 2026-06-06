@@ -122,3 +122,39 @@ func AddAIHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *au
 	err := AddAI(trackedWriter, r, db, store)
 	handleGameHandlerError(trackedWriter, err)
 }
+
+func KickGamePlayerHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := KickGamePlayer(trackedWriter, r, db, store)
+	handleGameHandlerError(trackedWriter, err)
+}
+
+func SelectGameCountryHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := SelectGameCountry(trackedWriter, r, db, store)
+	handleGameHandlerError(trackedWriter, err)
+}
+
+func UpdateGameStartingSettlersHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := UpdateGameStartingSettlers(trackedWriter, r, db, store)
+	handleGameHandlerError(trackedWriter, err)
+}
+
+func UpdateGameStartingGoldHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := UpdateGameStartingGold(trackedWriter, r, db, store)
+	handleGameHandlerError(trackedWriter, err)
+}
+
+func UpdateGamePingHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := UpdateGamePing(trackedWriter, r, db, store)
+	handleGameHandlerError(trackedWriter, err)
+}
+
+func StartGameHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := StartGame(trackedWriter, r, db, store)
+	handleGameHandlerError(trackedWriter, err)
+}

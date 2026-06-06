@@ -103,10 +103,10 @@ func (a UpdateExclusionsArgs) GetSessionID() *int64 {
 	return a.SessionId
 }
 
-// GetGame returns the current persisted game for the authenticated owner.
+// GetGame returns the current persisted game for an authenticated joined player.
 //
 // @Summary Get a game
-// @Description This endpoint returns a game's persisted setup fields for the authenticated game owner.
+// @Description This endpoint returns a game's persisted setup fields for any authenticated account that is still joined to the game, including player country and ping values.
 // @Tags game
 // @Accept json
 // @Produce json
@@ -142,9 +142,15 @@ func GetGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.Se
 		return err
 	}
 
-	if err := ensureGameOwner(w, session, game); err != nil {
+	if _, err := ensureGamePlayer(w, db, gameID, int64(session.AccountID)); err != nil {
 		return err
 	}
+
+	players, err := listGamePlayersByGameID(db, gameID)
+	if err != nil {
+		return err
+	}
+	game.Players = players
 
 	return writeGameJSONResponse(w, http.StatusOK, game)
 }

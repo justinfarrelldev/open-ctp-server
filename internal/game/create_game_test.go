@@ -78,9 +78,22 @@ func TestCreateGame_UsesAuthenticatedSessionOwnerAndReturnsCreatedGame(t *testin
 			DefaultStartingGold,
 		).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(44))
+	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO game_players (game_id, account_id) VALUES ($1, $2)`)).
+		WithArgs(int64(44), int64(7)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRow(44, 7, DefaultGameStatus, "ctp2 default setup", false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON))
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayersSelectByGameID)).
+		WithArgs(int64(44)).
+		WillReturnRows(gamePlayerRows(44,
+			struct {
+				id        int64
+				accountID int64
+				country   string
+				ping      int
+			}{id: 1, accountID: 7, country: "", ping: 0},
+		))
 	mock.ExpectCommit()
 
 	req := httptest.NewRequest(http.MethodPost, "/game/create_game", bytes.NewBuffer(jsonBody))
@@ -101,6 +114,9 @@ func TestCreateGame_UsesAuthenticatedSessionOwnerAndReturnsCreatedGame(t *testin
 	}
 	if response.Style != DefaultGameStyle || response.RulesJSON != defaultRulesJSON || response.ExclusionsJSON != defaultExclusionsJSON {
 		t.Fatalf("unexpected persisted defaults in response: %+v", response)
+	}
+	if len(response.Players) != 1 || response.Players[0].Ping != 0 {
+		t.Fatalf("unexpected players in response: %+v", response.Players)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
@@ -263,6 +279,26 @@ func TestGetGame_ReturnsPersistedFieldsForOwner(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRow(44, 7, DefaultGameStatus, "Persisted", true, true, "scenario", `["fast"]`, `{"units":["settler"]}`))
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayerByAccountQuery)).
+		WithArgs(int64(44), int64(7)).
+		WillReturnRows(gamePlayerRows(44,
+			struct {
+				id        int64
+				accountID int64
+				country   string
+				ping      int
+			}{id: 1, accountID: 7, country: "Greeks", ping: 0},
+		))
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayersSelectByGameID)).
+		WithArgs(int64(44)).
+		WillReturnRows(gamePlayerRows(44,
+			struct {
+				id        int64
+				accountID int64
+				country   string
+				ping      int
+			}{id: 1, accountID: 7, country: "Greeks", ping: 0},
+		))
 
 	req := httptest.NewRequest(http.MethodGet, "/game/get_game?game_id=44&session_id=55", nil)
 	rr := httptest.NewRecorder()
@@ -279,6 +315,9 @@ func TestGetGame_ReturnsPersistedFieldsForOwner(t *testing.T) {
 	}
 	if !response.IsLocked || !response.IsPublic || response.Style != "scenario" || response.RulesJSON != `["fast"]` || response.ExclusionsJSON != `{"units":["settler"]}` {
 		t.Fatalf("unexpected response: %+v", response)
+	}
+	if len(response.Players) != 1 || response.Players[0].Country != "Greeks" || response.Players[0].Ping != 0 {
+		t.Fatalf("unexpected players response: %+v", response.Players)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
@@ -302,6 +341,16 @@ func TestUpdateGame_PersistsAndReturnsUpdatedSetupFields(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRow(44, 7, DefaultGameStatus, "Renamed", true, true, "scenario", `["fast"]`, `{"units":["settler"]}`))
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayersSelectByGameID)).
+		WithArgs(int64(44)).
+		WillReturnRows(gamePlayerRows(44,
+			struct {
+				id        int64
+				accountID int64
+				country   string
+				ping      int
+			}{id: 1, accountID: 7, country: "Greeks", ping: 0},
+		))
 	mock.ExpectCommit()
 
 	req := httptest.NewRequest(http.MethodPut, "/game/update_game", strings.NewReader(body))
@@ -319,6 +368,9 @@ func TestUpdateGame_PersistsAndReturnsUpdatedSetupFields(t *testing.T) {
 	}
 	if response.Name != "Renamed" || !response.IsLocked || !response.IsPublic || response.Style != "scenario" || response.RulesJSON != `["fast"]` || response.ExclusionsJSON != `{"units":["settler"]}` {
 		t.Fatalf("unexpected updated response: %+v", response)
+	}
+	if len(response.Players) != 1 || response.Players[0].Country != "Greeks" {
+		t.Fatalf("unexpected players response: %+v", response.Players)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
