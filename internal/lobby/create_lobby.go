@@ -8,6 +8,9 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
+// CreateLobbyArgs represents the expected structure of the request body for creating a lobby.
+//
+// @Description Structure for the lobby creation request payload.
 type CreateLobbyArgs struct {
 	Lobby     LobbyParam `json:"lobby"`
 	Password  string     `json:"password"`
@@ -21,6 +24,20 @@ func (a CreateLobbyArgs) GetSessionID() *int64 {
 const ERROR_PASSWORD_TOO_SHORT = "password must be longer than 6 characters"
 const ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD = "password is required"
 
+// CreateLobby creates a new lobby for the authenticated account owner.
+//
+// @Summary Create a new lobby
+// @Description This endpoint creates a new lobby for the authenticated account, makes that account the owner, adds it as the first member, and rejects requests when the account is already in another open lobby.
+// @Tags lobby
+// @Accept json
+// @Produce json
+// @Param body body CreateLobbyArgs true "lobby creation request body"
+// @Success 201 {string} string "Lobby successfully created"
+// @Failure 400 {object} error "Bad Request"
+// @Failure 401 {object} error "Unauthorized"
+// @Failure 409 {object} error "Conflict"
+// @Failure 500 {object} error "Internal Server Error"
+// @Router /lobby/create_lobby [post]
 func CreateLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodPost {
 		return writeLobbyStatusError(w, http.StatusBadRequest, "invalid request; request must be a POST request")

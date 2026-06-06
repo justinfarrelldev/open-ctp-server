@@ -9,6 +9,9 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
+// DeleteLobbyArgs represents the expected structure of the request body for deleting a lobby.
+//
+// @Description Structure for the lobby deletion request payload.
 type DeleteLobbyArgs struct {
 	LobbyId   int64  `json:"lobby_id"`
 	SessionId *int64 `json:"session_id"`
@@ -18,6 +21,21 @@ func (a DeleteLobbyArgs) GetSessionID() *int64 {
 	return a.SessionId
 }
 
+// DeleteLobby deletes a lobby for the current owner.
+//
+// @Summary Deletes a lobby
+// @Description This endpoint deletes a lobby only for the authenticated lobby owner. It enforces ownership before deletion and does not allow non-owners to remove a lobby.
+// @Tags lobby
+// @Accept json
+// @Produce json
+// @Param body body DeleteLobbyArgs true "lobby deletion request body"
+// @Success 200 {string} string "Successfully deleted lobby!"
+// @Failure 400 {object} error "Bad Request"
+// @Failure 401 {object} error "Unauthorized"
+// @Failure 403 {object} error "Forbidden"
+// @Failure 404 {object} error "Not Found"
+// @Failure 500 {object} error "Internal Server Error"
+// @Router /lobby/delete_lobby [delete]
 func DeleteLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodDelete {
 		return writeLobbyStatusError(w, http.StatusBadRequest, "invalid request; request must be a DELETE request")

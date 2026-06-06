@@ -44,7 +44,6 @@ func TestGetLobby_Success(t *testing.T) {
 		WithArgs(int64(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
 			AddRow(int64(1), "Test Lobby", "Owner", int64(7), false, false, true, now, now, now, nil))
-	expectLobbyMemberCount(mock, int64(1), 1)
 	mock.ExpectCommit()
 
 	req := httptest.NewRequest(http.MethodGet, "/lobby/get_lobby", strings.NewReader(`{"lobby_id":1}`))

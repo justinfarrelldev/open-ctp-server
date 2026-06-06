@@ -9,6 +9,9 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
+// LeaveLobbyArgs represents the expected structure of the request body for leaving a lobby.
+//
+// @Description Structure for the lobby leave request payload.
 type LeaveLobbyArgs struct {
 	SessionId *int64 `json:"session_id"`
 }
@@ -17,6 +20,21 @@ func (a LeaveLobbyArgs) GetSessionID() *int64 {
 	return a.SessionId
 }
 
+// LeaveLobby removes the authenticated account from its current open lobby.
+//
+// @Summary Leaves the current lobby
+// @Description This endpoint removes the authenticated account from its current open lobby. If the owner leaves, ownership transfers to the longest-waiting remaining member, or the lobby is closed if it becomes empty.
+// @Tags lobby
+// @Accept json
+// @Produce json
+// @Param body body LeaveLobbyArgs true "lobby leave request body"
+// @Success 200 {string} string "Successfully left lobby!"
+// @Failure 400 {object} error "Bad Request"
+// @Failure 401 {object} error "Unauthorized"
+// @Failure 404 {object} error "Not Found"
+// @Failure 409 {object} error "Conflict"
+// @Failure 500 {object} error "Internal Server Error"
+// @Router /lobby/leave_lobby [post]
 func LeaveLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodPost {
 		return writeLobbyStatusError(w, http.StatusBadRequest, "invalid request; request must be a POST request")

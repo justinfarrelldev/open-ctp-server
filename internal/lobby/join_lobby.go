@@ -9,6 +9,9 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
+// JoinLobbyArgs represents the expected structure of the request body for joining a lobby.
+//
+// @Description Structure for the lobby join request payload.
 type JoinLobbyArgs struct {
 	LobbyId   int64  `json:"lobby_id"`
 	SessionId *int64 `json:"session_id"`
@@ -18,6 +21,22 @@ func (a JoinLobbyArgs) GetSessionID() *int64 {
 	return a.SessionId
 }
 
+// JoinLobby adds the authenticated account to a lobby.
+//
+// @Summary Joins a lobby
+// @Description This endpoint joins the authenticated account to the requested lobby, rejects the request if the account is already in another open lobby, and returns HTTP 410 Gone when the target lobby has auto-closed from inactivity.
+// @Tags lobby
+// @Accept json
+// @Produce json
+// @Param body body JoinLobbyArgs true "lobby join request body"
+// @Success 200 {string} string "Successfully joined lobby!"
+// @Failure 400 {object} error "Bad Request"
+// @Failure 401 {object} error "Unauthorized"
+// @Failure 404 {object} error "Not Found"
+// @Failure 409 {object} error "Conflict"
+// @Failure 410 {object} error "Gone"
+// @Failure 500 {object} error "Internal Server Error"
+// @Router /lobby/join_lobby [post]
 func JoinLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodPost {
 		return writeLobbyStatusError(w, http.StatusBadRequest, "invalid request; request must be a POST request")

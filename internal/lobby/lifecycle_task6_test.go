@@ -24,9 +24,12 @@ func newLobbyTestStore(t *testing.T) (*sqlx.DB, sqlmock.Sqlmock, *auth.SessionSt
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 
+	resetLobbyBroker()
+
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	store := auth.NewSessionStore(sqlxDB)
 	cleanup := func() {
+		resetLobbyBroker()
 		_ = db.Close()
 	}
 
@@ -38,10 +41,23 @@ func lobbySessionRows(sessionID int64, accountID int64, expiresAt time.Time) *sq
 		AddRow(sessionID, accountID, time.Now(), expiresAt)
 }
 
-func expectLobbyMemberCount(mock sqlmock.Sqlmock, lobbyID int64, count int64) {
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM lobby_members WHERE lobby_id = $1")).
+func expectExpiredCurrentLobbyLookup(mock sqlmock.Sqlmock, accountID int64, lobbyID int64) {
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT lm.lobby_id
+FROM lobby_members lm
+JOIN lobbies l ON l.id = lm.lobby_id
+WHERE lm.account_id = $1 AND l.closed_at IS NULL
+ORDER BY lm.joined_at ASC, lm.id ASC`)).
+		WithArgs(accountID).
+		WillReturnRows(sqlmock.NewRows([]string{"lobby_id"}).AddRow(lobbyID))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name, owner_name, owner_account_id, is_closed, is_muted, is_public, created_at, updated_at, last_activity_at, closed_at
+FROM lobby
+WHERE id = $1`)).
 		WithArgs(lobbyID).
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(count))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
+			AddRow(lobbyID, "Expired Current Lobby", "Owner", accountID, false, false, true, time.Now(), time.Now(), time.Now().Add(-2*time.Hour-time.Minute), nil))
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE lobbies SET is_closed = TRUE, closed_at = NOW(), updated_at = NOW() WHERE id = $1 AND closed_at IS NULL")).
+		WithArgs(lobbyID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 }
 
 func TestCreateLobby_RejectsInvalidSession(t *testing.T) {
@@ -84,9 +100,15 @@ func TestCreateLobby_RejectsSecondLobbyForAccount(t *testing.T) {
 FROM lobby_members lm
 JOIN lobbies l ON l.id = lm.lobby_id
 WHERE lm.account_id = $1 AND l.closed_at IS NULL
-LIMIT 1`)).
+ORDER BY lm.joined_at ASC, lm.id ASC`)).
 		WithArgs(accountID).
 		WillReturnRows(sqlmock.NewRows([]string{"lobby_id"}).AddRow(99))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name, owner_name, owner_account_id, is_closed, is_muted, is_public, created_at, updated_at, last_activity_at, closed_at
+FROM lobby
+WHERE id = $1`)).
+		WithArgs(int64(99)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
+			AddRow(int64(99), "Current Lobby", "Owner", accountID, false, false, true, time.Now(), time.Now(), time.Now(), nil))
 	mock.ExpectRollback()
 
 	body := `{"lobby":{"name":"Another Lobby","is_muted":false,"is_public":true},"password":"password123","session_id":44}`
@@ -103,6 +125,49 @@ LIMIT 1`)).
 
 	if rr.Code != http.StatusConflict {
 		t.Fatalf("got status %d want %d", rr.Code, http.StatusConflict)
+	}
+}
+
+func TestCreateLobby_AllowsFreshCreateAfterExpiredCurrentLobbyIsClosed(t *testing.T) {
+	sqlxDB, mock, store, cleanup := newLobbyTestStore(t)
+	defer cleanup()
+
+	sessionID := int64(145)
+	accountID := int64(17)
+	expiredLobbyID := int64(99)
+	newLobbyName := "Recovered Lobby"
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
+		WithArgs(sessionID).
+		WillReturnRows(lobbySessionRows(sessionID, accountID, time.Now().Add(time.Hour)))
+	mock.ExpectBegin()
+	expectExpiredCurrentLobbyLookup(mock, accountID, expiredLobbyID)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT name FROM account WHERE id = $1")).
+		WithArgs(accountID).
+		WillReturnRows(sqlmock.NewRows([]string{"name"}).AddRow("Recovered Owner"))
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO lobbies (name, owner_name, owner_account_id, is_closed, is_muted, is_public, updated_at, last_activity_at)
+VALUES ($1, $2, $3, FALSE, $4, $5, NOW(), NOW())
+RETURNING id`)).
+		WithArgs(newLobbyName, "Recovered Owner", accountID, false, true).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(150)))
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO lobby_members (lobby_id, account_id) VALUES ($1, $2)")).
+		WithArgs(int64(150), accountID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	body := `{"lobby":{"name":"Recovered Lobby","is_public":true},"password":"password123","session_id":145}`
+	req, err := http.NewRequest(http.MethodPost, "/lobby/create_lobby", strings.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	err = CreateLobby(rr, req, sqlxDB, store)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusCreated)
 	}
 }
 
@@ -127,7 +192,6 @@ WHERE id = $1`)).
 		WithArgs(lobbyID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
 			AddRow(lobbyID, "Old Lobby", "Owner", accountID, false, false, true, time.Now(), time.Now(), time.Now(), nil))
-	expectLobbyMemberCount(mock, lobbyID, 1)
 	mock.ExpectExec(regexp.QuoteMeta("UPDATE lobbies SET name = $1, is_muted = $2, is_public = $3, updated_at = NOW(), last_activity_at = NOW() WHERE id = $4")).
 		WithArgs(name, muted, public, lobbyID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -170,7 +234,6 @@ WHERE id = $1`)).
 		WithArgs(lobbyID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
 			AddRow(lobbyID, "Old Lobby", "Owner", int64(99), false, false, true, time.Now(), time.Now(), time.Now(), nil))
-	expectLobbyMemberCount(mock, lobbyID, 1)
 	mock.ExpectRollback()
 
 	payload := UpdateLobbyArgs{LobbyId: &lobbyID, SessionId: &sessionID, Lobby: &LobbyParam{Name: &name}}
@@ -209,7 +272,6 @@ WHERE id = $1`)).
 		WithArgs(lobbyID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
 			AddRow(lobbyID, "Old Lobby", "Owner", int64(77), false, false, true, time.Now(), time.Now(), time.Now(), nil))
-	expectLobbyMemberCount(mock, lobbyID, 1)
 	mock.ExpectRollback()
 
 	req, err := http.NewRequest(http.MethodDelete, "/lobby/delete_lobby", strings.NewReader(`{"lobby_id":14,"session_id":60}`))
@@ -244,16 +306,15 @@ func TestJoinLobby_ClosedLobbyReturnsGone(t *testing.T) {
 FROM lobby_members lm
 JOIN lobbies l ON l.id = lm.lobby_id
 WHERE lm.account_id = $1 AND l.closed_at IS NULL
-LIMIT 1`)).
+ORDER BY lm.joined_at ASC, lm.id ASC`)).
 		WithArgs(accountID).
-		WillReturnError(sql.ErrNoRows)
+		WillReturnRows(sqlmock.NewRows([]string{"lobby_id"}))
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name, owner_name, owner_account_id, is_closed, is_muted, is_public, created_at, updated_at, last_activity_at, closed_at
 FROM lobby
 WHERE id = $1`)).
 		WithArgs(lobbyID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
 			AddRow(lobbyID, "Closed Lobby", "Owner", int64(99), true, false, true, time.Now(), time.Now(), time.Now().Add(-2*time.Hour), time.Now().Add(-time.Minute)))
-	expectLobbyMemberCount(mock, lobbyID, 1)
 	mock.ExpectRollback()
 
 	req, err := http.NewRequest(http.MethodPost, "/lobby/join_lobby", strings.NewReader(`{"lobby_id":21,"session_id":70}`))
@@ -288,16 +349,15 @@ func TestJoinLobby_EmptyLobbyInactiveAtThirtyMinutesReturnsGone(t *testing.T) {
 FROM lobby_members lm
 JOIN lobbies l ON l.id = lm.lobby_id
 WHERE lm.account_id = $1 AND l.closed_at IS NULL
-LIMIT 1`)).
+ORDER BY lm.joined_at ASC, lm.id ASC`)).
 		WithArgs(accountID).
-		WillReturnError(sql.ErrNoRows)
+		WillReturnRows(sqlmock.NewRows([]string{"lobby_id"}))
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name, owner_name, owner_account_id, is_closed, is_muted, is_public, created_at, updated_at, last_activity_at, closed_at
 FROM lobby
 WHERE id = $1`)).
 		WithArgs(lobbyID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
 			AddRow(lobbyID, "Empty Stale Lobby", "Owner", int64(99), false, false, true, time.Now(), time.Now(), time.Now().Add(-31*time.Minute), nil))
-	expectLobbyMemberCount(mock, lobbyID, 0)
 	mock.ExpectExec(regexp.QuoteMeta("UPDATE lobbies SET is_closed = TRUE, closed_at = NOW(), updated_at = NOW() WHERE id = $1 AND closed_at IS NULL")).
 		WithArgs(lobbyID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -335,16 +395,15 @@ func TestJoinLobby_SucceedsForOpenLobby(t *testing.T) {
 FROM lobby_members lm
 JOIN lobbies l ON l.id = lm.lobby_id
 WHERE lm.account_id = $1 AND l.closed_at IS NULL
-LIMIT 1`)).
+ORDER BY lm.joined_at ASC, lm.id ASC`)).
 		WithArgs(accountID).
-		WillReturnError(sql.ErrNoRows)
+		WillReturnRows(sqlmock.NewRows([]string{"lobby_id"}))
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name, owner_name, owner_account_id, is_closed, is_muted, is_public, created_at, updated_at, last_activity_at, closed_at
 FROM lobby
 WHERE id = $1`)).
 		WithArgs(lobbyID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
 			AddRow(lobbyID, "Open Lobby", "Owner", int64(99), false, false, true, time.Now(), time.Now(), time.Now(), nil))
-	expectLobbyMemberCount(mock, lobbyID, 1)
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO lobby_members (lobby_id, account_id) VALUES ($1, $2)")).
 		WithArgs(lobbyID, accountID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -369,6 +428,49 @@ WHERE id = $1`)).
 	}
 }
 
+func TestJoinLobby_AllowsTargetJoinAfterExpiredCurrentLobbyIsClosed(t *testing.T) {
+	sqlxDB, mock, store, cleanup := newLobbyTestStore(t)
+	defer cleanup()
+
+	sessionID := int64(146)
+	accountID := int64(18)
+	expiredLobbyID := int64(100)
+	targetLobbyID := int64(101)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
+		WithArgs(sessionID).
+		WillReturnRows(lobbySessionRows(sessionID, accountID, time.Now().Add(time.Hour)))
+	mock.ExpectBegin()
+	expectExpiredCurrentLobbyLookup(mock, accountID, expiredLobbyID)
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name, owner_name, owner_account_id, is_closed, is_muted, is_public, created_at, updated_at, last_activity_at, closed_at
+FROM lobby
+WHERE id = $1`)).
+		WithArgs(targetLobbyID).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
+			AddRow(targetLobbyID, "Fresh Target Lobby", "Owner", int64(77), false, false, true, time.Now(), time.Now(), time.Now(), nil))
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO lobby_members (lobby_id, account_id) VALUES ($1, $2)")).
+		WithArgs(targetLobbyID, accountID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE lobbies SET last_activity_at = NOW(), updated_at = NOW() WHERE id = $1")).
+		WithArgs(targetLobbyID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	req, err := http.NewRequest(http.MethodPost, "/lobby/join_lobby", strings.NewReader(`{"lobby_id":101,"session_id":146}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	err = JoinLobby(rr, req, sqlxDB, store)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusOK)
+	}
+}
+
 func TestLeaveLobby_TransfersOwnershipToOldestRemainingMember(t *testing.T) {
 	sqlxDB, mock, store, cleanup := newLobbyTestStore(t)
 	defer cleanup()
@@ -386,9 +488,15 @@ func TestLeaveLobby_TransfersOwnershipToOldestRemainingMember(t *testing.T) {
 FROM lobby_members lm
 JOIN lobbies l ON l.id = lm.lobby_id
 WHERE lm.account_id = $1 AND l.closed_at IS NULL
-LIMIT 1`)).
+ORDER BY lm.joined_at ASC, lm.id ASC`)).
 		WithArgs(accountID).
 		WillReturnRows(sqlmock.NewRows([]string{"lobby_id"}).AddRow(lobbyID))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name, owner_name, owner_account_id, is_closed, is_muted, is_public, created_at, updated_at, last_activity_at, closed_at
+FROM lobby
+WHERE id = $1`)).
+		WithArgs(lobbyID).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
+			AddRow(lobbyID, "Open Lobby", "Owner", accountID, false, false, true, time.Now(), time.Now(), time.Now(), nil))
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name, owner_name, owner_account_id, is_closed, is_muted, is_public, created_at, updated_at, last_activity_at, closed_at
 FROM lobby
 WHERE id = $1`)).
@@ -443,9 +551,15 @@ func TestLeaveLobby_ClosesLobbyWhenOwnerWasLastMember(t *testing.T) {
 FROM lobby_members lm
 JOIN lobbies l ON l.id = lm.lobby_id
 WHERE lm.account_id = $1 AND l.closed_at IS NULL
-LIMIT 1`)).
+ORDER BY lm.joined_at ASC, lm.id ASC`)).
 		WithArgs(accountID).
 		WillReturnRows(sqlmock.NewRows([]string{"lobby_id"}).AddRow(lobbyID))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name, owner_name, owner_account_id, is_closed, is_muted, is_public, created_at, updated_at, last_activity_at, closed_at
+FROM lobby
+WHERE id = $1`)).
+		WithArgs(lobbyID).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
+			AddRow(lobbyID, "Open Lobby", "Owner", accountID, false, false, true, time.Now(), time.Now(), time.Now(), nil))
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name, owner_name, owner_account_id, is_closed, is_muted, is_public, created_at, updated_at, last_activity_at, closed_at
 FROM lobby
 WHERE id = $1`)).
@@ -484,7 +598,7 @@ LIMIT 1`)).
 	}
 }
 
-func TestGetLobby_RejectsEmptyLobbyInactiveAtThirtyMinutes(t *testing.T) {
+func TestGetLobby_RejectsLobbyInactiveAtThirtyMinutesWithoutConnectedSubscribers(t *testing.T) {
 	sqlxDB, mock, store, cleanup := newLobbyTestStore(t)
 	defer cleanup()
 
@@ -498,7 +612,6 @@ WHERE id = $1`)).
 		WithArgs(lobbyID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
 			AddRow(lobbyID, "Inactive Empty Lobby", "Owner", int64(9), false, false, true, time.Now(), time.Now(), inactiveAt, nil))
-	expectLobbyMemberCount(mock, lobbyID, 0)
 	mock.ExpectExec(regexp.QuoteMeta("UPDATE lobbies SET is_closed = TRUE, closed_at = NOW(), updated_at = NOW() WHERE id = $1 AND closed_at IS NULL")).
 		WithArgs(lobbyID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -520,13 +633,15 @@ WHERE id = $1`)).
 	}
 }
 
-func TestGetLobby_WithMembersDoesNotCloseAtThirtyMinutes(t *testing.T) {
+func TestGetLobby_WithConnectedSubscribersDoesNotCloseAtThirtyMinutes(t *testing.T) {
 	sqlxDB, mock, store, cleanup := newLobbyTestStore(t)
 	defer cleanup()
 
 	lobbyID := int64(34)
 	now := time.Now()
 	inactiveAt := now.Add(-31 * time.Minute)
+	_, unsubscribe := lobbyBrokerInstance.subscribe(lobbyID)
+	defer unsubscribe()
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name, owner_name, owner_account_id, is_closed, is_muted, is_public, created_at, updated_at, last_activity_at, closed_at
@@ -534,8 +649,7 @@ FROM lobby
 WHERE id = $1`)).
 		WithArgs(lobbyID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
-			AddRow(lobbyID, "Stale But Occupied Lobby", "Owner", int64(10), false, false, true, now, now, inactiveAt, nil))
-	expectLobbyMemberCount(mock, lobbyID, 2)
+			AddRow(lobbyID, "Stale But Connected Lobby", "Owner", int64(10), false, false, true, now, now, inactiveAt, nil))
 	mock.ExpectCommit()
 
 	req, err := http.NewRequest(http.MethodGet, "/lobby/get_lobby", strings.NewReader(`{"lobby_id":34}`))
@@ -554,12 +668,14 @@ WHERE id = $1`)).
 	}
 }
 
-func TestGetLobby_WithMembersClosesAtTwoHours(t *testing.T) {
+func TestGetLobby_WithConnectedSubscribersClosesAtTwoHours(t *testing.T) {
 	sqlxDB, mock, store, cleanup := newLobbyTestStore(t)
 	defer cleanup()
 
 	lobbyID := int64(35)
 	inactiveAt := time.Now().Add(-2*time.Hour - time.Minute)
+	_, unsubscribe := lobbyBrokerInstance.subscribe(lobbyID)
+	defer unsubscribe()
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name, owner_name, owner_account_id, is_closed, is_muted, is_public, created_at, updated_at, last_activity_at, closed_at
@@ -567,8 +683,7 @@ FROM lobby
 WHERE id = $1`)).
 		WithArgs(lobbyID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "owner_name", "owner_account_id", "is_closed", "is_muted", "is_public", "created_at", "updated_at", "last_activity_at", "closed_at"}).
-			AddRow(lobbyID, "Very Stale Occupied Lobby", "Owner", int64(11), false, false, true, time.Now(), time.Now(), inactiveAt, nil))
-	expectLobbyMemberCount(mock, lobbyID, 2)
+			AddRow(lobbyID, "Very Stale Connected Lobby", "Owner", int64(11), false, false, true, time.Now(), time.Now(), inactiveAt, nil))
 	mock.ExpectExec(regexp.QuoteMeta("UPDATE lobbies SET is_closed = TRUE, closed_at = NOW(), updated_at = NOW() WHERE id = $1 AND closed_at IS NULL")).
 		WithArgs(lobbyID).
 		WillReturnResult(sqlmock.NewResult(0, 1))

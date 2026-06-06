@@ -11,6 +11,9 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
+// UpdateLobbyArgs represents the expected structure of the request body for updating a lobby.
+//
+// @Description Structure for the lobby update request payload.
 type UpdateLobbyArgs struct {
 	Lobby     *LobbyParam `json:"lobby"`
 	LobbyId   *int64      `json:"lobby_id"`
@@ -21,6 +24,22 @@ func (a UpdateLobbyArgs) GetSessionID() *int64 {
 	return a.SessionId
 }
 
+// UpdateLobby updates mutable lobby fields for the current owner.
+//
+// @Summary Updates a lobby
+// @Description This endpoint lets only the authenticated lobby owner update the lobby name, mute state, or public state. If the lobby has already auto-closed from inactivity, the endpoint returns HTTP 410 Gone.
+// @Tags lobby
+// @Accept json
+// @Produce json
+// @Param body body UpdateLobbyArgs true "lobby update request body"
+// @Success 200 {string} string "Successfully updated lobby!"
+// @Failure 400 {object} error "Bad Request"
+// @Failure 401 {object} error "Unauthorized"
+// @Failure 403 {object} error "Forbidden"
+// @Failure 404 {object} error "Not Found"
+// @Failure 410 {object} error "Gone"
+// @Failure 500 {object} error "Internal Server Error"
+// @Router /lobby/update_lobby [put]
 func UpdateLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodPut {
 		return writeLobbyStatusError(w, http.StatusBadRequest, "invalid request; request must be a PUT request")
