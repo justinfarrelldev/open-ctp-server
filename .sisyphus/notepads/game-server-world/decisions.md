@@ -1,0 +1,5 @@
+- Use local `main` as the branch base for `game-server-world`; no rebase/reset/pull/push was needed for this preflight step.
+- Treat missing world-config fields as an expected gap to close in T2/T7 rather than trying to infer them from existing game DTOs alone.
+- Follow current route/handler/doc conventions from `internal/game` instead of inventing a new HTTP surface pattern for `/world`.
+- Keep the T2 stubs intentionally non-functional: `internal/world/contracts.go` only defines request/response shapes plus placeholder handlers, and `internal/game/world_contract_stubs.go` only maps the currently-known host params so the red suite fails on missing world semantics rather than on compile errors.
+- Lock the space-layer contract to a fixed JSON error payload in tests now, even before handler implementation, because that 404 is explicitly documented as a stable CTP2 placeholder behavior.

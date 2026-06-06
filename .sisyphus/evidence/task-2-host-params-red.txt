@@ -1,0 +1,18 @@
+$ go test ./internal/... -run 'TestGenerationConsumesAllHostParams'
+
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/account	0.010s [no tests to run]
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/auth	0.010s [no tests to run]
+--- FAIL: TestGenerationConsumesAllHostParams (0.00s)
+    world_contract_test.go:24: NormalizeWorldGenerationInput() error = world start contracts are not implemented yet
+    world_contract_test.go:48: missing required host param: seed
+    world_contract_test.go:51: missing required host param: wetness
+    world_contract_test.go:54: missing required host param: map_size
+    world_contract_test.go:57: missing required host param: climate
+    world_contract_test.go:60: missing required host param: generator_version
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/game	0.006s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/health	0.004s [no tests to run]
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/lobby	0.003s [no tests to run]
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/ratelimit	0.003s [no tests to run]
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/world	0.004s [no tests to run]
+FAIL

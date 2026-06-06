@@ -1,0 +1,7 @@
+- Branch preflight confirmed `game-server-world` can be created directly from local `main` without rebasing or discarding the existing untracked `.sisyphus/` worktree content.
+- Current game setup exposes `style`, `rules_json`, `exclusions_json`, `starting_settlers`, and `starting_gold`, but no explicit world-generation fields like seed, wetness, map size, climate, or generator version.
+- The obvious world integration seam is `internal/game/player_endpoints.go` StartGame flow plus `internal/game/helpers.go` SQL helpers and `main.go` route registration.
+- Existing endpoint conventions use `http.NewServeMux`, `tollbooth.LimitFuncHandler`, docs-only Swagger DTOs, and request structs with `SessionId *int64` plus auth/session helper checks.
+- Go 1.23 ServeMux supports patterns like `GET /world/{game_id}` with `r.PathValue("game_id")`; Swag annotations use `@Param ... path ...` and `@Router /world/{game_id} [get]` style.
+- Red contract tests under `internal/game/world_contract_test.go` and `internal/world/contracts_test.go` can safely lock future `/world` semantics now by targeting placeholder stubs, while preserving compile-clean packages and explicit failures for seed, wetness, map size, climate, and generator version gaps.
+- A source-level route surface assertion against `main.go` is enough to prove there is still no `/game/chat` or `/world/chat` registration while `/lobby/send_chat` remains the active chat path.
