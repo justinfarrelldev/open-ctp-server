@@ -410,7 +410,7 @@ func generateSpawns(input GenerationInput, profile mapProfile, tiles []WorldTile
 		return candidates[i].x < candidates[j].x
 	})
 
-	minDistance := profile.baseSetupRadius + 1
+	minDistance := spawnSeparationDistance(profile)
 	stride := deterministicSpawnStride(len(candidates), selectionSeed)
 	bestSelected := make([]spawnCandidate, 0)
 	for attempt := 0; attempt < maxSpawnPlacementAttempts; attempt++ {
@@ -557,6 +557,14 @@ func deterministicSpawnStride(candidateCount int, selectionSeed int64) int {
 		}
 	}
 	return stride
+}
+
+func spawnSeparationDistance(profile mapProfile) int {
+	distance := profile.baseSetupRadius*2 - 1
+	if distance < 1 {
+		return 1
+	}
+	return distance
 }
 
 func gcd(a, b int) int {
