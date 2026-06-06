@@ -2,7 +2,6 @@ package main
 
 import (
 	_ "embed"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -12,18 +11,18 @@ import (
 
 	"net/http"
 
+	"github.com/didip/tollbooth/v7"
 	"github.com/jmoiron/sqlx"
 	account "github.com/justinfarrelldev/open-ctp-server/internal/account"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 	game "github.com/justinfarrelldev/open-ctp-server/internal/game"
 	health "github.com/justinfarrelldev/open-ctp-server/internal/health"
 	lobby "github.com/justinfarrelldev/open-ctp-server/internal/lobby"
+	ratelimit "github.com/justinfarrelldev/open-ctp-server/internal/ratelimit"
 
 	_ "github.com/justinfarrelldev/open-ctp-server/docs"
 
 	"github.com/flowchartsman/swaggerui"
-
-	"github.com/didip/tollbooth/v7"
 
 	_ "github.com/lib/pq"
 
@@ -36,13 +35,7 @@ import (
 //	@contact.name	API Support
 //	@contact.email	justinfarrellwebdev@gmail.com
 
-type Server struct {
-}
-
-type Message struct {
-	Status string `json:"status"`
-	Body   string `json:"body"`
-}
+type Server struct{}
 
 var (
 	port  = 9000
@@ -64,36 +57,10 @@ func main() {
 	}
 
 	// Tollbooth
-	message := Message{
-		Status: "Request Failed",
-		Body:   "The API is at capacity, try again later.",
-	}
-	jsonMessage, _ := json.Marshal(message)
-
-	// TODO move these tollbooth initializations to its own module to clean up the code path
-	// Limiter for standard operations
-	tollboothLimiter := tollbooth.NewLimiter(5, nil)
-	tollboothLimiter.SetMessageContentType("application/json")
-	tollboothLimiter.SetMessage(string(jsonMessage))
-	tollboothLimiter.SetTokenBucketExpirationTTL(time.Hour)
-	tollboothLimiter.SetBasicAuthExpirationTTL(time.Hour)
-	tollboothLimiter.SetHeaderEntryExpirationTTL(time.Hour)
-
-	// Limiter for DB operations
-	tollboothLimiterMinute := tollbooth.NewLimiter(1.0/60.0, nil)
-	tollboothLimiterMinute.SetMessageContentType("application/json")
-	tollboothLimiterMinute.SetMessage(string(jsonMessage))
-	tollboothLimiterMinute.SetTokenBucketExpirationTTL(time.Hour)
-	tollboothLimiterMinute.SetBasicAuthExpirationTTL(time.Hour)
-	tollboothLimiterMinute.SetHeaderEntryExpirationTTL(time.Hour)
-
-	// Limiter for the health check
-	tollboothLimiterHealth := tollbooth.NewLimiter(5, nil)
-	tollboothLimiterHealth.SetMessageContentType("application/json")
-	tollboothLimiterHealth.SetMessage(string(jsonMessage))
-	tollboothLimiterHealth.SetTokenBucketExpirationTTL(time.Hour)
-	tollboothLimiterHealth.SetBasicAuthExpirationTTL(time.Hour)
-	tollboothLimiterHealth.SetHeaderEntryExpirationTTL(time.Hour)
+	authWriteLimiter := ratelimit.NewAuthWriteLimiter()
+	accountLimiter := ratelimit.NewAccountLimiter()
+	lobbyGameLimiter := ratelimit.NewLobbyGameLimiter()
+	healthLimiter := ratelimit.NewHealthLimiter()
 
 	// Postgres
 	db, err := sqlx.Open("postgres", os.Getenv("SUPABASE_DB_URL"))
@@ -108,43 +75,43 @@ func main() {
 	// Handlers
 	mux := http.NewServeMux()
 
-	mux.Handle("/game/create_game", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/game/create_game", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
 		game.GameHandler(w, r, db)
 	}))
 
-	mux.Handle("/account/create_account", tollbooth.LimitFuncHandler(tollboothLimiterMinute, func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/account/create_account", tollbooth.LimitFuncHandler(authWriteLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.CreateAccountHandler(w, r, db, sessionStore)
 	}))
 
-	mux.Handle("/account/get_account", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/account/get_account", tollbooth.LimitFuncHandler(accountLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.GetAccountHandler(w, r, db, sessionStore)
 	}))
 
-	mux.Handle("/account/update_account", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/account/update_account", tollbooth.LimitFuncHandler(accountLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.UpdateAccountHandler(w, r, db, sessionStore)
 	}))
 
-	mux.Handle("/account/delete_account", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/account/delete_account", tollbooth.LimitFuncHandler(accountLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.DeleteAccountHandler(w, r, db, sessionStore)
 	}))
 
-	mux.Handle("/lobby/create_lobby", tollbooth.LimitFuncHandler(tollboothLimiterMinute, func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/lobby/create_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
 		lobby.CreateLobbyHandler(w, r, db, sessionStore)
 	}))
 
-	mux.Handle("/lobby/get_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/lobby/get_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
 		lobby.GetLobbyHandler(w, r, db, sessionStore)
 	}))
 
-	mux.Handle("/lobby/update_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/lobby/update_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
 		lobby.UpdateLobbyHandler(w, r, db, sessionStore)
 	}))
 
-	mux.Handle("/lobby/delete_lobby", tollbooth.LimitFuncHandler(tollboothLimiter, func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/lobby/delete_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
 		lobby.DeleteLobbyHandler(w, r, db, sessionStore)
 	}))
 
-	mux.Handle("/health", tollbooth.LimitFuncHandler(tollboothLimiterHealth, health.HealthCheckHandler))
+	mux.Handle("/health", tollbooth.LimitFuncHandler(healthLimiter, health.HealthCheckHandler))
 	mux.Handle("/docs/", http.StripPrefix("/docs", swaggerui.Handler(spec)))
 
 	fmt.Printf("\nNow serving on port %d\n", port)
