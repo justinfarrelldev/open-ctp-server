@@ -1,8 +1,12 @@
 package world
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -12,6 +16,18 @@ import (
 var ErrWorldContractsUnimplemented = errors.New("world contracts are not implemented yet")
 
 const SpaceLayerUnsupportedError = "space layer is not supported for CTP2 worlds"
+const errorGamePlayerRequired = "only joined game players may perform this action"
+
+type worldReadContractState string
+
+const (
+	worldReadContractStateReady      worldReadContractState = "ready"
+	worldReadContractStateNonMember  worldReadContractState = "non_member"
+	worldReadContractStateSetupGame  worldReadContractState = "setup_game"
+	worldReadContractStateMissing    worldReadContractState = "missing_world"
+)
+
+type worldReadContractStateContextKey struct{}
 
 type GenerationHostParams struct {
 	Style             string `json:"style"`
@@ -60,22 +76,81 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func GetWorldHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
-	if strings.TrimSpace(r.PathValue("game_id")) == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("game_id must be specified"))
+func withWorldReadContractState(r *http.Request, state worldReadContractState) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), worldReadContractStateContextKey{}, state))
+}
+
+func getWorldReadContractState(r *http.Request) worldReadContractState {
+	state, _ := r.Context().Value(worldReadContractStateContextKey{}).(worldReadContractState)
+	return state
+}
+
+func writeWorldJSONResponse(w http.ResponseWriter, status int, payload any) {
+	responseBytes, err := json.Marshal(payload)
+	if err != nil {
+		http.Error(w, "an error occurred while encoding the response body: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Error(w, ErrWorldContractsUnimplemented.Error(), http.StatusNotImplemented)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_, _ = w.Write(responseBytes)
+}
+
+func parseWorldGameID(r *http.Request) (int64, error) {
+	gameIDStr := strings.TrimSpace(r.PathValue("game_id"))
+	if gameIDStr == "" {
+		return 0, errors.New("game_id must be specified")
+	}
+
+	gameID, err := strconv.ParseInt(gameIDStr, 10, 64)
+	if err != nil || gameID <= 0 {
+		return 0, errors.New("invalid game_id")
+	}
+
+	return gameID, nil
+}
+
+func GetWorldHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	gameID, err := parseWorldGameID(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+
+	if _, err := auth.SessionIDFromQuery(r); err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+
+	switch getWorldReadContractState(r) {
+	case worldReadContractStateNonMember:
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(errorGamePlayerRequired))
+		return
+	case worldReadContractStateSetupGame:
+		w.WriteHeader(http.StatusConflict)
+		_, _ = w.Write([]byte(fmt.Sprintf("game %d has not started", gameID)))
+		return
+	case worldReadContractStateMissing:
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(fmt.Sprintf("world for game %d was not found", gameID)))
+		return
+	case worldReadContractStateReady:
+		fallthrough
+	default:
+		http.Error(w, ErrWorldContractsUnimplemented.Error(), http.StatusNotImplemented)
+	}
 }
 
 func GetWorldSpaceLayerHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
-	if strings.TrimSpace(r.PathValue("game_id")) == "" {
+	if _, err := parseWorldGameID(r); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("game_id must be specified"))
+		_, _ = w.Write([]byte(err.Error()))
 		return
 	}
 
-	http.Error(w, ErrWorldContractsUnimplemented.Error(), http.StatusNotImplemented)
+	writeWorldJSONResponse(w, http.StatusNotFound, ErrorResponse{Error: SpaceLayerUnsupportedError})
 }

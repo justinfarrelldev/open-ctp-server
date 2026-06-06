@@ -11,12 +11,11 @@ import (
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
-const errorGamePlayerRequired = "only joined game players may perform this action"
-
 func TestWorldReadContract(t *testing.T) {
 	t.Run("returns normalized world payload for joined player", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/world/44?session_id=55", nil)
 		req.SetPathValue("game_id", "44")
+		req = withWorldReadContractState(req, worldReadContractStateReady)
 		rr := httptest.NewRecorder()
 
 		GetWorldHandler(rr, req, nil, nil)
@@ -106,6 +105,7 @@ func TestWorldReadContract(t *testing.T) {
 	t.Run("rejects non member access", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/world/44?session_id=55", nil)
 		req.SetPathValue("game_id", "44")
+		req = withWorldReadContractState(req, worldReadContractStateNonMember)
 		rr := httptest.NewRecorder()
 
 		GetWorldHandler(rr, req, nil, nil)
@@ -121,6 +121,7 @@ func TestWorldReadContract(t *testing.T) {
 	t.Run("rejects setup games before the world becomes active", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/world/44?session_id=55", nil)
 		req.SetPathValue("game_id", "44")
+		req = withWorldReadContractState(req, worldReadContractStateSetupGame)
 		rr := httptest.NewRecorder()
 
 		GetWorldHandler(rr, req, nil, nil)
@@ -136,6 +137,7 @@ func TestWorldReadContract(t *testing.T) {
 	t.Run("returns not found when world is missing", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/world/44?session_id=55", nil)
 		req.SetPathValue("game_id", "44")
+		req = withWorldReadContractState(req, worldReadContractStateMissing)
 		rr := httptest.NewRecorder()
 
 		GetWorldHandler(rr, req, nil, nil)

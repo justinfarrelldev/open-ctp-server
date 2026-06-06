@@ -22,19 +22,7 @@ ok  	github.com/justinfarrelldev/open-ctp-server/internal/lobby	(cached) [no tes
 ok  	github.com/justinfarrelldev/open-ctp-server/internal/ratelimit	(cached) [no tests to run]
 --- FAIL: TestWorldReadContract (0.00s)
     --- FAIL: TestWorldReadContract/returns_normalized_world_payload_for_joined_player (0.00s)
-        contracts_test.go:25: got status 501 want 200 body="world contracts are not implemented yet\n"
-    --- FAIL: TestWorldReadContract/rejects_invalid_game_id_path_value (0.00s)
-        contracts_test.go:84: got status 501 want 400
-    --- FAIL: TestWorldReadContract/rejects_invalid_session_query (0.00s)
-        contracts_test.go:99: got status 501 want 401
-    --- FAIL: TestWorldReadContract/rejects_non_member_access (0.00s)
-        contracts_test.go:114: got status 501 want 403
-    --- FAIL: TestWorldReadContract/rejects_setup_games_before_the_world_becomes_active (0.00s)
-        contracts_test.go:129: got status 501 want 409
-    --- FAIL: TestWorldReadContract/returns_not_found_when_world_is_missing (0.00s)
-        contracts_test.go:144: got status 501 want 404
---- FAIL: TestWorldSpaceLayerPlaceholder (0.00s)
-    contracts_test.go:160: got status 501 want 404 body="world contracts are not implemented yet\n"
+        contracts_test.go:24: got status 501 want 200 body="world contracts are not implemented yet\n"
 FAIL
-FAIL	github.com/justinfarrelldev/open-ctp-server/internal/world	0.004s
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/world	0.005s
 FAIL
