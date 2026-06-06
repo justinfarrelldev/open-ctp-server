@@ -30,14 +30,16 @@ func (a UpdateAccountArgs) GetSessionID() *int64 {
 // UpdateAccount updates an account by the account ID.
 //
 // @Summary Updates an account
-// @Description This endpoint updates an account's info.
+// @Description This endpoint updates an account's info for the authenticated account owner.
 // @Tags account
 // @Accept json
 // @Produce json
 // @Param body body UpdateAccountArgs true "account update request body"
-// @Success 200 {object} nil "Successfully updated account!"
-// @Failure 400 {string} string "account_id must be specified"
-// @Failure 500 {string} string "an error occurred while decoding the request body: <error message>"
+// @Success 200 {string} string "Successfully updated account!"
+// @Failure 400 {object} error "Bad Request"
+// @Failure 401 {object} error "Unauthorized"
+// @Failure 403 {object} error "Forbidden"
+// @Failure 500 {object} error "Internal Server Error"
 // @Router /account/update_account [put]
 func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodPut {
@@ -83,12 +85,36 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 		return writeAccountStatusError(w, http.StatusBadRequest, "at least one field to update must be specified")
 	}
 
-	currentEmail, err := getAccountEmailByID(*args.AccountId, db)
+	tx, err := beginAccountTx(db)
+	if err != nil {
+		return fmt.Errorf("an error occurred while starting account update: %v", err)
+	}
+
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+
+	currentEmail, err := getAccountEmailByID(*args.AccountId, tx)
 	if err != nil {
 		return err
 	}
 
-	storedHash, storedSalt, err := auth.GetHashAndSalt(currentEmail, db)
+	if args.Account.ExperienceLevel != nil {
+		if err := validateExperienceLevel(*args.Account.ExperienceLevel); err != nil {
+			return writeAccountStatusError(w, http.StatusBadRequest, err.Error())
+		}
+	}
+
+	if args.Account.Email != nil {
+		if err := validateEmail(*args.Account.Email, &currentEmail, tx); err != nil {
+			return writeAccountStatusError(w, http.StatusBadRequest, err.Error())
+		}
+	}
+
+	storedHash, storedSalt, err := auth.GetHashAndSalt(currentEmail, tx)
 	if err != nil {
 		return err
 	}
@@ -131,19 +157,22 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 	query += fmt.Sprintf(" WHERE id = $%d", paramIndex)
 	params = append(params, args.AccountId)
 
-	_, err = db.Exec(query, params...)
+	_, err = tx.Exec(query, params...)
 	if err != nil {
 		return fmt.Errorf("an error occurred while updating the account with the ID %d: %v", *args.AccountId, err)
 	}
 
 	if args.Account.Email != nil && *args.Account.Email != currentEmail {
-		_, err = db.Exec("UPDATE passwords SET account_email = $1 WHERE account_email = $2", *args.Account.Email, currentEmail)
+		_, err = tx.Exec("UPDATE passwords SET account_email = $1 WHERE account_email = $2", *args.Account.Email, currentEmail)
 		if err != nil {
 			return fmt.Errorf("an error occurred while synchronizing updated account credentials: %v", err)
 		}
 	}
 
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte("Successfully updated account!"))
-	return nil
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("an error occurred while finalizing account update: %v", err)
+	}
+	committed = true
+
+	return writeAccountJSONResponse(w, http.StatusOK, "Successfully updated account!")
 }
