@@ -2,7 +2,6 @@ package account
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -20,23 +19,27 @@ type DeleteAccountArgs struct {
 	SessionId *int64 `json:"session_id,omitempty"`
 }
 
+func (a DeleteAccountArgs) GetSessionID() *int64 {
+	return a.SessionId
+}
+
 // DeleteAccount deletes an account by the account ID.
 //
 // @Summary Deletes an account
-// @Description This endpoint deletes a player account.
+// @Description This endpoint deletes a player account for the authenticated account owner and invalidates that account's sessions after a successful delete.
 // @Tags account
 // @Accept json
 // @Produce json
 // @Param body body DeleteAccountArgs true "account deletion request body"
 // @Success 200 {string} string "Successfully deleted account!"
 // @Failure 400 {object} error "Bad Request"
+// @Failure 401 {object} error "Unauthorized"
 // @Failure 403 {object} error "Forbidden"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /account/delete_account [delete]
 func DeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
-
 	if r.Method != http.MethodDelete {
-		return errors.New("invalid request; request must be a DELETE request")
+		return writeAccountStatusError(w, http.StatusBadRequest, "invalid request; request must be a DELETE request")
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -44,45 +47,51 @@ func DeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 
 	args := DeleteAccountArgs{}
 	err := decoder.Decode(&args)
-
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return errors.New("an error occurred while decoding the request body: " + err.Error())
+		return writeAccountStatusError(w, http.StatusBadRequest, "an error occurred while decoding the request body: "+err.Error())
 	}
 
 	if args.AccountId == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("account_id must be specified")
+		return writeAccountStatusError(w, http.StatusBadRequest, "account_id must be specified")
 	}
 
-	if args.SessionId == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("a valid session_id must be specified")
-	}
-
-	fmt.Println("args: ", *args.AccountId)
-
-	session, err := store.GetSession(*args.SessionId)
-
+	session, err := auth.RequireSessionFromJSONBody(w, store, args)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return errors.New("an error occurred while retrieving the session: " + err.Error())
+		return err
 	}
 
-	if session == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("session not found")
+	if err := ensureSessionOwnsAccount(w, session, *args.AccountId); err != nil {
+		return err
 	}
 
-	if session.IsExpired() {
-		w.WriteHeader(http.StatusForbidden)
-		return errors.New("session has expired")
-	}
-
-	query := "DELETE FROM account WHERE id = $1"
-	result, err := db.Exec(query, args.AccountId)
+	tx, err := beginAccountTx(db)
 	if err != nil {
-		return fmt.Errorf("an error occurred while deleting the account with the ID %d: %v", args.AccountId, err)
+		return fmt.Errorf("an error occurred while starting account deletion: %v", err)
+	}
+
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+
+	accountEmail, err := getAccountEmailByID(*args.AccountId, tx)
+	if err != nil {
+		return err
+	}
+
+	if err := store.DeleteSessionsForAccountTx(tx, *args.AccountId); err != nil {
+		return fmt.Errorf("an error occurred while invalidating account sessions: %v", err)
+	}
+
+	if _, err := tx.Exec("DELETE FROM passwords WHERE account_email = $1", accountEmail); err != nil {
+		return fmt.Errorf("an error occurred while deleting credentials for the account with ID %d: %v", *args.AccountId, err)
+	}
+
+	result, err := tx.Exec("DELETE FROM account WHERE id = $1", args.AccountId)
+	if err != nil {
+		return fmt.Errorf("an error occurred while deleting the account with the ID %d: %v", *args.AccountId, err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -94,7 +103,10 @@ func DeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 		return fmt.Errorf("no rows were affected when the DELETE query ran for the account with ID %d", *args.AccountId)
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Successfully deleted account!"))
-	return nil
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("an error occurred while finalizing account deletion: %v", err)
+	}
+	committed = true
+
+	return writeAccountJSONResponse(w, http.StatusOK, "Successfully deleted account!")
 }

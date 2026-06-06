@@ -2,6 +2,7 @@ package account
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -53,26 +54,24 @@ func TestGetAccount_Success(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	mockStore := &auth.SessionStore{
-		DB: sqlxDB,
-	}
+	mockStore := &auth.SessionStore{DB: sqlxDB}
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, sqlxDB, mockStore)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	})
-
-	handler.ServeHTTP(rr, req)
+	GetAccountHandler(rr, req, sqlxDB, mockStore)
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	expectedResponse := `{"name":"John Doe","info":"Some info","location":"Some location","email":"john.doe@example.com","experience_level":5}`
-	if rr.Body.String() != expectedResponse {
-		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expectedResponse)
+	if got := rr.Header().Get("Content-Type"); got != "application/json" {
+		t.Fatalf("handler returned wrong content type: got %q want %q", got, "application/json")
+	}
+
+	var actualAccount Account
+	if err := json.Unmarshal(rr.Body.Bytes(), &actualAccount); err != nil {
+		t.Fatalf("expected valid JSON response, got %q (%v)", rr.Body.String(), err)
+	}
+	if actualAccount != expectedAccount {
+		t.Errorf("handler returned unexpected account: got %+v want %+v", actualAccount, expectedAccount)
 	}
 }
 
@@ -105,21 +104,12 @@ func TestGetAccount_NotFound(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	mockStore := &auth.SessionStore{
-		DB: sqlxDB,
-	}
+	mockStore := &auth.SessionStore{DB: sqlxDB}
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, sqlxDB, mockStore)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	})
+	GetAccountHandler(rr, req, sqlxDB, mockStore)
 
-	handler.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	if status := rr.Code; status != http.StatusNotFound {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusNotFound)
 	}
 
 	expectedError := "no account exists with the ID 1"
@@ -128,7 +118,7 @@ func TestGetAccount_NotFound(t *testing.T) {
 	}
 }
 
-func TestGetAccount_InvalidMethod(t *testing.T) {
+func TestGetAccountHandler_InvalidMethodReturnsBadRequest(t *testing.T) {
 	db, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -142,21 +132,12 @@ func TestGetAccount_InvalidMethod(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	mockStore := &auth.SessionStore{
-		DB: sqlxDB,
-	}
+	mockStore := &auth.SessionStore{DB: sqlxDB}
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, sqlxDB, mockStore)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	})
+	GetAccountHandler(rr, req, sqlxDB, mockStore)
 
-	handler.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 
 	expectedError := "invalid request; request must be a GET request"
@@ -165,7 +146,7 @@ func TestGetAccount_InvalidMethod(t *testing.T) {
 	}
 }
 
-func TestGetAccount_DecodeError(t *testing.T) {
+func TestGetAccountHandler_InvalidAccountIDReturnsBadRequest(t *testing.T) {
 	db, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -179,30 +160,77 @@ func TestGetAccount_DecodeError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	mockStore := &auth.SessionStore{
-		DB: sqlxDB,
-	}
+	mockStore := &auth.SessionStore{DB: sqlxDB}
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, sqlxDB, mockStore)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	})
+	GetAccountHandler(rr, req, sqlxDB, mockStore)
 
-	handler.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 
 	expectedError := "invalid account_id"
-	if strings.ReplaceAll(strings.TrimSpace(rr.Body.String()), "\n", "") != expectedError {
-		t.Errorf("handler returned unexpected body: got %v want %v", strings.ReplaceAll(strings.TrimSpace(rr.Body.String()), "\n", ""), expectedError)
+	if strings.TrimSpace(rr.Body.String()) != expectedError {
+		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedError)
 	}
 }
 
-func TestGetAccount_MissingAccountID(t *testing.T) {
+func TestGetAccountHandler_MissingSessionIDReturnsUnauthorized(t *testing.T) {
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	req, err := http.NewRequest("GET", "/account/get_account?account_id=1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{DB: sqlxDB}
+
+	GetAccountHandler(rr, req, sqlxDB, mockStore)
+
+	if status := rr.Code; status != http.StatusUnauthorized {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
+	}
+
+	expectedError := "session_id is required"
+	if strings.TrimSpace(rr.Body.String()) != expectedError {
+		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedError)
+	}
+}
+
+func TestGetAccountHandler_InvalidSessionIDReturnsUnauthorized(t *testing.T) {
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	req, err := http.NewRequest("GET", "/account/get_account?account_id=1&session_id=invalid", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{DB: sqlxDB}
+
+	GetAccountHandler(rr, req, sqlxDB, mockStore)
+
+	if status := rr.Code; status != http.StatusUnauthorized {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
+	}
+
+	expectedError := "invalid session_id"
+	if strings.TrimSpace(rr.Body.String()) != expectedError {
+		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedError)
+	}
+}
+
+func TestGetAccountHandler_MissingAccountIDReturnsBadRequest(t *testing.T) {
 	db, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -216,21 +244,12 @@ func TestGetAccount_MissingAccountID(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	mockStore := &auth.SessionStore{
-		DB: sqlxDB,
-	}
+	mockStore := &auth.SessionStore{DB: sqlxDB}
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := GetAccount(w, r, sqlxDB, mockStore)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	})
+	GetAccountHandler(rr, req, sqlxDB, mockStore)
 
-	handler.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 
 	expectedError := "account_id is required"

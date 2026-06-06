@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/mail"
 
 	"github.com/jmoiron/sqlx"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
@@ -25,29 +24,6 @@ type CreateAccountArgs struct {
 const ERROR_PASSWORD_TOO_SHORT = "password must be longer than 6 characters"
 const ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD = "password is required"
 
-func isEmailValid(email string, db *sqlx.DB) (bool, error) {
-	_, err := mail.ParseAddress(email)
-	if err != nil {
-		return false, errors.New("an error occurred while checking whether the email for the account is valid: " + err.Error())
-	}
-
-	result, err := db.Query("SELECT * from account WHERE email = $1", email)
-
-	if err != nil {
-		return false, errors.New("an error occurred while checking whether the email for the account is unique: " + err.Error())
-	}
-
-	defer result.Close()
-
-	if result.Next() {
-		// If result.Next() returns true, there is at least one row, so the email is not unique.
-		return false, nil
-	}
-
-	// If no rows were found, the email is unique (or not in the database).
-	return true, nil
-}
-
 // CreateAccount handles the creation of a new account.
 //
 // @Summary Create a new account
@@ -62,53 +38,28 @@ func isEmailValid(email string, db *sqlx.DB) (bool, error) {
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /account/create_account [post]
 func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) (*int64, error) {
-
-	if r.Method != "POST" {
-		w.WriteHeader(http.StatusBadRequest)
-
-		return nil, errors.New("invalid request; request must be a POST request")
+	if r.Method != http.MethodPost {
+		return nil, writeAccountStatusError(w, http.StatusBadRequest, "invalid request; request must be a POST request")
 	}
 
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 
 	account := CreateAccountArgs{}
-	err := decoder.Decode(&account)
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-
-		return nil, errors.New("an error occurred while decoding the request body:" + err.Error())
+	if err := decoder.Decode(&account); err != nil {
+		return nil, writeAccountStatusError(w, http.StatusBadRequest, "an error occurred while decoding the request body:"+err.Error())
 	}
 
-	if account.Account.ExperienceLevel < 0 || account.Account.ExperienceLevel > 5 {
-		w.WriteHeader(http.StatusBadRequest)
-
-		return nil, errors.New("experience_level must be between 0 and 5 (0=easy, 5=impossible)")
+	if err := validateExperienceLevel(account.Account.ExperienceLevel); err != nil {
+		return nil, writeAccountStatusError(w, http.StatusBadRequest, err.Error())
 	}
 
 	if account.Password == "" {
-		w.WriteHeader(http.StatusBadRequest)
-
-		return nil, errors.New(ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD)
+		return nil, writeAccountStatusError(w, http.StatusBadRequest, ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD)
 	}
 
 	if len(account.Password) < 6 {
-		w.WriteHeader(http.StatusBadRequest)
-
-		return nil, errors.New(ERROR_PASSWORD_TOO_SHORT)
-	}
-
-	isValidEmail, err := isEmailValid(account.Account.Email, db)
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return nil, err
-	}
-
-	if !isValidEmail {
-		w.WriteHeader(http.StatusBadRequest)
-		return nil, errors.New("the provided email is not valid")
+		return nil, writeAccountStatusError(w, http.StatusBadRequest, ERROR_PASSWORD_TOO_SHORT)
 	}
 
 	hashSalt, err := auth.Hasher.GenerateHash([]byte(account.Password), nil)
@@ -118,37 +69,55 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 		return nil, errors.New("an error occurred while saving the password. Please try again later")
 	}
 
-	accountId, err := storeAccount(&account.Account, db)
+	if err := validateEmail(account.Account.Email, nil, db); err != nil {
+		return nil, writeAccountStatusError(w, http.StatusBadRequest, err.Error())
+	}
+
+	tx, err := beginAccountTx(db)
+	if err != nil {
+		return nil, fmt.Errorf("an error occurred while starting account creation: %v", err)
+	}
+
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+
+	accountID, err := storeAccount(&account.Account, tx)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println("error saving an account: ", err.Error())
-		// Different from the one above for debugging purposes
 		return nil, errors.New("an error occurred while creating the account. Please try again at a later time")
 	}
 
-	err = auth.StoreHashAndSalt(hashSalt, account.Account.Email, db)
-	if err != nil {
+	if err := auth.StoreHashAndSalt(hashSalt, account.Account.Email, tx); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-
 		log.Println("error saving a password: ", err.Error())
-		// Different from the one above for debugging purposes
 		return nil, errors.New("an error occurred while saving the password. Please try again at a later time")
 	}
 
-	session, err := store.CreateSession(*accountId)
+	session, err := store.CreateSessionTx(tx, *accountID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-
 		log.Println("error creating a session: ", err.Error())
 		return nil, errors.New("an error occurred while creating a session. Please try again at a later time")
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	fmt.Println("Successfully created account!")
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("an error occurred while finalizing account creation: %v", err)
+	}
+	committed = true
+
+	if err := writeAccountJSONResponse(w, http.StatusCreated, session.ID); err != nil {
+		return nil, err
+	}
+
 	return &session.ID, nil
 }
 
-func storeAccount(account *Account, db *sqlx.DB) (accountId *int, err error) {
+func storeAccount(account *Account, db accountQueryExecutor) (accountId *int, err error) {
 	var id int
 	err = db.QueryRow("INSERT INTO account (name, info, location, email, experience_level) VALUES ($1, $2, $3, $4, $5) RETURNING id", account.Name, account.Info, account.Location, account.Email, account.ExperienceLevel).Scan(&id)
 	if err != nil {

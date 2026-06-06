@@ -1,100 +1,118 @@
 package lobby
 
 import (
-	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
-// CreateLobbyArgs represents the expected structure of the request body for creating a lobby for use within the server.
+// CreateLobbyArgs represents the expected structure of the request body for creating a lobby.
 //
 // @Description Structure for the lobby creation request payload.
 type CreateLobbyArgs struct {
-	// The lobby to create.
-	Lobby Lobby `json:"lobby"`
+	Lobby     LobbyParam `json:"lobby"`
+	Password  string     `json:"password"`
+	SessionId *int64     `json:"session_id"`
+}
 
-	// FIXME make passwords actually get stored with lobbies
-	// The password for the lobby to be created
-	Password string `json:"password"`
+func (a CreateLobbyArgs) GetSessionID() *int64 {
+	return a.SessionId
 }
 
 const ERROR_PASSWORD_TOO_SHORT = "password must be longer than 6 characters"
 const ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD = "password is required"
 
-// CreateLobby handles the creation of a new lobby.
+// CreateLobby creates a new lobby for the authenticated account owner.
 //
 // @Summary Create a new lobby
-// @Description This endpoint creates a new multiplayer lobby, protected by a password.
+// @Description This endpoint creates a new lobby for the authenticated account, makes that account the owner, adds it as the first member, and rejects requests when the account is already in another open lobby.
 // @Tags lobby
 // @Accept json
 // @Produce json
 // @Param body body CreateLobbyArgs true "lobby creation request body"
 // @Success 201 {string} string "Lobby successfully created"
 // @Failure 400 {object} error "Bad Request"
-// @Failure 403 {object} error "Forbidden"
+// @Failure 401 {object} error "Unauthorized"
+// @Failure 409 {object} error "Conflict"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /lobby/create_lobby [post]
 func CreateLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
-
-	if r.Method != "POST" {
-		return errors.New("invalid request; request must be a POST request")
+	if r.Method != http.MethodPost {
+		return writeLobbyStatusError(w, http.StatusBadRequest, "invalid request; request must be a POST request")
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
+	args := CreateLobbyArgs{}
+	if err := decodeJSONBody(r, &args); err != nil {
+		return writeLobbyStatusError(w, http.StatusBadRequest, "an error occurred while decoding the request body:"+err.Error())
+	}
 
-	lobby := CreateLobbyArgs{}
-	err := decoder.Decode(&lobby)
+	if args.Password == "" {
+		return writeLobbyStatusError(w, http.StatusBadRequest, ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD)
+	}
+	if len(args.Password) < 6 {
+		return writeLobbyStatusError(w, http.StatusBadRequest, ERROR_PASSWORD_TOO_SHORT)
+	}
+	if args.Lobby.Name == nil || *args.Lobby.Name == "" {
+		return writeLobbyStatusError(w, http.StatusBadRequest, "lobby.name must be specified")
+	}
 
+	session, err := requireLobbySession(w, store, args)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-
-		return errors.New("an error occurred while decoding the request body:" + err.Error())
+		return err
 	}
 
-	if lobby.Password == "" {
-		w.WriteHeader(http.StatusBadRequest)
-
-		return errors.New(ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD)
-	}
-
-	if _, err := strconv.ParseInt(lobby.Lobby.OwnerAccountId, 10, 64); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("OwnerAccountId must be a valid number")
-	}
-
-	if len(lobby.Password) < 6 {
-		w.WriteHeader(http.StatusBadRequest)
-
-		return errors.New(ERROR_PASSWORD_TOO_SHORT)
-	}
-
-	err = storeLobby(&lobby.Lobby, db)
-
+	tx, err := beginLobbyTx(db)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return errors.New("an error occurred while storing the lobby in the database: " + err.Error())
+		return fmt.Errorf("an error occurred while starting lobby creation: %v", err)
 	}
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+
+	accountID := int64(session.AccountID)
+	openLobbyID, err := findOpenLobbyForAccount(tx, accountID)
+	if err != nil {
+		return err
+	}
+	if openLobbyID != nil {
+		return writeLobbyStatusError(w, http.StatusConflict, "account is already in an open lobby")
+	}
+
+	ownerName, err := lookupAccountName(tx, accountID)
+	if err != nil {
+		return err
+	}
+
+	isMuted := false
+	if args.Lobby.IsMuted != nil {
+		isMuted = *args.Lobby.IsMuted
+	}
+	isPublic := true
+	if args.Lobby.IsPublic != nil {
+		isPublic = *args.Lobby.IsPublic
+	}
+
+	var lobbyID int64
+	if err := tx.QueryRowx(`INSERT INTO lobbies (name, owner_name, owner_account_id, is_closed, is_muted, is_public, updated_at, last_activity_at)
+VALUES ($1, $2, $3, FALSE, $4, $5, NOW(), NOW())
+RETURNING id`, *args.Lobby.Name, ownerName, accountID, isMuted, isPublic).Scan(&lobbyID); err != nil {
+		return fmt.Errorf("an error occurred while storing the lobby in the database: %v", err)
+	}
+
+	if _, err := tx.Exec("INSERT INTO lobby_members (lobby_id, account_id) VALUES ($1, $2)", lobbyID, accountID); err != nil {
+		return fmt.Errorf("an error occurred while creating lobby membership: %v", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("an error occurred while finalizing lobby creation: %v", err)
+	}
+	committed = true
 
 	w.WriteHeader(http.StatusCreated)
-
-	// TODO store password if needed
-	return nil
-}
-
-func storeLobby(lobby *Lobby, db *sqlx.DB) error {
-	result, err := db.Query(
-		"INSERT INTO lobby (name, owner_name, owner_account_id, is_closed, is_muted, is_public) VALUES ($1, $2, $3, $4, $5, $6)",
-		lobby.Name, lobby.OwnerName, lobby.OwnerAccountId, lobby.IsClosed, lobby.IsMuted, lobby.IsPublic,
-	)
-	if err != nil {
-		return errors.New("an error occurred while inserting a lobby into the database: " + err.Error())
-	}
-
-	defer result.Close()
 	return nil
 }

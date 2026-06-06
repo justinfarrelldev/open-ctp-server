@@ -3,10 +3,11 @@ package auth
 import (
 	"bytes"
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
 	"errors"
+	"fmt"
 
-	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/argon2"
 )
 
@@ -16,6 +17,12 @@ import (
 type hashSalt struct {
 	Hash []byte
 	Salt []byte
+}
+
+type credentialQueryExecutor interface {
+	Exec(query string, args ...any) (sql.Result, error)
+	Query(query string, args ...any) (*sql.Rows, error)
+	QueryRow(query string, args ...any) *sql.Row
 }
 
 type argon2idHash struct {
@@ -101,13 +108,44 @@ func (a *argon2idHash) Compare(hash, salt, password []byte) error {
 	return nil
 }
 
-func StoreHashAndSalt(hashSalt *hashSalt, accountEmail string, db *sqlx.DB) error {
+func StoreHashAndSalt(hashSalt *hashSalt, accountEmail string, db credentialQueryExecutor) error {
 	result, err := db.Query("INSERT INTO passwords (account_email, hash, salt) VALUES ($1, $2, $3)", accountEmail, base64.StdEncoding.EncodeToString(hashSalt.Hash), base64.StdEncoding.EncodeToString(hashSalt.Salt))
 	if err != nil {
 		return errors.New("an error occurred while inserting a hash-salt pair into the database: " + err.Error())
 	}
 
 	defer result.Close()
+	return nil
+}
+
+func GetHashAndSalt(accountEmail string, db credentialQueryExecutor) ([]byte, []byte, error) {
+	var storedHash string
+	var storedSalt string
+
+	err := db.QueryRow("SELECT hash, salt FROM passwords WHERE account_email = $1", accountEmail).Scan(&storedHash, &storedSalt)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error retrieving account credentials: %w", err)
+	}
+
+	storedHashBytes, err := base64.StdEncoding.DecodeString(storedHash)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error decoding stored hash: %w", err)
+	}
+
+	storedSaltBytes, err := base64.StdEncoding.DecodeString(storedSalt)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error decoding stored salt: %w", err)
+	}
+
+	return storedHashBytes, storedSaltBytes, nil
+}
+
+func UpdateHashAndSalt(hashSalt *hashSalt, accountEmail string, db credentialQueryExecutor) error {
+	_, err := db.Exec("UPDATE passwords SET hash = $1, salt = $2 WHERE account_email = $3", base64.StdEncoding.EncodeToString(hashSalt.Hash), base64.StdEncoding.EncodeToString(hashSalt.Salt), accountEmail)
+	if err != nil {
+		return errors.New("an error occurred while updating a hash-salt pair in the database: " + err.Error())
+	}
+
 	return nil
 }
 

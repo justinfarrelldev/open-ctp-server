@@ -66,7 +66,7 @@ const docTemplate = `{
         },
         "/account/delete_account": {
             "delete": {
-                "description": "This endpoint deletes a player account.",
+                "description": "This endpoint deletes a player account for the authenticated account owner and invalidates that account's sessions after a successful delete.",
                 "consumes": [
                     "application/json"
                 ],
@@ -99,6 +99,10 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {}
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
                     "403": {
                         "description": "Forbidden",
                         "schema": {}
@@ -112,7 +116,7 @@ const docTemplate = `{
         },
         "/account/get_account": {
             "get": {
-                "description": "This endpoint gets a multiplayer account's info.",
+                "description": "This endpoint gets a multiplayer account's info and requires a valid session.",
                 "consumes": [
                     "application/json"
                 ],
@@ -150,6 +154,106 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {}
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/account/login": {
+            "post": {
+                "description": "This endpoint verifies account credentials and returns a session for future authenticated requests.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "account"
+                ],
+                "summary": "Logs into an account",
+                "parameters": [
+                    {
+                        "description": "account login request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/account.LoginAccountArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "schema": {
+                            "$ref": "#/definitions/account.LoginAccountResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/account/reset_password": {
+            "post": {
+                "description": "This endpoint resets an account password for the authenticated account owner and invalidates the account's other sessions.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "account"
+                ],
+                "summary": "Resets an account password",
+                "parameters": [
+                    {
+                        "description": "password reset request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/account.ResetPasswordArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully reset password!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
                     "403": {
                         "description": "Forbidden",
                         "schema": {}
@@ -163,7 +267,7 @@ const docTemplate = `{
         },
         "/account/update_account": {
             "put": {
-                "description": "This endpoint updates an account's info.",
+                "description": "This endpoint updates an account's info for the authenticated account owner.",
                 "consumes": [
                     "application/json"
                 ],
@@ -187,26 +291,58 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully updated account!"
+                        "description": "Successfully updated account!",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     "400": {
-                        "description": "account_id must be specified",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
                     },
                     "500": {
-                        "description": "an error occurred while decoding the request body: \u003cerror message\u003e",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/add_ai": {
+            "post": {
+                "description": "This endpoint exists for future AI-player support and currently always returns 404 because AI players are not supported yet.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Add an AI player",
+                "responses": {
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "AI players are not supported yet",
+                        "schema": {}
                     }
                 }
             }
         },
         "/game/create_game": {
             "post": {
-                "description": "This endpoint creates a new multiplayer game, optionally protected by a password.",
+                "description": "This endpoint creates a new multiplayer game setup record using CTP2-first defaults for omitted setup fields.",
                 "consumes": [
                     "application/json"
                 ],
@@ -224,19 +360,890 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.CreateGameArgs"
+                            "$ref": "#/definitions/game.CreateGameDocsArgs"
                         }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Game successfully created",
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/delete_game": {
+            "delete": {
+                "description": "This endpoint deletes a setup-stage game only for the authenticated game owner.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Delete a game",
+                "parameters": [
+                    {
+                        "description": "game deletion request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.DeleteGameArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted game!",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/get_game": {
+            "get": {
+                "description": "This endpoint returns a game's persisted setup fields for any authenticated account that is still joined to the game, including player country and ping values.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Get a game",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "game ID",
+                        "name": "game_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "session ID",
+                        "name": "session_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/kick_player": {
+            "post": {
+                "description": "This endpoint lets the authenticated game owner remove a non-owner player from a setup-stage game. Kicked players lose access to game state endpoints immediately.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Kick a game player",
+                "parameters": [
+                    {
+                        "description": "kick player request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.KickGamePlayerArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/lock_game": {
+            "post": {
+                "description": "This endpoint updates a setup-stage game's locked flag only for the authenticated game owner and returns the persisted game state.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Lock or unlock a game",
+                "parameters": [
+                    {
+                        "description": "game lock request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.LockGameArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/rename_game": {
+            "post": {
+                "description": "This endpoint updates a setup-stage game's name only for the authenticated game owner and returns the persisted game state.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Rename a game",
+                "parameters": [
+                    {
+                        "description": "game rename request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.RenameGameArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/select_country": {
+            "post": {
+                "description": "This endpoint lets an authenticated joined player choose a unique country during setup. Duplicate country selections are rejected, and country changes are blocked once the game has started.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Select a game country",
+                "parameters": [
+                    {
+                        "description": "country selection request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.SelectGameCountryArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/set_public": {
+            "post": {
+                "description": "This endpoint updates a setup-stage game's public flag only for the authenticated game owner and returns the persisted game state.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Set game public state",
+                "parameters": [
+                    {
+                        "description": "game public-state request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.SetPublicGameArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/start_game": {
+            "post": {
+                "description": "This endpoint lets the authenticated game owner start a setup-stage game once it has at least one joined player and any lobby dependency is still available.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Start a game",
+                "parameters": [
+                    {
+                        "description": "start game request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.StartGameArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/update_exclusions": {
+            "post": {
+                "description": "This endpoint updates a setup-stage game's exclusions JSON only for the authenticated game owner and returns the persisted game state.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Update game exclusions",
+                "parameters": [
+                    {
+                        "description": "game exclusions update request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.UpdateExclusionsDocsArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/update_game": {
+            "put": {
+                "description": "This endpoint updates mutable setup-stage game fields for the authenticated game owner and returns the persisted game state.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Update a game",
+                "parameters": [
+                    {
+                        "description": "game update request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.UpdateGameDocsArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/update_ping": {
+            "post": {
+                "description": "This endpoint lets an authenticated joined player store a non-negative ping value that is returned in subsequent game responses.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Update player ping",
+                "parameters": [
+                    {
+                        "description": "ping update request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.UpdateGamePingArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/update_rules": {
+            "post": {
+                "description": "This endpoint updates a setup-stage game's rules JSON only for the authenticated game owner and returns the persisted game state.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Update game rules",
+                "parameters": [
+                    {
+                        "description": "game rules update request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.UpdateRulesDocsArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/update_starting_gold": {
+            "post": {
+                "description": "This endpoint lets the authenticated game owner update the setup-stage starting gold value before the game starts.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Update starting gold",
+                "parameters": [
+                    {
+                        "description": "starting gold request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.UpdateGameStartingGoldArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/update_starting_settlers": {
+            "post": {
+                "description": "This endpoint lets the authenticated game owner update the setup-stage starting settlers value before the game starts.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Update starting settlers",
+                "parameters": [
+                    {
+                        "description": "starting settlers request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.UpdateGameStartingSettlersArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/game/update_style": {
+            "post": {
+                "description": "This endpoint updates a setup-stage game's style only for the authenticated game owner and returns the persisted game state.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Update game style",
+                "parameters": [
+                    {
+                        "description": "game style update request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.UpdateStyleArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {}
                     },
                     "500": {
@@ -273,9 +1280,69 @@ const docTemplate = `{
                 }
             }
         },
+        "/lobby/connect_lobby": {
+            "get": {
+                "description": "This endpoint opens a text/event-stream connection for the authenticated account. It joins the account to the lobby when needed, rejects accounts that are already in a different open lobby, returns HTTP 410 Gone for inactive closed lobbies, and emits SSE events named player_connected, player_left, and chat_message with JSON payloads in each data line.",
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "lobby"
+                ],
+                "summary": "Connects to a lobby event stream",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "session ID",
+                        "name": "session_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "lobby ID",
+                        "name": "lobby_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SSE stream opened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "410": {
+                        "description": "Gone",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/lobby/create_lobby": {
             "post": {
-                "description": "This endpoint creates a new multiplayer lobby, protected by a password.",
+                "description": "This endpoint creates a new lobby for the authenticated account, makes that account the owner, adds it as the first member, and rejects requests when the account is already in another open lobby.",
                 "consumes": [
                     "application/json"
                 ],
@@ -308,8 +1375,12 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {}
                     },
-                    "403": {
-                        "description": "Forbidden",
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {}
                     },
                     "500": {
@@ -321,7 +1392,7 @@ const docTemplate = `{
         },
         "/lobby/delete_lobby": {
             "delete": {
-                "description": "This endpoint deletes a multiplayer lobby.",
+                "description": "This endpoint deletes a lobby only for the authenticated lobby owner. It enforces ownership before deletion and does not allow non-owners to remove a lobby.",
                 "consumes": [
                     "application/json"
                 ],
@@ -354,8 +1425,16 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {}
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {}
                     },
                     "500": {
@@ -367,7 +1446,7 @@ const docTemplate = `{
         },
         "/lobby/get_lobby": {
             "get": {
-                "description": "This endpoint gets a multiplayer lobby's info.",
+                "description": "This endpoint returns a lobby by ID. If the lobby has become inactive, it is closed during the read and the endpoint returns HTTP 410 Gone instead of lobby data.",
                 "consumes": [
                     "application/json"
                 ],
@@ -380,7 +1459,7 @@ const docTemplate = `{
                 "summary": "Gets a lobby",
                 "parameters": [
                     {
-                        "description": "lobby acquisition request body",
+                        "description": "lobby read request body",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -400,8 +1479,186 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {}
                     },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "410": {
+                        "description": "Gone",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/lobby/join_lobby": {
+            "post": {
+                "description": "This endpoint joins the authenticated account to the requested lobby, rejects the request if the account is already in another open lobby, and returns HTTP 410 Gone when the target lobby has auto-closed from inactivity.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lobby"
+                ],
+                "summary": "Joins a lobby",
+                "parameters": [
+                    {
+                        "description": "lobby join request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/lobby.JoinLobbyArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully joined lobby!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "410": {
+                        "description": "Gone",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/lobby/leave_lobby": {
+            "post": {
+                "description": "This endpoint removes the authenticated account from its current open lobby. If the owner leaves, ownership transfers to the longest-waiting remaining member, or the lobby is closed if it becomes empty.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lobby"
+                ],
+                "summary": "Leaves the current lobby",
+                "parameters": [
+                    {
+                        "description": "lobby leave request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/lobby.LeaveLobbyArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully left lobby!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/lobby/send_chat": {
+            "post": {
+                "description": "This endpoint sends a chat message to the authenticated account's current open lobby, persists the message, emits a chat_message SSE event, returns HTTP 403 if the lobby is muted, and returns HTTP 410 Gone if the lobby has already auto-closed from inactivity.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lobby"
+                ],
+                "summary": "Sends a lobby chat message",
+                "parameters": [
+                    {
+                        "description": "lobby chat request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/lobby.SendChatArgs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully sent chat message!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "410": {
+                        "description": "Gone",
                         "schema": {}
                     },
                     "500": {
@@ -413,7 +1670,7 @@ const docTemplate = `{
         },
         "/lobby/update_lobby": {
             "put": {
-                "description": "This endpoint updates a lobby's info.",
+                "description": "This endpoint lets only the authenticated lobby owner update the lobby name, mute state, or public state. If the lobby has already auto-closed from inactivity, the endpoint returns HTTP 410 Gone.",
                 "consumes": [
                     "application/json"
                 ],
@@ -443,16 +1700,28 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "lobby_id must be specified",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "410": {
+                        "description": "Gone",
+                        "schema": {}
                     },
                     "500": {
-                        "description": "an error occurred while decoding the request body: \u003cerror message\u003e",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "description": "Internal Server Error",
+                        "schema": {}
                     }
                 }
             }
@@ -675,6 +1944,51 @@ const docTemplate = `{
                 "Impossible"
             ]
         },
+        "account.LoginAccountArgs": {
+            "description": "Structure for the account login request payload.",
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "account.LoginAccountResponse": {
+            "description": "Structure for the account login response payload.",
+            "type": "object",
+            "properties": {
+                "account_id": {
+                    "type": "integer"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "account.ResetPasswordArgs": {
+            "description": "Structure for the password reset request payload.",
+            "type": "object",
+            "properties": {
+                "account_id": {
+                    "type": "integer"
+                },
+                "current_password": {
+                    "type": "string"
+                },
+                "new_password": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "account.UpdateAccountArgs": {
             "description": "Structure for the account update request payload.",
             "type": "object",
@@ -718,17 +2032,357 @@ const docTemplate = `{
                 }
             }
         },
-        "game.CreateGameArgs": {
-            "description": "Structure for the game creation request payload.",
+        "game.CreateGameDocsArgs": {
             "type": "object",
             "properties": {
+                "exclusions_json": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "is_locked": {
+                    "type": "boolean"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "lobby_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner_account_id": {
+                    "type": "integer"
+                },
                 "password": {
-                    "description": "Password is the password for the game.\nThis field is required if PasswordProtected is true.\nIt must be longer than 6 characters.",
                     "type": "string"
                 },
                 "password_protected": {
-                    "description": "PasswordProtected indicates whether the game is password-protected.\nIf true, a password must be provided.",
                     "type": "boolean"
+                },
+                "rules_json": {
+                    "type": "array",
+                    "items": {}
+                },
+                "session_id": {
+                    "type": "integer"
+                },
+                "starting_gold": {
+                    "type": "integer"
+                },
+                "starting_settlers": {
+                    "type": "integer"
+                },
+                "style": {
+                    "type": "string"
+                }
+            }
+        },
+        "game.DeleteGameArgs": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.Game": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "exclusions_json": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_locked": {
+                    "type": "boolean"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "lobby_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner_account_id": {
+                    "type": "integer"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "password_protected": {
+                    "type": "boolean"
+                },
+                "players": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/game.GamePlayer"
+                    }
+                },
+                "rules_json": {
+                    "type": "string"
+                },
+                "started_at": {
+                    "type": "string"
+                },
+                "starting_gold": {
+                    "type": "integer"
+                },
+                "starting_settlers": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "style": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "game.GamePlayer": {
+            "type": "object",
+            "properties": {
+                "account_id": {
+                    "type": "integer"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "game_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "joined_at": {
+                    "type": "string"
+                },
+                "ping": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "game.GameUpdateDocsArgs": {
+            "type": "object",
+            "properties": {
+                "exclusions_json": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "is_locked": {
+                    "type": "boolean"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "rules_json": {
+                    "type": "array",
+                    "items": {}
+                },
+                "style": {
+                    "type": "string"
+                }
+            }
+        },
+        "game.KickGamePlayerArgs": {
+            "type": "object",
+            "properties": {
+                "account_id": {
+                    "type": "integer"
+                },
+                "game_id": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.LockGameArgs": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "integer"
+                },
+                "is_locked": {
+                    "type": "boolean"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.RenameGameArgs": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.SelectGameCountryArgs": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "type": "string"
+                },
+                "game_id": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.SetPublicGameArgs": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "integer"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.StartGameArgs": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.UpdateExclusionsDocsArgs": {
+            "type": "object",
+            "properties": {
+                "exclusions_json": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "game_id": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.UpdateGameDocsArgs": {
+            "type": "object",
+            "properties": {
+                "game": {
+                    "$ref": "#/definitions/game.GameUpdateDocsArgs"
+                },
+                "game_id": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.UpdateGamePingArgs": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "integer"
+                },
+                "ping": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.UpdateGameStartingGoldArgs": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "integer"
+                },
+                "starting_gold": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.UpdateGameStartingSettlersArgs": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "integer"
+                },
+                "starting_settlers": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.UpdateRulesDocsArgs": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "integer"
+                },
+                "rules_json": {
+                    "type": "array",
+                    "items": {}
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.UpdateStyleArgs": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "integer"
+                },
+                "style": {
+                    "type": "string"
                 }
             }
         },
@@ -746,16 +2400,13 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "lobby": {
-                    "description": "The lobby to create.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/lobby.Lobby"
-                        }
-                    ]
+                    "$ref": "#/definitions/lobby.LobbyParam"
                 },
                 "password": {
-                    "description": "FIXME make passwords actually get stored with lobbies\nThe password for the lobby to be created",
                     "type": "string"
+                },
+                "session_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -764,86 +2415,106 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "lobby_id": {
-                    "description": "The lobby ID for the lobby that will be deleted.",
+                    "type": "integer"
+                },
+                "session_id": {
                     "type": "integer"
                 }
             }
         },
         "lobby.GetLobbyArgs": {
-            "description": "Structure for the lobby acquisition request payload.",
+            "description": "Structure for the lobby read request payload.",
             "type": "object",
             "properties": {
                 "lobby_id": {
-                    "description": "The lobby ID for the lobby that will be retrieved.",
+                    "type": "integer"
+                }
+            }
+        },
+        "lobby.JoinLobbyArgs": {
+            "description": "Structure for the lobby join request payload.",
+            "type": "object",
+            "properties": {
+                "lobby_id": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "lobby.LeaveLobbyArgs": {
+            "description": "Structure for the lobby leave request payload.",
+            "type": "object",
+            "properties": {
+                "session_id": {
                     "type": "integer"
                 }
             }
         },
         "lobby.Lobby": {
-            "description": "Structure for representing a player lobby.",
+            "description": "Structure for representing a lobby, including ownership, visibility, mute state, and lifecycle timestamps.",
             "type": "object",
             "properties": {
+                "closed_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
                 "id": {
-                    "description": "ID is the unique identifier for the lobby.",
                     "type": "integer"
                 },
                 "is_closed": {
-                    "description": "IsClosed indicates if the lobby is closed.",
                     "type": "boolean"
                 },
                 "is_muted": {
-                    "description": "IsMuted indicates if the lobby is muted.",
                     "type": "boolean"
                 },
                 "is_public": {
-                    "description": "IsPublic indicates if the lobby is public.",
                     "type": "boolean"
                 },
+                "last_activity_at": {
+                    "type": "string"
+                },
                 "name": {
-                    "description": "Name is the name of the lobby.",
                     "type": "string"
                 },
                 "owner_account_id": {
-                    "description": "OwnerAccountId is the account ID of the lobby owner.",
-                    "type": "string"
+                    "type": "integer"
                 },
                 "owner_name": {
-                    "description": "OwnerName is the name of the lobby owner.",
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
         },
         "lobby.LobbyParam": {
-            "description": "Structure for representing a player lobby with non-required fields.",
+            "description": "Structure for lobby fields that can be created or updated.",
             "type": "object",
             "properties": {
-                "id": {
-                    "description": "ID is the unique identifier for the lobby.",
-                    "type": "integer"
-                },
-                "is_closed": {
-                    "description": "IsClosed indicates if the lobby is closed.",
-                    "type": "boolean"
-                },
                 "is_muted": {
-                    "description": "IsMuted indicates if the lobby is muted.",
                     "type": "boolean"
                 },
                 "is_public": {
-                    "description": "IsPublic indicates if the lobby is public.",
                     "type": "boolean"
                 },
                 "name": {
-                    "description": "Name is the name of the lobby.",
+                    "type": "string"
+                }
+            }
+        },
+        "lobby.SendChatArgs": {
+            "description": "Structure for the lobby chat request payload.",
+            "type": "object",
+            "properties": {
+                "message": {
                     "type": "string"
                 },
-                "owner_account_id": {
-                    "description": "OwnerAccountId is the account ID of the lobby owner.",
-                    "type": "string"
-                },
-                "owner_name": {
-                    "description": "OwnerName is the name of the lobby owner.",
-                    "type": "string"
+                "session_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -852,15 +2523,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "lobby": {
-                    "description": "The lobby to update.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/lobby.LobbyParam"
-                        }
-                    ]
+                    "$ref": "#/definitions/lobby.LobbyParam"
                 },
                 "lobby_id": {
-                    "description": "The lobby ID for the lobby that will be updated.",
+                    "type": "integer"
+                },
+                "session_id": {
                     "type": "integer"
                 }
             }

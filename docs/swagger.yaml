@@ -79,6 +79,36 @@ definitions:
     - Hard
     - Very_Hard
     - Impossible
+  account.LoginAccountArgs:
+    description: Structure for the account login request payload.
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  account.LoginAccountResponse:
+    description: Structure for the account login response payload.
+    properties:
+      account_id:
+        type: integer
+      expires_at:
+        type: string
+      session_id:
+        type: integer
+    type: object
+  account.ResetPasswordArgs:
+    description: Structure for the password reset request payload.
+    properties:
+      account_id:
+        type: integer
+      current_password:
+        type: string
+      new_password:
+        type: string
+      session_id:
+        type: integer
+    type: object
   account.UpdateAccountArgs:
     description: Structure for the account update request payload.
     properties:
@@ -108,20 +138,237 @@ definitions:
       id:
         type: integer
     type: object
-  game.CreateGameArgs:
-    description: Structure for the game creation request payload.
+  game.CreateGameDocsArgs:
     properties:
+      exclusions_json:
+        additionalProperties: {}
+        type: object
+      is_locked:
+        type: boolean
+      is_public:
+        type: boolean
+      lobby_id:
+        type: integer
+      name:
+        type: string
+      owner_account_id:
+        type: integer
       password:
-        description: |-
-          Password is the password for the game.
-          This field is required if PasswordProtected is true.
-          It must be longer than 6 characters.
         type: string
       password_protected:
-        description: |-
-          PasswordProtected indicates whether the game is password-protected.
-          If true, a password must be provided.
         type: boolean
+      rules_json:
+        items: {}
+        type: array
+      session_id:
+        type: integer
+      starting_gold:
+        type: integer
+      starting_settlers:
+        type: integer
+      style:
+        type: string
+    type: object
+  game.DeleteGameArgs:
+    properties:
+      game_id:
+        type: integer
+      session_id:
+        type: integer
+    type: object
+  game.Game:
+    properties:
+      created_at:
+        type: string
+      exclusions_json:
+        type: string
+      id:
+        type: integer
+      is_locked:
+        type: boolean
+      is_public:
+        type: boolean
+      lobby_id:
+        type: integer
+      name:
+        type: string
+      owner_account_id:
+        type: integer
+      password:
+        type: string
+      password_protected:
+        type: boolean
+      players:
+        items:
+          $ref: '#/definitions/game.GamePlayer'
+        type: array
+      rules_json:
+        type: string
+      started_at:
+        type: string
+      starting_gold:
+        type: integer
+      starting_settlers:
+        type: integer
+      status:
+        type: string
+      style:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  game.GamePlayer:
+    properties:
+      account_id:
+        type: integer
+      country:
+        type: string
+      created_at:
+        type: string
+      game_id:
+        type: integer
+      id:
+        type: integer
+      joined_at:
+        type: string
+      ping:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  game.GameUpdateDocsArgs:
+    properties:
+      exclusions_json:
+        additionalProperties: {}
+        type: object
+      is_locked:
+        type: boolean
+      is_public:
+        type: boolean
+      name:
+        type: string
+      rules_json:
+        items: {}
+        type: array
+      style:
+        type: string
+    type: object
+  game.KickGamePlayerArgs:
+    properties:
+      account_id:
+        type: integer
+      game_id:
+        type: integer
+      session_id:
+        type: integer
+    type: object
+  game.LockGameArgs:
+    properties:
+      game_id:
+        type: integer
+      is_locked:
+        type: boolean
+      session_id:
+        type: integer
+    type: object
+  game.RenameGameArgs:
+    properties:
+      game_id:
+        type: integer
+      name:
+        type: string
+      session_id:
+        type: integer
+    type: object
+  game.SelectGameCountryArgs:
+    properties:
+      country:
+        type: string
+      game_id:
+        type: integer
+      session_id:
+        type: integer
+    type: object
+  game.SetPublicGameArgs:
+    properties:
+      game_id:
+        type: integer
+      is_public:
+        type: boolean
+      session_id:
+        type: integer
+    type: object
+  game.StartGameArgs:
+    properties:
+      game_id:
+        type: integer
+      session_id:
+        type: integer
+    type: object
+  game.UpdateExclusionsDocsArgs:
+    properties:
+      exclusions_json:
+        additionalProperties: {}
+        type: object
+      game_id:
+        type: integer
+      session_id:
+        type: integer
+    type: object
+  game.UpdateGameDocsArgs:
+    properties:
+      game:
+        $ref: '#/definitions/game.GameUpdateDocsArgs'
+      game_id:
+        type: integer
+      session_id:
+        type: integer
+    type: object
+  game.UpdateGamePingArgs:
+    properties:
+      game_id:
+        type: integer
+      ping:
+        type: integer
+      session_id:
+        type: integer
+    type: object
+  game.UpdateGameStartingGoldArgs:
+    properties:
+      game_id:
+        type: integer
+      session_id:
+        type: integer
+      starting_gold:
+        type: integer
+    type: object
+  game.UpdateGameStartingSettlersArgs:
+    properties:
+      game_id:
+        type: integer
+      session_id:
+        type: integer
+      starting_settlers:
+        type: integer
+    type: object
+  game.UpdateRulesDocsArgs:
+    properties:
+      game_id:
+        type: integer
+      rules_json:
+        items: {}
+        type: array
+      session_id:
+        type: integer
+    type: object
+  game.UpdateStyleArgs:
+    properties:
+      game_id:
+        type: integer
+      session_id:
+        type: integer
+      style:
+        type: string
     type: object
   health.Response:
     properties:
@@ -133,88 +380,93 @@ definitions:
     description: Structure for the lobby creation request payload.
     properties:
       lobby:
-        allOf:
-        - $ref: '#/definitions/lobby.Lobby'
-        description: The lobby to create.
+        $ref: '#/definitions/lobby.LobbyParam'
       password:
-        description: |-
-          FIXME make passwords actually get stored with lobbies
-          The password for the lobby to be created
         type: string
+      session_id:
+        type: integer
     type: object
   lobby.DeleteLobbyArgs:
     description: Structure for the lobby deletion request payload.
     properties:
       lobby_id:
-        description: The lobby ID for the lobby that will be deleted.
+        type: integer
+      session_id:
         type: integer
     type: object
   lobby.GetLobbyArgs:
-    description: Structure for the lobby acquisition request payload.
+    description: Structure for the lobby read request payload.
     properties:
       lobby_id:
-        description: The lobby ID for the lobby that will be retrieved.
+        type: integer
+    type: object
+  lobby.JoinLobbyArgs:
+    description: Structure for the lobby join request payload.
+    properties:
+      lobby_id:
+        type: integer
+      session_id:
+        type: integer
+    type: object
+  lobby.LeaveLobbyArgs:
+    description: Structure for the lobby leave request payload.
+    properties:
+      session_id:
         type: integer
     type: object
   lobby.Lobby:
-    description: Structure for representing a player lobby.
+    description: Structure for representing a lobby, including ownership, visibility,
+      mute state, and lifecycle timestamps.
     properties:
+      closed_at:
+        type: string
+      created_at:
+        type: string
       id:
-        description: ID is the unique identifier for the lobby.
         type: integer
       is_closed:
-        description: IsClosed indicates if the lobby is closed.
         type: boolean
       is_muted:
-        description: IsMuted indicates if the lobby is muted.
         type: boolean
       is_public:
-        description: IsPublic indicates if the lobby is public.
         type: boolean
+      last_activity_at:
+        type: string
       name:
-        description: Name is the name of the lobby.
         type: string
       owner_account_id:
-        description: OwnerAccountId is the account ID of the lobby owner.
-        type: string
+        type: integer
       owner_name:
-        description: OwnerName is the name of the lobby owner.
+        type: string
+      updated_at:
         type: string
     type: object
   lobby.LobbyParam:
-    description: Structure for representing a player lobby with non-required fields.
+    description: Structure for lobby fields that can be created or updated.
     properties:
-      id:
-        description: ID is the unique identifier for the lobby.
-        type: integer
-      is_closed:
-        description: IsClosed indicates if the lobby is closed.
-        type: boolean
       is_muted:
-        description: IsMuted indicates if the lobby is muted.
         type: boolean
       is_public:
-        description: IsPublic indicates if the lobby is public.
         type: boolean
       name:
-        description: Name is the name of the lobby.
         type: string
-      owner_account_id:
-        description: OwnerAccountId is the account ID of the lobby owner.
+    type: object
+  lobby.SendChatArgs:
+    description: Structure for the lobby chat request payload.
+    properties:
+      message:
         type: string
-      owner_name:
-        description: OwnerName is the name of the lobby owner.
-        type: string
+      session_id:
+        type: integer
     type: object
   lobby.UpdateLobbyArgs:
     description: Structure for the lobby update request payload.
     properties:
       lobby:
-        allOf:
-        - $ref: '#/definitions/lobby.LobbyParam'
-        description: The lobby to update.
+        $ref: '#/definitions/lobby.LobbyParam'
       lobby_id:
-        description: The lobby ID for the lobby that will be updated.
+        type: integer
+      session_id:
         type: integer
     type: object
 info:
@@ -261,7 +513,8 @@ paths:
     delete:
       consumes:
       - application/json
-      description: This endpoint deletes a player account.
+      description: This endpoint deletes a player account for the authenticated account
+        owner and invalidates that account's sessions after a successful delete.
       parameters:
       - description: account deletion request body
         in: body
@@ -279,6 +532,9 @@ paths:
         "400":
           description: Bad Request
           schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
         "403":
           description: Forbidden
           schema: {}
@@ -292,7 +548,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: This endpoint gets a multiplayer account's info.
+      description: This endpoint gets a multiplayer account's info and requires a
+        valid session.
       parameters:
       - description: account ID
         in: query
@@ -314,8 +571,11 @@ paths:
         "400":
           description: Bad Request
           schema: {}
-        "403":
-          description: Forbidden
+        "401":
+          description: Unauthorized
+          schema: {}
+        "404":
+          description: Not Found
           schema: {}
         "500":
           description: Internal Server Error
@@ -323,11 +583,79 @@ paths:
       summary: Gets an account
       tags:
       - account
+  /account/login:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint verifies account credentials and returns a session
+        for future authenticated requests.
+      parameters:
+      - description: account login request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/account.LoginAccountArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/account.LoginAccountResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Logs into an account
+      tags:
+      - account
+  /account/reset_password:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint resets an account password for the authenticated
+        account owner and invalidates the account's other sessions.
+      parameters:
+      - description: password reset request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/account.ResetPasswordArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully reset password!
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Resets an account password
+      tags:
+      - account
   /account/update_account:
     put:
       consumes:
       - application/json
-      description: This endpoint updates an account's info.
+      description: This endpoint updates an account's info for the authenticated account
+        owner.
       parameters:
       - description: account update request body
         in: body
@@ -340,45 +668,688 @@ paths:
       responses:
         "200":
           description: Successfully updated account!
+          schema:
+            type: string
         "400":
-          description: account_id must be specified
-          schema:
-            type: string
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
         "500":
-          description: 'an error occurred while decoding the request body: <error
-            message>'
-          schema:
-            type: string
+          description: Internal Server Error
+          schema: {}
       summary: Updates an account
       tags:
       - account
+  /game/add_ai:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint exists for future AI-player support and currently
+        always returns 404 because AI players are not supported yet.
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: AI players are not supported yet
+          schema: {}
+      summary: Add an AI player
+      tags:
+      - game
   /game/create_game:
     post:
       consumes:
       - application/json
-      description: This endpoint creates a new multiplayer game, optionally protected
-        by a password.
+      description: This endpoint creates a new multiplayer game setup record using
+        CTP2-first defaults for omitted setup fields.
       parameters:
       - description: Game creation request body
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/game.CreateGameArgs'
+          $ref: '#/definitions/game.CreateGameDocsArgs'
       produces:
       - application/json
       responses:
         "201":
-          description: Game successfully created
+          description: Created
           schema:
-            type: string
+            $ref: '#/definitions/game.Game'
         "400":
           description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
           schema: {}
         "500":
           description: Internal Server Error
           schema: {}
       summary: Create a new game
+      tags:
+      - game
+  /game/delete_game:
+    delete:
+      consumes:
+      - application/json
+      description: This endpoint deletes a setup-stage game only for the authenticated
+        game owner.
+      parameters:
+      - description: game deletion request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.DeleteGameArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted game!
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Delete a game
+      tags:
+      - game
+  /game/get_game:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint returns a game's persisted setup fields for any authenticated
+        account that is still joined to the game, including player country and ping
+        values.
+      parameters:
+      - description: game ID
+        in: query
+        name: game_id
+        required: true
+        type: integer
+      - description: session ID
+        in: query
+        name: session_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Get a game
+      tags:
+      - game
+  /game/kick_player:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint lets the authenticated game owner remove a non-owner
+        player from a setup-stage game. Kicked players lose access to game state endpoints
+        immediately.
+      parameters:
+      - description: kick player request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.KickGamePlayerArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Kick a game player
+      tags:
+      - game
+  /game/lock_game:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint updates a setup-stage game's locked flag only for
+        the authenticated game owner and returns the persisted game state.
+      parameters:
+      - description: game lock request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.LockGameArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Lock or unlock a game
+      tags:
+      - game
+  /game/rename_game:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint updates a setup-stage game's name only for the authenticated
+        game owner and returns the persisted game state.
+      parameters:
+      - description: game rename request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.RenameGameArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Rename a game
+      tags:
+      - game
+  /game/select_country:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint lets an authenticated joined player choose a unique
+        country during setup. Duplicate country selections are rejected, and country
+        changes are blocked once the game has started.
+      parameters:
+      - description: country selection request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.SelectGameCountryArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Select a game country
+      tags:
+      - game
+  /game/set_public:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint updates a setup-stage game's public flag only for
+        the authenticated game owner and returns the persisted game state.
+      parameters:
+      - description: game public-state request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.SetPublicGameArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Set game public state
+      tags:
+      - game
+  /game/start_game:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint lets the authenticated game owner start a setup-stage
+        game once it has at least one joined player and any lobby dependency is still
+        available.
+      parameters:
+      - description: start game request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.StartGameArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Start a game
+      tags:
+      - game
+  /game/update_exclusions:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint updates a setup-stage game's exclusions JSON only
+        for the authenticated game owner and returns the persisted game state.
+      parameters:
+      - description: game exclusions update request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.UpdateExclusionsDocsArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Update game exclusions
+      tags:
+      - game
+  /game/update_game:
+    put:
+      consumes:
+      - application/json
+      description: This endpoint updates mutable setup-stage game fields for the authenticated
+        game owner and returns the persisted game state.
+      parameters:
+      - description: game update request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.UpdateGameDocsArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Update a game
+      tags:
+      - game
+  /game/update_ping:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint lets an authenticated joined player store a non-negative
+        ping value that is returned in subsequent game responses.
+      parameters:
+      - description: ping update request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.UpdateGamePingArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Update player ping
+      tags:
+      - game
+  /game/update_rules:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint updates a setup-stage game's rules JSON only for
+        the authenticated game owner and returns the persisted game state.
+      parameters:
+      - description: game rules update request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.UpdateRulesDocsArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Update game rules
+      tags:
+      - game
+  /game/update_starting_gold:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint lets the authenticated game owner update the setup-stage
+        starting gold value before the game starts.
+      parameters:
+      - description: starting gold request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.UpdateGameStartingGoldArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Update starting gold
+      tags:
+      - game
+  /game/update_starting_settlers:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint lets the authenticated game owner update the setup-stage
+        starting settlers value before the game starts.
+      parameters:
+      - description: starting settlers request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.UpdateGameStartingSettlersArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Update starting settlers
+      tags:
+      - game
+  /game/update_style:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint updates a setup-stage game's style only for the authenticated
+        game owner and returns the persisted game state.
+      parameters:
+      - description: game style update request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/game.UpdateStyleArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Game'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Update game style
       tags:
       - game
   /health:
@@ -399,11 +1370,59 @@ paths:
       summary: Health check endpoint
       tags:
       - health
+  /lobby/connect_lobby:
+    get:
+      description: This endpoint opens a text/event-stream connection for the authenticated
+        account. It joins the account to the lobby when needed, rejects accounts that
+        are already in a different open lobby, returns HTTP 410 Gone for inactive
+        closed lobbies, and emits SSE events named player_connected, player_left,
+        and chat_message with JSON payloads in each data line.
+      parameters:
+      - description: session ID
+        in: query
+        name: session_id
+        required: true
+        type: integer
+      - description: lobby ID
+        in: query
+        name: lobby_id
+        required: true
+        type: integer
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: SSE stream opened
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "410":
+          description: Gone
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Connects to a lobby event stream
+      tags:
+      - lobby
   /lobby/create_lobby:
     post:
       consumes:
       - application/json
-      description: This endpoint creates a new multiplayer lobby, protected by a password.
+      description: This endpoint creates a new lobby for the authenticated account,
+        makes that account the owner, adds it as the first member, and rejects requests
+        when the account is already in another open lobby.
       parameters:
       - description: lobby creation request body
         in: body
@@ -421,8 +1440,11 @@ paths:
         "400":
           description: Bad Request
           schema: {}
-        "403":
-          description: Forbidden
+        "401":
+          description: Unauthorized
+          schema: {}
+        "409":
+          description: Conflict
           schema: {}
         "500":
           description: Internal Server Error
@@ -434,7 +1456,9 @@ paths:
     delete:
       consumes:
       - application/json
-      description: This endpoint deletes a multiplayer lobby.
+      description: This endpoint deletes a lobby only for the authenticated lobby
+        owner. It enforces ownership before deletion and does not allow non-owners
+        to remove a lobby.
       parameters:
       - description: lobby deletion request body
         in: body
@@ -452,8 +1476,14 @@ paths:
         "400":
           description: Bad Request
           schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
         "403":
           description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
           schema: {}
         "500":
           description: Internal Server Error
@@ -465,9 +1495,11 @@ paths:
     get:
       consumes:
       - application/json
-      description: This endpoint gets a multiplayer lobby's info.
+      description: This endpoint returns a lobby by ID. If the lobby has become inactive,
+        it is closed during the read and the endpoint returns HTTP 410 Gone instead
+        of lobby data.
       parameters:
-      - description: lobby acquisition request body
+      - description: lobby read request body
         in: body
         name: body
         required: true
@@ -483,8 +1515,11 @@ paths:
         "400":
           description: Bad Request
           schema: {}
-        "403":
-          description: Forbidden
+        "404":
+          description: Not Found
+          schema: {}
+        "410":
+          description: Gone
           schema: {}
         "500":
           description: Internal Server Error
@@ -492,11 +1527,140 @@ paths:
       summary: Gets a lobby
       tags:
       - lobby
+  /lobby/join_lobby:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint joins the authenticated account to the requested
+        lobby, rejects the request if the account is already in another open lobby,
+        and returns HTTP 410 Gone when the target lobby has auto-closed from inactivity.
+      parameters:
+      - description: lobby join request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/lobby.JoinLobbyArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully joined lobby!
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "410":
+          description: Gone
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Joins a lobby
+      tags:
+      - lobby
+  /lobby/leave_lobby:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint removes the authenticated account from its current
+        open lobby. If the owner leaves, ownership transfers to the longest-waiting
+        remaining member, or the lobby is closed if it becomes empty.
+      parameters:
+      - description: lobby leave request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/lobby.LeaveLobbyArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully left lobby!
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Leaves the current lobby
+      tags:
+      - lobby
+  /lobby/send_chat:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint sends a chat message to the authenticated account's
+        current open lobby, persists the message, emits a chat_message SSE event,
+        returns HTTP 403 if the lobby is muted, and returns HTTP 410 Gone if the lobby
+        has already auto-closed from inactivity.
+      parameters:
+      - description: lobby chat request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/lobby.SendChatArgs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully sent chat message!
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "410":
+          description: Gone
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Sends a lobby chat message
+      tags:
+      - lobby
   /lobby/update_lobby:
     put:
       consumes:
       - application/json
-      description: This endpoint updates a lobby's info.
+      description: This endpoint lets only the authenticated lobby owner update the
+        lobby name, mute state, or public state. If the lobby has already auto-closed
+        from inactivity, the endpoint returns HTTP 410 Gone.
       parameters:
       - description: lobby update request body
         in: body
@@ -512,14 +1676,23 @@ paths:
           schema:
             type: string
         "400":
-          description: lobby_id must be specified
-          schema:
-            type: string
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "410":
+          description: Gone
+          schema: {}
         "500":
-          description: 'an error occurred while decoding the request body: <error
-            message>'
-          schema:
-            type: string
+          description: Internal Server Error
+          schema: {}
       summary: Updates a lobby
       tags:
       - lobby
