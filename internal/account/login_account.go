@@ -13,17 +13,36 @@ import (
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
+// LoginAccountArgs represents the expected structure of the request body for logging into an account.
+//
+// @Description Structure for the account login request payload.
 type LoginAccountArgs struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+// LoginAccountResponse represents the session returned after a successful login.
+//
+// @Description Structure for the account login response payload.
 type LoginAccountResponse struct {
 	SessionID int64     `json:"session_id"`
 	AccountID int64     `json:"account_id"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
+// LoginAccount verifies account credentials and returns a session for future authenticated calls.
+//
+// @Summary Logs into an account
+// @Description This endpoint verifies account credentials and returns a session for future authenticated requests.
+// @Tags account
+// @Accept json
+// @Produce json
+// @Param body body LoginAccountArgs true "account login request body"
+// @Success 200 {object} LoginAccountResponse "Login successful"
+// @Failure 400 {object} error "Bad Request"
+// @Failure 401 {object} error "Unauthorized"
+// @Failure 500 {object} error "Internal Server Error"
+// @Router /account/login [post]
 func LoginAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodPost {
 		return writeAccountStatusError(w, http.StatusBadRequest, "invalid request; request must be a POST request")

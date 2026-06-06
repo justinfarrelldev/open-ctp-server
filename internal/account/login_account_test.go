@@ -22,6 +22,14 @@ type loginResponse struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
+type sessionValidationBody struct {
+	SessionId *int64 `json:"session_id"`
+}
+
+func (b sessionValidationBody) GetSessionID() *int64 {
+	return b.SessionId
+}
+
 func buildStoredPassword(t *testing.T, password string) (string, string) {
 	t.Helper()
 
@@ -73,8 +81,12 @@ func TestLoginAccount_Success(t *testing.T) {
 		t.Fatalf("expected account_id 7, got %d", response.AccountID)
 	}
 
-	if response.SessionID == 0 {
-		t.Fatal("expected non-zero session_id")
+	if response.SessionID <= 0 {
+		t.Fatalf("expected positive session_id, got %d", response.SessionID)
+	}
+
+	if _, err := auth.SessionIDFromJSONBody(sessionValidationBody{SessionId: &response.SessionID}); err != nil {
+		t.Fatalf("expected login session_id to pass shared JSON auth validation, got %v", err)
 	}
 
 	if response.ExpiresAt.IsZero() {
@@ -175,6 +187,54 @@ func TestLoginAccountHandler_InvalidPasswordReturnsUnauthorized(t *testing.T) {
 	}
 
 	if strings.TrimSpace(rr.Body.String()) != "invalid email or password" {
+		t.Fatalf("unexpected body: %q", rr.Body.String())
+	}
+}
+
+func TestLoginAccountHandler_DecodeErrorReturnsBadRequest(t *testing.T) {
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("unexpected error creating db: %v", err)
+	}
+	defer db.Close()
+
+	requestBody := `{"email":"captain@example.com","password":123}`
+	req := httptest.NewRequest(http.MethodPost, "/account/login", bytes.NewBufferString(requestBody))
+	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	store := auth.NewSessionStore(sqlxDB)
+
+	LoginAccountHandler(rr, req, sqlxDB, store)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rr.Code)
+	}
+
+	if strings.TrimSpace(rr.Body.String()) != "an error occurred while decoding the request body: json: cannot unmarshal number into Go struct field LoginAccountArgs.password of type string" {
+		t.Fatalf("unexpected body: %q", rr.Body.String())
+	}
+}
+
+func TestLoginAccountHandler_MissingEmailReturnsBadRequest(t *testing.T) {
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("unexpected error creating db: %v", err)
+	}
+	defer db.Close()
+
+	requestBody := `{"password":"password123"}`
+	req := httptest.NewRequest(http.MethodPost, "/account/login", bytes.NewBufferString(requestBody))
+	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	store := auth.NewSessionStore(sqlxDB)
+
+	LoginAccountHandler(rr, req, sqlxDB, store)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rr.Code)
+	}
+
+	if strings.TrimSpace(rr.Body.String()) != "email and password are required" {
 		t.Fatalf("unexpected body: %q", rr.Body.String())
 	}
 }
