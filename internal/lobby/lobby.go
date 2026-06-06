@@ -1,53 +1,48 @@
 package lobby
 
+import "time"
+
+const (
+	lobbyEmptyInactivityTimeout    = 30 * time.Minute
+	lobbyAbsoluteInactivityTimeout = 2 * time.Hour
+)
+
 // Lobby represents a player lobby.
-//
-// @Description Structure for representing a player lobby.
 type Lobby struct {
-	// ID is the unique identifier for the lobby.
-	ID int64 `json:"id,omitempty" db:"id"`
-
-	// Name is the name of the lobby.
-	Name string `json:"name" db:"name"`
-
-	// OwnerName is the name of the lobby owner.
-	OwnerName string `json:"owner_name" db:"owner_name"`
-
-	// OwnerAccountId is the account ID of the lobby owner.
-	OwnerAccountId string `json:"owner_account_id" db:"owner_account_id"`
-
-	// IsClosed indicates if the lobby is closed.
-	IsClosed bool `json:"is_closed" db:"is_closed"`
-
-	// IsMuted indicates if the lobby is muted.
-	IsMuted bool `json:"is_muted" db:"is_muted"`
-
-	// IsPublic indicates if the lobby is public.
-	IsPublic bool `json:"is_public" db:"is_public"`
+	ID             int64      `json:"id,omitempty" db:"id"`
+	Name           string     `json:"name" db:"name"`
+	OwnerName      string     `json:"owner_name" db:"owner_name"`
+	OwnerAccountID int64      `json:"owner_account_id" db:"owner_account_id"`
+	IsClosed       bool       `json:"is_closed" db:"is_closed"`
+	IsMuted        bool       `json:"is_muted" db:"is_muted"`
+	IsPublic       bool       `json:"is_public" db:"is_public"`
+	CreatedAt      time.Time  `json:"created_at,omitempty" db:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at,omitempty" db:"updated_at"`
+	LastActivityAt time.Time  `json:"last_activity_at,omitempty" db:"last_activity_at"`
+	ClosedAt       *time.Time `json:"closed_at,omitempty" db:"closed_at"`
 }
 
-// LobbyParam represents a player lobby with non-required fields.
-//
-// @Description Structure for representing a player lobby with non-required fields.
+func (l Lobby) ShouldCloseForInactivity(now time.Time, memberCount int64) bool {
+	if l.ClosedAt != nil {
+		return false
+	}
+
+	inactiveFor := now.Sub(l.LastActivityAt)
+	if inactiveFor >= lobbyAbsoluteInactivityTimeout {
+		return true
+	}
+
+	return memberCount == 0 && inactiveFor >= lobbyEmptyInactivityTimeout
+}
+
 type LobbyParam struct {
-	// ID is the unique identifier for the lobby.
-	ID *int64 `json:"id,omitempty" db:"id"`
+	Name     *string `json:"name,omitempty" db:"name"`
+	IsMuted  *bool   `json:"is_muted,omitempty" db:"is_muted"`
+	IsPublic *bool   `json:"is_public,omitempty" db:"is_public"`
+}
 
-	// Name is the name of the lobby.
-	Name *string `json:"name,omitempty" db:"name"`
-
-	// OwnerName is the name of the lobby owner.
-	OwnerName *string `json:"owner_name,omitempty" db:"owner_name"`
-
-	// OwnerAccountId is the account ID of the lobby owner.
-	OwnerAccountId *string `json:"owner_account_id,omitempty" db:"owner_account_id"`
-
-	// IsClosed indicates if the lobby is closed.
-	IsClosed *bool `json:"is_closed,omitempty" db:"is_closed"`
-
-	// IsMuted indicates if the lobby is muted.
-	IsMuted *bool `json:"is_muted,omitempty" db:"is_muted"`
-
-	// IsPublic indicates if the lobby is public.
-	IsPublic *bool `json:"is_public,omitempty" db:"is_public"`
+type lobbyOwnerRow struct {
+	AccountID int64     `db:"id"`
+	Name      string    `db:"name"`
+	JoinedAt  time.Time `db:"joined_at"`
 }

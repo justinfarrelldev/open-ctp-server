@@ -1,124 +1,119 @@
 package lobby
 
 import (
-	"encoding/json"
-	"errors"
+	"database/sql"
 	"fmt"
 	"net/http"
-	"reflect"
+	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
-// UpdateLobbyArgs represents the expected structure of the request body for updating a lobby.
-//
-// @Description Structure for the lobby update request payload.
 type UpdateLobbyArgs struct {
-	// The lobby to update.
-	Lobby *LobbyParam `json:"lobby"`
-	// The lobby ID for the lobby that will be updated.
-	LobbyId *int64 `json:"lobby_id"`
+	Lobby     *LobbyParam `json:"lobby"`
+	LobbyId   *int64      `json:"lobby_id"`
+	SessionId *int64      `json:"session_id"`
 }
 
-// UpdateLobby updates a lobby by the lobby ID.
-//
-// @Summary Updates a lobby
-// @Description This endpoint updates a lobby's info.
-// @Tags lobby
-// @Accept json
-// @Produce json
-// @Param body body UpdateLobbyArgs true "lobby update request body"
-// @Success 200 {string} string "Successfully updated lobby!"
-// @Failure 400 {string} string "lobby_id must be specified"
-// @Failure 500 {string} string "an error occurred while decoding the request body: <error message>"
-// @Router /lobby/update_lobby [put]
+func (a UpdateLobbyArgs) GetSessionID() *int64 {
+	return a.SessionId
+}
+
 func UpdateLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
-
 	if r.Method != http.MethodPut {
-		return errors.New("invalid request; request must be a PUT request")
+		return writeLobbyStatusError(w, http.StatusBadRequest, "invalid request; request must be a PUT request")
 	}
-
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
 
 	args := UpdateLobbyArgs{}
-	err := decoder.Decode(&args)
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return errors.New("an error occurred while decoding the request body:" + err.Error())
+	if err := decodeJSONBody(r, &args); err != nil {
+		return writeLobbyStatusError(w, http.StatusBadRequest, "an error occurred while decoding the request body:"+err.Error())
 	}
-
 	if args.LobbyId == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("lobby_id must be specified")
+		return writeLobbyStatusError(w, http.StatusBadRequest, "lobby_id must be specified")
 	}
-
 	if args.Lobby == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("lobby must be specified")
+		return writeLobbyStatusError(w, http.StatusBadRequest, "lobby must be specified")
 	}
 
-	// Use reflection to check if at least one field other than LobbyId is set
-	v := reflect.ValueOf(args)
-	numFields := v.NumField()
-	anyFieldSet := false
-
-	for i := 0; i < numFields; i++ {
-		field := v.Field(i)
-		if field.Kind() == reflect.Ptr && !field.IsNil() && v.Type().Field(i).Name != "LobbyId" {
-			anyFieldSet = true
-			break
-		}
-	}
-
+	anyFieldSet := args.Lobby.Name != nil || args.Lobby.IsMuted != nil || args.Lobby.IsPublic != nil
 	if !anyFieldSet {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("at least one field to update must be specified")
+		return writeLobbyStatusError(w, http.StatusBadRequest, "at least one field to update must be specified")
 	}
 
-	query := "UPDATE lobby SET "
-	params := []interface{}{}
+	session, err := requireLobbySession(w, store, args)
+	if err != nil {
+		return err
+	}
+
+	tx, err := beginLobbyTx(db)
+	if err != nil {
+		return fmt.Errorf("an error occurred while starting lobby update: %v", err)
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+
+	lobby, err := getLobbyByID(tx, *args.LobbyId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return writeLobbyStatusError(w, http.StatusNotFound, fmt.Sprintf("no lobby exists with the ID %d", *args.LobbyId))
+		}
+		return err
+	}
+
+	if err := closeLobbyIfInactive(tx, lobby, timeNow()); err != nil {
+		return err
+	}
+	if lobby.ClosedAt != nil || lobby.IsClosed {
+		return writeLobbyStatusError(w, http.StatusGone, fmt.Sprintf("lobby %d is closed", *args.LobbyId))
+	}
+	if err := ensureLobbyOwner(w, session, lobby); err != nil {
+		return err
+	}
+
+	fields := make([]string, 0, 5)
+	params := make([]any, 0, 4)
 	paramIndex := 1
-
 	if args.Lobby.Name != nil {
-		query += fmt.Sprintf("name = $%d, ", paramIndex)
-		params = append(params, args.Lobby.Name)
-		paramIndex++
-	}
-	if args.Lobby.OwnerName != nil {
-		query += fmt.Sprintf("owner_name = $%d, ", paramIndex)
-		params = append(params, args.Lobby.OwnerName)
-		paramIndex++
-	}
-	if args.Lobby.IsClosed != nil {
-		query += fmt.Sprintf("is_closed = $%d, ", paramIndex)
-		params = append(params, args.Lobby.IsClosed)
+		trimmed := strings.TrimSpace(*args.Lobby.Name)
+		if trimmed == "" {
+			return writeLobbyStatusError(w, http.StatusBadRequest, "lobby.name must not be empty")
+		}
+		fields = append(fields, fmt.Sprintf("name = $%d", paramIndex))
+		params = append(params, trimmed)
 		paramIndex++
 	}
 	if args.Lobby.IsMuted != nil {
-		query += fmt.Sprintf("is_muted = $%d, ", paramIndex)
-		params = append(params, args.Lobby.IsMuted)
+		fields = append(fields, fmt.Sprintf("is_muted = $%d", paramIndex))
+		params = append(params, *args.Lobby.IsMuted)
 		paramIndex++
 	}
 	if args.Lobby.IsPublic != nil {
-		query += fmt.Sprintf("is_public = $%d, ", paramIndex)
-		params = append(params, args.Lobby.IsPublic)
+		fields = append(fields, fmt.Sprintf("is_public = $%d", paramIndex))
+		params = append(params, *args.Lobby.IsPublic)
 		paramIndex++
 	}
+	fields = append(fields, "updated_at = NOW()", "last_activity_at = NOW()")
+	params = append(params, *args.LobbyId)
 
-	// Remove the trailing comma and space
-	query = query[:len(query)-2]
-	query += fmt.Sprintf(" WHERE id = $%d", paramIndex)
-	params = append(params, args.LobbyId)
-
-	_, err = db.Exec(query, params...)
-	if err != nil {
-		return fmt.Errorf("an error occurred while updating the lobby with the ID %d: %v", args.LobbyId, err)
+	query := fmt.Sprintf("UPDATE lobbies SET %s WHERE id = $%d", strings.Join(fields, ", "), paramIndex)
+	if _, err := tx.Exec(query, params...); err != nil {
+		return fmt.Errorf("an error occurred while updating the lobby with the ID %d: %v", *args.LobbyId, err)
 	}
 
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("an error occurred while finalizing lobby update: %v", err)
+	}
+	committed = true
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Successfully updated lobby!"))
+	_, _ = w.Write([]byte("Successfully updated lobby!"))
 	return nil
 }
+
+var timeNow = func() time.Time { return time.Now() }
