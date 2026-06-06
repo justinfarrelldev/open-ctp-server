@@ -2,12 +2,44 @@ package auth
 
 import (
 	"database/sql"
+	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
 )
+
+func TestGenerateSessionID_PositiveAndAcceptedByValidators(t *testing.T) {
+	t.Parallel()
+
+	sessionID, err := generateSessionID()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if sessionID <= 0 {
+		t.Fatalf("expected positive session ID, got %d", sessionID)
+	}
+
+	bodySessionID, err := SessionIDFromJSONBody(testSessionBody{SessionId: &sessionID})
+	if err != nil {
+		t.Fatalf("expected JSON body validator to accept generated session ID, got %v", err)
+	}
+	if bodySessionID != sessionID {
+		t.Fatalf("expected JSON body session ID %d, got %d", sessionID, bodySessionID)
+	}
+
+	req := httptest.NewRequest("GET", "/account/get_account?session_id="+strconv.FormatInt(sessionID, 10), nil)
+	querySessionID, err := SessionIDFromQuery(req)
+	if err != nil {
+		t.Fatalf("expected query validator to accept generated session ID, got %v", err)
+	}
+	if querySessionID != sessionID {
+		t.Fatalf("expected query session ID %d, got %d", sessionID, querySessionID)
+	}
+}
 
 func TestCreateSession_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
@@ -31,6 +63,14 @@ func TestCreateSession_Success(t *testing.T) {
 
 	if session.AccountID != accountID {
 		t.Errorf("expected account ID %d, got %d", accountID, session.AccountID)
+	}
+
+	if session.ID <= 0 {
+		t.Fatalf("expected positive session ID, got %d", session.ID)
+	}
+
+	if _, err := SessionIDFromJSONBody(testSessionBody{SessionId: &session.ID}); err != nil {
+		t.Fatalf("expected created session ID to pass JSON body validation, got %v", err)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
