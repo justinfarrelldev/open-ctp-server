@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
+	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
 const (
@@ -55,6 +56,7 @@ const insertGameQuery = `INSERT INTO games (
 //
 // @Description Structure for the game creation request payload.
 type CreateGameArgs struct {
+	SessionId         *int64          `json:"session_id,omitempty"`
 	Name              string          `json:"name"`
 	OwnerAccountID    *int64          `json:"owner_account_id,omitempty"`
 	LobbyID           *int64          `json:"lobby_id,omitempty"`
@@ -69,9 +71,13 @@ type CreateGameArgs struct {
 	StartingGold      *int            `json:"starting_gold,omitempty"`
 }
 
+func (a CreateGameArgs) GetSessionID() *int64 {
+	return a.SessionId
+}
+
 type createGameRecord struct {
 	Name              string
-	OwnerAccountID    *int64
+	OwnerAccountID    int64
 	LobbyID           *int64
 	PasswordProtected bool
 	Password          string
@@ -86,21 +92,18 @@ type createGameRecord struct {
 }
 
 func decodeCreateGameArgs(r *http.Request) (CreateGameArgs, error) {
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-
 	args := CreateGameArgs{}
-	if err := decoder.Decode(&args); err != nil {
+	if err := decodeGameJSONBody(r, &args); err != nil {
 		return CreateGameArgs{}, err
 	}
 
 	return args, nil
 }
 
-func resolveCreateGameRecord(args CreateGameArgs) (createGameRecord, error) {
+func resolveCreateGameRecord(args CreateGameArgs, session *auth.Session) (createGameRecord, error) {
 	record := createGameRecord{
 		Name:              args.Name,
-		OwnerAccountID:    args.OwnerAccountID,
+		OwnerAccountID:    int64(session.AccountID),
 		LobbyID:           args.LobbyID,
 		PasswordProtected: args.PasswordProtected,
 		Password:          args.Password,
@@ -196,7 +199,7 @@ func normalizeJSONObject(raw json.RawMessage, defaultValue []byte) (string, erro
 	return string(normalized), nil
 }
 
-// CreateGame handles the creation of a new game.
+// CreateGame creates a new game owned by the authenticated session account.
 //
 // @Summary Create a new game
 // @Description This endpoint creates a new multiplayer game setup record using CTP2-first defaults for omitted setup fields.
@@ -204,11 +207,12 @@ func normalizeJSONObject(raw json.RawMessage, defaultValue []byte) (string, erro
 // @Accept json
 // @Produce json
 // @Param body body CreateGameArgs true "Game creation request body"
-// @Success 201 {string} string "Game successfully created"
+// @Success 201 {object} Game
 // @Failure 400 {object} error "Bad Request"
+// @Failure 401 {object} error "Unauthorized"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /game/create_game [post]
-func CreateGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
+func CreateGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodPost {
 		return writeGameStatusError(w, http.StatusBadRequest, "invalid request; request must be a POST request")
 	}
@@ -218,13 +222,29 @@ func CreateGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 		return writeGameStatusError(w, http.StatusBadRequest, "an error occurred while decoding the request body:"+err.Error())
 	}
 
-	record, err := resolveCreateGameRecord(args)
+	session, err := requireGameSession(w, store, args)
+	if err != nil {
+		return err
+	}
+
+	record, err := resolveCreateGameRecord(args, session)
 	if err != nil {
 		return writeGameStatusError(w, http.StatusBadRequest, err.Error())
 	}
 
+	tx, err := beginGameTx(db)
+	if err != nil {
+		return fmt.Errorf("an error occurred while starting game creation: %v", err)
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+
 	var gameID int64
-	if err := db.QueryRowx(
+	if err := tx.QueryRowx(
 		insertGameQuery,
 		record.Name,
 		record.OwnerAccountID,
@@ -243,6 +263,15 @@ func CreateGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB) error {
 		return fmt.Errorf("an error occurred while storing the game in the database: %v", err)
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	return nil
+	game, err := getGameByID(tx, gameID)
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("an error occurred while finalizing game creation: %v", err)
+	}
+	committed = true
+
+	return writeGameJSONResponse(w, http.StatusCreated, game)
 }
