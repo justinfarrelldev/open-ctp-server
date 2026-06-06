@@ -99,7 +99,9 @@ func TestWorldStartContract(t *testing.T) {
 	})
 }
 
-func TestWorldRouteSurfaceContract(t *testing.T) {
+func assertActiveGameChatUsesLobby(t *testing.T) {
+	t.Helper()
+
 	mainPath := filepath.Join("..", "..", "main.go")
 	content, err := os.ReadFile(mainPath)
 	if err != nil {
@@ -116,4 +118,12 @@ func TestWorldRouteSurfaceContract(t *testing.T) {
 	if !strings.Contains(text, `"/lobby/send_chat"`) {
 		t.Fatal("expected lobby chat route to remain registered as the active-game chat surface")
 	}
+}
+
+func TestActiveGameChatUsesLobby(t *testing.T) {
+	assertActiveGameChatUsesLobby(t)
+}
+
+func TestWorldRouteSurfaceContract(t *testing.T) {
+	assertActiveGameChatUsesLobby(t)
 }
