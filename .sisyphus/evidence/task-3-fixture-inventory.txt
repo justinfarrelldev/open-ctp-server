@@ -1,0 +1,8 @@
+?   	github.com/justinfarrelldev/open-ctp-server/internal/world/fixtures	[no test files]
+--- FAIL: TestFixtureInventoryIncludesAllHostParams (0.00s)
+    fixtures_test.go:33: fixture inventory is ready but generator consumption is still red for "small-default": world fixture generation is not implemented yet
+--- FAIL: TestFixtureWetnessChangesExpectations (0.00s)
+    fixtures_test.go:62: wetness expectation remains intentionally red until generator parity exists: world fixture generation is not implemented yet
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/world	0.004s
+FAIL

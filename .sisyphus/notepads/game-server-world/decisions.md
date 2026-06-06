@@ -3,3 +3,6 @@
 - Follow current route/handler/doc conventions from `internal/game` instead of inventing a new HTTP surface pattern for `/world`.
 - Keep the T2 stubs intentionally non-functional: `internal/world/contracts.go` only defines request/response shapes plus placeholder handlers, and `internal/game/world_contract_stubs.go` only maps the currently-known host params so the red suite fails on missing world semantics rather than on compile errors.
 - Lock the space-layer contract to a fixed JSON error payload in tests now, even before handler implementation, because that 404 is explicitly documented as a stable CTP2 placeholder behavior.
+- Keep the new world harness pure with file-level import guards and immutable clone helpers; the existing contract stubs may still import HTTP/DB for red semantics, but the new support files must not.
+- Keep the T3 fixtures as in-repo metadata under `internal/world/fixtures/` plus a minimal `GenerateWorldFromFixture` red contract, so future generator work can consume deterministic references without adding any runtime file I/O to the external CTP2 source tree.
+- Reuse the package-level `WorldTile` contract type and align snapshot/test helpers with it; this keeps the red suite focused on missing generator parity instead of unrelated scaffold type drift.
