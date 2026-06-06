@@ -15,3 +15,5 @@
 - Clarification for the previous note: T5 deterministic generation now runs fully inside the internal/world package through the GenerateWorld entry point, deriving a canonical seed from normalized host params plus player order and generator version so repeated identical inputs produce byte-stable snapshots and turn state.
 
 - T7 world persistence keeps authoritative host params as first-class snapshot columns (including seed, wetness, map size, climate, and generator version) while storing player order, spawns, tiles, ratings, and pollution as canonical JSONB payloads for byte-stable round trips.
+- T5 cleanup confirmed the only tracked scope needed for the generator slice is internal/world plus refreshed task-5 evidence files; reverting .vscode and removing stray .serena state kept the worktree focused before commit.
+- The final generator uses flood-fill continent assignment and a bounded multi-pass spawn search, which preserves deterministic failure caps while avoiding false retry-cap failures on supported medium, large, and huge map cases.

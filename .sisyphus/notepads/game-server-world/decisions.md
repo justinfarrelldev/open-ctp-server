@@ -11,3 +11,5 @@
 - Clarification for the previous note: the bounded failure path is ErrWorldGenerationRetryCap, and the /world ready-state contract stub now reuses the same pure generator path as fixture generation.
 
 - T7 persists immutable world data in `world_snapshots` and mutable recalculation data in `world_turn_states`, both keyed by `game_id`; create uses one transaction with an existence check so duplicate worlds fail cleanly and partial inserts roll back.
+- Treat continent IDs as true connected land components before spawn selection; future start-placement logic can depend on those IDs safely once gameplay integration arrives.
+- Keep the retry cap at 64 bounded placement passes, but let each pass scan the full deterministically ordered candidate set so impossible worlds still fail predictably without rejecting valid supported maps too early.

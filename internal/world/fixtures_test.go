@@ -168,9 +168,9 @@ func fixtureHasReference(definition fixtures.Definition, file string) bool {
 	return false
 }
 
-func ExampleGenerateWorldFromFixture_redContract() {
+func ExampleGenerateWorldFromFixture() {
 	definition, _ := fixtures.ByName("small-default")
-	_, err := GenerateWorldFromFixture(definition)
-	fmt.Println(err)
-	// Output: world fixture generation is not implemented yet
+	response, err := GenerateWorldFromFixture(definition)
+	fmt.Println(err == nil, response.GameStatus, len(response.Spawns), len(response.Tiles) > 0)
+	// Output: true started 3 true
 }

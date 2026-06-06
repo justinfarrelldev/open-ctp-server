@@ -21,25 +21,25 @@ const errorGamePlayerRequired = "only joined game players may perform this actio
 type worldReadContractState string
 
 const (
-	worldReadContractStateReady      worldReadContractState = "ready"
-	worldReadContractStateNonMember  worldReadContractState = "non_member"
-	worldReadContractStateSetupGame  worldReadContractState = "setup_game"
-	worldReadContractStateMissing    worldReadContractState = "missing_world"
+	worldReadContractStateReady     worldReadContractState = "ready"
+	worldReadContractStateNonMember worldReadContractState = "non_member"
+	worldReadContractStateSetupGame worldReadContractState = "setup_game"
+	worldReadContractStateMissing   worldReadContractState = "missing_world"
 )
 
 type worldReadContractStateContextKey struct{}
 
 type GenerationHostParams struct {
-	Style             string `json:"style"`
-	RulesJSON         string `json:"rules_json"`
-	ExclusionsJSON    string `json:"exclusions_json"`
-	StartingSettlers  int    `json:"starting_settlers"`
-	StartingGold      int    `json:"starting_gold"`
-	Seed              *int64 `json:"seed,omitempty"`
-	Wetness           *int    `json:"wetness,omitempty"`
-	MapSize           string `json:"map_size,omitempty"`
-	Climate           string `json:"climate,omitempty"`
-	GeneratorVersion  string `json:"generator_version,omitempty"`
+	Style            string `json:"style"`
+	RulesJSON        string `json:"rules_json"`
+	ExclusionsJSON   string `json:"exclusions_json"`
+	StartingSettlers int    `json:"starting_settlers"`
+	StartingGold     int    `json:"starting_gold"`
+	Seed             *int64 `json:"seed,omitempty"`
+	Wetness          *int   `json:"wetness,omitempty"`
+	MapSize          string `json:"map_size,omitempty"`
+	Climate          string `json:"climate,omitempty"`
+	GeneratorVersion string `json:"generator_version,omitempty"`
 }
 
 type GenerationInput struct {
@@ -139,7 +139,13 @@ func GetWorldHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store 
 		_, _ = w.Write([]byte(fmt.Sprintf("world for game %d was not found", gameID)))
 		return
 	case worldReadContractStateReady:
-		fallthrough
+		response, err := deterministicContractWorld(gameID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writeWorldJSONResponse(w, http.StatusOK, response)
+		return
 	default:
 		http.Error(w, ErrWorldContractsUnimplemented.Error(), http.StatusNotImplemented)
 	}
@@ -153,4 +159,30 @@ func GetWorldSpaceLayerHandler(w http.ResponseWriter, r *http.Request, db *sqlx.
 	}
 
 	writeWorldJSONResponse(w, http.StatusNotFound, ErrorResponse{Error: SpaceLayerUnsupportedError})
+}
+
+func deterministicContractWorld(gameID int64) (WorldReadResponse, error) {
+	seed := int64(41041)
+	wetness := 50
+	snapshot, _, err := GenerateWorld(GenerationInput{
+		GameID:           gameID,
+		PlayerOrder:      []int64{101, 202, 303},
+		GeneratorVersion: "ctp2-first-v1",
+		HostParams: GenerationHostParams{
+			Style:            "standard_ctp2",
+			RulesJSON:        "[]",
+			ExclusionsJSON:   "{}",
+			StartingSettlers: 1,
+			StartingGold:     100,
+			Seed:             &seed,
+			Wetness:          &wetness,
+			MapSize:          "small",
+			Climate:          "temperate",
+			GeneratorVersion: "ctp2-first-v1",
+		},
+	})
+	if err != nil {
+		return WorldReadResponse{}, err
+	}
+	return snapshotToReadResponse(snapshot), nil
 }
