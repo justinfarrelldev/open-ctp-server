@@ -432,55 +432,26 @@ func TestStartGame_StartsSetupGameAndBlocksLaterSetupMutations(t *testing.T) {
 	sqlxDB, mock := newGameSQLMock(t)
 	store := newGameSessionStore(sqlxDB)
 	lobbyID := int64(18)
+	ownerID := int64(7)
 	startedAt := time.Now()
+	players := []GamePlayer{
+		{AccountID: 7, Country: "Greeks"},
+		{AccountID: 8, Country: "Romans"},
+	}
+	setupGame := &Game{
+		ID:               44,
+		LobbyID:          &lobbyID,
+		OwnerAccountID:   &ownerID,
+		Style:            DefaultGameStyle,
+		RulesJSON:        defaultRulesJSON,
+		ExclusionsJSON:   defaultExclusionsJSON,
+		Status:           DefaultGameStatus,
+		StartingSettlers: 2,
+		StartingGold:     250,
+	}
+	snapshot, turn := startedWorldFixture(t, setupGame, players)
 
-	expectGameSessionLookup(mock, 55, 7)
-	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
-		WithArgs(int64(44)).
-		WillReturnRows(gameRowWithLobby(44, 7, &lobbyID, DefaultGameStatus, "Task 11 Game", nil, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, 2, 250))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, closed_at FROM lobbies WHERE id = $1`)).
-		WithArgs(lobbyID).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "closed_at"}).AddRow(lobbyID, nil))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 ORDER BY joined_at ASC, id ASC`)).
-		WithArgs(int64(44)).
-		WillReturnRows(gamePlayerRows(44,
-			struct {
-				id        int64
-				accountID int64
-				country   string
-				ping      int
-			}{id: 1, accountID: 7, country: "Greeks", ping: 0},
-			struct {
-				id        int64
-				accountID int64
-				country   string
-				ping      int
-			}{id: 2, accountID: 8, country: "Romans", ping: 0},
-		))
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE games SET status = $1, started_at = NOW(), updated_at = NOW() WHERE id = $2`)).
-		WithArgs("started", int64(44)).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
-		WithArgs(int64(44)).
-		WillReturnRows(gameRowWithLobby(44, 7, &lobbyID, "started", "Task 11 Game", &startedAt, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, 2, 250))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 ORDER BY joined_at ASC, id ASC`)).
-		WithArgs(int64(44)).
-		WillReturnRows(gamePlayerRows(44,
-			struct {
-				id        int64
-				accountID int64
-				country   string
-				ping      int
-			}{id: 1, accountID: 7, country: "Greeks", ping: 0},
-			struct {
-				id        int64
-				accountID int64
-				country   string
-				ping      int
-			}{id: 2, accountID: 8, country: "Romans", ping: 0},
-		))
-	mock.ExpectCommit()
+	expectSuccessfulStartGame(mock, snapshot, turn, &lobbyID, &startedAt)
 
 	expectGameSessionLookup(mock, 55, 7)
 	mock.ExpectBegin()

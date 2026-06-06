@@ -137,14 +137,37 @@ func NewStore(db *sqlx.DB) *Store {
 	return &Store{db: db}
 }
 
-func (s *Store) Create(snapshot WorldSnapshot) error {
-	if s == nil || s.db == nil {
-		return errors.New("world store requires a database")
+// CreateInTx persists the first world snapshot and turn state inside an existing transaction.
+func CreateInTx(tx *sqlx.Tx, snapshot WorldSnapshot) error {
+	if tx == nil {
+		return errors.New("world store requires a transaction")
 	}
 
 	normalized, err := normalizeWorldSnapshotForStorage(snapshot)
 	if err != nil {
 		return err
+	}
+
+	var existingGameID int64
+	if err := tx.Get(&existingGameID, worldSnapshotExistsQuery, normalized.GameID); err == nil {
+		return fmt.Errorf("%w for game %d", ErrWorldAlreadyExists, normalized.GameID)
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("an error occurred while checking for an existing world for game %d: %v", normalized.GameID, err)
+	}
+
+	if err := insertWorldSnapshot(tx, normalized); err != nil {
+		return err
+	}
+	if err := insertWorldTurnState(tx, normalized.GameID, normalized.Turn); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Store) Create(snapshot WorldSnapshot) error {
+	if s == nil || s.db == nil {
+		return errors.New("world store requires a database")
 	}
 
 	tx, err := s.db.Beginx()
@@ -158,17 +181,7 @@ func (s *Store) Create(snapshot WorldSnapshot) error {
 		}
 	}()
 
-	var existingGameID int64
-	if err := tx.Get(&existingGameID, worldSnapshotExistsQuery, normalized.GameID); err == nil {
-		return fmt.Errorf("%w for game %d", ErrWorldAlreadyExists, normalized.GameID)
-	} else if !errors.Is(err, sql.ErrNoRows) {
-		return fmt.Errorf("an error occurred while checking for an existing world for game %d: %v", normalized.GameID, err)
-	}
-
-	if err := insertWorldSnapshot(tx, normalized); err != nil {
-		return err
-	}
-	if err := insertWorldTurnState(tx, normalized.GameID, normalized.Turn); err != nil {
+	if err := CreateInTx(tx, snapshot); err != nil {
 		return err
 	}
 

@@ -24,6 +24,11 @@ const gameSelectByID = `SELECT id, created_at, updated_at, started_at, lobby_id,
 FROM games
 WHERE id = $1`
 
+const gameSelectByIDForUpdate = `SELECT id, created_at, updated_at, started_at, lobby_id, owner_account_id, name, password_protected, password, is_locked, is_public, style, rules_json, exclusions_json, status, starting_settlers, starting_gold
+FROM games
+WHERE id = $1
+FOR UPDATE`
+
 const gamePlayersSelectByGameID = `SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 ORDER BY joined_at ASC, id ASC`
 
 const gamePlayerByAccountQuery = `SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 AND account_id = $2`
@@ -90,6 +95,17 @@ func getGameByID(executor gameGetter, gameID int64) (*Game, error) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("an error occurred while getting the game with the ID %d: %v", gameID, err)
+	}
+	return &game, nil
+}
+
+func getGameByIDForUpdate(executor gameGetter, gameID int64) (*Game, error) {
+	var game Game
+	if err := executor.Get(&game, gameSelectByIDForUpdate, gameID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("an error occurred while locking the game with the ID %d: %v", gameID, err)
 	}
 	return &game, nil
 }

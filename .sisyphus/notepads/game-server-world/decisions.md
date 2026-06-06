@@ -13,3 +13,5 @@
 - T7 persists immutable world data in `world_snapshots` and mutable recalculation data in `world_turn_states`, both keyed by `game_id`; create uses one transaction with an existence check so duplicate worlds fail cleanly and partial inserts roll back.
 - Treat continent IDs as true connected land components before spawn selection; future start-placement logic can depend on those IDs safely once gameplay integration arrives.
 - Keep the retry cap at 64 bounded placement passes, but let each pass scan the full deterministically ordered candidate set so impossible worlds still fail predictably without rejecting valid supported maps too early.
+- For T8, export a tx-composable `world.CreateInTx` helper and call it from `StartGame` instead of opening a second world-store transaction; that keeps initial world persistence and the `games.status=started` transition atomic.
+- For T8, use `SELECT ... FOR UPDATE` on the game row during StartGame so concurrent start attempts serialize before generation and persistence, and the loser observes a clean setup-state conflict instead of racing into duplicate world writes.

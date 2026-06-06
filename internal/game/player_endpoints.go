@@ -9,6 +9,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
+	world "github.com/justinfarrelldev/open-ctp-server/internal/world"
 )
 
 const ErrorNegativePing = "ping must be greater than or equal to 0"
@@ -480,7 +481,7 @@ func StartGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.
 		}
 	}()
 
-	game, err := getGameByID(tx, args.GameId)
+	game, err := getGameByIDForUpdate(tx, args.GameId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return writeGameStatusError(w, http.StatusNotFound, fmt.Sprintf("no game exists with the ID %d", args.GameId))
@@ -490,8 +491,8 @@ func StartGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.
 	if err := ensureGameOwner(w, session, game); err != nil {
 		return err
 	}
-	if err := ensureGameSetupMutable(w, game); err != nil {
-		return err
+	if err := ValidateWorldStartContract(game, false); err != nil {
+		return writeGameStatusError(w, http.StatusConflict, err.Error())
 	}
 	if game.LobbyID != nil {
 		if err := validateLobbyDependency(tx, *game.LobbyID); err != nil {
@@ -517,6 +518,23 @@ func StartGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.
 			return writeGameStatusError(w, http.StatusConflict, ErrorCountryAlreadyTaken)
 		}
 		selectedCountries[country] = struct{}{}
+	}
+
+	generationInput, err := NormalizeWorldGenerationInput(game, players)
+	if err != nil {
+		return fmt.Errorf("an error occurred while normalizing world generation input for game %d: %v", args.GameId, err)
+	}
+	snapshot, turn, err := world.GenerateWorld(generationInput)
+	if err != nil {
+		return fmt.Errorf("an error occurred while generating world for game %d: %v", args.GameId, err)
+	}
+	snapshot.Turn = turn.Clone()
+	snapshot = ApplyWorldSpawnCountries(snapshot, players)
+	if err := world.CreateInTx(tx, snapshot); err != nil {
+		if errors.Is(err, world.ErrWorldAlreadyExists) {
+			return writeGameStatusError(w, http.StatusConflict, err.Error())
+		}
+		return fmt.Errorf("an error occurred while storing the initial world for game %d: %v", args.GameId, err)
 	}
 
 	if _, err := tx.Exec(`UPDATE games SET status = $1, started_at = NOW(), updated_at = NOW() WHERE id = $2`, "started", args.GameId); err != nil {
