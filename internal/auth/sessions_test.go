@@ -177,6 +177,57 @@ func TestDeleteSession_Error(t *testing.T) {
 	}
 }
 
+func TestDeleteSessionsForAccount_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	store := NewSessionStore(sqlxDB)
+
+	var accountID int64 = 42
+	mock.ExpectExec("DELETE FROM sessions WHERE account_id = \\$1").
+		WithArgs(accountID).
+		WillReturnResult(sqlmock.NewResult(0, 2))
+
+	err = store.DeleteSessionsForAccount(accountID)
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestDeleteSessionsForAccountExcept_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	store := NewSessionStore(sqlxDB)
+
+	var accountID int64 = 42
+	var exceptSessionID int64 = 99
+	mock.ExpectExec("DELETE FROM sessions WHERE account_id = \\$1 AND id <> \\$2").
+		WithArgs(accountID, exceptSessionID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err = store.DeleteSessionsForAccountExcept(accountID, exceptSessionID)
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
 func TestIsExpired(t *testing.T) {
 	tests := []struct {
 		name      string

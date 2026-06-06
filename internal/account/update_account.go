@@ -1,12 +1,9 @@
 package account
 
 import (
-	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 
 	"github.com/jmoiron/sqlx"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
@@ -43,9 +40,8 @@ func (a UpdateAccountArgs) GetSessionID() *int64 {
 // @Failure 500 {string} string "an error occurred while decoding the request body: <error message>"
 // @Router /account/update_account [put]
 func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
-
 	if r.Method != http.MethodPut {
-		return errors.New("invalid request; request must be a PUT request")
+		return writeAccountStatusError(w, http.StatusBadRequest, "invalid request; request must be a PUT request")
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -53,77 +49,56 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 
 	args := UpdateAccountArgs{}
 	err := decoder.Decode(&args)
-
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return errors.New("an error occurred while decoding the request body:" + err.Error())
+		return writeAccountStatusError(w, http.StatusBadRequest, "an error occurred while decoding the request body:"+err.Error())
 	}
 
 	if args.AccountId == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("account_id must be specified")
+		return writeAccountStatusError(w, http.StatusBadRequest, "account_id must be specified")
 	}
 
-	_, err = auth.RequireSessionFromJSONBody(w, store, args)
+	session, err := auth.RequireSessionFromJSONBody(w, store, args)
 	if err != nil {
 		return err
 	}
 
+	if err := ensureSessionOwnsAccount(w, session, *args.AccountId); err != nil {
+		return err
+	}
+
 	if args.Password == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("the password for the account must be specified")
+		return writeAccountStatusError(w, http.StatusBadRequest, "the password for the account must be specified")
 	}
 
 	if args.Account == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("account must be specified")
+		return writeAccountStatusError(w, http.StatusBadRequest, "account must be specified")
 	}
 
-	// Get the current password hash and salt from the database
-	var storedHash, storedSalt string
-	err = db.QueryRow("SELECT hash, salt FROM passwords WHERE id = $1", args.AccountId).Scan(&storedHash, &storedSalt)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return fmt.Errorf("error retrieving account credentials: %v", err)
-	}
-
-	storedHashBytes, err := base64.StdEncoding.DecodeString(storedHash)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return fmt.Errorf("error decoding stored hash: %v", err)
-	}
-	storedSaltBytes, err := base64.StdEncoding.DecodeString(storedSalt)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return fmt.Errorf("error decoding stored salt: %v", err)
-	}
-
-	err = auth.Hasher.Compare(storedHashBytes, storedSaltBytes, []byte(*args.Password))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return fmt.Errorf("error comparing passwords: %v", err)
-	}
-
-	// Use reflection to check if at least one field other than AccountId is set
-	v := reflect.ValueOf(args)
-	numFields := v.NumField()
-	anyFieldSet := false
-
-	for i := 0; i < numFields; i++ {
-		field := v.Field(i)
-		if field.Kind() == reflect.Ptr && !field.IsNil() && v.Type().Field(i).Name != "AccountId" {
-			anyFieldSet = true
-			break
-		}
-	}
-
+	anyFieldSet := args.Account.Name != nil ||
+		args.Account.Info != nil ||
+		args.Account.Location != nil ||
+		args.Account.Email != nil ||
+		args.Account.ExperienceLevel != nil
 	if !anyFieldSet {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("at least one field to update must be specified")
+		return writeAccountStatusError(w, http.StatusBadRequest, "at least one field to update must be specified")
+	}
+
+	currentEmail, err := getAccountEmailByID(*args.AccountId, db)
+	if err != nil {
+		return err
+	}
+
+	storedHash, storedSalt, err := auth.GetHashAndSalt(currentEmail, db)
+	if err != nil {
+		return err
+	}
+
+	if err := auth.Hasher.Compare(storedHash, storedSalt, []byte(*args.Password)); err != nil {
+		return writeAccountStatusError(w, http.StatusUnauthorized, ErrorCurrentPasswordIncorrect)
 	}
 
 	query := "UPDATE account SET "
-	params := []interface{}{}
+	params := []any{}
 	paramIndex := 1
 
 	if args.Account.Name != nil {
@@ -152,17 +127,23 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 		paramIndex++
 	}
 
-	// Remove the trailing comma and space
 	query = query[:len(query)-2]
 	query += fmt.Sprintf(" WHERE id = $%d", paramIndex)
 	params = append(params, args.AccountId)
 
 	_, err = db.Exec(query, params...)
 	if err != nil {
-		return fmt.Errorf("an error occurred while updating the account with the ID %d: %v", args.AccountId, err)
+		return fmt.Errorf("an error occurred while updating the account with the ID %d: %v", *args.AccountId, err)
+	}
+
+	if args.Account.Email != nil && *args.Account.Email != currentEmail {
+		_, err = db.Exec("UPDATE passwords SET account_email = $1 WHERE account_email = $2", *args.Account.Email, currentEmail)
+		if err != nil {
+			return fmt.Errorf("an error occurred while synchronizing updated account credentials: %v", err)
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Successfully updated account!"))
+	_, _ = w.Write([]byte("Successfully updated account!"))
 	return nil
 }

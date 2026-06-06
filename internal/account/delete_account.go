@@ -2,7 +2,6 @@ package account
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -38,9 +37,8 @@ func (a DeleteAccountArgs) GetSessionID() *int64 {
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /account/delete_account [delete]
 func DeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
-
 	if r.Method != http.MethodDelete {
-		return errors.New("invalid request; request must be a DELETE request")
+		return writeAccountStatusError(w, http.StatusBadRequest, "invalid request; request must be a DELETE request")
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -48,28 +46,26 @@ func DeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 
 	args := DeleteAccountArgs{}
 	err := decoder.Decode(&args)
-
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return errors.New("an error occurred while decoding the request body: " + err.Error())
+		return writeAccountStatusError(w, http.StatusBadRequest, "an error occurred while decoding the request body: "+err.Error())
 	}
 
 	if args.AccountId == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("account_id must be specified")
+		return writeAccountStatusError(w, http.StatusBadRequest, "account_id must be specified")
 	}
 
-	fmt.Println("args: ", *args.AccountId)
-
-	_, err = auth.RequireSessionFromJSONBody(w, store, args)
+	session, err := auth.RequireSessionFromJSONBody(w, store, args)
 	if err != nil {
 		return err
 	}
 
-	query := "DELETE FROM account WHERE id = $1"
-	result, err := db.Exec(query, args.AccountId)
+	if err := ensureSessionOwnsAccount(w, session, *args.AccountId); err != nil {
+		return err
+	}
+
+	result, err := db.Exec("DELETE FROM account WHERE id = $1", args.AccountId)
 	if err != nil {
-		return fmt.Errorf("an error occurred while deleting the account with the ID %d: %v", args.AccountId, err)
+		return fmt.Errorf("an error occurred while deleting the account with the ID %d: %v", *args.AccountId, err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -81,7 +77,11 @@ func DeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 		return fmt.Errorf("no rows were affected when the DELETE query ran for the account with ID %d", *args.AccountId)
 	}
 
+	if err := store.DeleteSessionsForAccount(*args.AccountId); err != nil {
+		return fmt.Errorf("an error occurred while invalidating account sessions: %v", err)
+	}
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Successfully deleted account!"))
+	_, _ = w.Write([]byte("Successfully deleted account!"))
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/argon2"
@@ -108,6 +109,37 @@ func StoreHashAndSalt(hashSalt *hashSalt, accountEmail string, db *sqlx.DB) erro
 	}
 
 	defer result.Close()
+	return nil
+}
+
+func GetHashAndSalt(accountEmail string, db *sqlx.DB) ([]byte, []byte, error) {
+	var storedHash string
+	var storedSalt string
+
+	err := db.QueryRow("SELECT hash, salt FROM passwords WHERE account_email = $1", accountEmail).Scan(&storedHash, &storedSalt)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error retrieving account credentials: %w", err)
+	}
+
+	storedHashBytes, err := base64.StdEncoding.DecodeString(storedHash)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error decoding stored hash: %w", err)
+	}
+
+	storedSaltBytes, err := base64.StdEncoding.DecodeString(storedSalt)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error decoding stored salt: %w", err)
+	}
+
+	return storedHashBytes, storedSaltBytes, nil
+}
+
+func UpdateHashAndSalt(hashSalt *hashSalt, accountEmail string, db *sqlx.DB) error {
+	_, err := db.Exec("UPDATE passwords SET hash = $1, salt = $2 WHERE account_email = $3", base64.StdEncoding.EncodeToString(hashSalt.Hash), base64.StdEncoding.EncodeToString(hashSalt.Salt), accountEmail)
+	if err != nil {
+		return errors.New("an error occurred while updating a hash-salt pair in the database: " + err.Error())
+	}
+
 	return nil
 }
 

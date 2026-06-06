@@ -45,8 +45,8 @@ func TestDeleteAccount_InvalidMethod(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 
 	expectedError := "invalid request; request must be a DELETE request"
@@ -83,8 +83,8 @@ func TestDeleteAccount_DecodeError(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 
 	expectedError := "an error occurred while decoding the request body: invalid character 'i' looking for beginning of value"
@@ -324,6 +324,10 @@ func TestDeleteAccount_Success(t *testing.T) {
 			AddRow(sessionID, accountID, createdAt, expiresAt))
 
 	mock.ExpectExec("DELETE FROM account WHERE id = \\$1").
+		WithArgs(accountID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM sessions WHERE account_id = $1")).
 		WithArgs(accountID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 

@@ -122,6 +122,30 @@ func (s *SessionStore) DeleteSession(sessionID int64) error {
 	return nil
 }
 
+func (s *SessionStore) DeleteSessionsForAccount(accountID int64) error {
+	query := `DELETE FROM sessions WHERE account_id = $1`
+	_, err := s.DB.Exec(query, accountID)
+	if err != nil {
+		log.Printf("Error deleting sessions for account %d: %v", accountID, err)
+		return err
+	}
+
+	log.Printf("Sessions deleted for account: %d", accountID)
+	return nil
+}
+
+func (s *SessionStore) DeleteSessionsForAccountExcept(accountID int64, exceptSessionID int64) error {
+	query := `DELETE FROM sessions WHERE account_id = $1 AND id <> $2`
+	_, err := s.DB.Exec(query, accountID, exceptSessionID)
+	if err != nil {
+		log.Printf("Error deleting sessions for account %d except session %d: %v", accountID, exceptSessionID, err)
+		return err
+	}
+
+	log.Printf("Sessions deleted for account %d except session %d", accountID, exceptSessionID)
+	return nil
+}
+
 // generateSessionID creates a cryptographically secure random session ID
 // by generating 8 random bytes and converting them to a 64-bit integer.
 func generateSessionID() (int64, error) {

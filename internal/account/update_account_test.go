@@ -2,7 +2,6 @@ package account
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -45,8 +44,8 @@ func TestUpdateAccount_InvalidMethod(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 
 	expectedError := "invalid request; request must be a PUT request"
@@ -83,8 +82,8 @@ func TestUpdateAccount_DecodeError(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 
 	expectedError := "an error occurred while decoding the request body:invalid character 'i' looking for beginning of value"
@@ -178,14 +177,7 @@ func TestUpdateAccount_Success(t *testing.T) {
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
-	hasher := auth.NewArgon2idHash(1, 32, 64*1024, 32, 256)
-	hashSalt, err := hasher.GenerateHash([]byte(password), nil)
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when generating hash and salt", err)
-	}
-
-	storedHash := base64.StdEncoding.EncodeToString(hashSalt.Hash)
-	storedSalt := base64.StdEncoding.EncodeToString(hashSalt.Salt)
+	storedHash, storedSalt := buildStoredPassword(t, password)
 
 	createdAt := time.Now()
 	expiresAt := time.Now().Add(6 * time.Hour)
@@ -195,12 +187,20 @@ func TestUpdateAccount_Success(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
 			AddRow(sessionID, accountID, createdAt, expiresAt))
 
-	mock.ExpectQuery("SELECT hash, salt FROM passwords WHERE id = \\$1").
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT email FROM account WHERE id = $1")).
 		WithArgs(accountID).
+		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("current@example.com"))
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT hash, salt FROM passwords WHERE account_email = $1")).
+		WithArgs("current@example.com").
 		WillReturnRows(sqlmock.NewRows([]string{"hash", "salt"}).AddRow(storedHash, storedSalt))
 
 	mock.ExpectExec("UPDATE account SET name = \\$1, info = \\$2, location = \\$3, email = \\$4, experience_level = \\$5 WHERE id = \\$6").
 		WithArgs(name, info, location, email, experienceLevel, accountID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE passwords SET account_email = $1 WHERE account_email = $2")).
+		WithArgs(email, "current@example.com").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	mockStore := &auth.SessionStore{

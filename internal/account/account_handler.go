@@ -8,34 +8,75 @@ import (
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
-func CreateAccountHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
-	if _, err := CreateAccount(w, r, db, store); err != nil {
-		// Handle the error, e.g., log it and send an appropriate response to the client
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+type statusTrackingResponseWriter struct {
+	http.ResponseWriter
+	statusCode  int
+	wroteHeader bool
+	wroteBody   bool
+}
+
+func (w *statusTrackingResponseWriter) WriteHeader(statusCode int) {
+	if !w.wroteHeader {
+		w.statusCode = statusCode
+		w.wroteHeader = true
+	}
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (w *statusTrackingResponseWriter) Write(body []byte) (int, error) {
+	if !w.wroteHeader {
+		w.statusCode = http.StatusOK
+		w.wroteHeader = true
+	}
+	w.wroteBody = true
+	return w.ResponseWriter.Write(body)
+}
+
+func handleAccountHandlerError(w *statusTrackingResponseWriter, err error) {
+	if err == nil || w.wroteBody {
 		return
 	}
+
+	if w.wroteHeader {
+		_, _ = w.ResponseWriter.Write([]byte(err.Error()))
+		return
+	}
+
+	http.Error(w.ResponseWriter, err.Error(), http.StatusInternalServerError)
+}
+
+func CreateAccountHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	_, err := CreateAccount(trackedWriter, r, db, store)
+	handleAccountHandlerError(trackedWriter, err)
 }
 
 func GetAccountHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
-	if err := GetAccount(w, r, db, store); err != nil {
-		// Handle the error, e.g., log it and send an appropriate response to the client
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := GetAccount(trackedWriter, r, db, store)
+	handleAccountHandlerError(trackedWriter, err)
 }
 
 func UpdateAccountHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
-	if err := UpdateAccount(w, r, db, store); err != nil {
-		// Handle the error, e.g., log it and send an appropriate response to the client
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := UpdateAccount(trackedWriter, r, db, store)
+	handleAccountHandlerError(trackedWriter, err)
 }
 
 func DeleteAccountHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
-	if err := DeleteAccount(w, r, db, store); err != nil {
-		// Handle the error, e.g., log it and send an appropriate response to the client
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := DeleteAccount(trackedWriter, r, db, store)
+	handleAccountHandlerError(trackedWriter, err)
+}
+
+func LoginAccountHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := LoginAccount(trackedWriter, r, db, store)
+	handleAccountHandlerError(trackedWriter, err)
+}
+
+func ResetPasswordHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := ResetPassword(trackedWriter, r, db, store)
+	handleAccountHandlerError(trackedWriter, err)
 }

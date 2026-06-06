@@ -83,6 +83,14 @@ func main() {
 		account.CreateAccountHandler(w, r, db, sessionStore)
 	}))
 
+	mux.Handle("/account/login", tollbooth.LimitFuncHandler(authWriteLimiter, func(w http.ResponseWriter, r *http.Request) {
+		account.LoginAccountHandler(w, r, db, sessionStore)
+	}))
+
+	mux.Handle("/account/reset_password", tollbooth.LimitFuncHandler(authWriteLimiter, func(w http.ResponseWriter, r *http.Request) {
+		account.ResetPasswordHandler(w, r, db, sessionStore)
+	}))
+
 	mux.Handle("/account/get_account", tollbooth.LimitFuncHandler(accountLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.GetAccountHandler(w, r, db, sessionStore)
 	}))
