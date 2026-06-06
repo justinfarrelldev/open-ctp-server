@@ -29,7 +29,7 @@ func TestPlayerSpawnsAreValid(t *testing.T) {
 			continents := continentsFromTiles(response.Tiles, profile)
 			tilesByCoordinate := worldTilesByCoordinate(response.Tiles)
 			seenCoordinates := make(map[[2]int]int64, len(response.Spawns))
-			minDistance := spawnSeparationDistance(profile)
+			minDistance := 3
 
 			for i, spawn := range response.Spawns {
 				if spawn.AccountID != definition.PlayerOrder[i] {
@@ -60,7 +60,7 @@ func TestPlayerSpawnsAreValid(t *testing.T) {
 				for j := i + 1; j < len(response.Spawns); j++ {
 					left := response.Spawns[i]
 					right := response.Spawns[j]
-					if got := distance(left.X, left.Y, right.X, right.Y, profile); got < minDistance {
+					if got := wrappedManhattanDistance(left.X, left.Y, right.X, right.Y, profile.width, profile.height, profile.wrapX, profile.wrapY); got < minDistance {
 						t.Fatalf("spawn distance between account %d and %d = %d want >= %d", left.AccountID, right.AccountID, got, minDistance)
 					}
 				}
@@ -90,6 +90,43 @@ func TestPlayerSpawnsAreValid(t *testing.T) {
 			t.Fatalf("wrap-aware selection chose overlapping edge starts: %+v", spawns)
 		}
 	})
+}
+
+func TestPlayerSpawnsAreValidOnLargerProfiles(t *testing.T) {
+	tests := []struct {
+		name        string
+		mapSize     string
+		climate     string
+		playerCount int
+		minDistance int
+	}{
+		{name: "medium sixteen players", mapSize: "medium", climate: "temperate", playerCount: 16, minDistance: 5},
+		{name: "large eighteen players", mapSize: "large", climate: "temperate", playerCount: 18, minDistance: 5},
+		{name: "huge twenty players", mapSize: "huge", climate: "temperate", playerCount: 20, minDistance: 7},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			input := cloneGenerationInput(fixtureGenerationInput())
+			input.HostParams.MapSize = tc.mapSize
+			input.HostParams.Climate = tc.climate
+			input.PlayerOrder = make([]int64, tc.playerCount)
+			for i := range input.PlayerOrder {
+				input.PlayerOrder[i] = int64(5000 + i)
+			}
+
+			snapshot, _, err := GenerateWorld(input)
+			if err != nil {
+				t.Fatalf("GenerateWorld(%s) error = %v", tc.name, err)
+			}
+
+			profile, ok := supportedMapProfiles[tc.mapSize]
+			if !ok {
+				t.Fatalf("unsupported map size %q", tc.mapSize)
+			}
+			assertSpawnSetValid(t, snapshot.Spawns, snapshot.Tiles, input.PlayerOrder, profile, tc.minDistance)
+		})
+	}
 }
 
 func TestPlayerSpawnsDeterministic(t *testing.T) {
@@ -144,6 +181,71 @@ func TestStartPlacementFailsWhenNoValidSpawn(t *testing.T) {
 	if err.Error() != want {
 		t.Fatalf("generateSpawns() error = %q want %q", err.Error(), want)
 	}
+}
+
+func assertSpawnSetValid(t *testing.T, spawns []PlayerSpawn, tiles []WorldTile, playerOrder []int64, profile mapProfile, minDistance int) {
+	t.Helper()
+
+	if len(spawns) != len(playerOrder) {
+		t.Fatalf("spawn count=%d want %d", len(spawns), len(playerOrder))
+	}
+
+	continents := continentsFromTiles(tiles, profile)
+	tilesByCoordinate := worldTilesByCoordinate(tiles)
+	seenCoordinates := make(map[[2]int]int64, len(spawns))
+
+	for i, spawn := range spawns {
+		if spawn.AccountID != playerOrder[i] {
+			t.Fatalf("spawn[%d].account_id=%d want %d", i, spawn.AccountID, playerOrder[i])
+		}
+		if spawn.X < 0 || spawn.X >= profile.width || spawn.Y < 0 || spawn.Y >= profile.height {
+			t.Fatalf("spawn[%d]=(%d,%d) out of bounds for %dx%d map", i, spawn.X, spawn.Y, profile.width, profile.height)
+		}
+
+		coordinate := [2]int{spawn.X, spawn.Y}
+		tile, ok := tilesByCoordinate[coordinate]
+		if !ok {
+			t.Fatalf("spawn[%d]=(%d,%d) has no backing tile", i, spawn.X, spawn.Y)
+		}
+		if !isSpawnableTerrain(tile.Terrain) {
+			t.Fatalf("spawn[%d] terrain=%q is not spawnable", i, tile.Terrain)
+		}
+		if continents[spawn.Y][spawn.X] == 0 {
+			t.Fatalf("spawn[%d]=(%d,%d) must be on a land continent", i, spawn.X, spawn.Y)
+		}
+		if previousAccount, exists := seenCoordinates[coordinate]; exists {
+			t.Fatalf("spawn[%d] duplicates coordinate (%d,%d) already used by account %d", i, spawn.X, spawn.Y, previousAccount)
+		}
+		seenCoordinates[coordinate] = spawn.AccountID
+	}
+
+	for i := 0; i < len(spawns); i++ {
+		for j := i + 1; j < len(spawns); j++ {
+			left := spawns[i]
+			right := spawns[j]
+			if got := wrappedManhattanDistance(left.X, left.Y, right.X, right.Y, profile.width, profile.height, profile.wrapX, profile.wrapY); got < minDistance {
+				t.Fatalf("spawn distance between account %d and %d = %d want >= %d", left.AccountID, right.AccountID, got, minDistance)
+			}
+		}
+	}
+}
+
+func wrappedManhattanDistance(ax, ay, bx, by, width, height int, wrapX, wrapY bool) int {
+	dx := absInt(ax - bx)
+	if wrapX {
+		wrapped := width - dx
+		if wrapped < dx {
+			dx = wrapped
+		}
+	}
+	dy := absInt(ay - by)
+	if wrapY {
+		wrapped := height - dy
+		if wrapped < dy {
+			dy = wrapped
+		}
+	}
+	return dx + dy
 }
 
 func continentsFromTiles(tiles []WorldTile, profile mapProfile) [][]int {

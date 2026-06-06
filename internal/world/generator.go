@@ -179,7 +179,7 @@ func validateGenerationInput(input GenerationInput) (GenerationInput, mapProfile
 		HostParams:       normalizedConfig.ToHostParams(),
 	}
 
-	minimumArea := len(validated.PlayerOrder) * (profile.baseSetupRadius + 1) * 2
+	minimumArea := len(validated.PlayerOrder) * spawnSeparationDistance(profile) * 2
 	if profile.width*profile.height < minimumArea {
 		return GenerationInput{}, mapProfile{}, climateProfile{}, fmt.Errorf("%w: map size %q cannot fit %d players", ErrWorldGenerationInvalidInput, normalizedConfig.MapSize, len(validated.PlayerOrder))
 	}
