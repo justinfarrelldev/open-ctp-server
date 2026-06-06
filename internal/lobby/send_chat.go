@@ -11,6 +11,9 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
+// SendChatArgs represents the expected structure of the request body for sending a lobby chat.
+//
+// @Description Structure for the lobby chat request payload.
 type SendChatArgs struct {
 	Message   string `json:"message"`
 	SessionId *int64 `json:"session_id"`
@@ -20,6 +23,23 @@ func (a SendChatArgs) GetSessionID() *int64 {
 	return a.SessionId
 }
 
+// SendChat stores a chat message for the authenticated account's current lobby.
+//
+// @Summary Sends a lobby chat message
+// @Description This endpoint sends a chat message to the authenticated account's current open lobby, persists the message, emits a chat_message SSE event, returns HTTP 403 if the lobby is muted, and returns HTTP 410 Gone if the lobby has already auto-closed from inactivity.
+// @Tags lobby
+// @Accept json
+// @Produce json
+// @Param body body SendChatArgs true "lobby chat request body"
+// @Success 200 {string} string "Successfully sent chat message!"
+// @Failure 400 {object} error "Bad Request"
+// @Failure 401 {object} error "Unauthorized"
+// @Failure 403 {object} error "Forbidden"
+// @Failure 404 {object} error "Not Found"
+// @Failure 409 {object} error "Conflict"
+// @Failure 410 {object} error "Gone"
+// @Failure 500 {object} error "Internal Server Error"
+// @Router /lobby/send_chat [post]
 func SendChat(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodPost {
 		return writeLobbyStatusError(w, http.StatusBadRequest, "invalid request; request must be a POST request")

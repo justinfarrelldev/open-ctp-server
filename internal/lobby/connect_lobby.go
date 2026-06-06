@@ -10,6 +10,22 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 )
 
+// ConnectLobby attaches the authenticated account to a lobby event stream.
+//
+// @Summary Connects to a lobby event stream
+// @Description This endpoint opens a text/event-stream connection for the authenticated account. It joins the account to the lobby when needed, rejects accounts that are already in a different open lobby, returns HTTP 410 Gone for inactive closed lobbies, and emits SSE events named player_connected, player_left, and chat_message with JSON payloads in each data line.
+// @Tags lobby
+// @Produce text/event-stream
+// @Param session_id query int true "session ID"
+// @Param lobby_id query int true "lobby ID"
+// @Success 200 {string} string "SSE stream opened"
+// @Failure 400 {object} error "Bad Request"
+// @Failure 401 {object} error "Unauthorized"
+// @Failure 404 {object} error "Not Found"
+// @Failure 409 {object} error "Conflict"
+// @Failure 410 {object} error "Gone"
+// @Failure 500 {object} error "Internal Server Error"
+// @Router /lobby/connect_lobby [get]
 func ConnectLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodGet {
 		return writeLobbyStatusError(w, http.StatusBadRequest, "invalid request; request must be a GET request")

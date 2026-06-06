@@ -2,7 +2,6 @@ package lobby
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -82,9 +81,9 @@ func expectOpenLobbyLookupNoRows(mock sqlmock.Sqlmock, accountID int64) {
 FROM lobby_members lm
 JOIN lobbies l ON l.id = lm.lobby_id
 WHERE lm.account_id = $1 AND l.closed_at IS NULL
-LIMIT 1`)).
+ORDER BY lm.joined_at ASC, lm.id ASC`)).
 		WithArgs(accountID).
-		WillReturnError(sql.ErrNoRows)
+		WillReturnRows(sqlmock.NewRows([]string{"lobby_id"}))
 }
 
 func expectOpenLobbyLookup(mock sqlmock.Sqlmock, accountID int64, lobbyID int64) {
@@ -92,7 +91,7 @@ func expectOpenLobbyLookup(mock sqlmock.Sqlmock, accountID int64, lobbyID int64)
 FROM lobby_members lm
 JOIN lobbies l ON l.id = lm.lobby_id
 WHERE lm.account_id = $1 AND l.closed_at IS NULL
-LIMIT 1`)).
+ORDER BY lm.joined_at ASC, lm.id ASC`)).
 		WithArgs(accountID).
 		WillReturnRows(sqlmock.NewRows([]string{"lobby_id"}).AddRow(lobbyID))
 }
@@ -151,7 +150,6 @@ func TestConnectLobby_SetsSSEHeadersJoinsAndEmitsPlayerConnected(t *testing.T) {
 	mock.ExpectBegin()
 	expectOpenLobbyLookupNoRows(mock, accountID)
 	expectLobbyLookup(mock, lobbyID, int64(44), false)
-	expectLobbyMemberCount(mock, lobbyID, 1)
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO lobby_members (lobby_id, account_id) VALUES ($1, $2)")).
 		WithArgs(lobbyID, accountID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -203,6 +201,57 @@ func TestConnectLobby_SetsSSEHeadersJoinsAndEmitsPlayerConnected(t *testing.T) {
 	}
 }
 
+func TestConnectLobby_AllowsTargetConnectAfterExpiredCurrentLobbyIsClosed(t *testing.T) {
+	resetLobbyBroker()
+
+	sqlxDB, mock, store, cleanup := newLobbyTestStore(t)
+	defer cleanup()
+
+	sessionID := int64(407)
+	accountID := int64(96)
+	expiredLobbyID := int64(22)
+	targetLobbyID := int64(23)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
+		WithArgs(sessionID).
+		WillReturnRows(lobbySessionRows(sessionID, accountID, time.Now().Add(time.Hour)))
+	mock.ExpectBegin()
+	expectExpiredCurrentLobbyLookup(mock, accountID, expiredLobbyID)
+	expectLobbyLookup(mock, targetLobbyID, int64(44), false)
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO lobby_members (lobby_id, account_id) VALUES ($1, $2)")).
+		WithArgs(targetLobbyID, accountID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE lobbies SET last_activity_at = NOW(), updated_at = NOW() WHERE id = $1")).
+		WithArgs(targetLobbyID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	streamReq := httptest.NewRequest(http.MethodGet, "/lobby/connect_lobby?session_id=407&lobby_id=23", nil).WithContext(ctx)
+	writer := newSSETestWriter()
+	done := make(chan error, 1)
+	go func() {
+		done <- ConnectLobby(writer, streamReq, sqlxDB, store)
+	}()
+
+	chunk := waitForStreamChunk(t, writer.writes, "event: player_connected")
+	if !strings.Contains(chunk, `"account_id":96`) {
+		t.Fatalf("expected account_id in event payload, got %q", chunk)
+	}
+
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("connect lobby did not exit after cancel")
+	}
+}
+
 func TestSendChat_RejectsMutedLobbyWithoutPersisting(t *testing.T) {
 	resetLobbyBroker()
 
@@ -219,7 +268,7 @@ func TestSendChat_RejectsMutedLobbyWithoutPersisting(t *testing.T) {
 	mock.ExpectBegin()
 	expectOpenLobbyLookup(mock, accountID, lobbyID)
 	expectLobbyLookup(mock, lobbyID, int64(44), true)
-	expectLobbyMemberCount(mock, lobbyID, 1)
+	expectLobbyLookup(mock, lobbyID, int64(44), true)
 	mock.ExpectRollback()
 
 	req := httptest.NewRequest(http.MethodPost, "/lobby/send_chat", strings.NewReader(`{"session_id":402,"message":"hello"}`))
@@ -257,7 +306,7 @@ func TestSendChat_PersistsMessageAndEmitsChatEvent(t *testing.T) {
 	mock.ExpectBegin()
 	expectOpenLobbyLookup(mock, listenerAccountID, lobbyID)
 	expectLobbyLookup(mock, lobbyID, int64(44), false)
-	expectLobbyMemberCount(mock, lobbyID, 2)
+	expectLobbyLookup(mock, lobbyID, int64(44), false)
 	mock.ExpectExec(regexp.QuoteMeta("UPDATE lobbies SET last_activity_at = NOW(), updated_at = NOW() WHERE id = $1")).
 		WithArgs(lobbyID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -280,7 +329,7 @@ func TestSendChat_PersistsMessageAndEmitsChatEvent(t *testing.T) {
 	mock.ExpectBegin()
 	expectOpenLobbyLookup(mock, chatAccountID, lobbyID)
 	expectLobbyLookup(mock, lobbyID, int64(44), false)
-	expectLobbyMemberCount(mock, lobbyID, 2)
+	expectLobbyLookup(mock, lobbyID, int64(44), false)
 	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO lobby_messages (lobby_id, account_id, message) VALUES ($1, $2, $3) RETURNING id, created_at")).
 		WithArgs(lobbyID, chatAccountID, message).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at"}).AddRow(int64(501), time.Now()))
@@ -323,6 +372,64 @@ func TestSendChat_PersistsMessageAndEmitsChatEvent(t *testing.T) {
 	}
 }
 
+func TestSendChat_ExpiredCurrentLobbyReturnsConflictAfterNormalization(t *testing.T) {
+	resetLobbyBroker()
+
+	sqlxDB, mock, store, cleanup := newLobbyTestStore(t)
+	defer cleanup()
+
+	sessionID := int64(408)
+	accountID := int64(97)
+	expiredLobbyID := int64(24)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
+		WithArgs(sessionID).
+		WillReturnRows(lobbySessionRows(sessionID, accountID, time.Now().Add(time.Hour)))
+	mock.ExpectBegin()
+	expectExpiredCurrentLobbyLookup(mock, accountID, expiredLobbyID)
+	mock.ExpectRollback()
+
+	req := httptest.NewRequest(http.MethodPost, "/lobby/send_chat", strings.NewReader(`{"session_id":408,"message":"hello"}`))
+	rr := httptest.NewRecorder()
+
+	err := SendChat(rr, req, sqlxDB, store)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if rr.Code != http.StatusConflict {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusConflict)
+	}
+}
+
+func TestLeaveLobby_ExpiredCurrentLobbyReturnsConflictAfterNormalization(t *testing.T) {
+	resetLobbyBroker()
+
+	sqlxDB, mock, store, cleanup := newLobbyTestStore(t)
+	defer cleanup()
+
+	sessionID := int64(409)
+	accountID := int64(98)
+	expiredLobbyID := int64(25)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
+		WithArgs(sessionID).
+		WillReturnRows(lobbySessionRows(sessionID, accountID, time.Now().Add(time.Hour)))
+	mock.ExpectBegin()
+	expectExpiredCurrentLobbyLookup(mock, accountID, expiredLobbyID)
+	mock.ExpectRollback()
+
+	req := httptest.NewRequest(http.MethodPost, "/lobby/leave_lobby", strings.NewReader(`{"session_id":409}`))
+	rr := httptest.NewRecorder()
+
+	err := LeaveLobby(rr, req, sqlxDB, store)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if rr.Code != http.StatusConflict {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusConflict)
+	}
+}
+
 func TestLeaveLobby_EmitsPlayerLeftAndDisconnectCleansUpSubscriber(t *testing.T) {
 	resetLobbyBroker()
 
@@ -340,7 +447,7 @@ func TestLeaveLobby_EmitsPlayerLeftAndDisconnectCleansUpSubscriber(t *testing.T)
 	mock.ExpectBegin()
 	expectOpenLobbyLookup(mock, accountID, lobbyID)
 	expectLobbyLookup(mock, lobbyID, int64(44), false)
-	expectLobbyMemberCount(mock, lobbyID, 2)
+	expectLobbyLookup(mock, lobbyID, int64(44), false)
 	mock.ExpectExec(regexp.QuoteMeta("UPDATE lobbies SET last_activity_at = NOW(), updated_at = NOW() WHERE id = $1")).
 		WithArgs(lobbyID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -362,6 +469,7 @@ func TestLeaveLobby_EmitsPlayerLeftAndDisconnectCleansUpSubscriber(t *testing.T)
 		WillReturnRows(lobbySessionRows(leaveSessionID, accountID, time.Now().Add(time.Hour)))
 	mock.ExpectBegin()
 	expectOpenLobbyLookup(mock, accountID, lobbyID)
+	expectLobbyLookup(mock, lobbyID, int64(44), false)
 	expectLobbyLookup(mock, lobbyID, int64(44), false)
 	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM lobby_members WHERE lobby_id = $1 AND account_id = $2")).
 		WithArgs(lobbyID, accountID).
