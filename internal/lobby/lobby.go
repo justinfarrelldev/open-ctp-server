@@ -8,6 +8,8 @@ const (
 )
 
 // Lobby represents a player lobby.
+//
+// @Description Structure for representing a lobby, including ownership, visibility, mute state, and lifecycle timestamps.
 type Lobby struct {
 	ID             int64      `json:"id,omitempty" db:"id"`
 	Name           string     `json:"name" db:"name"`
@@ -22,7 +24,7 @@ type Lobby struct {
 	ClosedAt       *time.Time `json:"closed_at,omitempty" db:"closed_at"`
 }
 
-func (l Lobby) ShouldCloseForInactivity(now time.Time, memberCount int64) bool {
+func (l Lobby) ShouldCloseForInactivity(now time.Time, connectedSubscriberCount int) bool {
 	if l.ClosedAt != nil {
 		return false
 	}
@@ -32,9 +34,12 @@ func (l Lobby) ShouldCloseForInactivity(now time.Time, memberCount int64) bool {
 		return true
 	}
 
-	return memberCount == 0 && inactiveFor >= lobbyEmptyInactivityTimeout
+	return connectedSubscriberCount == 0 && inactiveFor >= lobbyEmptyInactivityTimeout
 }
 
+// LobbyParam represents the create and update fields accepted for lobby lifecycle mutations.
+//
+// @Description Structure for lobby fields that can be created or updated.
 type LobbyParam struct {
 	Name     *string `json:"name,omitempty" db:"name"`
 	IsMuted  *bool   `json:"is_muted,omitempty" db:"is_muted"`

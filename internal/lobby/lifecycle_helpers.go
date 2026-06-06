@@ -19,7 +19,7 @@ const openLobbyForAccountQuery = `SELECT lm.lobby_id
 FROM lobby_members lm
 JOIN lobbies l ON l.id = lm.lobby_id
 WHERE lm.account_id = $1 AND l.closed_at IS NULL
-LIMIT 1`
+ORDER BY lm.joined_at ASC, lm.id ASC`
 
 func beginLobbyTx(db *sqlx.DB) (*sqlx.Tx, error) {
 	return db.Beginx()
@@ -83,23 +83,33 @@ func getLobbyByIDNoTx(db *sqlx.DB, lobbyID int64) (*Lobby, error) {
 }
 
 func findOpenLobbyForAccount(tx *sqlx.Tx, accountID int64) (*int64, error) {
-	var lobbyID int64
-	if err := tx.Get(&lobbyID, openLobbyForAccountQuery, accountID); err != nil {
+	var lobbyIDs []int64
+	if err := tx.Select(&lobbyIDs, openLobbyForAccountQuery, accountID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("an error occurred while checking current lobby membership for account %d: %v", accountID, err)
 	}
 
-	return &lobbyID, nil
-}
+	now := timeNow()
+	for _, lobbyID := range lobbyIDs {
+		lobby, err := getLobbyByID(tx, lobbyID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				continue
+			}
+			return nil, err
+		}
 
-func lobbyMemberCount(tx *sqlx.Tx, lobbyID int64) (int64, error) {
-	var count int64
-	if err := tx.Get(&count, "SELECT COUNT(*) FROM lobby_members WHERE lobby_id = $1", lobbyID); err != nil {
-		return 0, fmt.Errorf("an error occurred while checking lobby membership count for lobby %d: %v", lobbyID, err)
+		if err := closeLobbyIfInactive(tx, lobby, now); err != nil {
+			return nil, err
+		}
+		if lobby.ClosedAt == nil && !lobby.IsClosed {
+			return &lobbyID, nil
+		}
 	}
-	return count, nil
+
+	return nil, nil
 }
 
 func ensureLobbyOwner(w http.ResponseWriter, session *auth.Session, lobby *Lobby) error {
@@ -114,11 +124,8 @@ func closeLobbyIfInactive(tx *sqlx.Tx, lobby *Lobby, now time.Time) error {
 		return nil
 	}
 
-	memberCount, err := lobbyMemberCount(tx, lobby.ID)
-	if err != nil {
-		return err
-	}
-	if !lobby.ShouldCloseForInactivity(now, memberCount) {
+	connectedSubscriberCount := lobbyBrokerInstance.subscriberCount(lobby.ID)
+	if !lobby.ShouldCloseForInactivity(now, connectedSubscriberCount) {
 		return nil
 	}
 

@@ -82,6 +82,12 @@ func (b *lobbyBroker) publish(lobbyID int64, event lobbyEvent) {
 	}
 }
 
+func (b *lobbyBroker) subscriberCount(lobbyID int64) int {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return len(b.subscribers[lobbyID])
+}
+
 func writeLobbySSEEvent(w http.ResponseWriter, event lobbyEvent) error {
 	body, err := json.Marshal(event.payload)
 	if err != nil {
