@@ -6,3 +6,8 @@
 - Keep the new world harness pure with file-level import guards and immutable clone helpers; the existing contract stubs may still import HTTP/DB for red semantics, but the new support files must not.
 - Keep the T3 fixtures as in-repo metadata under `internal/world/fixtures/` plus a minimal `GenerateWorldFromFixture` red contract, so future generator work can consume deterministic references without adding any runtime file I/O to the external CTP2 source tree.
 - Reuse the package-level `WorldTile` contract type and align snapshot/test helpers with it; this keeps the red suite focused on missing generator parity instead of unrelated scaffold type drift.
+- Use a bounded deterministic spawn-selection pass instead of unbounded retries: rank spawnable land tiles deterministically, require setup-radius separation, and fail with  after a fixed 64-attempt ceiling.
+- Keep the existing  ready-state contract stub backed by the same pure generator path as fixtures, so T2/T3 coverage shares one canonical world-output implementation rather than diverging test-only scaffolds.
+- Clarification for the previous note: the bounded failure path is ErrWorldGenerationRetryCap, and the /world ready-state contract stub now reuses the same pure generator path as fixture generation.
+
+- T7 persists immutable world data in `world_snapshots` and mutable recalculation data in `world_turn_states`, both keyed by `game_id`; create uses one transaction with an existence check so duplicate worlds fail cleanly and partial inserts roll back.
