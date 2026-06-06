@@ -101,6 +101,14 @@ func JoinLobby(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.
 	}
 	committed = true
 
+	lobbyBrokerInstance.publish(args.LobbyId, lobbyEvent{
+		name: "player_connected",
+		payload: lobbyEventPayload{
+			LobbyID:   args.LobbyId,
+			AccountID: accountID,
+		},
+	})
+
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("Successfully joined lobby!"))
 	return nil

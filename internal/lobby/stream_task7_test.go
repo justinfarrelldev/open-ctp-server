@@ -201,6 +201,90 @@ func TestConnectLobby_SetsSSEHeadersJoinsAndEmitsPlayerConnected(t *testing.T) {
 	}
 }
 
+func TestJoinLobby_PublishesPlayerConnectedToExistingSubscriber(t *testing.T) {
+	resetLobbyBroker()
+
+	sqlxDB, mock, store, cleanup := newLobbyTestStore(t)
+	defer cleanup()
+
+	listenerSessionID := int64(409)
+	joinSessionID := int64(410)
+	listenerAccountID := int64(98)
+	joinAccountID := int64(99)
+	lobbyID := int64(25)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
+		WithArgs(listenerSessionID).
+		WillReturnRows(lobbySessionRows(listenerSessionID, listenerAccountID, time.Now().Add(time.Hour)))
+	mock.ExpectBegin()
+	expectOpenLobbyLookupNoRows(mock, listenerAccountID)
+	expectLobbyLookup(mock, lobbyID, int64(44), false)
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO lobby_members (lobby_id, account_id) VALUES ($1, $2)")).
+		WithArgs(lobbyID, listenerAccountID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE lobbies SET last_activity_at = NOW(), updated_at = NOW() WHERE id = $1")).
+		WithArgs(lobbyID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	streamReq := httptest.NewRequest(http.MethodGet, "/lobby/connect_lobby?session_id=409&lobby_id=25", nil).WithContext(ctx)
+	writer := newSSETestWriter()
+	done := make(chan error, 1)
+	go func() {
+		done <- ConnectLobby(writer, streamReq, sqlxDB, store)
+	}()
+
+	firstChunk := waitForStreamChunk(t, writer.writes, "event: player_connected")
+	if !strings.Contains(firstChunk, `"account_id":98`) {
+		t.Fatalf("expected listener account in initial event payload, got %q", firstChunk)
+	}
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
+		WithArgs(joinSessionID).
+		WillReturnRows(lobbySessionRows(joinSessionID, joinAccountID, time.Now().Add(time.Hour)))
+	mock.ExpectBegin()
+	expectOpenLobbyLookupNoRows(mock, joinAccountID)
+	expectLobbyLookup(mock, lobbyID, int64(44), false)
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO lobby_members (lobby_id, account_id) VALUES ($1, $2)")).
+		WithArgs(lobbyID, joinAccountID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE lobbies SET last_activity_at = NOW(), updated_at = NOW() WHERE id = $1")).
+		WithArgs(lobbyID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	joinReq := httptest.NewRequest(http.MethodPost, "/lobby/join_lobby", strings.NewReader(`{"lobby_id":25,"session_id":410}`))
+	joinRR := httptest.NewRecorder()
+	if err := JoinLobby(joinRR, joinReq, sqlxDB, store); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if joinRR.Code != http.StatusOK {
+		t.Fatalf("got status %d want %d", joinRR.Code, http.StatusOK)
+	}
+
+	joinChunk := waitForStreamChunk(t, writer.writes, "event: player_connected")
+	if !strings.Contains(joinChunk, `"account_id":99`) {
+		t.Fatalf("expected joiner account in broadcast payload, got %q", joinChunk)
+	}
+
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("connect lobby did not exit after cancel")
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("there were unfulfilled expectations: %v", err)
+	}
+}
+
 func TestConnectLobby_AllowsTargetConnectAfterExpiredCurrentLobbyIsClosed(t *testing.T) {
 	resetLobbyBroker()
 
