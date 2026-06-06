@@ -5,221 +5,270 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
 )
 
-func TestCreateGame_PasswordTooShort(t *testing.T) {
-	// Create a test request with a password that is less than 6 characters
-	body := CreateGameArgs{
-		PasswordProtected: true,
-		Password:          "123", // This password is less than 6 characters
-	}
-	jsonBody, _ := json.Marshal(body)
-	req, err := http.NewRequest("POST", "/game", bytes.NewBuffer(jsonBody))
-	if err != nil {
-		t.Fatal(err)
-	}
+func newGameSQLMock(t *testing.T) (*sqlx.DB, sqlmock.Sqlmock) {
+	t.Helper()
 
-	// Create a ResponseRecorder to capture the response
-	rr := httptest.NewRecorder()
-
-	// DB is not needed for this test
-	var mockDB *sqlx.DB = nil
-
-	// Call the function to test
-	err = CreateGame(rr, req, mockDB)
-
-	// Check if the error is what we expect
-	expectedError := ERROR_PASSWORD_TOO_SHORT
-	if err == nil || err.Error() != expectedError {
-		t.Errorf("CreateGame() error = %v, wantErr %v", err, expectedError)
-	}
-}
-
-func TestCreateGame_PasswordRequiredWhenPasswordProtectedIsTrue(t *testing.T) {
-	// Create a test request with password protected set to true but no password
-	body := CreateGameArgs{
-		PasswordProtected: true,
-	}
-	jsonBody, _ := json.Marshal(body)
-	req, err := http.NewRequest("POST", "/game", bytes.NewBuffer(jsonBody))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Create a ResponseRecorder to capture the response
-	rr := httptest.NewRecorder()
-
-	// DB is not needed for this test
-	var mockDB *sqlx.DB = nil
-
-	// Call the function to test
-	err = CreateGame(rr, req, mockDB)
-
-	// Check if the error is what we expect
-	expectedError := ERROR_PASSWORD_REQUIRED_BUT_NO_PASSWORD
-	if err == nil || err.Error() != expectedError {
-		t.Errorf("CreateGame() error = %v, wantErr %v", err, expectedError)
-	}
-}
-
-func TestCreateGame_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	game := CreateGameArgs{
-		PasswordProtected: true,
-		Password:          "password123",
+		t.Fatalf("sqlmock.New() error = %v", err)
 	}
 
-	mock.ExpectQuery("INSERT INTO game \\(password_protected, password\\) VALUES \\(\\$1, \\$2\\)").
-		WithArgs(game.PasswordProtected, game.Password).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-
-	jsonBody, _ := json.Marshal(game)
-	req, err := http.NewRequest("POST", "/game/create_game", bytes.NewBuffer(jsonBody))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	rr := httptest.NewRecorder()
-	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := CreateGame(w, r, sqlxDB)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+	t.Cleanup(func() {
+		_ = db.Close()
 	})
 
-	handler.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusCreated {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusCreated)
-	}
+	return sqlx.NewDb(db, "sqlmock"), mock
 }
-func TestGameHandler_Success(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+
+func TestCreateGame_AppliesCTP2DefaultsWhenOmitted(t *testing.T) {
+	sqlxDB, mock := newGameSQLMock(t)
+
+	// Provenance for these defaults:
+	// - ctp2/ctp2_source_code/ctp2_code/gs/utility/gameinit.cpp uses one settler for setup slots.
+	// - ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Player.cpp reads starting gold from difficulty data.
+	// - ctp2/ctp2_released_game/ctp2_data/default/gamedata/DiffDB.txt keeps human starting gold at 100.
+	// - ctp2/ctp2_source_code/ctp2_code/ui/netshell/ns_gamesetup.cpp zero-initializes exclusions.
+	body := map[string]any{
+		"name":               "ctp2 default setup",
+		"password_protected": false,
+		"password":           "",
 	}
-	defer db.Close()
+	jsonBody, _ := json.Marshal(body)
 
-	game := CreateGameArgs{
-		PasswordProtected: true,
-		Password:          "password123",
-	}
+	mock.ExpectQuery(regexp.QuoteMeta(insertGameQuery)).
+		WithArgs(
+			"ctp2 default setup",
+			nil,
+			nil,
+			false,
+			"",
+			false,
+			false,
+			DefaultGameStyle,
+			defaultRulesJSON,
+			defaultExclusionsJSON,
+			DefaultGameStatus,
+			DefaultStartingSettlers,
+			DefaultStartingGold,
+		).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(44))
 
-	mock.ExpectQuery("INSERT INTO game \\(password_protected, password\\) VALUES \\(\\$1, \\$2\\)").
-		WithArgs(game.PasswordProtected, game.Password).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-
-	jsonBody, _ := json.Marshal(game)
-	req, err := http.NewRequest("POST", "/game/create_game", bytes.NewBuffer(jsonBody))
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	req := httptest.NewRequest(http.MethodPost, "/game/create_game", bytes.NewBuffer(jsonBody))
 	rr := httptest.NewRecorder()
-	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		GameHandler(w, r, sqlxDB)
-	})
 
-	handler.ServeHTTP(rr, req)
+	GameHandler(rr, req, sqlxDB)
 
-	if status := rr.Code; status != http.StatusCreated {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusCreated)
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusCreated)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet sql expectations: %v", err)
 	}
 }
 
-func TestGameHandler_Failure(t *testing.T) {
-	db, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
+func TestCreateGame_RejectsNegativeStartingSettlers(t *testing.T) {
+	sqlxDB, mock := newGameSQLMock(t)
+	settlers := -1
+	body := CreateGameArgs{StartingSettlers: &settlers}
+	jsonBody, _ := json.Marshal(body)
 
-	game := CreateGameArgs{
-		PasswordProtected: true,
-		Password:          "123", // This password is less than 6 characters
-	}
-
-	jsonBody, _ := json.Marshal(game)
-	req, err := http.NewRequest("POST", "/game/create_game", bytes.NewBuffer(jsonBody))
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	req := httptest.NewRequest(http.MethodPost, "/game/create_game", bytes.NewBuffer(jsonBody))
 	rr := httptest.NewRecorder()
-	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		GameHandler(w, r, sqlxDB)
-	})
 
-	handler.ServeHTTP(rr, req)
+	GameHandler(rr, req, sqlxDB)
 
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusBadRequest)
+	}
+	if rr.Body.String() != ErrorNegativeSettlers {
+		t.Fatalf("got body %q want %q", rr.Body.String(), ErrorNegativeSettlers)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unexpected sql execution: %v", err)
+	}
+}
+
+func TestCreateGame_RejectsNegativeStartingGold(t *testing.T) {
+	sqlxDB, mock := newGameSQLMock(t)
+	gold := -1
+	body := CreateGameArgs{StartingGold: &gold}
+	jsonBody, _ := json.Marshal(body)
+
+	req := httptest.NewRequest(http.MethodPost, "/game/create_game", bytes.NewBuffer(jsonBody))
+	rr := httptest.NewRecorder()
+
+	GameHandler(rr, req, sqlxDB)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusBadRequest)
+	}
+	if rr.Body.String() != ErrorNegativeGold {
+		t.Fatalf("got body %q want %q", rr.Body.String(), ErrorNegativeGold)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unexpected sql execution: %v", err)
+	}
+}
+
+func TestCreateGame_RejectsInvalidRulesJSONValue(t *testing.T) {
+	sqlxDB, mock := newGameSQLMock(t)
+	jsonBody := []byte(`{"rules_json":"not-json-array"}`)
+
+	req := httptest.NewRequest(http.MethodPost, "/game/create_game", bytes.NewBuffer(jsonBody))
+	rr := httptest.NewRecorder()
+
+	GameHandler(rr, req, sqlxDB)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusBadRequest)
+	}
+	if rr.Body.String() != ErrorRulesJSONInvalid {
+		t.Fatalf("got body %q want %q", rr.Body.String(), ErrorRulesJSONInvalid)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unexpected sql execution: %v", err)
+	}
+}
+
+func TestCreateGame_RejectsRulesJSONThatIsNotAnArray(t *testing.T) {
+	sqlxDB, mock := newGameSQLMock(t)
+	jsonBody := []byte(`{"rules_json":{"pollution":true}}`)
+
+	req := httptest.NewRequest(http.MethodPost, "/game/create_game", bytes.NewBuffer(jsonBody))
+	rr := httptest.NewRecorder()
+
+	GameHandler(rr, req, sqlxDB)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusBadRequest)
+	}
+	if rr.Body.String() != ErrorRulesJSONInvalid {
+		t.Fatalf("got body %q want %q", rr.Body.String(), ErrorRulesJSONInvalid)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unexpected sql execution: %v", err)
+	}
+}
+
+func TestCreateGame_RejectsInvalidExclusionsJSONValue(t *testing.T) {
+	sqlxDB, mock := newGameSQLMock(t)
+	jsonBody := []byte(`{"exclusions_json":"not-json-object"}`)
+
+	req := httptest.NewRequest(http.MethodPost, "/game/create_game", bytes.NewBuffer(jsonBody))
+	rr := httptest.NewRecorder()
+
+	GameHandler(rr, req, sqlxDB)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusBadRequest)
+	}
+	if rr.Body.String() != ErrorExclusionsJSONInvalid {
+		t.Fatalf("got body %q want %q", rr.Body.String(), ErrorExclusionsJSONInvalid)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unexpected sql execution: %v", err)
+	}
+}
+
+func TestCreateGame_RejectsExclusionsJSONThatIsNotAnObject(t *testing.T) {
+	sqlxDB, mock := newGameSQLMock(t)
+	jsonBody := []byte(`{"exclusions_json":["wonder_a"]}`)
+
+	req := httptest.NewRequest(http.MethodPost, "/game/create_game", bytes.NewBuffer(jsonBody))
+	rr := httptest.NewRecorder()
+
+	GameHandler(rr, req, sqlxDB)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusBadRequest)
+	}
+	if rr.Body.String() != ErrorExclusionsJSONInvalid {
+		t.Fatalf("got body %q want %q", rr.Body.String(), ErrorExclusionsJSONInvalid)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unexpected sql execution: %v", err)
+	}
+}
+
+func TestCreateGame_PasswordValidation(t *testing.T) {
+	tests := []struct {
+		name       string
+		body       CreateGameArgs
+		wantStatus int
+		wantBody   string
+	}{
+		{
+			name:       "missing password when protected",
+			body:       CreateGameArgs{PasswordProtected: true},
+			wantStatus: http.StatusBadRequest,
+			wantBody:   ErrorPasswordRequired,
+		},
+		{
+			name:       "short password when protected",
+			body:       CreateGameArgs{PasswordProtected: true, Password: "123"},
+			wantStatus: http.StatusBadRequest,
+			wantBody:   ErrorPasswordTooShort,
+		},
+		{
+			name:       "password present when not protected",
+			body:       CreateGameArgs{PasswordProtected: false, Password: "password123"},
+			wantStatus: http.StatusBadRequest,
+			wantBody:   ErrorPasswordUnexpected,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sqlxDB, mock := newGameSQLMock(t)
+			jsonBody, _ := json.Marshal(tt.body)
+
+			req := httptest.NewRequest(http.MethodPost, "/game/create_game", bytes.NewBuffer(jsonBody))
+			rr := httptest.NewRecorder()
+
+			GameHandler(rr, req, sqlxDB)
+
+			if rr.Code != tt.wantStatus {
+				t.Fatalf("got status %d want %d", rr.Code, tt.wantStatus)
+			}
+			if rr.Body.String() != tt.wantBody {
+				t.Fatalf("got body %q want %q", rr.Body.String(), tt.wantBody)
+			}
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("unexpected sql execution: %v", err)
+			}
+		})
 	}
 }
 
 func TestCreateGame_InvalidMethod(t *testing.T) {
-	// Create a test request with a method other than POST
-	req, err := http.NewRequest("GET", "/game/create_game", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Create a ResponseRecorder to capture the response
+	req := httptest.NewRequest(http.MethodGet, "/game/create_game", nil)
 	rr := httptest.NewRecorder()
 
-	// DB is not needed for this test
-	var mockDB *sqlx.DB = nil
+	GameHandler(rr, req, nil)
 
-	// Call the function to test
-	err = CreateGame(rr, req, mockDB)
-
-	// Check if the error is what we expect
-	expectedError := "invalid request; request must be a POST request"
-	if err == nil || err.Error() != expectedError {
-		t.Errorf("CreateGame() error = %v, wantErr %v", err, expectedError)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusBadRequest)
 	}
-
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	if rr.Body.String() != "invalid request; request must be a POST request" {
+		t.Fatalf("got body %q", rr.Body.String())
 	}
 }
 
 func TestCreateGame_DecodeError(t *testing.T) {
-	// Create a test request with an invalid JSON body
-	invalidJSON := `{"password_protected": true, "password": 123}`
-	req, err := http.NewRequest("POST", "/game/create_game", bytes.NewBufferString(invalidJSON))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Create a ResponseRecorder to capture the response
+	req := httptest.NewRequest(http.MethodPost, "/game/create_game", bytes.NewBufferString(`{"starting_gold":"oops"}`))
 	rr := httptest.NewRecorder()
 
-	// DB is not needed for this test
-	var mockDB *sqlx.DB = nil
+	GameHandler(rr, req, nil)
 
-	// Call the function to test
-	err = CreateGame(rr, req, mockDB)
-
-	// Check if the error is what we expect
-	expectedError := "an error occurred while decoding the request body:json: cannot unmarshal number into Go struct field CreateGameArgs.password of type string"
-	if err == nil || err.Error() != expectedError {
-		t.Errorf("CreateGame() error = %v, wantErr %v", err, expectedError)
-	}
-
-	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusBadRequest)
 	}
 }
