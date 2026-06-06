@@ -3,7 +3,6 @@ package account
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -31,10 +30,7 @@ func TestDeleteAccount_InvalidMethod(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-
-	mockStore := &auth.SessionStore{
-		DB: sqlxDB,
-	}
+	mockStore := &auth.SessionStore{DB: sqlxDB}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err := DeleteAccount(w, r, sqlxDB, mockStore)
@@ -69,10 +65,7 @@ func TestDeleteAccount_DecodeError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-
-	mockStore := &auth.SessionStore{
-		DB: sqlxDB,
-	}
+	mockStore := &auth.SessionStore{DB: sqlxDB}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err := DeleteAccount(w, r, sqlxDB, mockStore)
@@ -101,9 +94,7 @@ func TestDeleteAccount_MissingAccountID(t *testing.T) {
 	defer db.Close()
 
 	sessionID := int64(1)
-	deleteArgs := DeleteAccountArgs{
-		SessionId: &sessionID,
-	}
+	deleteArgs := DeleteAccountArgs{SessionId: &sessionID}
 
 	body, _ := json.Marshal(deleteArgs)
 	req, err := http.NewRequest("DELETE", "/account/delete_account", bytes.NewBuffer(body))
@@ -113,10 +104,7 @@ func TestDeleteAccount_MissingAccountID(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-
-	mockStore := &auth.SessionStore{
-		DB: sqlxDB,
-	}
+	mockStore := &auth.SessionStore{DB: sqlxDB}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err := DeleteAccount(w, r, sqlxDB, mockStore)
@@ -144,11 +132,8 @@ func TestDeleteAccount_MissingSessionID(t *testing.T) {
 	}
 	defer db.Close()
 
-	var acctId int64 = 1
-
-	deleteArgs := DeleteAccountArgs{
-		AccountId: &acctId,
-	}
+	var acctID int64 = 1
+	deleteArgs := DeleteAccountArgs{AccountId: &acctID}
 
 	body, _ := json.Marshal(deleteArgs)
 	req, err := http.NewRequest("DELETE", "/account/delete_account", bytes.NewBuffer(body))
@@ -158,10 +143,7 @@ func TestDeleteAccount_MissingSessionID(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-
-	mockStore := &auth.SessionStore{
-		DB: sqlxDB,
-	}
+	mockStore := &auth.SessionStore{DB: sqlxDB}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err := DeleteAccount(w, r, sqlxDB, mockStore)
@@ -190,13 +172,8 @@ func TestDeleteAccount_SessionNotFound(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
-	var acctId int64 = accountID
-
 	sessionID := int64(1)
-	deleteArgs := DeleteAccountArgs{
-		AccountId: &acctId,
-		SessionId: &sessionID,
-	}
+	deleteArgs := DeleteAccountArgs{AccountId: &accountID, SessionId: &sessionID}
 
 	body, _ := json.Marshal(deleteArgs)
 	req, err := http.NewRequest("DELETE", "/account/delete_account", bytes.NewBuffer(body))
@@ -206,14 +183,10 @@ func TestDeleteAccount_SessionNotFound(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM sessions WHERE id = $1")).
 		WithArgs(sessionID).
 		WillReturnRows(sqlmock.NewRows(nil))
-
-	mockStore := &auth.SessionStore{
-		DB: sqlxDB,
-	}
+	mockStore := &auth.SessionStore{DB: sqlxDB}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err := DeleteAccount(w, r, sqlxDB, mockStore)
@@ -242,13 +215,8 @@ func TestDeleteAccount_SessionExpired(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
-	var acctId int64 = accountID
-
 	sessionID := int64(1)
-	deleteArgs := DeleteAccountArgs{
-		AccountId: &acctId,
-		SessionId: &sessionID,
-	}
+	deleteArgs := DeleteAccountArgs{AccountId: &accountID, SessionId: &sessionID}
 
 	body, _ := json.Marshal(deleteArgs)
 	req, err := http.NewRequest("DELETE", "/account/delete_account", bytes.NewBuffer(body))
@@ -258,7 +226,6 @@ func TestDeleteAccount_SessionExpired(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-
 	createdAt := time.Now().Add(-2 * time.Hour)
 	expiresAt := time.Now().Add(-1 * time.Hour)
 
@@ -266,10 +233,7 @@ func TestDeleteAccount_SessionExpired(t *testing.T) {
 		WithArgs(sessionID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
 			AddRow(sessionID, accountID, createdAt, expiresAt))
-
-	mockStore := &auth.SessionStore{
-		DB: sqlxDB,
-	}
+	mockStore := &auth.SessionStore{DB: sqlxDB}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err := DeleteAccount(w, r, sqlxDB, mockStore)
@@ -298,13 +262,8 @@ func TestDeleteAccount_Success(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
-	var acctId int64 = accountID
-
 	sessionID := int64(1)
-	deleteArgs := DeleteAccountArgs{
-		AccountId: &acctId,
-		SessionId: &sessionID,
-	}
+	deleteArgs := DeleteAccountArgs{AccountId: &accountID, SessionId: &sessionID}
 
 	body, _ := json.Marshal(deleteArgs)
 	req, err := http.NewRequest("DELETE", "/account/delete_account", bytes.NewBuffer(body))
@@ -314,7 +273,6 @@ func TestDeleteAccount_Success(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-
 	createdAt := time.Now()
 	expiresAt := time.Now().Add(6 * time.Hour)
 
@@ -322,35 +280,38 @@ func TestDeleteAccount_Success(t *testing.T) {
 		WithArgs(sessionID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
 			AddRow(sessionID, accountID, createdAt, expiresAt))
-
-	mock.ExpectExec("DELETE FROM account WHERE id = \\$1").
+	mock.ExpectBegin()
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT email FROM account WHERE id = $1")).
 		WithArgs(accountID).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-
+		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("captain@example.com"))
 	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM sessions WHERE account_id = $1")).
 		WithArgs(accountID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM passwords WHERE account_email = $1")).
+		WithArgs("captain@example.com").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("DELETE FROM account WHERE id = \\$1").
+		WithArgs(accountID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+	mockStore := &auth.SessionStore{DB: sqlxDB}
 
-	mockStore := &auth.SessionStore{
-		DB: sqlxDB,
-	}
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := DeleteAccount(w, r, sqlxDB, mockStore)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	})
-
-	handler.ServeHTTP(rr, req)
+	DeleteAccountHandler(rr, req, sqlxDB, mockStore)
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	expectedResponse := "Successfully deleted account!"
-	if strings.TrimSpace(rr.Body.String()) != expectedResponse {
-		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedResponse)
+	if got := rr.Header().Get("Content-Type"); got != "application/json" {
+		t.Fatalf("handler returned wrong content type: got %q want %q", got, "application/json")
+	}
+
+	var response string
+	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+		t.Fatalf("expected valid JSON response, got %q (%v)", rr.Body.String(), err)
+	}
+	if response != "Successfully deleted account!" {
+		t.Errorf("handler returned unexpected body: got %v want %v", response, "Successfully deleted account!")
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -366,14 +327,8 @@ func TestDeleteAccount_NoAccountExists(t *testing.T) {
 	defer db.Close()
 
 	accountID := int64(1)
-	var acctId int64 = accountID
-
-	fmt.Println("Account id: ", acctId)
 	sessionID := int64(1)
-	deleteArgs := DeleteAccountArgs{
-		AccountId: &acctId,
-		SessionId: &sessionID,
-	}
+	deleteArgs := DeleteAccountArgs{AccountId: &accountID, SessionId: &sessionID}
 
 	body, _ := json.Marshal(deleteArgs)
 	req, err := http.NewRequest("DELETE", "/account/delete_account", bytes.NewBuffer(body))
@@ -383,7 +338,6 @@ func TestDeleteAccount_NoAccountExists(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-
 	createdAt := time.Now()
 	expiresAt := time.Now().Add(6 * time.Hour)
 
@@ -391,14 +345,21 @@ func TestDeleteAccount_NoAccountExists(t *testing.T) {
 		WithArgs(sessionID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).
 			AddRow(sessionID, accountID, createdAt, expiresAt))
-
+	mock.ExpectBegin()
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT email FROM account WHERE id = $1")).
+		WithArgs(accountID).
+		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("captain@example.com"))
+	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM sessions WHERE account_id = $1")).
+		WithArgs(accountID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM passwords WHERE account_email = $1")).
+		WithArgs("captain@example.com").
+		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("DELETE FROM account WHERE id = \\$1").
 		WithArgs(accountID).
 		WillReturnResult(sqlmock.NewResult(0, 0))
-
-	mockStore := &auth.SessionStore{
-		DB: sqlxDB,
-	}
+	mock.ExpectRollback()
+	mockStore := &auth.SessionStore{DB: sqlxDB}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err := DeleteAccount(w, r, sqlxDB, mockStore)
