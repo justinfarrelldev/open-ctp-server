@@ -85,6 +85,18 @@ func TestWorldStartContract(t *testing.T) {
 			t.Fatalf("got error %q want %q", err.Error(), want)
 		}
 	})
+
+	t.Run("rejects ended games before attempting any new world start", func(t *testing.T) {
+		game := &Game{ID: 44, Status: "ended"}
+		err := ValidateWorldStartContract(game, false)
+		if err == nil {
+			t.Fatal("expected ended-game start conflict")
+		}
+		want := fmt.Sprintf("game %d is not in setup", game.ID)
+		if err.Error() != want {
+			t.Fatalf("got error %q want %q", err.Error(), want)
+		}
+	})
 }
 
 func TestWorldRouteSurfaceContract(t *testing.T) {

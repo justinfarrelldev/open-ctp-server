@@ -58,6 +58,36 @@ func TestWorldReadContract(t *testing.T) {
 		}
 	})
 
+	t.Run("rejects missing game id path value", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/world/?session_id=55", nil)
+		req.SetPathValue("game_id", "")
+		rr := httptest.NewRecorder()
+
+		GetWorldHandler(rr, req, nil, nil)
+
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("got status %d want %d", rr.Code, http.StatusBadRequest)
+		}
+		if strings.TrimSpace(rr.Body.String()) != "game_id must be specified" {
+			t.Fatalf("got body %q want %q", rr.Body.String(), "game_id must be specified")
+		}
+	})
+
+	t.Run("rejects invalid game id path value", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/world/not-a-number?session_id=55", nil)
+		req.SetPathValue("game_id", "not-a-number")
+		rr := httptest.NewRecorder()
+
+		GetWorldHandler(rr, req, nil, nil)
+
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("got status %d want %d", rr.Code, http.StatusBadRequest)
+		}
+		if strings.TrimSpace(rr.Body.String()) != "invalid game_id" {
+			t.Fatalf("got body %q want %q", rr.Body.String(), "invalid game_id")
+		}
+	})
+
 	t.Run("rejects invalid session query", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/world/44?session_id=invalid", nil)
 		req.SetPathValue("game_id", "44")
@@ -85,6 +115,21 @@ func TestWorldReadContract(t *testing.T) {
 		}
 		if strings.TrimSpace(rr.Body.String()) != errorGamePlayerRequired {
 			t.Fatalf("got body %q want %q", rr.Body.String(), errorGamePlayerRequired)
+		}
+	})
+
+	t.Run("rejects setup games before the world becomes active", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/world/44?session_id=55", nil)
+		req.SetPathValue("game_id", "44")
+		rr := httptest.NewRecorder()
+
+		GetWorldHandler(rr, req, nil, nil)
+
+		if rr.Code != http.StatusConflict {
+			t.Fatalf("got status %d want %d", rr.Code, http.StatusConflict)
+		}
+		if strings.TrimSpace(rr.Body.String()) != "game 44 has not started" {
+			t.Fatalf("got body %q want %q", rr.Body.String(), "game 44 has not started")
 		}
 	})
 
