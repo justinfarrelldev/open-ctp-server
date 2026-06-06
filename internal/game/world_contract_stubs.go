@@ -1,6 +1,8 @@
 package game
 
 import (
+	cryptorand "crypto/rand"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"strings"
@@ -15,15 +17,26 @@ const (
 	defaultWorldStartWetness          = 50
 )
 
-func NormalizeWorldGenerationInput(game *Game, players []GamePlayer) (world.GenerationInput, error) {
+var generateStartWorldSeed = func() (int64, error) {
+	var seedBytes [8]byte
+	if _, err := cryptorand.Read(seedBytes[:]); err != nil {
+		return 0, fmt.Errorf("generate start world seed: %w", err)
+	}
+	seed := int64(binary.BigEndian.Uint64(seedBytes[:]) >> 1)
+	if seed == 0 {
+		seed = 1
+	}
+	return seed, nil
+}
+
+func NormalizeWorldGenerationInput(game *Game, players []GamePlayer, seed int64) (world.GenerationInput, error) {
 	if game == nil {
 		return world.GenerationInput{}, errors.New("game must be provided")
 	}
-
-	seed := game.ID
-	if seed <= 0 {
-		seed = 1
+	if seed == 0 {
+		return world.GenerationInput{}, errors.New("seed must be non-zero")
 	}
+
 	wetness := defaultWorldStartWetness
 	config, err := world.NormalizeWorldConfig(world.WorldConfig{
 		Style:            game.Style,

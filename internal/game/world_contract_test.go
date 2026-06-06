@@ -18,8 +18,9 @@ func TestGenerationConsumesAllHostParams(t *testing.T) {
 		StartingGold:     250,
 	}
 	players := []GamePlayer{{AccountID: 7, Country: "Greeks"}, {AccountID: 8, Country: "Romans"}}
+	seed := int64(991337)
 
-	input, err := NormalizeWorldGenerationInput(game, players)
+	input, err := NormalizeWorldGenerationInput(game, players, seed)
 	if err != nil {
 		t.Errorf("NormalizeWorldGenerationInput() error = %v", err)
 	}
@@ -46,6 +47,8 @@ func TestGenerationConsumesAllHostParams(t *testing.T) {
 	}
 	if input.HostParams.Seed == nil {
 		t.Error("missing required host param: seed")
+	} else if *input.HostParams.Seed != seed {
+		t.Errorf("got seed %d want %d", *input.HostParams.Seed, seed)
 	}
 	if input.HostParams.Wetness == nil {
 		t.Error("missing required host param: wetness")

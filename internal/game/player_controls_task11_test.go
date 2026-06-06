@@ -429,6 +429,8 @@ func TestUpdatePing_PersistsNonNegativeValue(t *testing.T) {
 }
 
 func TestStartGame_StartsSetupGameAndBlocksLaterSetupMutations(t *testing.T) {
+	stubStartWorldSeed(t, testWorldSnapshotSeed, nil)
+
 	sqlxDB, mock := newGameSQLMock(t)
 	store := newGameSessionStore(sqlxDB)
 	lobbyID := int64(18)

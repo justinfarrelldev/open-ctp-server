@@ -1,1 +1,1 @@
-ok  	github.com/justinfarrelldev/open-ctp-server/internal/game	0.004s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/game	0.006s

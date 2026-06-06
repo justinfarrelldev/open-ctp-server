@@ -520,7 +520,11 @@ func StartGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.
 		selectedCountries[country] = struct{}{}
 	}
 
-	generationInput, err := NormalizeWorldGenerationInput(game, players)
+	seed, err := generateStartWorldSeed()
+	if err != nil {
+		return fmt.Errorf("an error occurred while generating the initial world seed for game %d: %v", args.GameId, err)
+	}
+	generationInput, err := NormalizeWorldGenerationInput(game, players, seed)
 	if err != nil {
 		return fmt.Errorf("an error occurred while normalizing world generation input for game %d: %v", args.GameId, err)
 	}

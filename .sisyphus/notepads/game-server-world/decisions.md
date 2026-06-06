@@ -17,3 +17,4 @@
 - For T8, use `SELECT ... FOR UPDATE` on the game row during StartGame so concurrent start attempts serialize before generation and persistence, and the loser observes a clean setup-state conflict instead of racing into duplicate world writes.
 - Kept the implementation untouched and added only contract-level coverage in `internal/game/world_contract_test.go`; this preserves the existing lobby chat surface while making the active-game chat claim explicit for review.
 - Captured the verification as evidence files under `.sisyphus/evidence/` instead of broadening into new endpoints or StartGame/world-generation changes.
+- For the R3 follow-up, keep seed generation outside NormalizeWorldGenerationInput and inside the StartGame flow so production uses a server-only start-time seed while tests can inject a fixed seed through the package seam without reintroducing public determinism.

@@ -14,6 +14,8 @@ import (
 	world "github.com/justinfarrelldev/open-ctp-server/internal/world"
 )
 
+const testWorldSnapshotSeed = int64(991337)
+
 const testWorldSnapshotExistsQuery = `SELECT game_id FROM world_snapshots WHERE game_id = $1`
 
 const testWorldSnapshotInsertQuery = `INSERT INTO world_snapshots (
@@ -77,6 +79,8 @@ const testWorldTurnStateInsertQuery = `INSERT INTO world_turn_states (
 )`
 
 func TestStartGameGeneratesWorldOnce(t *testing.T) {
+	stubStartWorldSeed(t, testWorldSnapshotSeed, nil)
+
 	sqlxDB, mock := newGameSQLMock(t)
 	store := newGameSessionStore(sqlxDB)
 	lobbyID := int64(18)
@@ -130,6 +134,8 @@ func TestStartGameGeneratesWorldOnce(t *testing.T) {
 }
 
 func TestStartGamePersistsWorldInTransaction(t *testing.T) {
+	stubStartWorldSeed(t, testWorldSnapshotSeed, nil)
+
 	sqlxDB, mock := newGameSQLMock(t)
 	store := newGameSessionStore(sqlxDB)
 	lobbyID := int64(18)
@@ -170,6 +176,8 @@ func TestStartGamePersistsWorldInTransaction(t *testing.T) {
 }
 
 func TestStartGameDoesNotStartOnWorldGenerationFailure(t *testing.T) {
+	stubStartWorldSeed(t, testWorldSnapshotSeed, nil)
+
 	sqlxDB, mock := newGameSQLMock(t)
 	store := newGameSessionStore(sqlxDB)
 
@@ -219,15 +227,22 @@ func TestStartGameSerialization(t *testing.T) {
 	}
 	players := []GamePlayer{{AccountID: 8, Country: " Romans "}, {AccountID: 7, Country: "Greeks"}}
 
-	input, err := NormalizeWorldGenerationInput(game, players)
+	seed := int64(991337)
+	input, err := NormalizeWorldGenerationInput(game, players, seed)
 	if err != nil {
 		t.Fatalf("NormalizeWorldGenerationInput() error = %v", err)
 	}
 	if input.GeneratorVersion != defaultWorldStartGeneratorVersion {
 		t.Fatalf("got generator version %q want %q", input.GeneratorVersion, defaultWorldStartGeneratorVersion)
 	}
-	if input.HostParams.Seed == nil || *input.HostParams.Seed != 44 {
-		t.Fatalf("got seed %v want 44", input.HostParams.Seed)
+	if input.HostParams.Seed == nil {
+		t.Fatal("expected seed to be populated")
+	}
+	if *input.HostParams.Seed != seed {
+		t.Fatalf("got seed %d want %d", *input.HostParams.Seed, seed)
+	}
+	if *input.HostParams.Seed == game.ID {
+		t.Fatalf("seed must not be derived from public game id %d", game.ID)
 	}
 	if input.HostParams.Wetness == nil || *input.HostParams.Wetness != defaultWorldStartWetness {
 		t.Fatalf("got wetness %v want %d", input.HostParams.Wetness, defaultWorldStartWetness)
@@ -263,7 +278,7 @@ func TestStartGameSerialization(t *testing.T) {
 func startedWorldFixture(t *testing.T, game *Game, players []GamePlayer) (world.WorldSnapshot, world.MutableTurnState) {
 	t.Helper()
 
-	input, err := NormalizeWorldGenerationInput(game, players)
+	input, err := NormalizeWorldGenerationInput(game, players, testWorldSnapshotSeed)
 	if err != nil {
 		t.Fatalf("NormalizeWorldGenerationInput() error = %v", err)
 	}
@@ -274,6 +289,18 @@ func startedWorldFixture(t *testing.T, game *Game, players []GamePlayer) (world.
 	snapshot.Turn = turn.Clone()
 	snapshot = ApplyWorldSpawnCountries(snapshot, players)
 	return snapshot, turn.Clone()
+}
+
+func stubStartWorldSeed(t *testing.T, seed int64, err error) {
+	t.Helper()
+
+	original := generateStartWorldSeed
+	generateStartWorldSeed = func() (int64, error) {
+		return seed, err
+	}
+	t.Cleanup(func() {
+		generateStartWorldSeed = original
+	})
 }
 
 func expectSuccessfulStartGame(mock sqlmock.Sqlmock, snapshot world.WorldSnapshot, turn world.MutableTurnState, lobbyID *int64, startedAt *time.Time) {

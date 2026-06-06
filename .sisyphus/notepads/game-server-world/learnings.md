@@ -21,3 +21,4 @@
 - T8 also needs the generated snapshot's spawn countries rewritten from placeholder generator labels to the actual `game_players.country` selections before persistence so later world reads stay aligned with setup choices.
 - T9 verification now has an explicit `TestActiveGameChatUsesLobby` alias over the route-surface contract, so the README World chat bullet can be defended directly without changing any runtime chat handlers.
 - The proof remains focused on `/lobby/send_chat`: the lobby chat test still passes, and `main.go` continues to omit `/game/chat` and `/world/chat`.
+- R3 seed blocker fix: StartGame now generates the initial world seed from a server-only crypto/rand source at start time and passes it through normalization/persistence without deriving it from public values like game IDs.
