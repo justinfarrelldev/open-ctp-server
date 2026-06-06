@@ -26,6 +26,10 @@ type UpdateAccountArgs struct {
 	SessionId *int64 `json:"session_id"`
 }
 
+func (a UpdateAccountArgs) GetSessionID() *int64 {
+	return a.SessionId
+}
+
 // UpdateAccount updates an account by the account ID.
 //
 // @Summary Updates an account
@@ -60,27 +64,9 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 		return errors.New("account_id must be specified")
 	}
 
-	if args.SessionId == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("a valid session_id must be specified")
-	}
-
-	session, err := store.GetSession(*args.SessionId)
-
+	_, err = auth.RequireSessionFromJSONBody(w, store, args)
 	if err != nil {
-
-		w.WriteHeader(http.StatusInternalServerError)
-		return errors.New("an error occurred while retrieving the session: " + err.Error())
-	}
-
-	if session == nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return errors.New("session not found")
-	}
-
-	if session.IsExpired() {
-		w.WriteHeader(http.StatusForbidden)
-		return errors.New("session has expired")
+		return err
 	}
 
 	if args.Password == nil {

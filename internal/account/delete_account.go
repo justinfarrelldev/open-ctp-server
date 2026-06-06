@@ -20,6 +20,10 @@ type DeleteAccountArgs struct {
 	SessionId *int64 `json:"session_id,omitempty"`
 }
 
+func (a DeleteAccountArgs) GetSessionID() *int64 {
+	return a.SessionId
+}
+
 // DeleteAccount deletes an account by the account ID.
 //
 // @Summary Deletes an account
@@ -55,28 +59,11 @@ func DeleteAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 		return errors.New("account_id must be specified")
 	}
 
-	if args.SessionId == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("a valid session_id must be specified")
-	}
-
 	fmt.Println("args: ", *args.AccountId)
 
-	session, err := store.GetSession(*args.SessionId)
-
+	_, err = auth.RequireSessionFromJSONBody(w, store, args)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return errors.New("an error occurred while retrieving the session: " + err.Error())
-	}
-
-	if session == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("session not found")
-	}
-
-	if session.IsExpired() {
-		w.WriteHeader(http.StatusForbidden)
-		return errors.New("session has expired")
+		return err
 	}
 
 	query := "DELETE FROM account WHERE id = $1"

@@ -54,30 +54,9 @@ func GetAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth
 		return errors.New("invalid account_id")
 	}
 
-	sessionIdStr := queryParams.Get("session_id")
-	if sessionIdStr == "" {
-		return errors.New("session_id is required")
-	}
-
-	sessionId, err := strconv.ParseInt(sessionIdStr, 10, 64)
+	_, err = auth.RequireSessionFromQuery(w, r, store)
 	if err != nil {
-		return errors.New("invalid session_id")
-	}
-
-	session, err := store.GetSession(sessionId)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return errors.New("an error occurred while retrieving the session: " + err.Error())
-	}
-
-	if session == nil {
-		w.WriteHeader(http.StatusForbidden)
-		return errors.New("session not found")
-	}
-
-	if session.IsExpired() {
-		w.WriteHeader(http.StatusForbidden)
-		return errors.New("session has expired")
+		return err
 	}
 
 	var (

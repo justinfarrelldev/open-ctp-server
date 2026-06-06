@@ -137,7 +137,7 @@ func TestDeleteSession_Success(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	store := NewSessionStore(sqlxDB)
 
-	sessionID := "test-session-id"
+	var sessionID int64 = 12345678
 	mock.ExpectExec("DELETE FROM sessions WHERE id = \\$1").
 		WithArgs(sessionID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -162,7 +162,7 @@ func TestDeleteSession_Error(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	store := NewSessionStore(sqlxDB)
 
-	sessionID := "test-session-id"
+	var sessionID int64 = 87654321
 	mock.ExpectExec("DELETE FROM sessions WHERE id = \\$1").
 		WithArgs(sessionID).
 		WillReturnError(sql.ErrConnDone)

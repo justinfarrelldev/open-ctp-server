@@ -110,15 +110,15 @@ func (s *SessionStore) GetSession(sessionID int64) (*Session, error) {
 // @Success 204
 // @Failure 404 {object} error
 // @Router /sessions/{id} [delete]
-func (s *SessionStore) DeleteSession(sessionID string) error {
+func (s *SessionStore) DeleteSession(sessionID int64) error {
 	query := `DELETE FROM sessions WHERE id = $1`
 	_, err := s.DB.Exec(query, sessionID)
 	if err != nil {
-		log.Printf("Error deleting session %s: %v", sessionID, err)
+		log.Printf("Error deleting session %d: %v", sessionID, err)
 		return err
 	}
 
-	log.Printf("Session deleted: %s", sessionID)
+	log.Printf("Session deleted: %d", sessionID)
 	return nil
 }
 

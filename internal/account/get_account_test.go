@@ -202,6 +202,74 @@ func TestGetAccount_DecodeError(t *testing.T) {
 	}
 }
 
+func TestGetAccountHandler_MissingSessionIDReturnsUnauthorized(t *testing.T) {
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	req, err := http.NewRequest("GET", "/account/get_account?account_id=1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		GetAccountHandler(w, r, sqlxDB, mockStore)
+	})
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusUnauthorized {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
+	}
+
+	expectedError := "session_id is required"
+	if strings.TrimSpace(rr.Body.String()) != expectedError {
+		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedError)
+	}
+}
+
+func TestGetAccountHandler_InvalidSessionIDReturnsUnauthorized(t *testing.T) {
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	req, err := http.NewRequest("GET", "/account/get_account?account_id=1&session_id=invalid", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	mockStore := &auth.SessionStore{
+		DB: sqlxDB,
+	}
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		GetAccountHandler(w, r, sqlxDB, mockStore)
+	})
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusUnauthorized {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
+	}
+
+	expectedError := "invalid session_id"
+	if strings.TrimSpace(rr.Body.String()) != expectedError {
+		t.Errorf("handler returned unexpected body: got %v want %v", strings.TrimSpace(rr.Body.String()), expectedError)
+	}
+}
+
 func TestGetAccount_MissingAccountID(t *testing.T) {
 	db, _, err := sqlmock.New()
 	if err != nil {
