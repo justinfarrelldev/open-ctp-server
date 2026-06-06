@@ -19,3 +19,5 @@
 - The final generator uses flood-fill continent assignment and a bounded multi-pass spawn search, which preserves deterministic failure caps while avoiding false retry-cap failures on supported medium, large, and huge map cases.
 - T8 StartGame now locks the game row before validation and generation, uses normalized default host params for the missing setup-era world fields (seed from `game.ID`, wetness 50, small/temperate, `ctp2-first-v1`), and persists the first world through the shared world-store insert path before updating `games.status`.
 - T8 also needs the generated snapshot's spawn countries rewritten from placeholder generator labels to the actual `game_players.country` selections before persistence so later world reads stay aligned with setup choices.
+- T9 verification now has an explicit `TestActiveGameChatUsesLobby` alias over the route-surface contract, so the README World chat bullet can be defended directly without changing any runtime chat handlers.
+- The proof remains focused on `/lobby/send_chat`: the lobby chat test still passes, and `main.go` continues to omit `/game/chat` and `/world/chat`.
