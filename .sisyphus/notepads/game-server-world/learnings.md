@@ -25,3 +25,7 @@
 - R3 race blocker fix: all setup-only mutators that can change pre-start game state now lock the game row before validating setup status, matching StartGame's serialization point and preventing stale setup writes from committing after world creation begins.
 - T10 world reads now live in internal/game so the HTTP layer can reuse the existing query-session auth, getGameByID lookup, joined-player membership check, setup-vs-started guard, and lobbyGameLimiter pattern while reading persisted snapshots from world.NewStore(db).Read instead of regenerating on GET.
 - The /world/{game_id}/space placeholder now follows the same auth and membership gate as /world/{game_id}, then returns the fixed JSON 404 contract {"error":"space layer is not supported for CTP2 worlds"}; focused sqlmock coverage lives in internal/game/world_read_test.go and evidence is captured under .sisyphus/evidence/task-10-*.txt.
+
+- T11 ratings and pollution reads now reuse  plus , so auth, membership, started-game gating, and the response source of truth all stay aligned with the persisted  read path and do not regenerate world state on GET.
+
+- T11 ratings and pollution reads now reuse the existing readable-world auth and membership gate plus world.NewStore(db).Read(gameID), so the response source of truth stays on persisted world turn state and GET never regenerates world data.

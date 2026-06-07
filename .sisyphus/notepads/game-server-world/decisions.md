@@ -22,3 +22,7 @@
 - Reuse getGameByIDForUpdate(...) for setup-only mutators instead of adding a second concurrency mechanism, so StartGame and pre-start setup writes share one row-lock serialization discipline.
 - Kept the persisted /world read surface in internal/game rather than replacing the pure internal/world contract stubs, so the HTTP endpoint can share existing game auth/membership helpers and preserve the pure world package as a storage/generation boundary.
 - Registered the new /world routes in main.go with Go 1.23 ServeMux path patterns (GET /world/{game_id} and GET /world/{game_id}/space) and the existing lobbyGameLimiter, matching current game/lobby route conventions without introducing a new limiter class.
+
+- For T11 pollution reads, return  when present, otherwise fall back to persisted , then the stored turn-row update timestamp; this keeps  deterministic and non-zero without mutating state on GET.
+
+- For T11 pollution reads, return the persisted pollution UpdatedAt when present, otherwise fall back to LastRecalculatedAt and then the stored turn-row update timestamp so the endpoint stays deterministic and read-only even before recalculation work lands.
