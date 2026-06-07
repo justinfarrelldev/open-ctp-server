@@ -1821,6 +1821,300 @@
                     }
                 }
             }
+        },
+        "/world/{game_id}": {
+            "get": {
+                "description": "This endpoint returns the persisted generated world state for any authenticated account that is still joined to the game after the game has started.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "world"
+                ],
+                "summary": "Get a generated world",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "game ID",
+                        "name": "game_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "session ID",
+                        "name": "session_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.WorldReadResponseDocs"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request method, missing game_id, or invalid game_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "missing or invalid session",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "only joined game players may perform this action",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "game or persisted world not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "game has not started",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/world/{game_id}/pollution": {
+            "get": {
+                "description": "This endpoint returns the persisted read-only world pollution summary for any authenticated account that is still joined to the started game.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "world"
+                ],
+                "summary": "Get world pollution",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "game ID",
+                        "name": "game_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "session ID",
+                        "name": "session_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.WorldPollutionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request method, missing game_id, or invalid game_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "missing or invalid session",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "only joined game players may perform this action",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "game or persisted world not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "game has not started",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/world/{game_id}/ratings": {
+            "get": {
+                "description": "This endpoint returns the persisted read-only world ratings summary for any authenticated account that is still joined to the started game.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "world"
+                ],
+                "summary": "Get world ratings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "game ID",
+                        "name": "game_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "session ID",
+                        "name": "session_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.WorldRatingsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request method, missing game_id, or invalid game_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "missing or invalid session",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "only joined game players may perform this action",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "game or persisted world not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "game has not started",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/world/{game_id}/space": {
+            "get": {
+                "description": "This endpoint is reserved for future CTP1 space-layer support. Authenticated joined players may call it today, but it always returns the fixed 404 JSON placeholder for CTP2 worlds.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "world"
+                ],
+                "summary": "Get the world space layer",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "game ID",
+                        "name": "game_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "session ID",
+                        "name": "session_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "invalid request method, missing game_id, or invalid game_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "missing or invalid session",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "only joined game players may perform this action",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "CTP2 placeholder response after auth, membership, and started-game checks",
+                        "schema": {
+                            "$ref": "#/definitions/game.WorldSpaceLayerErrorResponseDocs"
+                        }
+                    },
+                    "409": {
+                        "description": "game has not started",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -2374,6 +2668,156 @@
                 },
                 "style": {
                     "type": "string"
+                }
+            }
+        },
+        "game.WorldGenerationHostParamsDocs": {
+            "type": "object",
+            "properties": {
+                "climate": {
+                    "type": "string"
+                },
+                "exclusions_json": {
+                    "type": "string"
+                },
+                "generator_version": {
+                    "type": "string"
+                },
+                "map_size": {
+                    "type": "string"
+                },
+                "rules_json": {
+                    "type": "string"
+                },
+                "seed": {
+                    "type": "integer"
+                },
+                "starting_gold": {
+                    "type": "integer"
+                },
+                "starting_settlers": {
+                    "type": "integer"
+                },
+                "style": {
+                    "type": "string"
+                },
+                "wetness": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.WorldPlayerSpawnDocs": {
+            "type": "object",
+            "properties": {
+                "account_id": {
+                    "type": "integer"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "x": {
+                    "type": "integer"
+                },
+                "y": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.WorldPollutionResponse": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "integer"
+                },
+                "global_pollution": {
+                    "type": "integer"
+                },
+                "tile_pollution_count": {
+                    "type": "integer"
+                },
+                "turn": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "game.WorldRatingsResponse": {
+            "type": "object",
+            "properties": {
+                "economic": {
+                    "type": "integer"
+                },
+                "military": {
+                    "type": "integer"
+                },
+                "overall": {
+                    "type": "integer"
+                },
+                "pollution": {
+                    "type": "integer"
+                },
+                "science": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.WorldReadResponseDocs": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "integer"
+                },
+                "game_status": {
+                    "type": "string"
+                },
+                "generator_version": {
+                    "type": "string"
+                },
+                "host_params": {
+                    "$ref": "#/definitions/game.WorldGenerationHostParamsDocs"
+                },
+                "player_order": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "spawns": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/game.WorldPlayerSpawnDocs"
+                    }
+                },
+                "tiles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/game.WorldTileDocs"
+                    }
+                }
+            }
+        },
+        "game.WorldSpaceLayerErrorResponseDocs": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "space layer is not supported for CTP2 worlds"
+                }
+            }
+        },
+        "game.WorldTileDocs": {
+            "type": "object",
+            "properties": {
+                "terrain": {
+                    "type": "string"
+                },
+                "x": {
+                    "type": "integer"
+                },
+                "y": {
+                    "type": "integer"
                 }
             }
         },

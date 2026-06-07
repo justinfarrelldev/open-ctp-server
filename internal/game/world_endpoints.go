@@ -78,13 +78,13 @@ func storedWorldToReadResponse(stored *world.StoredWorld) world.WorldReadRespons
 // @Produce json
 // @Param game_id path int true "game ID"
 // @Param session_id query int true "session ID"
-// @Success 200 {object} world.WorldReadResponse
-// @Failure 400 {object} error "Bad Request"
-// @Failure 401 {object} error "Unauthorized"
-// @Failure 403 {object} error "Forbidden"
-// @Failure 404 {object} error "Not Found"
-// @Failure 409 {object} error "Conflict"
-// @Failure 500 {object} error "Internal Server Error"
+// @Success 200 {object} WorldReadResponseDocs
+// @Failure 400 {string} string "invalid request method, missing game_id, or invalid game_id"
+// @Failure 401 {string} string "missing or invalid session"
+// @Failure 403 {string} string "only joined game players may perform this action"
+// @Failure 404 {string} string "game or persisted world not found"
+// @Failure 409 {string} string "game has not started"
+// @Failure 500 {string} string "internal server error"
 // @Router /world/{game_id} [get]
 func GetWorld(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodGet {
@@ -116,12 +116,12 @@ func GetWorld(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.S
 // @Produce json
 // @Param game_id path int true "game ID"
 // @Param session_id query int true "session ID"
-// @Success 404 {object} world.ErrorResponse
-// @Failure 400 {object} error "Bad Request"
-// @Failure 401 {object} error "Unauthorized"
-// @Failure 403 {object} error "Forbidden"
-// @Failure 409 {object} error "Conflict"
-// @Failure 500 {object} error "Internal Server Error"
+// @Failure 400 {string} string "invalid request method, missing game_id, or invalid game_id"
+// @Failure 401 {string} string "missing or invalid session"
+// @Failure 403 {string} string "only joined game players may perform this action"
+// @Failure 404 {object} WorldSpaceLayerErrorResponseDocs "CTP2 placeholder response after auth, membership, and started-game checks"
+// @Failure 409 {string} string "game has not started"
+// @Failure 500 {string} string "internal server error"
 // @Router /world/{game_id}/space [get]
 func GetWorldSpaceLayer(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodGet {

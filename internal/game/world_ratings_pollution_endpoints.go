@@ -92,12 +92,12 @@ func storedWorldToPollutionResponse(stored *world.StoredWorld) WorldPollutionRes
 // @Param game_id path int true "game ID"
 // @Param session_id query int true "session ID"
 // @Success 200 {object} WorldRatingsResponse
-// @Failure 400 {object} error "Bad Request"
-// @Failure 401 {object} error "Unauthorized"
-// @Failure 403 {object} error "Forbidden"
-// @Failure 404 {object} error "Not Found"
-// @Failure 409 {object} error "Conflict"
-// @Failure 500 {object} error "Internal Server Error"
+// @Failure 400 {string} string "invalid request method, missing game_id, or invalid game_id"
+// @Failure 401 {string} string "missing or invalid session"
+// @Failure 403 {string} string "only joined game players may perform this action"
+// @Failure 404 {string} string "game or persisted world not found"
+// @Failure 409 {string} string "game has not started"
+// @Failure 500 {string} string "internal server error"
 // @Router /world/{game_id}/ratings [get]
 func GetWorldRatings(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodGet {
@@ -122,12 +122,12 @@ func GetWorldRatings(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store 
 // @Param game_id path int true "game ID"
 // @Param session_id query int true "session ID"
 // @Success 200 {object} WorldPollutionResponse
-// @Failure 400 {object} error "Bad Request"
-// @Failure 401 {object} error "Unauthorized"
-// @Failure 403 {object} error "Forbidden"
-// @Failure 404 {object} error "Not Found"
-// @Failure 409 {object} error "Conflict"
-// @Failure 500 {object} error "Internal Server Error"
+// @Failure 400 {string} string "invalid request method, missing game_id, or invalid game_id"
+// @Failure 401 {string} string "missing or invalid session"
+// @Failure 403 {string} string "only joined game players may perform this action"
+// @Failure 404 {string} string "game or persisted world not found"
+// @Failure 409 {string} string "game has not started"
+// @Failure 500 {string} string "internal server error"
 // @Router /world/{game_id}/pollution [get]
 func GetWorldPollution(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodGet {

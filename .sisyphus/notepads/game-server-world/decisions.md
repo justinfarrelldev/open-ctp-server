@@ -27,3 +27,4 @@
 
 - For T11 pollution reads, return the persisted pollution UpdatedAt when present, otherwise fall back to LastRecalculatedAt and then the stored turn-row update timestamp so the endpoint stays deterministic and read-only even before recalculation work lands.
 - T12 uses a per-game TurnRecalculationService lock plus deterministic formulas for ratings, pollution, recalculation_count, and recalculated timestamps so concurrent calls serialize at the service boundary without advancing broader gameplay systems.
+- For T13, keep runtime `/world` handlers unchanged and describe them accurately in Swagger: use local docs-only models for successful payloads, keep plain-text `writeGameStatusError` contracts as string responses, and document the space-layer placeholder as the fixed 404 JSON model.

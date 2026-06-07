@@ -30,3 +30,4 @@
 
 - T11 ratings and pollution reads now reuse the existing readable-world auth and membership gate plus world.NewStore(db).Read(gameID), so the response source of truth stays on persisted world turn state and GET never regenerates world data.
 - T12 recalculation can stay inside internal/world by reusing Store.Read plus Store.UpdateTurnState: the service only derives a new MutableTurnState, persists it, and never rewrites tiles, spawns, host params, or player order.
+- T13 Swagger regeneration now includes `/world/{game_id}`, `/world/{game_id}/space`, `/world/{game_id}/ratings`, and `/world/{game_id}/pollution` after pointing the annotations at local `internal/game` docs models and documenting plain-text error statuses as string schemas.
