@@ -38,3 +38,5 @@
 
 - F3 manual QA: after applying local migration , , , , and  all responded according to contract on a fresh started game.
 - Correction to the prior F3 note: after applying local migration 20260606183000_world_persistence_task7.sql, the /world/{game_id}, /world/{game_id}/space, /world/{game_id}/ratings, and /world/{game_id}/pollution endpoints all responded according to contract on a fresh started game.
+- F1/T14 coverage hardening landed fastest through wrapper/helper tests: `internal/auth` jumped to 95.0%, `internal/lobby` to 76.7%, and `internal/world` to 85.5% without any production-code changes.
+- `go tool cover -func /tmp/opencode/internal-verification-final.out` is the reliable compliance signal here; it now reports `total: (statements) 80.2%`, which cleared the internal-only threshold after store transaction/error-path tests pushed `CreateInTx`, `Read`, and `assembleStoredWorld` coverage up.

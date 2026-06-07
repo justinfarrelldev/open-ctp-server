@@ -1,0 +1,36 @@
+Task 14 coverage hardening verification
+Date: 2026-06-06
+
+Files added:
+- internal/account/account_handler_writer_test.go
+- internal/auth/credential_helpers_test.go
+- internal/auth/session_auth_wrappers_test.go
+- internal/auth/session_store_wrappers_test.go
+- internal/lobby/lobby_handler_wrappers_test.go
+- internal/world/store_update_test.go
+
+Verification commands:
+1. task test
+2. task test-coverage
+3. go test ./internal/... -coverprofile=/tmp/opencode/internal-verification-final.out
+4. go tool cover -func=/tmp/opencode/internal-verification-final.out
+
+Results:
+- task test: PASS
+- task test-coverage: PASS
+- go test ./internal/...: PASS
+- go tool cover -func total: 80.2%
+
+Per-package coverage from final internal run:
+- internal/account: 83.5%
+- internal/auth: 95.0%
+- internal/game: 73.2%
+- internal/health: 75.0%
+- internal/lobby: 76.7%
+- internal/ratelimit: 100.0%
+- internal/world: 85.5%
+- internal/world/fixtures: 0.0% (no test files)
+
+Notes:
+- No production files were changed.
+- Coverage was raised through high-yield wrapper/helper tests in auth and lobby, plus focused world store transaction/read/update error-path tests.
