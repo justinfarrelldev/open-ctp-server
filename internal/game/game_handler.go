@@ -158,3 +158,27 @@ func StartGameHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store
 	err := StartGame(trackedWriter, r, db, store)
 	handleGameHandlerError(trackedWriter, err)
 }
+
+func GetWorldHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := GetWorld(trackedWriter, r, db, store)
+	handleGameHandlerError(trackedWriter, err)
+}
+
+func GetWorldSpaceLayerHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := GetWorldSpaceLayer(trackedWriter, r, db, store)
+	handleGameHandlerError(trackedWriter, err)
+}
+
+func GetWorldRatingsHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := GetWorldRatings(trackedWriter, r, db, store)
+	handleGameHandlerError(trackedWriter, err)
+}
+
+func GetWorldPollutionHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) {
+	trackedWriter := &statusTrackingResponseWriter{ResponseWriter: w}
+	err := GetWorldPollution(trackedWriter, r, db, store)
+	handleGameHandlerError(trackedWriter, err)
+}

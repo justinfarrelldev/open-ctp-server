@@ -119,6 +119,18 @@ func main() {
 	mux.Handle("/game/start_game", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
 		game.StartGameHandler(w, r, db, sessionStore)
 	}))
+	mux.Handle("GET /world/{game_id}", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		game.GetWorldHandler(w, r, db, sessionStore)
+	}))
+	mux.Handle("GET /world/{game_id}/space", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		game.GetWorldSpaceLayerHandler(w, r, db, sessionStore)
+	}))
+	mux.Handle("GET /world/{game_id}/ratings", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		game.GetWorldRatingsHandler(w, r, db, sessionStore)
+	}))
+	mux.Handle("GET /world/{game_id}/pollution", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
+		game.GetWorldPollutionHandler(w, r, db, sessionStore)
+	}))
 
 	mux.Handle("/account/create_account", tollbooth.LimitFuncHandler(authWriteLimiter, func(w http.ResponseWriter, r *http.Request) {
 		account.CreateAccountHandler(w, r, db, sessionStore)

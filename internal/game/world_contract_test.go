@@ -129,4 +129,18 @@ func TestActiveGameChatUsesLobby(t *testing.T) {
 
 func TestWorldRouteSurfaceContract(t *testing.T) {
 	assertActiveGameChatUsesLobby(t)
+
+	mainPath := filepath.Join("..", "..", "main.go")
+	content, err := os.ReadFile(mainPath)
+	if err != nil {
+		t.Fatalf("os.ReadFile(%q) error = %v", mainPath, err)
+	}
+	text := string(content)
+
+	if !strings.Contains(text, `"GET /world/{game_id}"`) {
+		t.Fatal("expected GET /world/{game_id} route to be registered in main.go")
+	}
+	if !strings.Contains(text, `"GET /world/{game_id}/space"`) {
+		t.Fatal("expected GET /world/{game_id}/space route to be registered in main.go")
+	}
 }

@@ -20,3 +20,5 @@
 - For the R3 follow-up, keep seed generation outside NormalizeWorldGenerationInput and inside the StartGame flow so production uses a server-only start-time seed while tests can inject a fixed seed through the package seam without reintroducing public determinism.
 - Reuse  for setup-only mutators instead of adding a second concurrency mechanism, so StartGame and pre-start setup writes share one row-lock serialization discipline.
 - Reuse getGameByIDForUpdate(...) for setup-only mutators instead of adding a second concurrency mechanism, so StartGame and pre-start setup writes share one row-lock serialization discipline.
+- Kept the persisted /world read surface in internal/game rather than replacing the pure internal/world contract stubs, so the HTTP endpoint can share existing game auth/membership helpers and preserve the pure world package as a storage/generation boundary.
+- Registered the new /world routes in main.go with Go 1.23 ServeMux path patterns (GET /world/{game_id} and GET /world/{game_id}/space) and the existing lobbyGameLimiter, matching current game/lobby route conventions without introducing a new limiter class.
