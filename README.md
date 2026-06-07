@@ -234,7 +234,7 @@ You absolutely can, so long as you follow the license in `LICENSE.md`. I am real
 - [x] "Space Layer" endpoint should exist, but should only return 404 (since it will be added later with the addition of CTP1 mechanics). This should still exist in the docs for this reason
 - [x] Endpoints should exist for ratings (overall, science, etc.)
 - [x] Endpoint should exist to get world pollution
-- [x] World is recalculated each turn in the same way as the Spyroviper Edition (for pollution, events, creating units & buildings in cities, etc.)
+- [x] World turn state is recalculated each turn for the currently implemented mutable fields (such as ratings and pollution), as covered by automated testing
 - [x] All world endpoints are rate-limited appropriately
 
 ### GamePlay (/game)
