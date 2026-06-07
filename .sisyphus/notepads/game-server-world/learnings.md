@@ -32,3 +32,9 @@
 - T12 recalculation can stay inside internal/world by reusing Store.Read plus Store.UpdateTurnState: the service only derives a new MutableTurnState, persists it, and never rewrites tiles, spawns, host params, or player order.
 - T13 Swagger regeneration now includes `/world/{game_id}`, `/world/{game_id}/space`, `/world/{game_id}/ratings`, and `/world/{game_id}/pollution` after pointing the annotations at local `internal/game` docs models and documenting plain-text error statuses as string schemas.
 - R5 README truthfulness follow-up: T12 only recalculates deterministic mutable turn-state fields, so the World checklist wording must stay limited to implemented ratings/pollution-style recalculation and not claim broader Spyroviper parity for events or city production.
+
+- F2 review: runtime /world reads, ratings, pollution, and StartGame integration stay on the intended boundary: HTTP/auth/membership live in internal/game, deterministic generation/persistence/recalculation live in internal/world, and no request-path code reads external CTP2 files.
+- F2 review: no broad dependency creep landed with the world slice; go.mod stayed unchanged, docs sync only touched Swagger/README artifacts, and targeted diagnostics plus go test ./internal/world/... and ./internal/game/... both passed.
+
+- F3 manual QA: after applying local migration , , , , and  all responded according to contract on a fresh started game.
+- Correction to the prior F3 note: after applying local migration 20260606183000_world_persistence_task7.sql, the /world/{game_id}, /world/{game_id}/space, /world/{game_id}/ratings, and /world/{game_id}/pollution endpoints all responded according to contract on a fresh started game.
