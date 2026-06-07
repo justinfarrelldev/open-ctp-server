@@ -26,3 +26,4 @@
 - For T11 pollution reads, return  when present, otherwise fall back to persisted , then the stored turn-row update timestamp; this keeps  deterministic and non-zero without mutating state on GET.
 
 - For T11 pollution reads, return the persisted pollution UpdatedAt when present, otherwise fall back to LastRecalculatedAt and then the stored turn-row update timestamp so the endpoint stays deterministic and read-only even before recalculation work lands.
+- T12 uses a per-game TurnRecalculationService lock plus deterministic formulas for ratings, pollution, recalculation_count, and recalculated timestamps so concurrent calls serialize at the service boundary without advancing broader gameplay systems.

@@ -29,3 +29,4 @@
 - T11 ratings and pollution reads now reuse  plus , so auth, membership, started-game gating, and the response source of truth all stay aligned with the persisted  read path and do not regenerate world state on GET.
 
 - T11 ratings and pollution reads now reuse the existing readable-world auth and membership gate plus world.NewStore(db).Read(gameID), so the response source of truth stays on persisted world turn state and GET never regenerates world data.
+- T12 recalculation can stay inside internal/world by reusing Store.Read plus Store.UpdateTurnState: the service only derives a new MutableTurnState, persists it, and never rewrites tiles, spawns, host params, or player order.
