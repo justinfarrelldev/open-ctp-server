@@ -1,0 +1,8 @@
+- R1 reviewer wave initially rejected T2-T4 because T2 lacked non-active/ended-game and broader invalid-parameter coverage; this blocker was resolved by commits `6fe3d19` and `69355eb`, and R1 later approved.
+- R3 reviewer wave rejected T8-T9 because StartGame currently derives the initial world seed from public `game.ID`, making the hidden world predictable offline before reveal.
+- R3 still rejects T8-T9 because setup-only mutators (`applyGamePatch`, `updateStartingValue`, `SelectGameCountry`, `KickGamePlayer`, and delete) read unlocked game state and can race a concurrent StartGame after world persistence.
+- R2 rejected T5-T7 because `internal/world/store.go` does not expose a transaction-composable create path, so StartGame cannot yet make game-start and initial world persistence atomic.
+- R2 also flagged `generator_version` as a duplicated source of truth across generation input and persisted snapshot/config state; this was treated as a host-param fidelity blocker for StartGame wiring.
+- F3 manual QA hit a local environment blocker before validation: the current database lacked migration , causing  reads to fail with  until Local database is up to date. was run.
+- Correction to the prior F3 issue note: the local blocker was missing migration 20260606183000_world_persistence_task7.sql, which caused /world reads to fail with pq: relation world_snapshots does not exist until supabase migration up --local --yes was run.
+- Closeout issue: none; the remaining work was pure repository cleanup with no new app-source fixes required.

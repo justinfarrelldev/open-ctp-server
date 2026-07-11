@@ -1,0 +1,50 @@
+2026/06/06 20:22:22 Generate swagger docs....
+2026/06/06 20:22:22 Generate general API Info, search dir:./
+2026/06/06 20:22:22 Generating account.CreateAccountArgs
+2026/06/06 20:22:22 Generating account.Account
+2026/06/06 20:22:22 Generating account.ExperienceLevel
+2026/06/06 20:22:22 Generating account.DeleteAccountArgs
+2026/06/06 20:22:22 Generating account.LoginAccountArgs
+2026/06/06 20:22:22 Generating account.LoginAccountResponse
+2026/06/06 20:22:22 Generating account.ResetPasswordArgs
+2026/06/06 20:22:22 Generating account.UpdateAccountArgs
+2026/06/06 20:22:22 Generating account.AccountParam
+2026/06/06 20:22:22 Generating auth.Session
+2026/06/06 20:22:22 Generating game.CreateGameDocsArgs
+2026/06/06 20:22:22 Generating game.Game
+2026/06/06 20:22:22 Generating game.GamePlayer
+2026/06/06 20:22:22 Generating game.UpdateGameDocsArgs
+2026/06/06 20:22:22 Generating game.GameUpdateDocsArgs
+2026/06/06 20:22:22 Generating game.DeleteGameArgs
+2026/06/06 20:22:22 Generating game.RenameGameArgs
+2026/06/06 20:22:22 Generating game.LockGameArgs
+2026/06/06 20:22:22 Generating game.SetPublicGameArgs
+2026/06/06 20:22:22 Generating game.UpdateStyleArgs
+2026/06/06 20:22:22 Generating game.UpdateRulesDocsArgs
+2026/06/06 20:22:22 Generating game.UpdateExclusionsDocsArgs
+2026/06/06 20:22:22 Generating game.KickGamePlayerArgs
+2026/06/06 20:22:22 Generating game.SelectGameCountryArgs
+2026/06/06 20:22:22 Generating game.UpdateGameStartingSettlersArgs
+2026/06/06 20:22:22 Generating game.UpdateGameStartingGoldArgs
+2026/06/06 20:22:22 Generating game.UpdateGamePingArgs
+2026/06/06 20:22:22 Generating game.StartGameArgs
+2026/06/06 20:22:22 Generating game.WorldReadResponseDocs
+2026/06/06 20:22:22 Generating game.WorldGenerationHostParamsDocs
+2026/06/06 20:22:22 Generating game.WorldPlayerSpawnDocs
+2026/06/06 20:22:22 Generating game.WorldTileDocs
+2026/06/06 20:22:22 Generating game.WorldSpaceLayerErrorResponseDocs
+2026/06/06 20:22:22 Generating game.WorldRatingsResponse
+2026/06/06 20:22:22 Generating game.WorldPollutionResponse
+2026/06/06 20:22:22 Generating health.Response
+2026/06/06 20:22:22 Generating lobby.CreateLobbyArgs
+2026/06/06 20:22:22 Generating lobby.LobbyParam
+2026/06/06 20:22:22 Generating lobby.DeleteLobbyArgs
+2026/06/06 20:22:22 Generating lobby.GetLobbyArgs
+2026/06/06 20:22:22 Generating lobby.Lobby
+2026/06/06 20:22:22 Generating lobby.JoinLobbyArgs
+2026/06/06 20:22:22 Generating lobby.LeaveLobbyArgs
+2026/06/06 20:22:22 Generating lobby.SendChatArgs
+2026/06/06 20:22:22 Generating lobby.UpdateLobbyArgs
+2026/06/06 20:22:22 create docs.go at docs/docs.go
+2026/06/06 20:22:22 create swagger.json at docs/swagger.json
+2026/06/06 20:22:22 create swagger.yaml at docs/swagger.yaml

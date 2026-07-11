@@ -31,3 +31,4 @@
 - For the T13/R5 docs-only fix, leave Swagger artifacts untouched when `task docs` regenerates without content changes and narrow only the README recalculation bullet to the implemented mutable turn-state surface.
 - For F1/T14, prefer cheap helper and wrapper coverage over endpoint expansion: auth/session wrappers, lobby handler fan-out, and world-store guard/error paths moved aggregate internal coverage faster than broader game-endpoint tests would have.
 - Keep the compliance fix test-only; even the final threshold push came from `internal/world/store` transaction/read assembly error-path tests rather than from any runtime behavior seam.
+- Final closeout decision: keep the commit scoped to workflow artifacts only; do not touch application source or `.serena/` cache state.

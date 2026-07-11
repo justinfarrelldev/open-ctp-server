@@ -1,0 +1,71 @@
+F3 Real Manual QA evidence for /world API slice
+Date: 2026-06-07
+Server: local go run . on http://127.0.0.1:9000
+
+Environment note:
+- Initial live /world reads failed because the local database was missing migration 20260606183000_world_persistence_task7.sql.
+- Applied with: supabase migration up --local --yes
+- Result: "Applying migration 20260606183000_world_persistence_task7.sql... Local database is up to date."
+
+Health check:
+REQUEST: curl -i --max-time 10 http://127.0.0.1:9000/health
+RESPONSE:
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+
+{"status":"OK"}
+
+Docs check:
+REQUEST: curl -i --max-time 10 http://127.0.0.1:9000/docs/
+RESPONSE:
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+
+Swagger UI HTML returned.
+
+QA account creation:
+REQUEST: POST /account/create_account
+BODY: {"account":{"name":"F3 World QA","info":"manual qa","location":"local","email":"f3-world-20260607-0117@example.com","experience_level":0},"password":"secret7"}
+RESPONSE:
+HTTP/1.1 201 Created
+BODY: 619094010676125305
+
+Fresh QA game creation:
+REQUEST: POST /game/create_game
+BODY: {"session_id":619094010676125305,"name":"F3 World QA Game 2","password_protected":false}
+RESPONSE:
+HTTP/1.1 201 Created
+BODY: {"id":5,"owner_account_id":24,"name":"F3 World QA Game 2","status":"setup","starting_settlers":1,"starting_gold":100,"players":[{"account_id":24}]...}
+
+Fresh QA game start:
+REQUEST: POST /game/start_game
+BODY: {"game_id":5,"session_id":619094010676125305}
+RESPONSE:
+HTTP/1.1 200 OK
+BODY: {"id":5,"owner_account_id":24,"name":"F3 World QA Game 2","status":"started","starting_settlers":1,"starting_gold":100,"players":[{"account_id":24}]...}
+
+/world live checks:
+1) REQUEST: GET /world/5?session_id=619094010676125305
+RESPONSE:
+HTTP/1.1 200 OK
+BODY SUMMARY: {"game_id":5,"game_status":"started","generator_version":"ctp2-first-v1","host_params":{"style":"standard_ctp2","rules_json":"[]","exclusions_json":"{}","starting_settlers":1,"starting_gold":100,"seed":5682592065769938485,"wetness":50,"map_size":"small","climate":"temperate","generator_version":"ctp2-first-v1"},"player_order":[24],"spawns":[{"account_id":24,"x":20,"y":6}],"tiles":[...384 tiles...]}
+
+2) REQUEST: GET /world/5/space?session_id=619094010676125305
+RESPONSE:
+HTTP/1.1 404 Not Found
+BODY: {"error":"space layer is not supported for CTP2 worlds"}
+
+3) REQUEST: GET /world/5/ratings?session_id=619094010676125305
+RESPONSE:
+HTTP/1.1 200 OK
+BODY: {"overall":0,"science":0,"military":0,"economic":0,"pollution":0}
+
+4) REQUEST: GET /world/5/pollution?session_id=619094010676125305
+RESPONSE:
+HTTP/1.1 200 OK
+BODY: {"game_id":5,"turn":1,"global_pollution":0,"tile_pollution_count":0,"updated_at":"2026-06-07T01:19:54.724342Z"}
+
+Observed blocker before migration:
+- GET /world/4?session_id=619094010676125305 -> HTTP/1.1 500 Internal Server Error
+- Body: an error occurred while loading the world snapshot for game 4: pq: relation "world_snapshots" does not exist
+- Same failure for /world/4/ratings and /world/4/pollution before applying the migration.

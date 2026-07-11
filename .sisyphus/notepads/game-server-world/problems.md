@@ -1,0 +1,6 @@
+- Before T5 starts, T2 red tests must be widened to cover non-active/ended-game `/world` behavior and remaining invalid-parameter contract cases while staying compile-clean and non-functional.
+- Carry-forward note for T8+: add row-locking or optimistic concurrency around world turn-state mutation, and tighten table access expectations with safe RLS/policy assumptions when `/world` integration becomes user-facing.
+- Final compliance note: keep the first two README World bullets unchecked until there is direct automated parity evidence against Spyroviper-equivalent output, not just internal determinism and validity tests.
+- Final blocker: aggregate `go test -cover ./internal/...` coverage is 75.4%, below the plan/F1 requirement of >80%; the fastest coverage gains are in lobby/auth helper and wrapper tests, with `internal/world/store.go` as the next fallback.
+- T8 is blocked until world creation can join the surrounding StartGame transaction and until `generator_version` is enforced as one unambiguous invariant across request normalization, generation, and persistence.
+- Final cleanup problem: none remain; the closeout is limited to workflow artifacts and unrelated drift removal.

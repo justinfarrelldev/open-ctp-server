@@ -1,0 +1,25 @@
+R1 contract/model review: APPROVE after fixes
+- Initial blocker: T2 missing non-active/ended-game and broader invalid-parameter contract coverage
+- Fix commits: 6fe3d19 (widen T2 red blocker coverage), 69355eb (remove ambiguous world error contracts)
+
+R2 generation/persistence review: APPROVE
+- Non-blocking notes carried forward: future RLS hardening and cross-instance turn-state locking considerations
+- Blocking issues resolved before approval: tx-composable world create path, generator_version source-of-truth alignment, clean T5 scope/commit isolation
+- Key commits in reviewed slice: 642f869, 842ebf3, bd3d635
+
+R3 start/spawn/chat review: APPROVE after fixes
+- Initial blocker 1: StartGame seed derived from public game ID
+- Fix commit: 726155b (use server-only start seed)
+- Initial blocker 2: setup-only mutators could race StartGame with unlocked reads
+- Fix commit: 122dd9c (lock setup mutators during start race window)
+- Chat proof remained valid throughout: /lobby/send_chat present, /game/chat and /world/chat absent
+
+R4 endpoint/docs review: APPROVE
+- /world read, /space placeholder, /ratings, and /pollution are internally consistent with generated docs and README after truthfulness corrections
+- Key commits in reviewed slice: 4fa92ee, 0afb08c, bd60e47
+
+R5 recalculation/docs review: APPROVE after fix
+- Initial blocker: README overclaimed recalculation parity beyond implemented mutable turn-state fields
+- Fix commit: 09eb83b (narrow recalculation checklist claim)
+
+All reviewer waves R1-R5 concluded APPROVE after the listed fixes.

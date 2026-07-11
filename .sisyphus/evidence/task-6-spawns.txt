@@ -1,0 +1,2 @@
+?   	github.com/justinfarrelldev/open-ctp-server/internal/world/fixtures	[no test files]
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/world	0.262s
