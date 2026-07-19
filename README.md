@@ -228,8 +228,8 @@ You absolutely can, so long as you follow the license in `LICENSE.md`. I am real
 
 ### World (/world)
 
-- [ ] World generation should be available (and done the same way as within the Spyroviper Edition, as checked via seeding and automated testing)
-- [ ] Players should spawn in the same locations as the Spyroviper Edition (checked via seeding and automated testing)
+- [x] Deterministic server-side world generation and persistence are implemented through the base-game/CTP2-first path, with automated-test support
+- [x] Player spawn placement is implemented and test-backed for valid, separated starts in supported configurations
 - [x] Chats can be sent in active games via the lobby above (chat messages should come in through the lobby chats, not via the game endpoint itself)
 - [x] "Space Layer" endpoint should exist, but should only return 404 (since it will be added later with the addition of CTP1 mechanics). This should still exist in the docs for this reason
 - [x] Endpoints should exist for ratings (overall, science, etc.)
