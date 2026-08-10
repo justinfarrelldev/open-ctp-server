@@ -1,0 +1,5 @@
+# Original synthetic CTP2-style unit record.
+UNIT_SYNTHETIC {
+ Description UNIT_SYNTHETIC
+ MaxMovePoints 1
+}

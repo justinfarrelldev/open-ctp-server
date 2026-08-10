@@ -1,0 +1,6 @@
+ENDGAME_GAIA_VECTOR {
+ TurnsToActivate 1
+}
+ENDGAME_UNION_VECTOR {
+ TurnsToActivate 0
+}

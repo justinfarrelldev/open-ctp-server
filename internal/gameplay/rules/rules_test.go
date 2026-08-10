@@ -1,0 +1,159 @@
+package rules
+
+import (
+	"errors"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"testing"
+)
+
+func TestParseCTP2StyleSyntheticCatalog(t *testing.T) {
+	t.Parallel()
+
+	ruleset, err := Import(ImportConfig{Directory: fixtureDirectory(t)})
+	if err != nil {
+		t.Fatalf("Import() error = %v", err)
+	}
+	if got, want := recordIDs(ruleset.Records), "ENDGAME_GAIA_VECTOR,ENDGAME_UNION_VECTOR,IMPROVE_SYNTHETIC,TERRAIN_SYNTHETIC,UNIT_SYNTHETIC,WONDER_SYNTHETIC"; got != want {
+		t.Fatalf("record IDs = %q, want %q", got, want)
+	}
+	if ruleset.ContentHash == "" || len(ruleset.CanonicalJSON) == 0 {
+		t.Fatal("expected canonical catalog bytes and content hash")
+	}
+}
+
+func TestParseRejectsCustomAndUnsupportedCTP2ConstructsWithLocation(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name  string
+		files map[string]string
+		code  string
+		id    string
+	}{
+		{name: "legacy custom grammar", files: map[string]string{"Units.txt": "[unit:scout]\nname=Scout\n"}, code: ErrorMalformedValue},
+		{name: "duplicate ID", files: map[string]string{"Units.txt": "UNIT_SYNTHETIC { Description A MaxMovePoints 1 }\n", "units.ctp2synthetic": "UNIT_SYNTHETIC { Description B MaxMovePoints 1 }\n"}, code: ErrorDuplicateID, id: "UNIT_SYNTHETIC"},
+		{name: "malformed value", files: map[string]string{"Units.txt": "UNIT_SYNTHETIC { Description A MaxMovePoints fast }\n"}, code: ErrorMalformedValue, id: "UNIT_SYNTHETIC"},
+		{name: "unsupported behavior", files: map[string]string{"Units.txt": "UNIT_SYNTHETIC { Description A MaxMovePoints 1 TeleportAnywhere }\n"}, code: ErrorUnsupportedRequiredTag, id: "UNIT_SYNTHETIC"},
+		{name: "nested behavior", files: map[string]string{"Units.txt": "UNIT_SYNTHETIC { Description A MaxMovePoints 1 CargoData { MaxCargo 1 } }\n"}, code: ErrorUnsupportedRequiredTag, id: "UNIT_SYNTHETIC"},
+		{name: "unsupported file semantics", files: map[string]string{"Const.txt": "CONST_SYNTHETIC { Value 1 }\n"}, code: ErrorUnsupportedMechanic, id: "CONST_SYNTHETIC"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := Import(ImportConfig{Directory: writeCatalog(t, tc.files)})
+			var importErr *ImportError
+			if !errors.As(err, &importErr) {
+				t.Fatalf("Import() error = %v, want ImportError", err)
+			}
+			if importErr.Code != tc.code || (tc.id != "" && importErr.RecordID != tc.id) || importErr.Filename == "" || importErr.Line == 0 {
+				t.Fatalf("ImportError = %+v, want code=%q id=%q and source location", importErr, tc.code, tc.id)
+			}
+		})
+	}
+}
+
+func TestManifestInventoryMapsEveryBaselineEvaluatorToOriginalVector(t *testing.T) {
+	t.Parallel()
+
+	manifest := SupportedManifest()
+	if err := manifest.Validate(); err != nil {
+		t.Fatalf("Validate() error = %v", err)
+	}
+	got := make([]string, 0, len(manifest.VictoryEvaluators))
+	for _, evaluator := range manifest.VictoryEvaluators {
+		got = append(got, evaluator.ID)
+	}
+	sort.Strings(got)
+	if want := "bloodlust_conquest,diplomatic_world_union,science_gaia_controller,score_2300"; strings.Join(got, ",") != want {
+		t.Fatalf("victory evaluator inventory = %q, want %q", strings.Join(got, ","), want)
+	}
+	manifest.VictoryVectors = manifest.VictoryVectors[:len(manifest.VictoryVectors)-1]
+	if err := manifest.Validate(); err == nil {
+		t.Fatal("Validate() error = nil, want missing evaluator vector rejection")
+	}
+}
+
+func TestCanonicalHashIsIndependentOfFileAndRecordOrder(t *testing.T) {
+	t.Parallel()
+
+	first, err := Import(ImportConfig{Directory: fixtureDirectory(t)})
+	if err != nil {
+		t.Fatalf("first Import() error = %v", err)
+	}
+	second, err := Import(ImportConfig{Directory: writeCatalog(t, map[string]string{
+		"Wonder.ctp2synthetic":         "WONDER_SYNTHETIC { Description WONDER_SYNTHETIC }\n",
+		"Units.ctp2synthetic":          "UNIT_SYNTHETIC { MaxMovePoints 1 Description UNIT_SYNTHETIC }\n",
+		"terrain.ctp2synthetic":        "TERRAIN_SYNTHETIC { Description TERRAIN_SYNTHETIC }\n",
+		"buildings.ctp2synthetic":      "IMPROVE_SYNTHETIC { Description IMPROVE_SYNTHETIC }\n",
+		"EndGameObjects.ctp2synthetic": "ENDGAME_UNION_VECTOR { TurnsToActivate 0 } ENDGAME_GAIA_VECTOR { TurnsToActivate 1 }\n",
+	})})
+	if err != nil {
+		t.Fatalf("second Import() error = %v", err)
+	}
+	if first.ContentHash != second.ContentHash || string(first.CanonicalJSON) != string(second.CanonicalJSON) {
+		t.Fatalf("canonical imports differ:\nfirst=%s %s\nsecond=%s %s", first.ContentHash, first.CanonicalJSON, second.ContentHash, second.CanonicalJSON)
+	}
+}
+
+func TestProtectedAssetGuard(t *testing.T) {
+	t.Parallel()
+
+	if err := CheckProtectedAssets([]AssetFile{{Path: "internal/gameplay/rules/testdata/synthetic-ctp2/Units.ctp2synthetic", Content: []byte("UNIT_SYNTHETIC { Description Unit MaxMovePoints 1 }")}}); err != nil {
+		t.Fatalf("synthetic fixture rejected: %v", err)
+	}
+	if err := CheckProtectedAssets([]AssetFile{{Path: "data/Units.txt"}}); err == nil {
+		t.Fatal("retail filename was accepted")
+	}
+	if err := CheckTrackedAssets(repositoryRoot(t)); err != nil {
+		t.Fatalf("CheckTrackedAssets() error = %v", err)
+	}
+}
+
+func TestProtectedAssetGuardRejectsTrackedContentMarker(t *testing.T) {
+	dir := t.TempDir()
+	const filename = "fixture.txt"
+	marker := strings.Join([]string{"CTP2", "RETAIL", "ASSET"}, "_")
+	if err := os.WriteFile(filepath.Join(dir, filename), []byte(marker), 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	if err := checkTrackedFiles(dir, []string{filename}); err == nil {
+		t.Fatal("checkTrackedFiles() error = nil, want protected content rejection")
+	}
+}
+
+func fixtureDirectory(t *testing.T) string {
+	t.Helper()
+	return filepath.Join("testdata", "synthetic-ctp2")
+}
+
+func writeCatalog(t *testing.T, files map[string]string) string {
+	t.Helper()
+	dir := t.TempDir()
+	for name, content := range files {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o600); err != nil {
+			t.Fatalf("WriteFile(%q): %v", name, err)
+		}
+	}
+	return dir
+}
+
+func recordIDs(records []Record) string {
+	ids := make([]string, 0, len(records))
+	for _, record := range records {
+		ids = append(ids, record.ID)
+	}
+	return strings.Join(ids, ",")
+}
+
+func repositoryRoot(t *testing.T) string {
+	t.Helper()
+	root, err := filepath.Abs(filepath.Join("..", "..", ".."))
+	if err != nil {
+		t.Fatalf("Abs repository root: %v", err)
+	}
+	return root
+}
