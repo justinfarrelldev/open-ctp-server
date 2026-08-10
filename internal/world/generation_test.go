@@ -34,6 +34,24 @@ func TestWorldGenerationDeterministic(t *testing.T) {
 	}
 }
 
+func TestVictorySelectorDoesNotChangeWorldGeneration(t *testing.T) {
+	base := fixtureGenerationInput()
+	selected := cloneGenerationInput(base)
+	selected.HostParams.RulesJSON = `["victory:bloodlust_conquest"]`
+
+	baseSeed, err := deriveGeneratorSeed(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	selectedSeed, err := deriveGeneratorSeed(selected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if selectedSeed != baseSeed {
+		t.Fatalf("victory selector changed generator seed from %d to %d", baseSeed, selectedSeed)
+	}
+}
+
 func TestGenerationConsumesAllHostParams(t *testing.T) {
 	base := fixtureGenerationInput()
 	baseSnapshot, _, err := GenerateWorld(base)

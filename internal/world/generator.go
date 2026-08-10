@@ -2,6 +2,7 @@ package world
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -194,6 +195,24 @@ func defaultIfEmpty(value, fallback string) string {
 	return value
 }
 
+func generatorRulesJSON(rulesJSON string) string {
+	var options []string
+	if err := json.Unmarshal([]byte(rulesJSON), &options); err != nil {
+		return rulesJSON
+	}
+	filtered := make([]string, 0, len(options))
+	for _, option := range options {
+		if !strings.HasPrefix(option, "victory:") {
+			filtered = append(filtered, option)
+		}
+	}
+	canonical, err := json.Marshal(filtered)
+	if err != nil {
+		return rulesJSON
+	}
+	return string(canonical)
+}
+
 func deriveGeneratorSeed(input GenerationInput) (int64, error) {
 	key, err := CanonicalJSON(struct {
 		Seed             int64   `json:"seed"`
@@ -213,7 +232,7 @@ func deriveGeneratorSeed(input GenerationInput) (int64, error) {
 		MapSize:          input.HostParams.MapSize,
 		Climate:          input.HostParams.Climate,
 		Style:            input.HostParams.Style,
-		RulesJSON:        input.HostParams.RulesJSON,
+		RulesJSON:        generatorRulesJSON(input.HostParams.RulesJSON),
 		ExclusionsJSON:   input.HostParams.ExclusionsJSON,
 		StartingSettlers: input.HostParams.StartingSettlers,
 		StartingGold:     input.HostParams.StartingGold,
