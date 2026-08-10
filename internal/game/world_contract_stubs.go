@@ -38,6 +38,16 @@ func NormalizeWorldGenerationInput(game *Game, players []GamePlayer, seed int64)
 	}
 
 	wetness := defaultWorldStartWetness
+	if game.Wetness != nil {
+		wetness = *game.Wetness
+	}
+	mapSize, climate := defaultWorldStartMapSize, defaultWorldStartClimate
+	if game.MapSize != nil && strings.TrimSpace(*game.MapSize) != "" {
+		mapSize = strings.TrimSpace(*game.MapSize)
+	}
+	if game.Climate != nil && strings.TrimSpace(*game.Climate) != "" {
+		climate = strings.TrimSpace(*game.Climate)
+	}
 	config, err := world.NormalizeWorldConfig(world.WorldConfig{
 		Style:            game.Style,
 		RulesJSON:        game.RulesJSON,
@@ -46,8 +56,8 @@ func NormalizeWorldGenerationInput(game *Game, players []GamePlayer, seed int64)
 		StartingGold:     game.StartingGold,
 		Seed:             &seed,
 		Wetness:          &wetness,
-		MapSize:          defaultWorldStartMapSize,
-		Climate:          defaultWorldStartClimate,
+		MapSize:          mapSize,
+		Climate:          climate,
 		GeneratorVersion: defaultWorldStartGeneratorVersion,
 	})
 	if err != nil {
@@ -89,6 +99,10 @@ func ValidateWorldStartContract(game *Game, hasExistingWorld bool) error {
 	}
 	if hasExistingWorld {
 		return fmt.Errorf("world already exists for game %d", game.ID)
+	}
+	style := strings.TrimSpace(game.Style)
+	if style != "" && !supportedGameStyle(style) {
+		return fmt.Errorf("unsupported game style %q", game.Style)
 	}
 	return nil
 }

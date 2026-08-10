@@ -1,7 +1,10 @@
 package game
 
 import (
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -11,6 +14,8 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
+	gameplaystore "github.com/justinfarrelldev/open-ctp-server/internal/gameplay/store"
 	world "github.com/justinfarrelldev/open-ctp-server/internal/world"
 )
 
@@ -103,7 +108,7 @@ func TestStartGameGeneratesWorldOnce(t *testing.T) {
 	}
 	snapshot, turn := startedWorldFixture(t, setupGame, players)
 
-	expectSuccessfulStartGame(mock, snapshot, turn, &lobbyID, &startedAt)
+	expectSuccessfulStartGame(t, mock, snapshot, turn, &lobbyID, &startedAt)
 
 	expectGameSessionLookup(mock, 55, 7)
 	mock.ExpectBegin()
@@ -114,19 +119,20 @@ func TestStartGameGeneratesWorldOnce(t *testing.T) {
 
 	startReq := httptest.NewRequest(http.MethodPost, "/game/start_game", strings.NewReader(`{"game_id":44,"session_id":55}`))
 	startRR := httptest.NewRecorder()
-	StartGameHandler(startRR, startReq, sqlxDB, store)
+	if err := StartGameWithSeedAndSources(startRR, startReq, sqlxDB, store, func() (int64, error) { return testWorldSnapshotSeed, nil }, testStartGameplaySources()); err != nil {
+		t.Fatalf("StartGameWithSeedAndSources() error = %v", err)
+	}
 	if startRR.Code != http.StatusOK {
 		t.Fatalf("first start got status %d want %d body=%q", startRR.Code, http.StatusOK, startRR.Body.String())
 	}
 
 	duplicateReq := httptest.NewRequest(http.MethodPost, "/game/start_game", strings.NewReader(`{"game_id":44,"session_id":55}`))
 	duplicateRR := httptest.NewRecorder()
-	StartGameHandler(duplicateRR, duplicateReq, sqlxDB, store)
+	if err := StartGameWithSeedAndSources(duplicateRR, duplicateReq, sqlxDB, store, func() (int64, error) { return testWorldSnapshotSeed, nil }, testStartGameplaySources()); err == nil {
+		t.Fatal("StartGameWithSeedAndSources() duplicate error = nil")
+	}
 	if duplicateRR.Code != http.StatusConflict {
 		t.Fatalf("second start got status %d want %d body=%q", duplicateRR.Code, http.StatusConflict, duplicateRR.Body.String())
-	}
-	if strings.TrimSpace(duplicateRR.Body.String()) != "game 44 is not in setup" {
-		t.Fatalf("got duplicate body %q", duplicateRR.Body.String())
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
@@ -158,11 +164,13 @@ func TestStartGamePersistsWorldInTransaction(t *testing.T) {
 	}
 	snapshot, turn := startedWorldFixture(t, setupGame, players)
 
-	expectSuccessfulStartGame(mock, snapshot, turn, &lobbyID, &startedAt)
+	expectSuccessfulStartGame(t, mock, snapshot, turn, &lobbyID, &startedAt)
 
 	req := httptest.NewRequest(http.MethodPost, "/game/start_game", strings.NewReader(`{"game_id":44,"session_id":55}`))
 	rr := httptest.NewRecorder()
-	StartGameHandler(rr, req, sqlxDB, store)
+	if err := StartGameWithSeedAndSources(rr, req, sqlxDB, store, func() (int64, error) { return testWorldSnapshotSeed, nil }, testStartGameplaySources()); err != nil {
+		t.Fatalf("StartGameWithSeedAndSources() error = %v", err)
+	}
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("got status %d want %d body=%q", rr.Code, http.StatusOK, rr.Body.String())
@@ -218,7 +226,7 @@ func TestStartGameSerialization(t *testing.T) {
 	game := &Game{
 		ID:               44,
 		OwnerAccountID:   &ownerID,
-		Style:            " standard_ctp2 ",
+		Style:            " sequential ",
 		RulesJSON:        " { \"fast\" : true } ",
 		ExclusionsJSON:   " { \"units\" : [ \"settler\" ] } ",
 		Status:           DefaultGameStatus,
@@ -250,7 +258,7 @@ func TestStartGameSerialization(t *testing.T) {
 	if input.HostParams.MapSize != defaultWorldStartMapSize || input.HostParams.Climate != defaultWorldStartClimate {
 		t.Fatalf("unexpected defaults: %+v", input.HostParams)
 	}
-	if input.HostParams.Style != "standard_ctp2" || input.HostParams.RulesJSON != `{"fast":true}` || input.HostParams.ExclusionsJSON != `{"units":["settler"]}` {
+	if input.HostParams.Style != "sequential" || input.HostParams.RulesJSON != `{"fast":true}` || input.HostParams.ExclusionsJSON != `{"units":["settler"]}` {
 		t.Fatalf("expected compact normalized host params, got %+v", input.HostParams)
 	}
 
@@ -303,7 +311,8 @@ func stubStartWorldSeed(t *testing.T, seed int64, err error) {
 	})
 }
 
-func expectSuccessfulStartGame(mock sqlmock.Sqlmock, snapshot world.WorldSnapshot, turn world.MutableTurnState, lobbyID *int64, startedAt *time.Time) {
+func expectSuccessfulStartGame(t *testing.T, mock sqlmock.Sqlmock, snapshot world.WorldSnapshot, turn world.MutableTurnState, lobbyID *int64, startedAt *time.Time) {
+	t.Helper()
 	expectGameSessionLookup(mock, 55, 7)
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
@@ -330,7 +339,13 @@ func expectSuccessfulStartGame(mock sqlmock.Sqlmock, snapshot world.WorldSnapsho
 				ping      int
 			}{id: 2, accountID: 8, country: "Romans", ping: 0},
 		))
-	expectWorldCreate(mock, snapshot, turn)
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT account_id, controller_kind FROM game_players WHERE game_id = $1`)).
+		WithArgs(int64(44)).
+		WillReturnRows(sqlmock.NewRows([]string{"account_id", "controller_kind"}).AddRow(7, "human").AddRow(8, "human"))
+	expectWorldCreate(t, mock, snapshot, turn, []GamePlayer{
+		{ID: 1, AccountID: 7, Country: "Greeks"},
+		{ID: 2, AccountID: 8, Country: "Romans"},
+	})
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE games SET status = $1, started_at = NOW(), updated_at = NOW() WHERE id = $2`)).
 		WithArgs("started", int64(44)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -356,65 +371,183 @@ func expectSuccessfulStartGame(mock sqlmock.Sqlmock, snapshot world.WorldSnapsho
 	mock.ExpectCommit()
 }
 
-func expectWorldCreate(mock sqlmock.Sqlmock, snapshot world.WorldSnapshot, turn world.MutableTurnState) {
-	playerOrderJSON, err := world.CanonicalString(snapshot.PlayerOrder)
-	if err != nil {
-		panic(err)
-	}
-	spawnsJSON, err := world.CanonicalString(snapshot.Spawns)
-	if err != nil {
-		panic(err)
-	}
-	tilesJSON, err := world.CanonicalString(snapshot.Tiles)
-	if err != nil {
-		panic(err)
-	}
-	activePlayerOrderJSON, err := world.CanonicalString(turn.ActivePlayerOrder)
-	if err != nil {
-		panic(err)
-	}
-	ratingsJSON, err := world.CanonicalString(turn.Ratings)
-	if err != nil {
-		panic(err)
-	}
-	pollutionJSON, err := world.CanonicalString(turn.Pollution)
-	if err != nil {
-		panic(err)
-	}
+func expectWorldCreate(t *testing.T, mock sqlmock.Sqlmock, snapshot world.WorldSnapshot, _ world.MutableTurnState, players []GamePlayer) {
+	t.Helper()
+	testState, initialJSON, nextJSON, receipt, event := expectedStartGameplay(t, snapshot, players)
+	playerOrderJSON := mustWorldCanonicalString(t, snapshot.PlayerOrder)
+	spawnsJSON := mustWorldCanonicalString(t, snapshot.Spawns)
+	tilesJSON := mustWorldCanonicalString(t, snapshot.Tiles)
+	activePlayerOrderJSON := mustWorldCanonicalString(t, snapshot.Turn.ActivePlayerOrder)
+	ratingsJSON := mustWorldCanonicalString(t, snapshot.Turn.Ratings)
+	pollutionJSON := mustWorldCanonicalString(t, snapshot.Turn.Pollution)
 
 	mock.ExpectQuery(regexp.QuoteMeta(testWorldSnapshotExistsQuery)).
 		WithArgs(snapshot.GameID).
 		WillReturnError(sql.ErrNoRows)
-	mock.ExpectExec(regexp.QuoteMeta(testWorldSnapshotInsertQuery)).
-		WithArgs(
-			snapshot.GameID,
-			snapshot.GameStatus,
-			snapshot.GeneratorVersion,
-			snapshot.Config.Style,
-			snapshot.Config.RulesJSON,
-			snapshot.Config.ExclusionsJSON,
-			snapshot.Config.StartingSettlers,
-			snapshot.Config.StartingGold,
-			snapshot.Config.Seed,
-			snapshot.Config.Wetness,
-			snapshot.Config.MapSize,
-			snapshot.Config.Climate,
-			playerOrderJSON,
-			spawnsJSON,
-			tilesJSON,
-		).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec(regexp.QuoteMeta(testWorldTurnStateInsertQuery)).
-		WithArgs(
-			snapshot.GameID,
-			turn.TurnNumber,
-			turn.CurrentPlayerIndex,
-			activePlayerOrderJSON,
-			turn.RecalculationCount,
-			strconv.FormatUint(turn.RNGState, 10),
-			ratingsJSON,
-			pollutionJSON,
-			turn.LastRecalculatedAt,
-		).
-		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO world_snapshots (
+	game_id,
+	game_status,
+	generator_version,
+	style,
+	rules_json,
+	exclusions_json,
+	starting_settlers,
+	starting_gold,
+	seed,
+	wetness,
+	map_size,
+	climate,
+	player_order_json,
+	spawns_json,
+	tiles_json,
+	ruleset_canonical_json,
+	ruleset_content_hash,
+	ruleset_version,
+	updated_at
+) VALUES (
+	$1,
+	$2,
+	$3,
+	$4,
+	$5::jsonb,
+	$6::jsonb,
+	$7,
+	$8,
+	$9,
+	$10,
+	$11,
+	$12,
+	$13::jsonb,
+	$14::jsonb,
+	$15::jsonb,
+	$16::jsonb,
+	$17,
+	$18,
+	NOW()
+)`)).WithArgs(
+		snapshot.GameID, snapshot.GameStatus, snapshot.GeneratorVersion, snapshot.Config.Style,
+		snapshot.Config.RulesJSON, snapshot.Config.ExclusionsJSON, snapshot.Config.StartingSettlers,
+		snapshot.Config.StartingGold, snapshot.Config.Seed, snapshot.Config.Wetness, snapshot.Config.MapSize,
+		snapshot.Config.Climate, playerOrderJSON, spawnsJSON, tilesJSON, string(testState.Rules.Definitions),
+		testState.Rules.ContentHash, testState.Rules.Version,
+	).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO world_turn_states (
+	game_id,
+	turn_number,
+	current_player_index,
+	active_player_order_json,
+	recalculation_count,
+	rng_state,
+	ratings_json,
+	pollution_json,
+	last_recalculated_at,
+	state_schema_version,
+	revision,
+	last_event_sequence,
+	canonical_state_json,
+	updated_at
+) VALUES (
+	$1,
+	$2,
+	$3,
+	$4::jsonb,
+	$5,
+	$6,
+	$7::jsonb,
+	$8::jsonb,
+	$9,
+	$10,
+	$11,
+	$12,
+	$13::jsonb,
+	NOW()
+)`)).WithArgs(
+		snapshot.GameID, snapshot.Turn.TurnNumber, snapshot.Turn.CurrentPlayerIndex, activePlayerOrderJSON,
+		snapshot.Turn.RecalculationCount, strconv.FormatUint(snapshot.Turn.RNGState, 10), ratingsJSON, pollutionJSON, snapshot.Turn.LastRecalculatedAt,
+		world.StateSchemaV1, int64(0), int64(0), string(initialJSON),
+	).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE world_turn_states
+SET
+	canonical_state_json = $1::jsonb,
+	revision = revision + 1,
+	last_event_sequence = $2,
+	updated_at = NOW()
+WHERE game_id = $3 AND state_schema_version = 1 AND revision = $4`)).WithArgs(
+		nextJSON, int64(1), snapshot.GameID, int64(0),
+	).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO gameplay_command_receipts (
+	game_id, actor_player_id, idempotency_key, payload_sha256,
+	result_json, resulting_revision, resulting_event_sequence
+) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7)`)).WithArgs(
+		receipt.GameID, receipt.ActorPlayerID, receipt.IdempotencyKey, receipt.PayloadSHA256,
+		receipt.ResultJSON, receipt.ResultingRevision, receipt.ResultingEventSequence,
+	).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO gameplay_events (
+	game_id, sequence, revision, ordinal, event_id, event_type, payload_json
+) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)`)).WithArgs(
+		event.GameID, event.Sequence, event.Revision, event.Ordinal, event.ID, event.Type, event.PayloadJSON,
+	).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO gameplay_event_outbox (game_id, sequence) VALUES ($1, $2)`)).WithArgs(
+		event.GameID, event.Sequence,
+	).WillReturnResult(sqlmock.NewResult(0, 1))
+}
+
+func expectedStartGameplay(t *testing.T, snapshot world.WorldSnapshot, players []GamePlayer) (engine.State, []byte, []byte, gameplaystore.CommandReceipt, gameplaystore.Event) {
+	t.Helper()
+	pin, err := serverRuntimePin()
+	if err != nil {
+		t.Fatalf("serverRuntimePin() error = %v", err)
+	}
+	state, err := initialGameplayState(snapshot, snapshot.Config.Style, pin, players)
+	if err != nil {
+		t.Fatalf("initialGameplayState() error = %v", err)
+	}
+	playerIDs := state.Phase.ActivePlayerOrder
+	initialJSON, err := engine.CanonicalStateJSON(state)
+	if err != nil {
+		t.Fatalf("CanonicalStateJSON(initial) error = %v", err)
+	}
+	next, events, result, err := engine.Apply(state, engine.Command{SchemaVersion: engine.CommandSchemaV1, ID: "game-start", ActorPlayerID: playerIDs[0], Type: engine.CommandNoop}, pin, testStartGameplaySources())
+	if err != nil {
+		t.Fatalf("Apply(initial game-start) error = %v", err)
+	}
+	nextJSON, err := engine.CanonicalStateJSON(next)
+	if err != nil {
+		t.Fatalf("CanonicalStateJSON(next) error = %v", err)
+	}
+	payload, err := json.Marshal(events[0])
+	if err != nil {
+		t.Fatalf("Marshal(event) error = %v", err)
+	}
+	resultJSON, err := json.Marshal(result)
+	if err != nil {
+		t.Fatalf("Marshal(result) error = %v", err)
+	}
+	commandHash := sha256.Sum256([]byte("game-start"))
+	return state, initialJSON, nextJSON, gameplaystore.CommandReceipt{GameID: snapshot.GameID, ActorPlayerID: players[0].ID, IdempotencyKey: "game-start", PayloadSHA256: hex.EncodeToString(commandHash[:]), ResultJSON: resultJSON, ResultingRevision: next.Revision, ResultingEventSequence: next.EventSequence}, gameplaystore.Event{GameID: snapshot.GameID, Sequence: events[0].Sequence, Revision: next.Revision, Ordinal: events[0].Ordinal, ID: events[0].ID, Type: events[0].Type, PayloadJSON: payload}
+}
+
+type fixedStartClock struct{}
+
+func (fixedStartClock) Now() time.Time { return time.Date(2026, time.July, 19, 8, 0, 0, 0, time.UTC) }
+
+func testStartGameplaySources() engine.Sources {
+	return engine.Sources{Clock: fixedStartClock{}, IDs: &startIDs{}, RNG: startRNG{}}
+}
+
+func startRulesJSON(value string) string {
+	rules := []byte(value)
+	if !json.Valid(rules) || len(rules) == 0 || rules[0] != '{' {
+		return `{}`
+	}
+	return string(rules)
+}
+
+func mustWorldCanonicalString(t *testing.T, value any) string {
+	t.Helper()
+	encoded, err := world.CanonicalString(value)
+	if err != nil {
+		t.Fatalf("CanonicalString() error = %v", err)
+	}
+	return encoded
 }

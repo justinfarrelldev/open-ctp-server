@@ -40,6 +40,13 @@ func (s MutableTurnState) Clone() MutableTurnState {
 }
 
 // WorldSnapshot is the immutable world state persisted and serialized later.
+// RulesetPin is the immutable canonical import identity supplied when creating a v1 world snapshot.
+type RulesetPin struct {
+	CanonicalJSON []byte
+	ContentHash   string
+	Version       string
+}
+
 type WorldSnapshot struct {
 	GameID           int64            `json:"game_id"`
 	GameStatus       string           `json:"game_status"`

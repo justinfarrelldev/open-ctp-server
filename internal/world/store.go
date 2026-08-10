@@ -13,6 +13,11 @@ import (
 
 var ErrWorldAlreadyExists = errors.New("world already exists")
 
+const (
+	StateSchemaLegacy = 0
+	StateSchemaV1     = 1
+)
+
 const worldSnapshotExistsQuery = `SELECT game_id FROM world_snapshots WHERE game_id = $1`
 
 const worldSnapshotInsertQuery = `INSERT INTO world_snapshots (
@@ -51,6 +56,48 @@ const worldSnapshotInsertQuery = `INSERT INTO world_snapshots (
 	NOW()
 )`
 
+const worldSnapshotV1InsertQuery = `INSERT INTO world_snapshots (
+	game_id,
+	game_status,
+	generator_version,
+	style,
+	rules_json,
+	exclusions_json,
+	starting_settlers,
+	starting_gold,
+	seed,
+	wetness,
+	map_size,
+	climate,
+	player_order_json,
+	spawns_json,
+	tiles_json,
+	ruleset_canonical_json,
+	ruleset_content_hash,
+	ruleset_version,
+	updated_at
+) VALUES (
+	$1,
+	$2,
+	$3,
+	$4,
+	$5::jsonb,
+	$6::jsonb,
+	$7,
+	$8,
+	$9,
+	$10,
+	$11,
+	$12,
+	$13::jsonb,
+	$14::jsonb,
+	$15::jsonb,
+	$16::jsonb,
+	$17,
+	$18,
+	NOW()
+)`
+
 const worldTurnStateInsertQuery = `INSERT INTO world_turn_states (
 	game_id,
 	turn_number,
@@ -72,6 +119,38 @@ const worldTurnStateInsertQuery = `INSERT INTO world_turn_states (
 	$7::jsonb,
 	$8::jsonb,
 	$9,
+	NOW()
+)`
+
+const worldTurnStateV1InsertQuery = `INSERT INTO world_turn_states (
+	game_id,
+	turn_number,
+	current_player_index,
+	active_player_order_json,
+	recalculation_count,
+	rng_state,
+	ratings_json,
+	pollution_json,
+	last_recalculated_at,
+	state_schema_version,
+	revision,
+	last_event_sequence,
+	canonical_state_json,
+	updated_at
+) VALUES (
+	$1,
+	$2,
+	$3,
+	$4::jsonb,
+	$5,
+	$6,
+	$7::jsonb,
+	$8::jsonb,
+	$9,
+	$10,
+	$11,
+	$12,
+	$13::jsonb,
 	NOW()
 )`
 
@@ -162,6 +241,40 @@ func CreateInTx(tx *sqlx.Tx, snapshot WorldSnapshot) error {
 		return err
 	}
 
+	return nil
+}
+
+// CreateV1InTx creates a world with its imported ruleset pin in the same initial
+// snapshot INSERT. Existing snapshots cannot acquire a pin later because snapshots
+// are immutable at the database boundary.
+func CreateV1InTx(tx *sqlx.Tx, snapshot WorldSnapshot, pin RulesetPin, initialCanonicalStateJSON []byte) error {
+	if tx == nil {
+		return errors.New("world store requires a transaction")
+	}
+
+	normalized, err := normalizeWorldSnapshotForStorage(snapshot)
+	if err != nil {
+		return err
+	}
+	if err := validateRulesetPin(pin); err != nil {
+		return err
+	}
+	if err := validateInitialCanonicalState(initialCanonicalStateJSON); err != nil {
+		return err
+	}
+
+	var existingGameID int64
+	if err := tx.Get(&existingGameID, worldSnapshotExistsQuery, normalized.GameID); err == nil {
+		return fmt.Errorf("%w for game %d", ErrWorldAlreadyExists, normalized.GameID)
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("an error occurred while checking for an existing world for game %d: %v", normalized.GameID, err)
+	}
+	if err := insertWorldSnapshotV1(tx, normalized, pin); err != nil {
+		return err
+	}
+	if err := insertWorldTurnStateV1(tx, normalized.GameID, normalized.Turn, initialCanonicalStateJSON); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -299,6 +412,45 @@ func insertWorldSnapshot(executor sqlx.Execer, snapshot WorldSnapshot) error {
 	return nil
 }
 
+func insertWorldSnapshotV1(executor sqlx.Execer, snapshot WorldSnapshot, pin RulesetPin) error {
+	playerOrderJSON, err := CanonicalString(snapshot.PlayerOrder)
+	if err != nil {
+		return fmt.Errorf("an error occurred while encoding world player order: %v", err)
+	}
+	spawnsJSON, err := CanonicalString(snapshot.Spawns)
+	if err != nil {
+		return fmt.Errorf("an error occurred while encoding world spawns: %v", err)
+	}
+	tilesJSON, err := CanonicalString(snapshot.Tiles)
+	if err != nil {
+		return fmt.Errorf("an error occurred while encoding world tiles: %v", err)
+	}
+	if _, err := executor.Exec(
+		worldSnapshotV1InsertQuery,
+		snapshot.GameID,
+		snapshot.GameStatus,
+		snapshot.GeneratorVersion,
+		snapshot.Config.Style,
+		snapshot.Config.RulesJSON,
+		snapshot.Config.ExclusionsJSON,
+		snapshot.Config.StartingSettlers,
+		snapshot.Config.StartingGold,
+		snapshot.Config.Seed,
+		snapshot.Config.Wetness,
+		snapshot.Config.MapSize,
+		snapshot.Config.Climate,
+		playerOrderJSON,
+		spawnsJSON,
+		tilesJSON,
+		string(pin.CanonicalJSON),
+		pin.ContentHash,
+		pin.Version,
+	); err != nil {
+		return fmt.Errorf("an error occurred while storing the v1 world snapshot in the database: %v", err)
+	}
+	return nil
+}
+
 func insertWorldTurnState(executor sqlx.Execer, gameID int64, turn MutableTurnState) error {
 	normalizedTurn := turn.Clone()
 	activePlayerOrderJSON, err := CanonicalString(normalizedTurn.ActivePlayerOrder)
@@ -329,6 +481,41 @@ func insertWorldTurnState(executor sqlx.Execer, gameID int64, turn MutableTurnSt
 		return fmt.Errorf("an error occurred while storing the world turn state in the database: %v", err)
 	}
 
+	return nil
+}
+
+func insertWorldTurnStateV1(executor sqlx.Execer, gameID int64, turn MutableTurnState, initialCanonicalStateJSON []byte) error {
+	normalizedTurn := turn.Clone()
+	activePlayerOrderJSON, err := CanonicalString(normalizedTurn.ActivePlayerOrder)
+	if err != nil {
+		return fmt.Errorf("an error occurred while encoding world active player order: %v", err)
+	}
+	ratingsJSON, err := CanonicalString(normalizedTurn.Ratings)
+	if err != nil {
+		return fmt.Errorf("an error occurred while encoding world ratings: %v", err)
+	}
+	pollutionJSON, err := CanonicalString(normalizedTurn.Pollution)
+	if err != nil {
+		return fmt.Errorf("an error occurred while encoding world pollution: %v", err)
+	}
+	if _, err := executor.Exec(
+		worldTurnStateV1InsertQuery,
+		gameID,
+		normalizedTurn.TurnNumber,
+		normalizedTurn.CurrentPlayerIndex,
+		activePlayerOrderJSON,
+		normalizedTurn.RecalculationCount,
+		strconv.FormatUint(normalizedTurn.RNGState, 10),
+		ratingsJSON,
+		pollutionJSON,
+		normalizedTurn.LastRecalculatedAt,
+		StateSchemaV1,
+		int64(0),
+		int64(0),
+		string(initialCanonicalStateJSON),
+	); err != nil {
+		return fmt.Errorf("an error occurred while storing the v1 world turn state in the database: %v", err)
+	}
 	return nil
 }
 
@@ -452,6 +639,36 @@ func normalizeWorldSnapshotForStorage(snapshot WorldSnapshot) (WorldSnapshot, er
 	}
 
 	return normalized, nil
+}
+
+func validateRulesetPin(pin RulesetPin) error {
+	if len(pin.CanonicalJSON) == 0 || strings.TrimSpace(pin.ContentHash) == "" || strings.TrimSpace(pin.Version) == "" {
+		return errors.New("v1 world snapshot requires a complete ruleset pin")
+	}
+	var object map[string]json.RawMessage
+	if err := json.Unmarshal(pin.CanonicalJSON, &object); err != nil || object == nil {
+		return errors.New("v1 ruleset canonical JSON must be an object")
+	}
+	if len(pin.ContentHash) != 64 {
+		return errors.New("v1 ruleset content hash must be SHA-256")
+	}
+	for _, character := range pin.ContentHash {
+		if !(character >= '0' && character <= '9') && !(character >= 'a' && character <= 'f') {
+			return errors.New("v1 ruleset content hash must be SHA-256")
+		}
+	}
+	return nil
+}
+
+func validateInitialCanonicalState(value []byte) error {
+	if len(value) == 0 {
+		return errors.New("v1 world snapshot requires a non-empty canonical state object")
+	}
+	var object map[string]json.RawMessage
+	if err := json.Unmarshal(value, &object); err != nil || object == nil {
+		return errors.New("v1 canonical state must be a JSON object")
+	}
+	return nil
 }
 
 func decodeJSONSlice[T any](raw string) ([]T, error) {

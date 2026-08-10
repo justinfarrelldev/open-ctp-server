@@ -74,9 +74,12 @@ func (a SetPublicGameArgs) GetSessionID() *int64 {
 }
 
 type UpdateStyleArgs struct {
-	GameId    int64  `json:"game_id"`
-	SessionId *int64 `json:"session_id"`
-	Style     string `json:"style"`
+	GameId    int64   `json:"game_id"`
+	SessionId *int64  `json:"session_id"`
+	Style     string  `json:"style"`
+	MapSize   *string `json:"map_size,omitempty"`
+	Climate   *string `json:"climate,omitempty"`
+	Wetness   *int    `json:"wetness,omitempty"`
 }
 
 func (a UpdateStyleArgs) GetSessionID() *int64 {
@@ -98,6 +101,14 @@ type UpdateExclusionsArgs struct {
 	SessionId      *int64          `json:"session_id"`
 	ExclusionsJSON json.RawMessage `json:"exclusions_json"`
 }
+
+type AddAIArgs struct {
+	GameID          int64  `json:"game_id"`
+	SessionID       *int64 `json:"session_id"`
+	TargetAccountID int64  `json:"target_account_id"`
+}
+
+func (a AddAIArgs) GetSessionID() *int64 { return a.SessionID }
 
 func (a UpdateExclusionsArgs) GetSessionID() *int64 {
 	return a.SessionId
@@ -415,7 +426,7 @@ func UpdateStyle(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *aut
 		return writeGameStatusError(w, http.StatusBadRequest, "game_id must be specified")
 	}
 
-	return applyGamePatch(w, db, store, args, args.GameId, gamePatch{Style: &args.Style})
+	return applyGamePatch(w, db, store, args, args.GameId, gamePatch{Style: &args.Style, MapSize: args.MapSize, Climate: args.Climate, Wetness: args.Wetness})
 }
 
 // UpdateRules updates the rules JSON for a setup-stage game.
@@ -492,10 +503,61 @@ func UpdateExclusions(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store
 // @Failure 400 {object} error "Bad Request"
 // @Failure 404 {object} error "AI players are not supported yet"
 // @Router /game/add_ai [post]
-func AddAI(w http.ResponseWriter, r *http.Request, _ *sqlx.DB, _ *auth.SessionStore) error {
+func AddAI(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodPost {
 		return writeGameStatusError(w, http.StatusBadRequest, "invalid request; request must be a POST request")
 	}
-
-	return writeGameStatusError(w, http.StatusNotFound, "AI players are not supported yet")
+	args := AddAIArgs{}
+	if err := decodeGameJSONBody(r, &args); err != nil {
+		return writeGameStatusError(w, http.StatusBadRequest, "an error occurred while decoding the request body:"+err.Error())
+	}
+	if args.GameID == 0 || args.TargetAccountID == 0 {
+		return writeGameStatusError(w, http.StatusBadRequest, "game_id and target_account_id must be specified")
+	}
+	session, err := requireGameSession(w, store, args)
+	if err != nil {
+		return err
+	}
+	tx, err := beginGameTx(db)
+	if err != nil {
+		return fmt.Errorf("an error occurred while starting AI setup: %v", err)
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+	game, err := getGameByIDForUpdate(tx, args.GameID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return writeGameStatusError(w, http.StatusNotFound, fmt.Sprintf("no game exists with the ID %d", args.GameID))
+		}
+		return err
+	}
+	if err := ensureGameSetupMutable(w, game); err != nil {
+		return err
+	}
+	if game.OwnerAccountID == nil || *game.OwnerAccountID != int64(session.AccountID) {
+		return writeGameStatusError(w, http.StatusForbidden, "only the game owner can assign AI control")
+	}
+	var playerID int64
+	if err := tx.Get(&playerID, `SELECT id FROM game_players WHERE game_id = $1 AND account_id = $2 FOR UPDATE`, args.GameID, args.TargetAccountID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return writeGameStatusError(w, http.StatusNotFound, "target account is not a game player")
+		}
+		return err
+	}
+	if _, err := tx.Exec(`UPDATE game_players SET controller_kind = 'ai', updated_at = NOW() WHERE id = $1`, playerID); err != nil {
+		return fmt.Errorf("an error occurred while assigning AI control: %v", err)
+	}
+	updated, err := getGameWithPlayers(tx, args.GameID)
+	if err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("an error occurred while finalizing AI setup: %v", err)
+	}
+	committed = true
+	return writeGameJSONResponse(w, http.StatusOK, updated)
 }

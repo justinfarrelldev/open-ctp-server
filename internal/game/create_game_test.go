@@ -278,7 +278,7 @@ func TestGetGame_ReturnsPersistedFieldsForOwner(t *testing.T) {
 	expectGameSessionLookup(mock, 55, 7)
 	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
 		WithArgs(int64(44)).
-		WillReturnRows(gameRow(44, 7, DefaultGameStatus, "Persisted", true, true, "scenario", `["fast"]`, `{"units":["settler"]}`))
+		WillReturnRows(gameRow(44, 7, DefaultGameStatus, "Persisted", true, true, "simultaneous", `["fast"]`, `{"units":["settler"]}`))
 	mock.ExpectQuery(regexp.QuoteMeta(gamePlayerByAccountQuery)).
 		WithArgs(int64(44), int64(7)).
 		WillReturnRows(gamePlayerRows(44,
@@ -313,7 +313,7 @@ func TestGetGame_ReturnsPersistedFieldsForOwner(t *testing.T) {
 	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
 		t.Fatalf("json.Unmarshal() error = %v", err)
 	}
-	if !response.IsLocked || !response.IsPublic || response.Style != "scenario" || response.RulesJSON != `["fast"]` || response.ExclusionsJSON != `{"units":["settler"]}` {
+	if !response.IsLocked || !response.IsPublic || response.Style != "simultaneous" || response.RulesJSON != `["fast"]` || response.ExclusionsJSON != `{"units":["settler"]}` {
 		t.Fatalf("unexpected response: %+v", response)
 	}
 	if len(response.Players) != 1 || response.Players[0].Country != "Greeks" || response.Players[0].Ping != 0 {
@@ -328,7 +328,7 @@ func TestUpdateGame_PersistsAndReturnsUpdatedSetupFields(t *testing.T) {
 	sqlxDB, mock := newGameSQLMock(t)
 	store := newGameSessionStore(sqlxDB)
 
-	body := `{"game_id":44,"session_id":55,"game":{"name":"Renamed","is_locked":true,"is_public":true,"style":"scenario","rules_json":["fast"],"exclusions_json":{"units":["settler"]}}}`
+	body := `{"game_id":44,"session_id":55,"game":{"name":"Renamed","is_locked":true,"is_public":true,"style":"simultaneous","rules_json":["fast"],"exclusions_json":{"units":["settler"]}}}`
 
 	expectGameSessionLookup(mock, 55, 7)
 	mock.ExpectBegin()
@@ -336,11 +336,11 @@ func TestUpdateGame_PersistsAndReturnsUpdatedSetupFields(t *testing.T) {
 		WithArgs(int64(44)).
 		WillReturnRows(gameRow(44, 7, DefaultGameStatus, "Original", false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON))
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE games SET name = $1, is_locked = $2, is_public = $3, style = $4, rules_json = $5, exclusions_json = $6, updated_at = NOW() WHERE id = $7`)).
-		WithArgs("Renamed", true, true, "scenario", `["fast"]`, `{"units":["settler"]}`, int64(44)).
+		WithArgs("Renamed", true, true, "simultaneous", `["fast"]`, `{"units":["settler"]}`, int64(44)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
 		WithArgs(int64(44)).
-		WillReturnRows(gameRow(44, 7, DefaultGameStatus, "Renamed", true, true, "scenario", `["fast"]`, `{"units":["settler"]}`))
+		WillReturnRows(gameRow(44, 7, DefaultGameStatus, "Renamed", true, true, "simultaneous", `["fast"]`, `{"units":["settler"]}`))
 	mock.ExpectQuery(regexp.QuoteMeta(gamePlayersSelectByGameID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gamePlayerRows(44,
@@ -366,7 +366,7 @@ func TestUpdateGame_PersistsAndReturnsUpdatedSetupFields(t *testing.T) {
 	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
 		t.Fatalf("json.Unmarshal() error = %v", err)
 	}
-	if response.Name != "Renamed" || !response.IsLocked || !response.IsPublic || response.Style != "scenario" || response.RulesJSON != `["fast"]` || response.ExclusionsJSON != `{"units":["settler"]}` {
+	if response.Name != "Renamed" || !response.IsLocked || !response.IsPublic || response.Style != "simultaneous" || response.RulesJSON != `["fast"]` || response.ExclusionsJSON != `{"units":["settler"]}` {
 		t.Fatalf("unexpected updated response: %+v", response)
 	}
 	if len(response.Players) != 1 || response.Players[0].Country != "Greeks" {
@@ -426,7 +426,7 @@ func TestGameMutations_RejectNonOwners(t *testing.T) {
 	}{
 		{name: "rename", request: httptest.NewRequest(http.MethodPost, "/game/rename_game", strings.NewReader(`{"game_id":44,"session_id":55,"name":"new"}`)), invoke: RenameGameHandler},
 		{name: "delete", request: httptest.NewRequest(http.MethodDelete, "/game/delete_game", strings.NewReader(`{"game_id":44,"session_id":55}`)), invoke: DeleteGameHandler},
-		{name: "style", request: httptest.NewRequest(http.MethodPost, "/game/update_style", strings.NewReader(`{"game_id":44,"session_id":55,"style":"scenario"}`)), invoke: UpdateGameStyleHandler},
+		{name: "style", request: httptest.NewRequest(http.MethodPost, "/game/update_style", strings.NewReader(`{"game_id":44,"session_id":55,"style":"simultaneous"}`)), invoke: UpdateGameStyleHandler},
 		{name: "rules", request: httptest.NewRequest(http.MethodPost, "/game/update_rules", strings.NewReader(`{"game_id":44,"session_id":55,"rules_json":["fast"]}`)), invoke: UpdateGameRulesHandler},
 		{name: "exclusions", request: httptest.NewRequest(http.MethodPost, "/game/update_exclusions", strings.NewReader(`{"game_id":44,"session_id":55,"exclusions_json":{"units":["settler"]}}`)), invoke: UpdateGameExclusionsHandler},
 		{name: "public", request: httptest.NewRequest(http.MethodPost, "/game/set_public", strings.NewReader(`{"game_id":44,"session_id":55,"is_public":true}`)), invoke: SetGamePublicHandler},
@@ -488,17 +488,25 @@ func TestGameMutations_RejectNonSetupGames(t *testing.T) {
 	}
 }
 
-func TestAddAI_AlwaysReturns404WithExactMessage(t *testing.T) {
+func TestAddAIRejectsMissingTargetAccount(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/game/add_ai", strings.NewReader(`{"game_id":44}`))
 	rr := httptest.NewRecorder()
 
 	AddAIHandler(rr, req, nil, nil)
 
-	if rr.Code != http.StatusNotFound {
-		t.Fatalf("got status %d want %d", rr.Code, http.StatusNotFound)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("got status %d want %d", rr.Code, http.StatusBadRequest)
 	}
-	if strings.TrimSpace(rr.Body.String()) != "AI players are not supported yet" {
+	if strings.TrimSpace(rr.Body.String()) != "game_id and target_account_id must be specified" {
 		t.Fatalf("got body %q", rr.Body.String())
+	}
+}
+
+func TestCreateGameRejectsUnknownTurnMode(t *testing.T) {
+	style := "unknown-mode"
+	_, err := resolveCreateGameRecord(CreateGameArgs{Style: &style}, &auth.Session{AccountID: 7})
+	if err == nil || err.Error() != `unsupported game style "unknown-mode"` {
+		t.Fatalf("unexpected mode validation error: %v", err)
 	}
 }
 

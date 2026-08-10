@@ -9,6 +9,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
 	world "github.com/justinfarrelldev/open-ctp-server/internal/world"
 )
 
@@ -452,7 +453,26 @@ func UpdateGamePing(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *
 // @Failure 409 {object} error "Conflict"
 // @Failure 500 {object} error "Internal Server Error"
 // @Router /game/start_game [post]
+// StartGame starts a game using the production server-owned seed source.
 func StartGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
+	return startGame(w, r, db, store, generateStartWorldSeed, defaultStartGameplaySources())
+}
+
+// StartGameWithSeed is an integration-test seam. The supplied source is server
+// configuration, never request data, so clients cannot choose gameplay seeds.
+func StartGameWithSeed(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore, seedSource func() (int64, error)) error {
+	return StartGameWithSeedAndSources(w, r, db, store, seedSource, defaultStartGameplaySources())
+}
+
+// StartGameWithSeedAndSources injects only server-owned deterministic sources for integration tests.
+func StartGameWithSeedAndSources(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore, seedSource func() (int64, error), sources engine.Sources) error {
+	if seedSource == nil {
+		seedSource = generateStartWorldSeed
+	}
+	return startGame(w, r, db, store, seedSource, sources)
+}
+
+func startGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore, seedSource func() (int64, error), sources engine.Sources) error {
 	if r.Method != http.MethodPost {
 		return writeGameStatusError(w, http.StatusBadRequest, "invalid request; request must be a POST request")
 	}
@@ -520,7 +540,7 @@ func StartGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.
 		selectedCountries[country] = struct{}{}
 	}
 
-	seed, err := generateStartWorldSeed()
+	seed, err := seedSource()
 	if err != nil {
 		return fmt.Errorf("an error occurred while generating the initial world seed for game %d: %v", args.GameId, err)
 	}
@@ -534,7 +554,7 @@ func StartGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.
 	}
 	snapshot.Turn = turn.Clone()
 	snapshot = ApplyWorldSpawnCountries(snapshot, players)
-	if err := world.CreateInTx(tx, snapshot); err != nil {
+	if err := createStartedGameplay(tx, snapshot, game, players, sources); err != nil {
 		if errors.Is(err, world.ErrWorldAlreadyExists) {
 			return writeGameStatusError(w, http.StatusConflict, err.Error())
 		}

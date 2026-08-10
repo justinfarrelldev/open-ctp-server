@@ -25,9 +25,9 @@ func gamePlayerRows(gameID int64, players ...struct {
 	country   string
 	ping      int
 }) *sqlmock.Rows {
-	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "game_id", "account_id", "joined_at", "country", "ping_ms"})
+	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "game_id", "account_id", "joined_at", "country", "ping_ms", "controller_kind"})
 	for _, player := range players {
-		rows.AddRow(player.id, time.Now(), time.Now(), gameID, player.accountID, time.Now(), player.country, player.ping)
+		rows.AddRow(player.id, time.Now(), time.Now(), gameID, player.accountID, time.Now(), player.country, player.ping, "human")
 	}
 	return rows
 }
@@ -79,7 +79,7 @@ func TestCreateGame_WithLobbyCopiesLobbyMembersIntoGamePlayers(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRowWithLobby(44, 7, &lobbyID, DefaultGameStatus, "Task 11 Game", nil, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, DefaultStartingSettlers, DefaultStartingGold))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 ORDER BY joined_at ASC, id ASC`)).
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayersSelectByGameID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gamePlayerRows(44,
 			struct {
@@ -116,6 +116,9 @@ func TestCreateGame_WithLobbyCopiesLobbyMembersIntoGamePlayers(t *testing.T) {
 	if response.Players[0].Ping != 0 || response.Players[1].Ping != 0 {
 		t.Fatalf("expected default ping 0 in response, got %+v", response.Players)
 	}
+	if response.Players[0].Controller != "human" || response.Players[1].Controller != "human" {
+		t.Fatalf("expected persisted human controllers in response, got %+v", response.Players)
+	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
@@ -129,7 +132,7 @@ func TestGetGame_AllowsJoinedPlayerAndIncludesPingValues(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRowWithLobby(44, 7, nil, DefaultGameStatus, "Task 11 Game", nil, false, true, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, DefaultStartingSettlers, DefaultStartingGold))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 AND account_id = $2`)).
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayerByAccountQuery)).
 		WithArgs(int64(44), int64(8)).
 		WillReturnRows(gamePlayerRows(44,
 			struct {
@@ -139,7 +142,7 @@ func TestGetGame_AllowsJoinedPlayerAndIncludesPingValues(t *testing.T) {
 				ping      int
 			}{id: 2, accountID: 8, country: "Romans", ping: 140},
 		))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 ORDER BY joined_at ASC, id ASC`)).
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayersSelectByGameID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gamePlayerRows(44,
 			struct {
@@ -172,8 +175,8 @@ func TestGetGame_AllowsJoinedPlayerAndIncludesPingValues(t *testing.T) {
 	if len(response.Players) != 2 {
 		t.Fatalf("got %d players want 2", len(response.Players))
 	}
-	if response.Players[1].Country != "Romans" || response.Players[1].Ping != 140 {
-		t.Fatalf("unexpected player payload: %+v", response.Players[1])
+	if response.Players[1].Country != "Romans" || response.Players[1].Ping != 140 || response.Players[1].Controller != "human" {
+		t.Fatalf("unexpected persisted player payload: %+v", response.Players[1])
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
@@ -189,7 +192,7 @@ func TestKickPlayer_RemovesPlayerAndKickedPlayerCanNoLongerReadGame(t *testing.T
 	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRowWithLobby(44, 7, nil, DefaultGameStatus, "Task 11 Game", nil, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, DefaultStartingSettlers, DefaultStartingGold))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 AND account_id = $2`)).
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayerByAccountQuery)).
 		WithArgs(int64(44), int64(8)).
 		WillReturnRows(gamePlayerRows(44,
 			struct {
@@ -205,7 +208,7 @@ func TestKickPlayer_RemovesPlayerAndKickedPlayerCanNoLongerReadGame(t *testing.T
 	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRowWithLobby(44, 7, nil, DefaultGameStatus, "Task 11 Game", nil, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, DefaultStartingSettlers, DefaultStartingGold))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 ORDER BY joined_at ASC, id ASC`)).
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayersSelectByGameID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gamePlayerRows(44,
 			struct {
@@ -221,7 +224,7 @@ func TestKickPlayer_RemovesPlayerAndKickedPlayerCanNoLongerReadGame(t *testing.T
 	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRowWithLobby(44, 7, nil, DefaultGameStatus, "Task 11 Game", nil, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, DefaultStartingSettlers, DefaultStartingGold))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 AND account_id = $2`)).
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayerByAccountQuery)).
 		WithArgs(int64(44), int64(8)).
 		WillReturnError(sql.ErrNoRows)
 
@@ -258,7 +261,7 @@ func TestSelectCountry_RejectsDuplicateAndStartedGameChanges(t *testing.T) {
 		mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
 			WithArgs(int64(44)).
 			WillReturnRows(gameRowWithLobby(44, 7, nil, DefaultGameStatus, "Task 11 Game", nil, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, DefaultStartingSettlers, DefaultStartingGold))
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 AND account_id = $2`)).
+		mock.ExpectQuery(regexp.QuoteMeta(gamePlayerByAccountQuery)).
 			WithArgs(int64(44), int64(8)).
 			WillReturnRows(gamePlayerRows(44,
 				struct {
@@ -374,7 +377,7 @@ func TestUpdatePing_PersistsNonNegativeValue(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRowWithLobby(44, 7, nil, DefaultGameStatus, "Task 11 Game", nil, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, DefaultStartingSettlers, DefaultStartingGold))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 AND account_id = $2`)).
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayerByAccountQuery)).
 		WithArgs(int64(44), int64(8)).
 		WillReturnRows(gamePlayerRows(44,
 			struct {
@@ -390,7 +393,7 @@ func TestUpdatePing_PersistsNonNegativeValue(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gameRowWithLobby(44, 7, nil, DefaultGameStatus, "Task 11 Game", nil, false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON, DefaultStartingSettlers, DefaultStartingGold))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 ORDER BY joined_at ASC, id ASC`)).
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayersSelectByGameID)).
 		WithArgs(int64(44)).
 		WillReturnRows(gamePlayerRows(44,
 			struct {
@@ -453,7 +456,7 @@ func TestStartGame_StartsSetupGameAndBlocksLaterSetupMutations(t *testing.T) {
 	}
 	snapshot, turn := startedWorldFixture(t, setupGame, players)
 
-	expectSuccessfulStartGame(mock, snapshot, turn, &lobbyID, &startedAt)
+	expectSuccessfulStartGame(t, mock, snapshot, turn, &lobbyID, &startedAt)
 
 	expectGameSessionLookup(mock, 55, 7)
 	mock.ExpectBegin()
@@ -464,7 +467,9 @@ func TestStartGame_StartsSetupGameAndBlocksLaterSetupMutations(t *testing.T) {
 
 	startReq := httptest.NewRequest(http.MethodPost, "/game/start_game", strings.NewReader(`{"game_id":44,"session_id":55}`))
 	startRR := httptest.NewRecorder()
-	StartGameHandler(startRR, startReq, sqlxDB, store)
+	if err := StartGameWithSeedAndSources(startRR, startReq, sqlxDB, store, func() (int64, error) { return testWorldSnapshotSeed, nil }, testStartGameplaySources()); err != nil {
+		t.Fatalf("StartGameWithSeedAndSources() error = %v", err)
+	}
 
 	if startRR.Code != http.StatusOK {
 		t.Fatalf("start got status %d want %d", startRR.Code, http.StatusOK)

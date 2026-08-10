@@ -260,3 +260,75 @@ func TestWorldStoreRollbackOnCreateFailure(t *testing.T) {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
 }
+
+func TestCreateV1InTxWritesImmutableRulesetPinWithSnapshot(t *testing.T) {
+	sqlxDB, mock := newWorldSQLMock(t)
+	mock.ExpectBegin()
+	tx, err := sqlxDB.Beginx()
+	if err != nil {
+		t.Fatalf("Beginx() error = %v", err)
+	}
+
+	snapshot := FixtureWorldSnapshot()
+	pin := RulesetPin{
+		CanonicalJSON: []byte(`{"version":"ctp2-v1"}`),
+		ContentHash:   "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+		Version:       "ctp2-v1",
+	}
+	playerOrderJSON := MustCanonicalString(t, snapshot.PlayerOrder)
+	spawnsJSON := MustCanonicalString(t, snapshot.Spawns)
+	tilesJSON := MustCanonicalString(t, snapshot.Tiles)
+	activePlayerOrderJSON := MustCanonicalString(t, snapshot.Turn.ActivePlayerOrder)
+	ratingsJSON := MustCanonicalString(t, snapshot.Turn.Ratings)
+	pollutionJSON := MustCanonicalString(t, snapshot.Turn.Pollution)
+
+	mock.ExpectQuery(regexp.QuoteMeta(worldSnapshotExistsQuery)).WithArgs(snapshot.GameID).WillReturnError(sql.ErrNoRows)
+	mock.ExpectExec(regexp.QuoteMeta(worldSnapshotV1InsertQuery)).WithArgs(
+		snapshot.GameID, snapshot.GameStatus, snapshot.GeneratorVersion, snapshot.Config.Style,
+		snapshot.Config.RulesJSON, snapshot.Config.ExclusionsJSON, snapshot.Config.StartingSettlers,
+		snapshot.Config.StartingGold, snapshot.Config.Seed, snapshot.Config.Wetness, snapshot.Config.MapSize,
+		snapshot.Config.Climate, playerOrderJSON, spawnsJSON, tilesJSON, string(pin.CanonicalJSON), pin.ContentHash, pin.Version,
+	).WillReturnResult(sqlmock.NewResult(0, 1))
+	initialCanonicalStateJSON := []byte(`{"phase":"setup"}`)
+	mock.ExpectExec(regexp.QuoteMeta(worldTurnStateV1InsertQuery)).WithArgs(
+		snapshot.GameID, snapshot.Turn.TurnNumber, snapshot.Turn.CurrentPlayerIndex, activePlayerOrderJSON,
+		snapshot.Turn.RecalculationCount, "99", ratingsJSON, pollutionJSON, snapshot.Turn.LastRecalculatedAt,
+		StateSchemaV1, int64(0), int64(0), string(initialCanonicalStateJSON),
+	).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectRollback()
+
+	if err := CreateV1InTx(tx, snapshot, pin, initialCanonicalStateJSON); err != nil {
+		t.Fatalf("CreateV1InTx() error = %v", err)
+	}
+	if err := tx.Rollback(); err != nil {
+		t.Fatalf("Rollback() error = %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet SQL expectations: %v", err)
+	}
+}
+
+func TestCreateV1InTxRejectsInvalidCanonicalStateBeforeWrites(t *testing.T) {
+	sqlxDB, mock := newWorldSQLMock(t)
+	mock.ExpectBegin()
+	tx, err := sqlxDB.Beginx()
+	if err != nil {
+		t.Fatalf("Beginx() error = %v", err)
+	}
+	mock.ExpectRollback()
+
+	pin := RulesetPin{
+		CanonicalJSON: []byte(`{"version":"ctp2-v1"}`),
+		ContentHash:   "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+		Version:       "ctp2-v1",
+	}
+	if err := CreateV1InTx(tx, FixtureWorldSnapshot(), pin, []byte(`[]`)); err == nil {
+		t.Fatal("CreateV1InTx() accepted array canonical state")
+	}
+	if err := tx.Rollback(); err != nil {
+		t.Fatalf("Rollback() error = %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("invalid canonical state performed partial SQL writes: %v", err)
+	}
+}

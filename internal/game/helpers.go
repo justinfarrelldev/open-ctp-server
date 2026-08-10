@@ -12,6 +12,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
 const (
@@ -20,18 +21,18 @@ const (
 	ErrorCountryAlreadyTaken = "country has already been selected by another player"
 )
 
-const gameSelectByID = `SELECT id, created_at, updated_at, started_at, lobby_id, owner_account_id, name, password_protected, password, is_locked, is_public, style, rules_json, exclusions_json, status, starting_settlers, starting_gold
+const gameSelectByID = `SELECT id, created_at, updated_at, started_at, lobby_id, owner_account_id, name, password_protected, password, is_locked, is_public, style, rules_json, exclusions_json, status, starting_settlers, starting_gold, map_size, climate, wetness
 FROM games
 WHERE id = $1`
 
-const gameSelectByIDForUpdate = `SELECT id, created_at, updated_at, started_at, lobby_id, owner_account_id, name, password_protected, password, is_locked, is_public, style, rules_json, exclusions_json, status, starting_settlers, starting_gold
+const gameSelectByIDForUpdate = `SELECT id, created_at, updated_at, started_at, lobby_id, owner_account_id, name, password_protected, password, is_locked, is_public, style, rules_json, exclusions_json, status, starting_settlers, starting_gold, map_size, climate, wetness
 FROM games
 WHERE id = $1
 FOR UPDATE`
 
-const gamePlayersSelectByGameID = `SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 ORDER BY joined_at ASC, id ASC`
+const gamePlayersSelectByGameID = `SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms, controller_kind FROM game_players WHERE game_id = $1 ORDER BY joined_at ASC, id ASC`
 
-const gamePlayerByAccountQuery = `SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms FROM game_players WHERE game_id = $1 AND account_id = $2`
+const gamePlayerByAccountQuery = `SELECT id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms, controller_kind FROM game_players WHERE game_id = $1 AND account_id = $2`
 
 const lobbyByIDForGameQuery = `SELECT id, closed_at FROM lobbies WHERE id = $1`
 
@@ -55,6 +56,9 @@ type gamePatch struct {
 	IsLocked          *bool
 	IsPublic          *bool
 	Style             *string
+	MapSize           *string
+	Climate           *string
+	Wetness           *int
 	RulesJSON         json.RawMessage
 	HasRulesJSON      bool
 	ExclusionsJSON    json.RawMessage
@@ -67,7 +71,7 @@ type lobbyDependency struct {
 }
 
 func (p gamePatch) hasAnyField() bool {
-	return p.Name != nil || p.IsLocked != nil || p.IsPublic != nil || p.Style != nil || p.HasRulesJSON || p.HasExclusionsJSON
+	return p.Name != nil || p.IsLocked != nil || p.IsPublic != nil || p.Style != nil || p.MapSize != nil || p.Climate != nil || p.Wetness != nil || p.HasRulesJSON || p.HasExclusionsJSON
 }
 
 func beginGameTx(db *sqlx.DB) (*sqlx.Tx, error) {
@@ -223,8 +227,37 @@ func buildGamePatchUpdate(patch gamePatch) (string, []any, error) {
 		if trimmed == "" {
 			return "", nil, errors.New("style must be specified")
 		}
+		if !supportedGameStyle(trimmed) {
+			return "", nil, fmt.Errorf("unsupported game style %q", trimmed)
+		}
 		fields = append(fields, fmt.Sprintf("style = $%d", paramIndex))
 		params = append(params, trimmed)
+		paramIndex++
+	}
+	if patch.MapSize != nil {
+		value := strings.TrimSpace(*patch.MapSize)
+		if value != "duel" && value != "small" && value != "medium" && value != "large" && value != "huge" {
+			return "", nil, errors.New("unsupported map_size")
+		}
+		fields = append(fields, fmt.Sprintf("map_size = $%d", paramIndex))
+		params = append(params, value)
+		paramIndex++
+	}
+	if patch.Climate != nil {
+		value := strings.TrimSpace(*patch.Climate)
+		if value != "arid" && value != "cold" && value != "temperate" && value != "tropical" {
+			return "", nil, errors.New("unsupported climate")
+		}
+		fields = append(fields, fmt.Sprintf("climate = $%d", paramIndex))
+		params = append(params, value)
+		paramIndex++
+	}
+	if patch.Wetness != nil {
+		if *patch.Wetness < 0 || *patch.Wetness > 100 {
+			return "", nil, errors.New("wetness must be between 0 and 100")
+		}
+		fields = append(fields, fmt.Sprintf("wetness = $%d", paramIndex))
+		params = append(params, *patch.Wetness)
 		paramIndex++
 	}
 	if patch.HasRulesJSON {
@@ -252,6 +285,15 @@ func buildGamePatchUpdate(patch gamePatch) (string, []any, error) {
 
 	fields = append(fields, "updated_at = NOW()")
 	return strings.Join(fields, ", "), params, nil
+}
+
+func supportedGameStyle(style string) bool {
+	for _, mode := range rules.SupportedManifest().Modes {
+		if style == mode {
+			return true
+		}
+	}
+	return false
 }
 
 func validateLobbyDependency(executor gameGetter, lobbyID int64) error {

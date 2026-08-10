@@ -19,7 +19,7 @@ const (
 	// - ctp2/ctp2_released_game/ctp2_data/default/gamedata/DiffDB.txt
 	// For the user-facing server setup baseline we keep the human-created game defaults at
 	// 1 settler and 100 starting gold, with Task 11+ left to handle AI/difficulty-specific variance.
-	DefaultGameStyle           = "standard_ctp2"
+	DefaultGameStyle           = "sequential"
 	DefaultGameStatus          = "setup"
 	DefaultStartingSettlers    = 1
 	DefaultStartingGold        = 100
@@ -134,6 +134,9 @@ func resolveCreateGameRecord(args CreateGameArgs, session *auth.Session) (create
 	}
 	if args.Style != nil && strings.TrimSpace(*args.Style) != "" {
 		record.Style = strings.TrimSpace(*args.Style)
+	}
+	if !supportedGameStyle(record.Style) {
+		return createGameRecord{}, fmt.Errorf("unsupported game style %q", record.Style)
 	}
 	if args.StartingSettlers != nil {
 		if *args.StartingSettlers < 0 {
