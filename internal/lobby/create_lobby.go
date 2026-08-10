@@ -1,6 +1,7 @@
 package lobby
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -113,6 +114,9 @@ RETURNING id`, *args.Lobby.Name, ownerName, accountID, isMuted, isPublic).Scan(&
 	}
 	committed = true
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	return nil
+	return json.NewEncoder(w).Encode(struct {
+		ID int64 `json:"id"`
+	}{ID: lobbyID})
 }
