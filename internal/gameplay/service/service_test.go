@@ -19,7 +19,7 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/store"
-	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/testkit"
+	"github.com/justinfarrelldev/open-ctp-server/internal/e2e/testkit"
 	_ "github.com/lib/pq"
 )
 
