@@ -16,6 +16,7 @@ import (
 	"github.com/didip/tollbooth/v7/limiter"
 	"github.com/jmoiron/sqlx"
 	"github.com/justinfarrelldev/open-ctp-server/internal/e2e/memorysql"
+	e2esetup "github.com/justinfarrelldev/open-ctp-server/internal/e2e/setup"
 	"github.com/justinfarrelldev/open-ctp-server/internal/game"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
 	serverruntime "github.com/justinfarrelldev/open-ctp-server/internal/runtime"
@@ -31,14 +32,28 @@ func TestPublicOrderedSetupStartsAndRestartsForEveryCount(t *testing.T) {
 					controllers[index] = engine.ControllerAI
 				}
 			}
-			testPublicOrderedSetup(t, orderedSlots(controllers))
+			testPublicOrderedSetup(t, orderedSlots(controllers), 8)
 		})
 	}
 }
 
-func testPublicOrderedSetup(t *testing.T, slots []orderedSetupSlot) {
+func TestPublicOrderedSetupPersistsEveryImportedPlayableCivilization(t *testing.T) {
+	const importedCount = 10
+	for index := 1; index <= importedCount; index++ {
+		t.Run(syntheticCivilizationID(index), func(t *testing.T) {
+			other := index%importedCount + 1
+			slots := []e2esetup.Slot{
+				{Slot: 1, CountryRecordID: syntheticCivilizationID(index), ControllerKind: engine.ControllerHuman},
+				{Slot: 2, CountryRecordID: syntheticCivilizationID(other), ControllerKind: engine.ControllerAI},
+			}
+			testPublicOrderedSetup(t, slots, importedCount)
+		})
+	}
+}
+
+func testPublicOrderedSetup(t *testing.T, slots []e2esetup.Slot, importedCount int) {
 	t.Helper()
-	if err := validateOrderedSlots(slots, importedPlayableCivilizations(t)); err != nil {
+	if err := e2esetup.Validate(importedPlayableRuleset(t, importedCount), slots); err != nil {
 		t.Fatal(err)
 	}
 	namespace := t.Name()
