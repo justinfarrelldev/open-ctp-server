@@ -46,7 +46,7 @@ func TestPuppeteerPlansOnlyFromDetachedPublicBytes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	history, err := json.Marshal([]map[string]any{{"event": "public-turn-started", "revision": 4}})
+	history, err := json.Marshal([]PublicExplorationStep{{CommandType: engine.CommandMoveUnit, DestinationTileID: "visible-origin", Sequence: 4}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,6 +76,45 @@ func TestPuppeteerPlansOnlyFromDetachedPublicBytes(t *testing.T) {
 	}
 	if client.command.Route != "pass" || client.command.SessionID != 70 || client.command.ExpectedRevision != 4 || client.command.IdempotencyKey != "puppet-pass-4" {
 		t.Fatalf("unexpected public human command: %#v", client.command)
+	}
+}
+
+func TestPuppeteerUsesSerializedPublicHistoryForProductionPlanning(t *testing.T) {
+	projection, err := json.Marshal(visibility.Projection{
+		Tiles: []visibility.TileProjection{
+			{ID: "origin", X: 0, Y: 0, Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{engine.DomainLand}, Accessible: true}},
+			{ID: "visited", X: -1, Y: 0, Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{engine.DomainLand}, Accessible: true}},
+			{ID: "fresh", X: 1, Y: 0, Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{engine.DomainLand}, Accessible: true}},
+		},
+		Units:  []visibility.UnitProjection{{ID: "scout", OwnerID: "account-7", TileID: "origin", Domain: engine.DomainLand, Movement: 1, ArmyID: "army"}},
+		Cities: []visibility.CityProjection{{ID: "home", OwnerID: "account-7", TileID: "origin"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	history, err := json.Marshal([]PublicExplorationStep{{CommandType: engine.CommandMoveUnit, DestinationTileID: "visited", Sequence: 7}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := &recordingHumanHTTPClient{}
+	result, err := (Puppeteer{Client: client}).SelectAndSubmit(context.Background(), HumanActor{GameID: 44, SessionID: 70}, PlanningInput{
+		ActorPlayerID: "account-7", ExpectedRevision: 4, PublicProjectionJSON: projection, PublicHistoryJSON: history,
+		TestHarnessPolicyLevel: TestHarnessPolicyLevelProductionFirst,
+	}, "history-aware-move")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload struct {
+		Path []string `json:"path"`
+	}
+	if err := json.Unmarshal(result.Candidate.Payload, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if result.Candidate.Type != engine.CommandMoveUnit || len(payload.Path) != 1 || payload.Path[0] != "fresh" {
+		t.Fatalf("history-aware puppet candidate = %#v payload=%#v, want fresh visible step", result.Candidate, payload)
+	}
+	if client.command.Route != "move" {
+		t.Fatalf("history-aware puppet route = %q, want move", client.command.Route)
 	}
 }
 

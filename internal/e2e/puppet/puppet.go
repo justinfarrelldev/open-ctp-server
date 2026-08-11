@@ -37,6 +37,13 @@ type RawPlanningInput struct {
 	PublicHistoryJSON    []byte
 }
 
+// PublicExplorationStep is the serialized, actor-visible movement history accepted by the test harness.
+type PublicExplorationStep struct {
+	CommandType       string `json:"command_type"`
+	DestinationTileID string `json:"destination_tile_id"`
+	Sequence          int64  `json:"sequence"`
+}
+
 type HumanActor struct {
 	GameID    int64
 	SessionID int64
@@ -77,16 +84,16 @@ func (p Puppeteer) SelectAndSubmit(ctx context.Context, actor HumanActor, input 
 	if !json.Valid(input.PublicProjectionJSON) || !json.Valid(input.PublicHistoryJSON) {
 		return Result{}, errors.New("puppet public planning bytes are invalid")
 	}
-	var history []json.RawMessage
-	if err := json.Unmarshal(input.PublicHistoryJSON, &history); err != nil {
-		return Result{}, errors.New("puppet public history must be a JSON array")
+	history, err := decodePublicHistory(input.PublicHistoryJSON)
+	if err != nil {
+		return Result{}, err
 	}
 	projection := cloneBytes(input.PublicProjectionJSON)
 	publicHistory := cloneBytes(input.PublicHistoryJSON)
 	if p.ObservePlanningInput != nil {
 		p.ObservePlanningInput(RawPlanningInput{PublicProjectionJSON: cloneBytes(projection), PublicHistoryJSON: cloneBytes(publicHistory)})
 	}
-	candidates, err := ai.Plan(projection, input.ActorPlayerID)
+	candidates, err := ai.PlanWithHistory(projection, input.ActorPlayerID, history)
 	if err != nil {
 		return Result{}, fmt.Errorf("plan puppet command: %w", err)
 	}
@@ -106,6 +113,28 @@ func (p Puppeteer) SelectAndSubmit(ctx context.Context, actor HumanActor, input 
 		return Result{}, err
 	}
 	return Result{Candidate: selected, Revision: submitted.Revision}, nil
+}
+
+func decodePublicHistory(data []byte) ([]ai.ExplorationStep, error) {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	var public []PublicExplorationStep
+	if err := decoder.Decode(&public); err != nil {
+		return nil, errors.New("puppet public history must be a JSON array of exploration steps")
+	}
+	if decoder.Decode(&struct{}{}) != io.EOF {
+		return nil, errors.New("puppet public history must contain one JSON value")
+	}
+	history := make([]ai.ExplorationStep, len(public))
+	var previousSequence int64
+	for index, step := range public {
+		if step.CommandType != engine.CommandMoveUnit || step.DestinationTileID == "" || step.Sequence <= previousSequence {
+			return nil, errors.New("puppet public exploration history is invalid")
+		}
+		history[index] = ai.ExplorationStep{CommandType: step.CommandType, DestinationTileID: step.DestinationTileID, Sequence: step.Sequence}
+		previousSequence = step.Sequence
+	}
+	return history, nil
 }
 
 func selectCandidate(candidates []ai.Candidate, level TestHarnessPolicyLevel) (ai.Candidate, error) {

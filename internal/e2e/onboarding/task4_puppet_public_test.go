@@ -37,6 +37,10 @@ func TestPuppetCommandTraversesAuthenticatedHumanHTTPPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	outsider, err := setupClient.signup(ctx, "puppet-outsider", "puppet-outsider@example.invalid")
+	if err != nil {
+		t.Fatal(err)
+	}
 	lobbyID, err := setupClient.createLobby(ctx, owner.session, "puppet-public-path")
 	if err != nil {
 		t.Fatal(err)
@@ -80,8 +84,13 @@ func TestPuppetCommandTraversesAuthenticatedHumanHTTPPath(t *testing.T) {
 	input := puppet.PlanningInput{ActorPlayerID: ownerPlayerID, ExpectedRevision: 1, PublicProjectionJSON: []byte(`{}`), PublicHistoryJSON: []byte(`[]`), TestHarnessPolicyLevel: puppet.TestHarnessPolicyLevelPassOnly}
 	_, err = puppeteer.SelectAndSubmit(ctx, puppet.HumanActor{GameID: gameID, SessionID: other.session}, input, "wrong-human-session")
 	var publicError *puppet.HTTPError
-	if !errors.As(err, &publicError) || publicError.Status < http.StatusBadRequest {
-		t.Fatalf("wrong human actor did not fail through public path: %v", err)
+	if !errors.As(err, &publicError) || publicError.Status != http.StatusUnprocessableEntity {
+		t.Fatalf("out-of-turn human status = %v, want %d", err, http.StatusUnprocessableEntity)
+	}
+	_, err = puppeteer.SelectAndSubmit(ctx, puppet.HumanActor{GameID: gameID, SessionID: outsider.session}, input, "nonmember-human-session")
+	publicError = nil
+	if !errors.As(err, &publicError) || publicError.Status != http.StatusForbidden {
+		t.Fatalf("nonmember human status = %v, want %d", err, http.StatusForbidden)
 	}
 	result, err := puppeteer.SelectAndSubmit(ctx, puppet.HumanActor{GameID: gameID, SessionID: owner.session}, input, "authorized-human-session")
 	if err != nil {
