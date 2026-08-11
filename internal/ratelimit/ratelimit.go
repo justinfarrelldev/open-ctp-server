@@ -50,6 +50,11 @@ func NewLobbyGameLimiter() *limiter.Limiter {
 	return newLimiter(120.0 / 60.0)
 }
 
+// NewGameplayCommandLimiter returns the limiter shared by gameplay mutations.
+func NewGameplayCommandLimiter() *limiter.Limiter {
+	return newLimiter(120.0 / 60.0)
+}
+
 // NewLobbySSELimiter returns the limiter used for lobby SSE connections.
 func NewLobbySSELimiter() *limiter.Limiter {
 	return newLimiter(20.0 / 60.0)

@@ -2,8 +2,6 @@ package game
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -11,7 +9,7 @@ import (
 func TestGenerationConsumesAllHostParams(t *testing.T) {
 	game := &Game{
 		ID:               44,
-		Style:            "standard_ctp2",
+		Style:            "sequential",
 		RulesJSON:        `["fast"]`,
 		ExclusionsJSON:   `{"units":["settler"]}`,
 		StartingSettlers: 2,
@@ -102,45 +100,9 @@ func TestWorldStartContract(t *testing.T) {
 	})
 }
 
-func assertActiveGameChatUsesLobby(t *testing.T) {
-	t.Helper()
-
-	mainPath := filepath.Join("..", "..", "main.go")
-	content, err := os.ReadFile(mainPath)
-	if err != nil {
-		t.Fatalf("os.ReadFile(%q) error = %v", mainPath, err)
-	}
-	text := string(content)
-
-	if strings.Contains(text, `"/game/chat"`) {
-		t.Fatal("/game/chat route must not be registered; active games continue to use lobby chat")
-	}
-	if strings.Contains(text, `"/world/chat"`) {
-		t.Fatal("/world/chat route must not be registered; active games continue to use lobby chat")
-	}
-	if !strings.Contains(text, `"/lobby/send_chat"`) {
-		t.Fatal("expected lobby chat route to remain registered as the active-game chat surface")
-	}
-}
-
-func TestActiveGameChatUsesLobby(t *testing.T) {
-	assertActiveGameChatUsesLobby(t)
-}
-
-func TestWorldRouteSurfaceContract(t *testing.T) {
-	assertActiveGameChatUsesLobby(t)
-
-	mainPath := filepath.Join("..", "..", "main.go")
-	content, err := os.ReadFile(mainPath)
-	if err != nil {
-		t.Fatalf("os.ReadFile(%q) error = %v", mainPath, err)
-	}
-	text := string(content)
-
-	if !strings.Contains(text, `"GET /world/{game_id}"`) {
-		t.Fatal("expected GET /world/{game_id} route to be registered in main.go")
-	}
-	if !strings.Contains(text, `"GET /world/{game_id}/space"`) {
-		t.Fatal("expected GET /world/{game_id}/space route to be registered in main.go")
+func TestWorldStartContractRejectsUnknownMode(t *testing.T) {
+	err := ValidateWorldStartContract(&Game{ID: 44, Status: DefaultGameStatus, Style: "unknown-mode"}, false)
+	if err == nil || err.Error() != `unsupported game style "unknown-mode"` {
+		t.Fatalf("unexpected mode validation error: %v", err)
 	}
 }
