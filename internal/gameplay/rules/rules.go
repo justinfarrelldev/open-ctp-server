@@ -44,6 +44,7 @@ var CatalogFiles = []CatalogFile{
 	{Filename: "terrain.txt", Kind: "terrain", Prefix: "TERRAIN_"},
 	{Filename: "Const.txt", Kind: "rules", Prefix: "CONST_"},
 	{Filename: "EndGameObjects.txt", Kind: "endgame", Prefix: "ENDGAME_"},
+	{Filename: "Civilisation.txt", Kind: "civilization", Prefix: "CIVILIZATION_"},
 }
 
 type ImportConfig struct {
@@ -292,6 +293,26 @@ func Import(config ImportConfig) (Ruleset, error) {
 	return Ruleset{CompatibilityVersion: CTP2CompatibilityVersion, Manifest: normalizedManifest(manifest), Records: parsed, CanonicalJSON: canonical, ContentHash: hex.EncodeToString(digest[:])}, nil
 }
 
+// PlayableCivilizationIDs returns stable imported IDs that are explicitly selectable.
+// Missing or malformed metadata is rejected during import, so special and barbarian
+// records remain unavailable unless all three metadata fields are present and false.
+func (r Ruleset) PlayableCivilizationIDs() ([]string, error) {
+	ids := make([]string, 0)
+	for _, record := range r.Records {
+		if record.Kind != "civilization" {
+			continue
+		}
+		if record.Tags["Playable"] == "true" && record.Tags["Special"] == "false" && record.Tags["Barbarian"] == "false" {
+			ids = append(ids, record.ID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil, errors.New("no selectable playable civilizations")
+	}
+	sort.Strings(ids)
+	return ids, nil
+}
+
 func catalogFileFor(name string) (CatalogFile, bool) {
 	isSynthetic := strings.HasSuffix(strings.ToLower(name), ".ctp2synthetic")
 	base := strings.TrimSuffix(name, ".ctp2synthetic")
@@ -371,6 +392,9 @@ func validateCTP2Tags(kind string, id token, tags map[string]string, path string
 	case "endgame":
 		allowed = map[string]bool{"TurnsToActivate": true}
 		required = []string{"TurnsToActivate"}
+	case "civilization":
+		allowed = map[string]bool{"Playable": true, "Special": true, "Barbarian": true}
+		required = []string{"Playable", "Special", "Barbarian"}
 	}
 	for key, value := range tags {
 		if !allowed[key] {
@@ -379,6 +403,11 @@ func validateCTP2Tags(kind string, id token, tags map[string]string, path string
 		if key == "MaxMovePoints" || key == "TurnsToActivate" {
 			if _, err := strconv.Atoi(value); err != nil {
 				return importError(ErrorMalformedValue, path, id.line, id.value, key+" must be an integer")
+			}
+		}
+		if kind == "civilization" {
+			if value != "true" && value != "false" {
+				return importError(ErrorMalformedValue, path, id.line, id.value, key+" must be true or false")
 			}
 		}
 	}

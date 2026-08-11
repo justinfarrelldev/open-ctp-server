@@ -24,6 +24,46 @@ func TestParseCTP2StyleSyntheticCatalog(t *testing.T) {
 	}
 }
 
+func TestPlayableCivilizationMetadataFailsClosed(t *testing.T) {
+	playable := "CIVILIZATION_TEST_01 { Playable true Special false Barbarian false }"
+	ruleset, err := Import(ImportConfig{Directory: writeCatalog(t, map[string]string{"Civilisation.ctp2synthetic": playable})})
+	if err != nil {
+		t.Fatalf("Import() error = %v", err)
+	}
+	ids, err := ruleset.PlayableCivilizationIDs()
+	if err != nil || strings.Join(ids, ",") != "CIVILIZATION_TEST_01" {
+		t.Fatalf("PlayableCivilizationIDs() = %v, %v", ids, err)
+	}
+
+	for name, record := range map[string]string{
+		"special":      "CIVILIZATION_TEST_02 { Playable true Special true Barbarian false }",
+		"barbarian":    "CIVILIZATION_TEST_03 { Playable true Special false Barbarian true }",
+		"not playable": "CIVILIZATION_TEST_04 { Playable false Special false Barbarian false }",
+	} {
+		t.Run(name, func(t *testing.T) {
+			imported, err := Import(ImportConfig{Directory: writeCatalog(t, map[string]string{"Civilisation.ctp2synthetic": record})})
+			if err != nil {
+				t.Fatalf("Import() error = %v", err)
+			}
+			if _, err := imported.PlayableCivilizationIDs(); err == nil {
+				t.Fatal("unselectable civilization was accepted")
+			}
+		})
+	}
+
+	for name, record := range map[string]string{
+		"unknown field":  "CIVILIZATION_TEST_05 { Playable true Special false Barbarian false Hidden true }",
+		"malformed bool": "CIVILIZATION_TEST_06 { Playable yes Special false Barbarian false }",
+		"missing field":  "CIVILIZATION_TEST_07 { Playable true Special false }",
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := Import(ImportConfig{Directory: writeCatalog(t, map[string]string{"Civilisation.ctp2synthetic": record})}); err == nil {
+				t.Fatal("invalid civilization metadata was accepted")
+			}
+		})
+	}
+}
+
 func TestParseRejectsCustomAndUnsupportedCTP2ConstructsWithLocation(t *testing.T) {
 	t.Parallel()
 
