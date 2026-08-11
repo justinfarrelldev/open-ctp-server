@@ -53,6 +53,12 @@ func assertRouteSurface(handler http.Handler) error {
 	}{
 		{method: http.MethodPost, path: "/game/chat"},
 		{method: http.MethodPost, path: "/world/chat"},
+		{method: http.MethodGet, path: "/diagnostic"},
+		{method: http.MethodPost, path: "/puppet"},
+		{method: http.MethodGet, path: "/game/44/diagnostic"},
+		{method: http.MethodPost, path: "/game/44/puppet"},
+		{method: http.MethodGet, path: "/game/44/events/diagnostic"},
+		{method: http.MethodGet, path: "/game/44/events/puppet"},
 	} {
 		status := routeStatus(handler, route.method, route.path)
 		if status != http.StatusNotFound && status != http.StatusMethodNotAllowed {
