@@ -64,6 +64,8 @@ func TestValidateRejectsInvalidSlots(t *testing.T) {
 		"missing slot":       {{Slot: 1, CountryRecordID: civilizationID(1), ControllerKind: engine.ControllerHuman}, {Slot: 3, CountryRecordID: civilizationID(2), ControllerKind: engine.ControllerAI}},
 		"duplicate country":  {{Slot: 1, CountryRecordID: civilizationID(1), ControllerKind: engine.ControllerHuman}, {Slot: 2, CountryRecordID: civilizationID(1), ControllerKind: engine.ControllerAI}},
 		"unknown country":    {{Slot: 1, CountryRecordID: civilizationID(1), ControllerKind: engine.ControllerHuman}, {Slot: 2, CountryRecordID: "CIVILIZATION_UNKNOWN", ControllerKind: engine.ControllerAI}},
+		"special country":    {{Slot: 1, CountryRecordID: civilizationID(1), ControllerKind: engine.ControllerHuman}, {Slot: 2, CountryRecordID: "CIVILIZATION_SPECIAL", ControllerKind: engine.ControllerAI}},
+		"barbarian country":  {{Slot: 1, CountryRecordID: civilizationID(1), ControllerKind: engine.ControllerHuman}, {Slot: 2, CountryRecordID: "CIVILIZATION_BARBARIAN", ControllerKind: engine.ControllerAI}},
 		"unknown controller": {{Slot: 1, CountryRecordID: civilizationID(1), ControllerKind: engine.ControllerHuman}, {Slot: 2, CountryRecordID: civilizationID(2), ControllerKind: "robot"}},
 	}
 	for name, slots := range cases {
