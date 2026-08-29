@@ -1,0 +1,32 @@
+Task 4 matrix fail-closed proof
+===============================
+
+RED start (before implementation)
+---------------------------------
+Command: go test ./internal/gameplay/rules -run '^TestTask4Manifest' -count=1
+Exit: 1
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules.test]
+internal/gameplay/rules/mechanic_matrix_task4_test.go:15:31: manifest.MechanicMatrix undefined (type SupportedRulesManifest has no field or method MechanicMatrix)
+internal/gameplay/rules/mechanic_matrix_task4_test.go:18:31: manifest.SyntheticContracts undefined (type SupportedRulesManifest has no field or method SyntheticContracts)
+internal/gameplay/rules/mechanic_matrix_task4_test.go:21:93: undefined: requiredMechanicFamilies
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [build failed]
+FAIL
+
+GREEN fail-closed validation
+----------------------------
+Command: go test ./internal/gameplay/rules -run 'TestTask4ManifestRejectsIncludedMechanicMissingRuntimeLayer|TestTask4ManifestRejectsIncludedMechanicMissingAPIStatus|TestTask4ManifestRejectsUnknownMechanicStatus' -count=1 -v
+Exit: 0
+=== RUN   TestTask4ManifestRejectsIncludedMechanicMissingRuntimeLayer
+=== PAUSE TestTask4ManifestRejectsIncludedMechanicMissingRuntimeLayer
+=== RUN   TestTask4ManifestRejectsIncludedMechanicMissingAPIStatus
+=== PAUSE TestTask4ManifestRejectsIncludedMechanicMissingAPIStatus
+=== RUN   TestTask4ManifestRejectsUnknownMechanicStatus
+=== PAUSE TestTask4ManifestRejectsUnknownMechanicStatus
+=== CONT  TestTask4ManifestRejectsIncludedMechanicMissingRuntimeLayer
+--- PASS: TestTask4ManifestRejectsIncludedMechanicMissingRuntimeLayer (0.00s)
+=== CONT  TestTask4ManifestRejectsUnknownMechanicStatus
+=== CONT  TestTask4ManifestRejectsIncludedMechanicMissingAPIStatus
+--- PASS: TestTask4ManifestRejectsUnknownMechanicStatus (0.00s)
+--- PASS: TestTask4ManifestRejectsIncludedMechanicMissingAPIStatus (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules	0.003s

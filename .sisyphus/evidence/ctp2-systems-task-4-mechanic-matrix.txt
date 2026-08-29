@@ -1,0 +1,38 @@
+Task 4 mechanic matrix proof
+===========================
+
+Command: go test ./internal/gameplay/rules -run 'TestTask4ManifestMechanicMatrixAndContractsAreComplete|TestProtectedAssetGuard' -count=1 -v
+Exit: 0
+=== RUN   TestTask4ManifestMechanicMatrixAndContractsAreComplete
+=== PAUSE TestTask4ManifestMechanicMatrixAndContractsAreComplete
+=== RUN   TestProtectedAssetGuard
+=== PAUSE TestProtectedAssetGuard
+=== RUN   TestProtectedAssetGuardRejectsTrackedContentMarker
+--- PASS: TestProtectedAssetGuardRejectsTrackedContentMarker (0.00s)
+=== CONT  TestTask4ManifestMechanicMatrixAndContractsAreComplete
+=== CONT  TestProtectedAssetGuard
+--- PASS: TestTask4ManifestMechanicMatrixAndContractsAreComplete (0.00s)
+--- PASS: TestProtectedAssetGuard (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules	0.007s
+
+
+Command: go test ./internal/e2e/setup -run '^TestTask4ImportedRulesetCarriesMechanicMatrix$' -count=1 -v
+Exit: 0
+=== RUN   TestTask4ImportedRulesetCarriesMechanicMatrix
+--- PASS: TestTask4ImportedRulesetCarriesMechanicMatrix (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/setup	0.004s
+
+
+Command: go test ./internal/e2e/freeze -run '^TestEngineLock$' -count=1 -v
+Exit: 0
+=== RUN   TestEngineLock
+--- PASS: TestEngineLock (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze	0.005s
+
+
+Command: git diff --check
+Exit: 0
+(no output)

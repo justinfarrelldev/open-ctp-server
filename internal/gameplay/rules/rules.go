@@ -115,7 +115,35 @@ type RejectedVictoryEvaluator struct {
 	Reason string `json:"reason"`
 }
 
-// SupportedRulesManifest inventories the CTP2 baseline victory families. Only
+const (
+	mechanicStatusIncludedNow        = "included-now"
+	mechanicStatusDeferred           = "deferred"
+	mechanicStatusExplicitlyExcluded = "explicitly-excluded"
+)
+
+type MechanicReadiness struct {
+	Family     string `json:"family"`
+	Status     string `json:"status"`
+	ContractID string `json:"contract_id"`
+	Importer   string `json:"importer,omitempty"`
+	Runtime    string `json:"runtime,omitempty"`
+	Engine     string `json:"engine,omitempty"`
+	API        string `json:"api,omitempty"`
+	AI         string `json:"ai,omitempty"`
+	Notes      string `json:"notes"`
+}
+
+type SyntheticRecordContract struct {
+	ID                string           `json:"id"`
+	Family            string           `json:"family"`
+	RecordKind        string           `json:"record_kind"`
+	SyntheticIDPrefix string           `json:"synthetic_id_prefix"`
+	RequiredTags      []string         `json:"required_tags"`
+	Purpose           string           `json:"purpose"`
+	Source            SourceProvenance `json:"source"`
+}
+
+// SupportedRulesManifest inventories the bounded CTP2-style mechanic slice. Only
 // entries in VictoryEvaluators are enabled; rejected entries fail closed.
 type SupportedRulesManifest struct {
 	CompatibilityVersion      string                     `json:"compatibility_version"`
@@ -128,6 +156,8 @@ type SupportedRulesManifest struct {
 	RejectedVictoryEvaluators []RejectedVictoryEvaluator `json:"rejected_victory_evaluators"`
 	SpecialActionEvaluators   []SpecialActionEvaluator   `json:"special_action_evaluators"`
 	SpecialActionVectors      []SpecialActionVector      `json:"special_action_vectors"`
+	MechanicMatrix            []MechanicReadiness        `json:"mechanic_matrix"`
+	SyntheticContracts        []SyntheticRecordContract  `json:"synthetic_contracts"`
 }
 
 const upstreamRepository = "https://github.com/civctp2/civctp2"
@@ -167,6 +197,30 @@ func SupportedManifest() SupportedRulesManifest {
 			{ID: "terraform", SyntheticVectorID: "terraform_vector", Source: SourceProvenance{Repository: upstreamRepository, Commit: upstreamCommit, Path: "ctp2_code/gs/gameobj/Player.cpp", Symbol: "Player::CanTerraform", Purpose: "terrain transformation prerequisites"}},
 		},
 		SpecialActionVectors: []SpecialActionVector{{ID: "embassy_vector", EvaluatorID: "embassy", Original: true}, {ID: "soothsaying_vector", EvaluatorID: "soothsaying", Original: true}, {ID: "steal_technology_vector", EvaluatorID: "steal_technology", Original: true}, {ID: "terraform_vector", EvaluatorID: "terraform", Original: true}},
+		MechanicMatrix: []MechanicReadiness{
+			{Family: "units", Status: mechanicStatusIncludedNow, ContractID: "contract-units", Importer: "CatalogFiles Units.txt -> parseCTP2File(unit)", Runtime: "compileRecord(kind=unit) and starter-unit presence gate", Engine: "production and unit command slice already consumes runtime production/unit records", API: "existing gameplay setup and projection contracts expose unit production and unit actions", AI: "basic legal-use slice exists through current deterministic command legality; richer tactics remain deferred", Notes: "Included now as a bounded synthetic production and action family, not retail-stat parity."},
+			{Family: "advances", Status: mechanicStatusDeferred, ContractID: "contract-advances", Notes: "Deferred until Task 5 because prerequisite trees, unlocks, and research progression need new importer/runtime/engine/API work."},
+			{Family: "buildings", Status: mechanicStatusIncludedNow, ContractID: "contract-buildings", Importer: "CatalogFiles buildings.txt -> parseCTP2File(building)", Runtime: "compileRecord(kind=building) produces production and effect inventory", Engine: "city production and upkeep slice can already bind generic building production/effect records", API: "existing gameplay projections already expose production choices and city-state consequences", AI: "basic legal-use slice can choose bounded synthetic production; optimization remains deferred", Notes: "Included now only for generic city production/effect wiring and bounded synthetic upkeep semantics."},
+			{Family: "wonders", Status: mechanicStatusIncludedNow, ContractID: "contract-wonders", Importer: "CatalogFiles Wonder.txt -> parseCTP2File(wonder)", Runtime: "compileRecord(kind=wonder) produces production and effect inventory", Engine: "city production and wonder uniqueness hooks can already consume generic wonder/effect records", API: "existing gameplay projections already expose production choices and resulting wonder state", AI: "basic legal-use slice can pick bounded synthetic wonders; strategic wonder timing remains deferred", Notes: "Included now for bounded production/effect and uniqueness contracts only."},
+			{Family: "terrain", Status: mechanicStatusIncludedNow, ContractID: "contract-terrain", Importer: "CatalogFiles terrain.txt -> parseCTP2File(terrain)", Runtime: "compileRecord(kind=terrain) and movement policy synthesize terrain movement tables", Engine: "movement, visibility, and world traversal already consume bounded terrain movement definitions", API: "existing world and gameplay projections expose terrain-backed movement legality", AI: "basic legal-use slice can issue commands against current movement legality; advanced path heuristics remain deferred", Notes: "Included now for bounded movement/yield anchors, not full terrain ecology parity."},
+			{Family: "terrain-improvements", Status: mechanicStatusDeferred, ContractID: "contract-terrain-improvements", Notes: "Deferred until terrain transformation and public-works records can be imported, compiled, and projected without copying retail tile tables."},
+			{Family: "governments", Status: mechanicStatusDeferred, ContractID: "contract-governments", Notes: "Deferred until advance-enabled government switching, tax/readiness consequences, and public projections become executable in this server slice."},
+			{Family: "trade-routes-agreements", Status: mechanicStatusDeferred, ContractID: "contract-trade-routes-agreements", Notes: "Deferred until route pathing, agreement lifecycle, and diplomatic/public projections share a single deterministic server contract."},
+			{Family: "pollution-sources", Status: mechanicStatusDeferred, ContractID: "contract-pollution-sources", Notes: "Deferred until city and world pollution sources can be imported, accumulated, and surfaced without implying full disaster parity."},
+			{Family: "special-actions", Status: mechanicStatusIncludedNow, ContractID: "contract-special-actions", Importer: "SupportedManifest special-action evaluator/vector inventory pins bounded action families", Runtime: "manifest validation plus starter action effects provide executable bounded action hooks", Engine: "engine command slice already names embassy, steal, and terraform style actions as bounded mechanics", API: "existing gameplay command/projection contracts can expose bounded special-action legality and outcomes", AI: "basic legal-use slice can stay bounded to current command legality; richer targeting and sequencing remain deferred", Notes: "Included now for bounded action-vector contracts and starter hooks only."},
+		},
+		SyntheticContracts: []SyntheticRecordContract{
+			{ID: "contract-units", Family: "units", RecordKind: "unit", SyntheticIDPrefix: "UNIT_SYNTHETIC_", RequiredTags: []string{"Description", "MaxMovePoints", "Role"}, Purpose: "Synthetic units must at minimum name their role and movement budget so runtime production and legal action slices stay deterministic.", Source: SourceProvenance{Repository: upstreamRepository, Commit: upstreamCommit, Path: "ctp2_code/gs/gameobj/Player.cpp", Symbol: "Player::CreateUnit", Purpose: "unit creation branches on unit record properties and movement domain constraints"}},
+			{ID: "contract-advances", Family: "advances", RecordKind: "advance", SyntheticIDPrefix: "ADVANCE_SYNTHETIC_", RequiredTags: []string{"Description", "Cost", "PrerequisiteAdvanceIDs"}, Purpose: "Synthetic advances must describe prerequisite and cost structure without copying retail trees so future unlock logic can fail closed.", Source: SourceProvenance{Repository: upstreamRepository, Commit: upstreamCommit, Path: "ctp2_code/gs/gameobj/Advances.cpp", Symbol: "Advances::ResetCanResearch", Purpose: "advance availability is recalculated from prerequisites and gating conditions"}},
+			{ID: "contract-buildings", Family: "buildings", RecordKind: "building", SyntheticIDPrefix: "IMPROVE_SYNTHETIC_", RequiredTags: []string{"Description", "Upkeep", "EffectVectorID"}, Purpose: "Synthetic buildings must declare upkeep and a bounded effect vector so city production semantics remain deterministic.", Source: SourceProvenance{Repository: upstreamRepository, Commit: upstreamCommit, Path: "ctp2_code/gs/gameobj/buildingutil.cpp", Symbol: "buildingutil_GetTotalUpkeep", Purpose: "built improvements aggregate upkeep and effect-bearing record properties"}},
+			{ID: "contract-wonders", Family: "wonders", RecordKind: "wonder", SyntheticIDPrefix: "WONDER_SYNTHETIC_", RequiredTags: []string{"Description", "EffectVectorID", "UniquenessScope"}, Purpose: "Synthetic wonders must declare bounded global uniqueness and effect semantics without copying retail names or movies.", Source: SourceProvenance{Repository: upstreamRepository, Commit: upstreamCommit, Path: "ctp2_code/gs/gameobj/WonderTracker.cpp", Symbol: "WonderTracker::AddBuilt", Purpose: "wonder ownership is tracked globally and must stay unique"}},
+			{ID: "contract-terrain", Family: "terrain", RecordKind: "terrain", SyntheticIDPrefix: "TERRAIN_SYNTHETIC_", RequiredTags: []string{"Description", "MovementCost", "MovementDomains"}, Purpose: "Synthetic terrain must declare movement semantics and a stable identifier so traversal rules and future yield work stay deterministic.", Source: SourceProvenance{Repository: upstreamRepository, Commit: upstreamCommit, Path: "ctp2_code/gs/world/WrlImprove.cpp", Symbol: "Terrain::GetFood", Purpose: "terrain records expose bounded per-tile yields alongside movement/environment semantics"}},
+			{ID: "contract-terrain-improvements", Family: "terrain-improvements", RecordKind: "terrain_improvement", SyntheticIDPrefix: "TERRAIN_IMPROVEMENT_SYNTHETIC_", RequiredTags: []string{"Description", "BuildTurns", "YieldVectorID"}, Purpose: "Synthetic terrain improvements must separate placement/build-time semantics from terrain base records for future public-works and transformation tasks.", Source: SourceProvenance{Repository: upstreamRepository, Commit: upstreamCommit, Path: "ctp2_code/gs/world/WrlImprove.cpp", Symbol: "World::InsertImprovement", Purpose: "terrain improvements are inserted separately from base terrain and need their own contract"}},
+			{ID: "contract-governments", Family: "governments", RecordKind: "government", SyntheticIDPrefix: "GOVERNMENT_SYNTHETIC_", RequiredTags: []string{"Description", "EnableAdvanceID", "TaxRateCap"}, Purpose: "Synthetic governments must bind to explicit unlocks and top-level policy caps so future government switching is deterministic.", Source: SourceProvenance{Repository: upstreamRepository, Commit: upstreamCommit, Path: "ctp2_code/gs/gameobj/Player.cpp", Symbol: "Player::InitPlayer", Purpose: "government choice depends on unlocked advances and drives tax/readiness initialization"}},
+			{ID: "contract-trade-routes-agreements", Family: "trade-routes-agreements", RecordKind: "trade_agreement", SyntheticIDPrefix: "TRADE_AGREEMENT_SYNTHETIC_", RequiredTags: []string{"Description", "RouteClass", "DurationTurns"}, Purpose: "Synthetic trade and agreement records must declare route/agreement class and bounded duration so pathing and diplomatic lifecycle can be validated later.", Source: SourceProvenance{Repository: upstreamRepository, Commit: upstreamCommit, Path: "ctp2_code/gs/gameobj/TradeRouteData.cpp", Symbol: "TradeRouteData::GeneratePath", Purpose: "trade routes have dedicated path generation and cost state that require explicit synthetic contracts"}},
+			{ID: "contract-pollution-sources", Family: "pollution-sources", RecordKind: "pollution_source", SyntheticIDPrefix: "POLLUTION_SOURCE_SYNTHETIC_", RequiredTags: []string{"Description", "PollutionPoints", "EffectScope"}, Purpose: "Synthetic pollution sources must declare bounded contribution and effect scope so city/world accumulation can be tested without retail disaster tables.", Source: SourceProvenance{Repository: upstreamRepository, Commit: upstreamCommit, Path: "ctp2_code/gs/gameobj/Pollution.cpp", Symbol: "Pollution::GetGlobalPollutionLevel", Purpose: "global pollution aggregates player and wonder-driven deltas from multiple sources"}},
+			{ID: "contract-special-actions", Family: "special-actions", RecordKind: "special_action", SyntheticIDPrefix: "SPECIAL_ACTION_SYNTHETIC_", RequiredTags: []string{"Description", "ActionType", "VectorID"}, Purpose: "Synthetic special actions must bind a stable action type to a bounded evaluator vector so legality and projections fail closed.", Source: SourceProvenance{Repository: upstreamRepository, Commit: upstreamCommit, Path: "ctp2_code/gs/gameobj/ArmyData.cpp", Symbol: "ArmyData::EstablishEmbassy", Purpose: "special actions depend on unit-side command execution and adjacency legality"}},
+		},
 	}
 }
 
@@ -204,7 +258,14 @@ func (m SupportedRulesManifest) Validate() error {
 	if !sameStrings(mapKeys(seen), []string{"bloodlust_conquest", "diplomatic_world_union", "score_2300", "science_gaia_controller"}) {
 		return errors.New("baseline victory inventory is incomplete")
 	}
-	return validateSpecialActionVectors(m.SpecialActionEvaluators, m.SpecialActionVectors)
+	if err := validateSpecialActionVectors(m.SpecialActionEvaluators, m.SpecialActionVectors); err != nil {
+		return err
+	}
+	contracts, err := validateSyntheticContracts(m.SyntheticContracts)
+	if err != nil {
+		return err
+	}
+	return validateMechanicMatrix(m.MechanicMatrix, contracts)
 }
 
 // Import reads only the explicitly supplied user-owned directory. It never scans installation paths.
@@ -232,6 +293,95 @@ func validateSpecialActionVectors(evaluators []SpecialActionEvaluator, vectors [
 	}
 	if !sameStrings(mapKeys(seen), []string{"embassy", "soothsaying", "steal_technology", "terraform"}) {
 		return errors.New("special-action inventory is incomplete")
+	}
+	return nil
+}
+
+func requiredMechanicFamilies() []string {
+	return []string{
+		"units",
+		"advances",
+		"buildings",
+		"wonders",
+		"terrain",
+		"terrain-improvements",
+		"governments",
+		"trade-routes-agreements",
+		"pollution-sources",
+		"special-actions",
+	}
+}
+
+func validMechanicStatus(status string) bool {
+	switch status {
+	case mechanicStatusIncludedNow, mechanicStatusDeferred, mechanicStatusExplicitlyExcluded:
+		return true
+	default:
+		return false
+	}
+}
+
+func validateSyntheticContracts(contracts []SyntheticRecordContract) (map[string]SyntheticRecordContract, error) {
+	byID := make(map[string]SyntheticRecordContract, len(contracts))
+	seenFamilies := make(map[string]bool, len(contracts))
+	for _, contract := range contracts {
+		if contract.ID == "" || contract.Family == "" || contract.RecordKind == "" || contract.SyntheticIDPrefix == "" || len(contract.RequiredTags) == 0 || contract.Purpose == "" {
+			return nil, fmt.Errorf("invalid synthetic contract %q", contract.ID)
+		}
+		if contract.Source.Repository != upstreamRepository || contract.Source.Commit != upstreamCommit || contract.Source.Path == "" || contract.Source.Symbol == "" {
+			return nil, fmt.Errorf("invalid synthetic contract provenance %q", contract.ID)
+		}
+		if _, exists := byID[contract.ID]; exists {
+			return nil, fmt.Errorf("duplicate synthetic contract %q", contract.ID)
+		}
+		if seenFamilies[contract.Family] {
+			return nil, fmt.Errorf("duplicate synthetic contract family %q", contract.Family)
+		}
+		byID[contract.ID] = contract
+		seenFamilies[contract.Family] = true
+	}
+	if !sameStrings(mapKeys(seenFamilies), requiredMechanicFamilies()) {
+		return nil, errors.New("synthetic contract inventory is incomplete")
+	}
+	return byID, nil
+}
+
+func validateMechanicMatrix(rows []MechanicReadiness, contracts map[string]SyntheticRecordContract) error {
+	seenFamilies := make(map[string]bool, len(rows))
+	for _, row := range rows {
+		if row.Family == "" || row.Status == "" || row.ContractID == "" || strings.TrimSpace(row.Notes) == "" {
+			return fmt.Errorf("invalid mechanic matrix row %q", row.Family)
+		}
+		if !validMechanicStatus(row.Status) {
+			return fmt.Errorf("unknown mechanic status %q for %s", row.Status, row.Family)
+		}
+		if seenFamilies[row.Family] {
+			return fmt.Errorf("duplicate mechanic matrix family %q", row.Family)
+		}
+		contract, ok := contracts[row.ContractID]
+		if !ok {
+			return fmt.Errorf("mechanic %q references unknown contract %q", row.Family, row.ContractID)
+		}
+		if contract.Family != row.Family {
+			return fmt.Errorf("mechanic %q contract mismatch %q", row.Family, row.ContractID)
+		}
+		if row.Status == mechanicStatusIncludedNow {
+			for layer, value := range map[string]string{
+				"importer": row.Importer,
+				"runtime":  row.Runtime,
+				"engine":   row.Engine,
+				"api":      row.API,
+				"ai":       row.AI,
+			} {
+				if strings.TrimSpace(value) == "" {
+					return fmt.Errorf("mechanic %q missing %s readiness", row.Family, layer)
+				}
+			}
+		}
+		seenFamilies[row.Family] = true
+	}
+	if !sameStrings(mapKeys(seenFamilies), requiredMechanicFamilies()) {
+		return errors.New("mechanic matrix inventory is incomplete")
 	}
 	return nil
 }
@@ -492,6 +642,25 @@ func normalizedManifest(manifest SupportedRulesManifest) SupportedRulesManifest 
 	result.RejectedVictoryEvaluators = append([]RejectedVictoryEvaluator(nil), manifest.RejectedVictoryEvaluators...)
 	sort.Slice(result.RejectedVictoryEvaluators, func(i, j int) bool {
 		return result.RejectedVictoryEvaluators[i].ID < result.RejectedVictoryEvaluators[j].ID
+	})
+	result.SpecialActionEvaluators = append([]SpecialActionEvaluator(nil), manifest.SpecialActionEvaluators...)
+	sort.Slice(result.SpecialActionEvaluators, func(i, j int) bool {
+		return result.SpecialActionEvaluators[i].ID < result.SpecialActionEvaluators[j].ID
+	})
+	result.SpecialActionVectors = append([]SpecialActionVector(nil), manifest.SpecialActionVectors...)
+	sort.Slice(result.SpecialActionVectors, func(i, j int) bool {
+		return result.SpecialActionVectors[i].ID < result.SpecialActionVectors[j].ID
+	})
+	result.MechanicMatrix = append([]MechanicReadiness(nil), manifest.MechanicMatrix...)
+	sort.Slice(result.MechanicMatrix, func(i, j int) bool {
+		return result.MechanicMatrix[i].Family < result.MechanicMatrix[j].Family
+	})
+	result.SyntheticContracts = append([]SyntheticRecordContract(nil), manifest.SyntheticContracts...)
+	for i := range result.SyntheticContracts {
+		result.SyntheticContracts[i].RequiredTags = sortedStrings(result.SyntheticContracts[i].RequiredTags)
+	}
+	sort.Slice(result.SyntheticContracts, func(i, j int) bool {
+		return result.SyntheticContracts[i].ID < result.SyntheticContracts[j].ID
 	})
 	return result
 }
