@@ -1,0 +1,22 @@
+# Task 3 validation failure evidence
+$ go test ./internal/e2e/fullgame -run TestValidateAcceptedRowsRejectsRegistryDrift|TestCatalogRejectsProvisionalScenarios|TestValidateFinalAllRequiresAcceptedRowsToStayObserved -count=1 -v
+=== RUN   TestCatalogRejectsProvisionalScenarios
+--- PASS: TestCatalogRejectsProvisionalScenarios (0.08s)
+=== RUN   TestValidateAcceptedRowsRejectsRegistryDrift
+=== RUN   TestValidateAcceptedRowsRejectsRegistryDrift/missing_row_01_artifact
+=== RUN   TestValidateAcceptedRowsRejectsRegistryDrift/corrupt_row_02_winner
+=== RUN   TestValidateAcceptedRowsRejectsRegistryDrift/row_09_added_to_accepted_registry_without_artifacts
+--- PASS: TestValidateAcceptedRowsRejectsRegistryDrift (0.01s)
+    --- PASS: TestValidateAcceptedRowsRejectsRegistryDrift/missing_row_01_artifact (0.00s)
+    --- PASS: TestValidateAcceptedRowsRejectsRegistryDrift/corrupt_row_02_winner (0.00s)
+    --- PASS: TestValidateAcceptedRowsRejectsRegistryDrift/row_09_added_to_accepted_registry_without_artifacts (0.01s)
+=== RUN   TestValidateFinalAllRequiresAcceptedRowsToStayObserved
+--- PASS: TestValidateFinalAllRequiresAcceptedRowsToStayObserved (0.06s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame	0.179s
+[exit 0]
+
+$ python -c import pathlib,re; text=pathlib.Path('internal/e2e/fullgame/validate.go').read_text(); patterns=[r'catalog\s*\[:\s*12\s*\]', r'catalog\s*\[\s*12\s*:']; matches=[p for p in patterns if re.search(p, text)]; print('positional catalog slice matches:', matches if matches else 'none')
+positional catalog slice matches: none
+[exit 0]
+

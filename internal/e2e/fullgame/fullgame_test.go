@@ -231,7 +231,6 @@ func TestCatalogRowNineDeclaresSequentialScoreReachability(t *testing.T) {
 	}
 }
 
-
 func TestCatalogRows01_12CoverTaskNineRosterAndPolicyEnvelope(t *testing.T) {
 	rows := CatalogRows01_12()
 	modesSeen := map[string]bool{}
@@ -341,9 +340,24 @@ func TestCatalogVictoryIDsMatchSupportedRuntime(t *testing.T) {
 	}
 }
 
+func TestAcceptedScenarioRegistryTracksRows01Through07Only(t *testing.T) {
+	want := []string{
+		"fullgame-01-sequential-bloodlust_conquest",
+		"fullgame-02-long_turn-diplomatic_world_union",
+		"fullgame-03-simultaneous-score_2300",
+		"fullgame-04-hybrid-science_gaia_controller",
+		"fullgame-05-sequential-diplomatic_world_union",
+		"fullgame-06-long_turn-score_2300",
+		"fullgame-07-simultaneous-science_gaia_controller",
+	}
+	if got := strings.Join(acceptedScenarioIDs, ","); got != strings.Join(want, ",") {
+		t.Fatalf("acceptedScenarioIDs = %q, want %q", got, strings.Join(want, ","))
+	}
+}
+
 func TestCatalogRejectsProvisionalScenarios(t *testing.T) {
-	if err := Validate(Catalog); err == nil || !strings.Contains(err.Error(), "scenario fullgame-08-hybrid-bloodlust_conquest has non-observed immutable artifacts") {
-		t.Fatalf("Validate(Catalog) error = %v, want row 8 provisional artifact rejection", err)
+	if err := ValidateFinalAll(Catalog); err == nil || !strings.Contains(err.Error(), "scenario fullgame-08-hybrid-bloodlust_conquest has non-observed immutable artifacts") {
+		t.Fatalf("ValidateFinalAll(Catalog) error = %v, want row 8 provisional artifact rejection", err)
 	}
 }
 
@@ -351,8 +365,62 @@ func TestValidateObservationScenarioAcceptsProvisionalRow(t *testing.T) {
 	if err := ValidateObservationScenario(Catalog[1]); err != nil {
 		t.Fatal(err)
 	}
-	if err := Validate(Catalog); err == nil {
-		t.Fatal("final catalog validation accepted provisional artifacts")
+	if err := ValidateAcceptedRows(Catalog); err != nil {
+		t.Fatalf("ValidateAcceptedRows(Catalog) error = %v, want accepted rows 01-07 to pass", err)
+	}
+	if err := ValidateFinalAll(Catalog); err == nil {
+		t.Fatal("final-all catalog validation accepted provisional artifacts")
+	}
+}
+
+func TestValidateAcceptedRowsRejectsRegistryDrift(t *testing.T) {
+	tests := []struct {
+		name        string
+		mutate      func([]Scenario) []Scenario
+		acceptedIDs []string
+		want        string
+	}{
+		{
+			name: "missing row 01 artifact",
+			mutate: func(rows []Scenario) []Scenario {
+				rows[0].Observed.StateHash = ""
+				return rows
+			},
+			acceptedIDs: acceptedScenarioIDs,
+			want:        "scenario fullgame-01-sequential-bloodlust_conquest has non-observed immutable artifacts",
+		},
+		{
+			name: "corrupt row 02 winner",
+			mutate: func(rows []Scenario) []Scenario {
+				rows[1].Observed.Winner = "account-missing"
+				return rows
+			},
+			acceptedIDs: acceptedScenarioIDs,
+			want:        "scenario fullgame-02-long_turn-diplomatic_world_union observed winner \"account-missing\" is not present in the declared slots",
+		},
+		{
+			name:        "row 09 added to accepted registry without artifacts",
+			mutate:      func(rows []Scenario) []Scenario { return rows },
+			acceptedIDs: append(append([]string(nil), acceptedScenarioIDs...), "fullgame-09-sequential-score_2300"),
+			want:        "scenario fullgame-09-sequential-score_2300 has non-observed immutable artifacts",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			rows := cloneCatalogRows(Catalog)
+			rows = test.mutate(rows)
+			if err := validateAcceptedRows(rows, test.acceptedIDs); err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("validateAcceptedRows error = %v, want substring %q", err, test.want)
+			}
+		})
+	}
+}
+
+func TestValidateFinalAllRequiresAcceptedRowsToStayObserved(t *testing.T) {
+	rows := cloneCatalogRows(Catalog)
+	rows[0].Observed = ObservedArtifacts{}
+	if err := ValidateFinalAll(rows); err == nil || !strings.Contains(err.Error(), "scenario fullgame-01-sequential-bloodlust_conquest has non-observed immutable artifacts") {
+		t.Fatalf("ValidateFinalAll(rows) error = %v, want accepted row 01 artifact rejection", err)
 	}
 }
 
