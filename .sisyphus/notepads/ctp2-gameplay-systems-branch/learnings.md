@@ -1,0 +1,3 @@
+# Learnings
+- 2026-08-29T18:59:16Z Duplicated dirty gameplay workspace from /home/justi/Projects/open-ctp-server on game-server-world@212e070880dbce3be56b74446c6fc00a4a2cb97e into /home/justi/Projects/open-ctp-server-gameplay-systems on gameplay-systems-completion; source combined patch d6ac4257ce4ec0062ff6a577a0a4d831197bf09548ba86d1be751efaae746a82, untracked inventory 4dc43d9f744955be6f7b6815cf59a70d3b466b712d68ac93307dcff1c9caf917, and recovery reconstruction all matched before Task 1 evidence writes.
+2026-08-29T19:09:17+00:00 Task 2: demoted Row 09 acceptance by replacing catalog observed artifacts with ObservedArtifacts{} and deleting the row-nine acceptance test; targeted fullgame slice passed, and rows 01-07 literals were preserved byte-for-byte.

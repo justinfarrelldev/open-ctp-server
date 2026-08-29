@@ -1,0 +1,18 @@
+Timestamp: 2026-08-29T19:09:17+00:00
+Task: Row 09 acceptance rollback
+
+Pre-state:
+- catalog row 09 carried observedArtifacts("account-1", "13f89849c047ab5ea09180597a3efe6e57f52cb1be674763182974585aa7dea3", "8504b909dc83ca8c63fded829e7e6a9532d87e86063fe5938619dc5e38bf9550")
+- TestCatalogRowNineDeclaresSequentialScoreReachability asserted those exact hashes
+- TestRowNineObservedSequentialScoreRestartsAtCompletedTurnTwelve existed as an acceptance gate
+
+Post-state:
+- catalog row 09 now uses ObservedArtifacts{}
+- TestCatalogRowNineDeclaresSequentialScoreReachability now asserts provisional zero-value observed artifacts
+- TestRowNineObservedSequentialScoreRestartsAtCompletedTurnTwelve symbol removed
+
+Verification:
+- grep no-match proof for row hash 1: pass
+- grep no-match proof for row hash 2: pass
+- grep no-match proof for acceptance symbol: pass
+- go test ./internal/e2e/fullgame -run 'TestCatalogRow.*|TestCatalogRows01_12Cover|TestCatalogRejectsProvisionalScenarios' -count=1: pass
