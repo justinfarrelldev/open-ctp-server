@@ -66,6 +66,7 @@ var commands = map[string]struct {
 	"pass":              {engine.CommandPass, fields()},
 	"set-war":           {engine.CommandSetWar, fields("target_player_id", "at_war")},
 	"round-complete":    {engine.CommandRoundComplete, fields()},
+	"set-research":      {engine.CommandSetResearch, fields("advance_id")},
 	"move":              {engine.CommandMoveUnit, fields("unit_id", "path")},
 	"disband":           {engine.CommandDisband, fields("unit_id")},
 	"embark":            {engine.CommandEmbark, fields("unit_id", "transport_id")},

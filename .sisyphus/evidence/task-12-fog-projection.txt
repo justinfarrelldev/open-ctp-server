@@ -1,0 +1,31 @@
+Task 12 visibility/projection verification (2026-07-19)
+
+RED: initial focused test command exposed the concurrent Task 8 unfinished engine symbols; after that integration completed, the visibility tests were implemented and passed.
+
+Focused:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/visibility ./internal/gameplay/service ./internal/gameplay/events
+PASS
+
+Full:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...
+PASS
+
+Build:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go build ./...
+PASS
+
+Coverage:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m task test-coverage
+PASS; visibility 90.2%, engine 90.0%, aggregate gate passed.
+
+Focused tests use raw-byte checks across serialized viewer projections, generic errors, event payload projection, AI input, SSE resync, and terminal events. They prove hidden unit/current-terrain tokens never appear while prior seen terrain/city memory survives canonical serialize/decode restart.
+
+Continuation verification (2026-07-19):
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/visibility ./internal/gameplay/service ./internal/gameplay/events ./internal/gameplay/engine
+PASS
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...
+PASS
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go build ./...
+PASS
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m task test-coverage
+PASS; visibility 90.2%, engine 90.0%, aggregate coverage gate passed.

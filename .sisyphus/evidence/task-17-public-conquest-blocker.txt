@@ -1,0 +1,10 @@
+Task 17 public conquest template observation
+
+RED: `Test(FixedConquestTemplate|ObserveConquest)` initially failed because ConquestTemplate, FixedConquestTemplate, and ObserveConquestTwice were undefined.
+GREEN: fixed role-bound army-create/move/combat/pass schedule derives its move through PlanVisibleRoute and observation returns artifacts only for two equal natural conquest results.
+
+Clean local Supabase prerequisite runs passed twice:
+- `timeout --signal=TERM --kill-after=30s 10m supabase db reset --local`
+- `GAMEPLAY_POSTGRES_DSN=... GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/onboarding -run 'TestFixedScenariosOverLocalSupabasePublicHTTPAndSSE/onboarding-01-sequential-2' -count=1`
+
+No terminal artifact was retained. A compliant public conquest run is blocked: two-player spawns are enforced at Manhattan distance >=3, current visibility radius is 2, starter movement is 2, movement does not reset on round completion, and PlanVisibleRoute rejects non-visible targets. Reaching an enemy therefore requires hidden spawn/world data, direct state seeding, random exploration, or additional movement lifecycle authority; each is prohibited or outside this task.

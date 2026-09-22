@@ -1,0 +1,27 @@
+Task 14 lifecycle/victory verification
+
+RED:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine -run 'Test(LifecycleVictoryEvaluatorsEndOnceInManifestOrder|OwnerEarlyEndAndLeaveTakeoverLifecycle)'
+Initial failure: lifecycle test referenced missing Player.TakeoverPending.
+
+GREEN:
+Focused engine + service lifecycle tests passed:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -timeout=13m -p=2 ./internal/gameplay/engine ./internal/gameplay/service
+
+Package suite passed:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -timeout=13m -p=2 ./internal/gameplay/...
+
+Full suite passed:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...
+
+go build ./... passed.
+
+Coverage command passed; engine coverage: 90.0%, total gameplay coverage: 83.2%.
+
+Provenance reviewed: civctp2/civctp2 commit 0668dd199c2519ff8ab7d2871e7c7a89e21c8e52, Player.cpp (conquest), diplomat.cpp (World Union), TurnCnt.cpp (2300 score), gaiacontroller.cpp (Gaia). No upstream code or protected data was copied.
+
+Resume verification:
+- RED: owner early-end incorrectly populated VictoryState; repeated leave emitted a duplicate disconnect event.
+- GREEN: owner end is terminal-only; repeated leave/takeover reject without event or mutation.
+- Added all-player departure/takeover and one projected terminal-SSE event vectors.
+- Passed bounded gameplay suite, full ./... suite, build, and gameplay coverage; engine coverage 90.1%.

@@ -1,0 +1,24 @@
+Task 8 negative-case evidence
+All cases run against copied temporary roots; the real dirty worktree was not modified.
+- changed locked file -> precise "manifest path ...: hash mismatch"
+- added internal/gameplay/added.go -> precise "manifest path internal/gameplay/added.go: undeclared production file"
+- deleted declared file -> precise "manifest path ...: missing file"
+- duplicate manifest entry -> precise "manifest path ...: duplicate entry"
+- out-of-scope README.md entry -> precise "manifest path README.md: out of scope"
+- malformed ../main.go entry -> precise "manifest path ../main.go: invalid canonical relative path"
+- parsed forbidden E2E import -> precise "production file internal/runtime/runtime.go imports E2E package ..."
+Focused command: go test ./internal/e2e/freeze -count=1
+Result: exit 0; all seven negative subtests passed.
+
+Allowlist tampering cases, all against temporary copied roots, each failed with campaign_write_allowlist diagnostics:
+- empty -> length mismatch (got 0, want 6)
+- missing -> length mismatch (got 5, want 6)
+- extra -> length mismatch (got 7, want 6)
+- reordered -> mismatch at index 0 with got/want values
+- duplicate -> mismatch at index 1 with got/want values
+- changed -> mismatch at index 0 with got/want values
+
+Retry 2 negative cases:
+- selected file deleted and its manifest entry removed -> `required production path "internal/world/config.go": missing file`
+- selected regular file replaced by symlink -> `manifest path "internal/world/config.go": not a regular file`
+- non-clean slash paths and backslash path -> `invalid canonical relative path`

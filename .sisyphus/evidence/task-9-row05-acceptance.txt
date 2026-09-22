@@ -1,0 +1,36 @@
+
+## Task 9 Row 05 acceptance — 2026-08-29T10:46:00Z
+
+Bounded failure before correction:
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m env TASK9_ROW=5 go test -timeout=8m -p=2 ./internal/e2e/fullgame -run TestObserveTask9Row -count=1`
+- Exit 1 with `mixed-controller command budget exhausted in mode sequential at turn 12 revision 242 after 240 accepted commands (budget 240); actor=account-2`.
+- Recent transcript proved ordinary autonomous AI moves/passes plus only one embassy path, so the old eight-player continuity fixture could not satisfy reciprocal embassies inside the unchanged 240-command/48-turn/2-minute envelope.
+
+Correction rationale:
+- Row 05 was a catalog mismatch, not a production defect. The row declared `diplomatic_world_union` but used the continuity/leave fixture family (`HumanPolicyContinuity` + `scripts/resignation-continuity.json`) that exists to exercise public continuity behavior, not diplomatic reachability.
+- Accepted Row 02 already proved the truthful public diplomacy harness. Row 03 and Row 04 already preserve distinct continuity and larger-roster coverage, so Row 05 was reduced to the smallest honest sequential diplomatic fixture that still adds distinct mode coverage: sequential + 3 slots (human, ai, ai) + `scripts/city-economy-wonder.json` + `HumanPolicyDiplomacy`.
+
+RED/GREEN evidence:
+- Added `TestCatalogRowFiveDeclaresSequentialDiplomacyReachability`.
+- RED command: `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 5m go test -timeout=4m -p=2 ./internal/e2e/fullgame -run TestCatalogRowFiveDeclaresSequentialDiplomacyReachability -count=1`
+- RED failure under old declaration: `catalog row 5 world drift` showing the old huge/arid/eight-slot/continuity fixture.
+- GREEN command: same command exited 0 after the Row 05 declaration changed to the sequential three-player diplomacy fixture.
+
+Accepted Row 05 public artifacts after equality gate:
+- Winner: `account-1`
+- Reason: `diplomatic_world_union`
+- State SHA-256: `5b4deeb4f0a5106ed1351a6656f7e6db2fdca1de1571772ae78be3572dd861e8`
+- Event SHA-256: `e3509ea099a3c7bf025683a4378539e40fe4769f615c5d31f8978cf597a44cf9`
+- AI commands: `125`
+- Restart event: `{Point:after-completed-turn CompletedTurn:12}`
+
+Equality/verification commands:
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m env TASK9_ROW=5 go test -timeout=8m -p=2 ./internal/e2e/fullgame -run TestObserveTask9Row -count=1`
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m env TASK9_ROW=5 go test -v -timeout=8m -p=2 ./internal/e2e/fullgame -run TestObserveTask9Row -count=1`
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -count=1`
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -race -timeout=13m -p=2 ./internal/gameplay/... ./internal/runtime ./internal/e2e/fullgame -count=1`
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/game ./internal/gameplay/... ./internal/world ./internal/runtime ./internal/e2e/memorysql ./internal/e2e/onboarding ./internal/e2e/fullgame -count=1`
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build ./...`
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 5m go vet ./internal/e2e/fullgame`
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 5m go test -timeout=4m -p=2 ./internal/e2e/freeze -run '^TestEngineLock$' -count=1`
+- `git diff --check`

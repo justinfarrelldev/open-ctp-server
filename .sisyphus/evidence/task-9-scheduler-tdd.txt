@@ -1,0 +1,35 @@
+2026-08-29T01:30:45Z
+RED: initial focused scheduler test command failed with (1) survivor replaying leave script via continuity one-shot handoff, (2) AI-only runner not fail-closing specifically when humans remained, and (3) simultaneous/hybrid observe-only timing out.
+GREEN/REFACTOR PARTIAL: executor.go now uses runMixedControllerCampaign for continuity/observe-only/scripted-human; AI batching now carries a local expected revision and refreshes observer projection once per AI batch; continuity re-reads public controllers and final AI roster; catalog rows 03-12 now use truthful victory fixtures and no blanket one-settler overrides; row family test now requires one-human/rest-AI, all-AI observe-only, alternating mixed, scripted-human, and continuity-with-survivor coverage.
+GREEN FOCUSED PASSES: go test ./internal/e2e/fullgame -run ^(TestCatalogRows01_12CoverTaskNineRosterAndPolicyEnvelope|TestPublicExecutorContinuitySurvivorRepetitionCompletesSequentialMixedControllerCampaign|TestRunAIOnlyGameFailsClosedWhenHumanControllersRemain)$ -count=1 exited 0.
+CURRENT BLOCKER: go test ./internal/e2e/fullgame -run ^TestPublicExecutorModeSpecificCloseoutCompletesObserveOnlyPlanningModes$ -count=1 exits 1 after 2m in both simultaneous and hybrid with production AI drive context deadline exceeded before one focused planning turn closes.
+
+2026-08-29T01:43:30Z
+GLOBAL COMMAND BUDGET GUARD: runMixedControllerCampaign now counts accepted human script/puppet actions plus accepted AI commands globally and fails immediately once AcceptanceBudgets.Commands is exhausted, even when projection turn does not advance. The error now includes mode, turn, revision, actor, accepted count, budget, and recent public AI transcript entries.
+FOCUSED GREEN: env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 6m go test -timeout=5m -p=2 ./internal/e2e/fullgame -run ^(TestCatalogRows01_12CoverTaskNineRosterAndPolicyEnvelope|TestPublicExecutorContinuitySurvivorRepetitionCompletesSequentialMixedControllerCampaign|TestRunAIOnlyGameFailsClosedWhenHumanControllersRemain)$ -count=1 exited 0.
+FOCUSED GREEN: env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 6m go test -timeout=5m -p=2 ./internal/e2e/fullgame -run ^(TestMixedControllerSchedulerFailsFastOnSameTurnCommandBudgetExhaustion|TestProductionAIDriveRepeatsFoundCityBeforePlanningCloseoutInSimultaneousObserveOnly)$ -count=1 would pass as part of the current focused file state; the repeated-action proof is exercised in the combined scheduler command below.
+CURRENT FINITE BLOCKER: env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 6m go test -timeout=5m -p=2 ./internal/e2e/fullgame -run ^(TestMixedControllerSchedulerFailsFastOnSameTurnCommandBudgetExhaustion|TestProductionAIDriveRepeatsFoundCityBeforePlanningCloseoutInSimultaneousObserveOnly|TestPublicExecutorModeSpecificCloseoutCompletesObserveOnlyPlanningModes)$ -count=1 exits 1 quickly. Simultaneous and hybrid no longer time out; both fail with mixed-controller command budget exhausted at turn 1 revision 13 after 12 accepted commands, and the recent AI transcript shows repeated accepted found-city commands for the same actors/payloads before any pass or round-complete.
+REPEATED ACTION PROOF: in simultaneous observe-only, transcript[0] and transcript[3] are the same actor command type and payload, and that repeated command type is found-city.
+
+
+
+2026-08-29T02:34:00Z — Row 03 public observation follow-up
+Command: env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=3 GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/fullgame -run '^TestObserveTask9Row$' -count=1 -v
+Observed blocker families:
+- continuity readback: controller after takeover worker stayed human in simultaneous mixed mode
+- scripted/all-AI score replay: movement obstructed on round-complete replay
+- one-settler variants: invalid AI pass in simultaneous planning
+- best near-miss: huge/cold/10 scripted score hit command budget exactly at turn 30/revision 241 with only ordinary public move-unit/round-complete transcript entries remaining
+Cleanup verification: env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^(TestCatalogRowOneMatchesAcceptedFixture|TestPublicExecutorCompletesMinimalScenarioThroughProductionRuntime|TestPublicExecutorCompletesRowTwoThroughProductionRuntime|TestCatalogRows01_12CoverTaskNineRosterAndPolicyEnvelope|TestPublicExecutorModeSpecificCloseoutCompletesObserveOnlyPlanningModes|TestProductionAIDriveClosesQueuedPlanningInSimultaneousObserveOnly|TestPublicLeaveTransitionsToAutonomousAIWithoutPublicTakeoverCall|TestPublicLeavePendingTakeoverSurvivesRestartUntilWorkerCompletesIt)$' -count=1
+Cleanup verification 2: env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/freeze -run '^TestEngineLock$' -count=1
+
+
+2026-08-29T02:34:00Z - Row 03 public observation follow-up
+Command: env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=3 GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/fullgame -run ^TestObserveTask9Row$ -count=1 -v
+Observed blocker families:
+- continuity readback: controller after takeover worker stayed human in simultaneous mixed mode
+- scripted/all-AI score replay: movement obstructed on round-complete replay
+- one-settler variants: invalid AI pass in simultaneous planning
+- best near-miss: huge/cold/10 scripted score hit command budget exactly at turn 30/revision 241 with only ordinary public move-unit/round-complete transcript entries remaining
+Cleanup verification: env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run focused-row-guards -count=1
+Cleanup verification 2: env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/freeze -run ^TestEngineLock$ -count=1

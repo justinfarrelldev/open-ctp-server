@@ -3,6 +3,9 @@ package puppet
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -126,5 +129,73 @@ func TestPuppeteerRejectsUnknownHarnessPolicyBeforeSubmission(t *testing.T) {
 	}, "invalid-policy")
 	if err == nil || client.calls != 0 {
 		t.Fatalf("unknown/non-harness policy reached submission: err=%v calls=%d", err, client.calls)
+	}
+}
+
+func TestClientSubmitsEnrichedPublicCommandAndDecodesRevision(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/game/44/move-unit" || r.Header.Get("Content-Type") != "application/json" {
+			t.Errorf("unexpected request: method=%s path=%s content-type=%q", r.Method, r.URL.Path, r.Header.Get("Content-Type"))
+		}
+		var body map[string]json.RawMessage
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Errorf("decode request: %v", err)
+			return
+		}
+		for name, want := range map[string]string{
+			"session_id":        "70",
+			"expected_revision": "4",
+			"idempotency_key":   `"move-4"`,
+			"command_id":        `"command-4"`,
+			"unit_id":           `"unit-7"`,
+		} {
+			if string(body[name]) != want {
+				t.Errorf("body[%q] = %s, want %s", name, body[name], want)
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"revision":5}`))
+	}))
+	defer server.Close()
+
+	result, err := (Client{BaseURL: server.URL, HTTPClient: server.Client()}).SubmitHumanCommand(context.Background(), HumanCommand{
+		GameID: 44, SessionID: 70, ExpectedRevision: 4, Route: "move-unit", IdempotencyKey: "move-4", CommandID: "command-4", Payload: []byte(`{"unit_id":"unit-7"}`),
+	})
+	if err != nil || result.Revision != 5 {
+		t.Fatalf("submission result = %#v, err=%v", result, err)
+	}
+}
+
+func TestClientRejectsInvalidCommandsAndHTTPResponses(t *testing.T) {
+	client := Client{}
+	if _, err := client.SubmitHumanCommand(context.Background(), HumanCommand{}); err == nil {
+		t.Fatal("invalid command was accepted")
+	}
+	valid := HumanCommand{GameID: 1, SessionID: 2, ExpectedRevision: 3, Route: "pass", IdempotencyKey: "pass-3", CommandID: "command-3"}
+	malformed := valid
+	malformed.Payload = []byte(`{"bad":`)
+	if _, err := client.SubmitHumanCommand(context.Background(), malformed); err == nil || !strings.Contains(err.Error(), "decode public human payload") {
+		t.Fatalf("malformed payload error = %v", err)
+	}
+
+	forbidden := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "forbidden detail must not escape", http.StatusForbidden)
+	}))
+	valid.Payload = []byte(`{}`)
+	_, err := (Client{BaseURL: forbidden.URL, HTTPClient: forbidden.Client()}).SubmitHumanCommand(context.Background(), valid)
+	forbidden.Close()
+	var httpError *HTTPError
+	if !errors.As(err, &httpError) || httpError.Status != http.StatusForbidden || httpError.Error() != "public human command returned status 403" {
+		t.Fatalf("forbidden error = %#v", err)
+	}
+
+	malformedResponse := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"revision":`))
+	}))
+	_, err = (Client{BaseURL: malformedResponse.URL, HTTPClient: malformedResponse.Client()}).SubmitHumanCommand(context.Background(), valid)
+	malformedResponse.Close()
+	if err == nil {
+		t.Fatal("malformed success response was accepted")
 	}
 }

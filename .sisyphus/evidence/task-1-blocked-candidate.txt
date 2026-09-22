@@ -1,0 +1,29 @@
+Task 1 blocked candidates
+Recorded 2026-08-10
+
+1. Gameplay service/store/HTTP/combat layered patch
+   Patch paths: internal/gameplay/{ai,combat,events,http,service,store,visibility}/** (applied to clean parent dabe0ae).
+   Focused command:
+   GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/ai ./internal/gameplay/combat ./internal/gameplay/events ./internal/gameplay/http ./internal/gameplay/service ./internal/gameplay/store ./internal/gameplay/visibility -count=1
+   Exit: 1.
+   Exact dependency/failure reasons:
+   - internal/gameplay/service/service_test.go imports uncommitted internal/gameplay/testkit.
+   - internal/gameplay/store/store_test.go reads prohibited uncommitted migrations ../../../supabase/migrations/20260719120000_gameplay_persistence_task2.sql and ../../../supabase/migrations/20260810160000_gameplay_ai_exploration_history_task17.sql.
+   - internal/gameplay/http TestOpenAPIDocumentsGameplayCommandRoute fails because the required dirty generated docs changes are not part of the patch.
+   The same clean patch passed go build ./... and git diff --check, but direct tests were red; no files were committed.
+
+2. Gameplay testkit
+   Patch paths: internal/gameplay/testkit/** (applied to clean parent d4b7521).
+   Focused command:
+   GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/testkit -count=1
+   Exit: 1.
+   Exact failure: TestRepositoryTimeoutPolicy reports `Taskfile.yml: test command is missing "GOMAXPROCS=4"` because the required Taskfile change is dirty and intentionally excluded. The patch passed go build ./... and git diff --check; no files were committed.
+
+3. Runtime/onboarding/memorysql
+   Paths are blocked because internal/runtime/runtime.go imports prohibited dirty internal/game/** and the E2E adapters exercise that bridge. They cannot be verified or committed without prohibited internal/game changes.
+
+4. World V1 persistence
+   internal/world/{snapshot.go,store.go,store_test.go} is blocked because the new V1 columns require the prohibited dirty gameplay migrations and dirty internal/game start bridge. It was intentionally not split or staged.
+
+5. Docs/CI/Taskfile/main/account/ratelimit
+   These changes document or wire blocked gameplay routes, migrations, or runtime composition and have no standalone direct-test unit. They remain uncommitted.

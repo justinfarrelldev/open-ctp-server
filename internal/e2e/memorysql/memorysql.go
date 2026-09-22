@@ -150,6 +150,42 @@ func (c *conn) query(query string, args []driver.NamedValue) (driver.Rows, error
 	c.store.mu.Lock()
 	defer c.store.mu.Unlock()
 	switch normalized {
+	case "select state.game_id, state.revision, player.value->>'id' as player_id from world_turn_states as state join games on games.id = state.game_id cross join lateral jsonb_array_elements(state.canonical_state_json->'players') as player(value) where state.state_schema_version = 1 and games.status = 'started' and coalesce(player.value->>'controller', '') = 'human' and coalesce(player.value->>'takeover_pending', 'false') = 'true' order by state.game_id asc, player_id asc":
+		values := make([][]driver.Value, 0)
+		for gameID, turn := range c.store.turns {
+			game, ok := c.store.games[gameID]
+			if !ok || game.status != "started" {
+				continue
+			}
+			var state struct {
+				Players []struct {
+					ID              string `json:"id"`
+					Controller      string `json:"controller"`
+					TakeoverPending bool   `json:"takeover_pending"`
+				} `json:"players"`
+			}
+			canonical, ok := turn[12].(string)
+			if !ok {
+				canonical = string(turn[12].([]byte))
+			}
+			if json.Unmarshal([]byte(canonical), &state) != nil {
+				continue
+			}
+			for _, player := range state.Players {
+				if player.Controller != "human" || !player.TakeoverPending {
+					continue
+				}
+				values = append(values, []driver.Value{int64(gameID), turn[10], player.ID})
+			}
+		}
+		sort.Slice(values, func(i, j int) bool {
+			leftGame, rightGame := intArgFromValue(values[i][0]), intArgFromValue(values[j][0])
+			if leftGame != rightGame {
+				return leftGame < rightGame
+			}
+			return values[i][2].(string) < values[j][2].(string)
+		})
+		return &rows{columns: []string{"game_id", "revision", "player_id"}, values: values}, nil
 	case "select game_id, revision, canonical_state_json #>> '{policy,deadline,player_id}' as player_id, (canonical_state_json #>> '{policy,deadline,at_unix}')::bigint as deadline_at from world_turn_states where state_schema_version = 1 and canonical_state_json #>> '{phase,mode}' = 'long_turn' and (canonical_state_json #>> '{policy,deadline,at_unix}')::bigint <= $1 order by deadline_at asc, game_id asc":
 		now := intArg(args, 0)
 		values := make([][]driver.Value, 0)
@@ -493,6 +529,26 @@ func (c *conn) exec(query string, args []driver.NamedValue) (driver.Result, erro
 			return driver.RowsAffected(1), nil
 		}
 		return driver.RowsAffected(0), nil
+	}
+	if normalized == "update game_players set controller_kind = $1, controller_changed_at = now() where game_id = $2 and id = $3" {
+		c.store.mu.Lock()
+		defer c.store.mu.Unlock()
+		gameID, playerID := intArg(args, 1), intArg(args, 2)
+		players := c.store.players[gameID]
+		index := playerID - 1
+		if index < 0 || index >= int64(len(players)) {
+			return driver.RowsAffected(0), nil
+		}
+		if c.store.controllers[gameID] == nil {
+			c.store.controllers[gameID] = map[int64]string{}
+		}
+		accountID := players[index]
+		previous := c.store.controllers[gameID][accountID]
+		c.store.controllers[gameID][accountID] = stringArg(args, 0)
+		if c.tx != nil {
+			c.tx.undo = append(c.tx.undo, func() { c.store.controllers[gameID][accountID] = previous })
+		}
+		return driver.RowsAffected(1), nil
 	}
 	if normalized == "update games set status = 'ended', ended_at = now(), ended_by = $1, end_reason = $2, updated_at = now() where id = $3" {
 		c.store.mu.Lock()

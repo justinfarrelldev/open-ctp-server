@@ -1,0 +1,8 @@
+Timestamp: 2026-08-11 UTC
+Refactor: replaced onboarding's private orderedSetupSlot and validateOrderedSlots with internal/e2e/setup.Slot and setup.Validate.
+Focused command: env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/rules ./internal/e2e/setup ./internal/e2e/onboarding -count=1
+Exit: 0
+Build command: GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build ./...
+Exit: 0
+Clean-parent verification: each of c989bbb, b95509e, and a5747a7 was applied to a detached worktree at its parent; focused tests, build, and git diff --check exited 0.
+Committed-path scan: no named setup composition, half-human derivation, fixed count set, or hard-coded campaign roster symbol in internal/e2e/setup or tracked Task 3 onboarding files.

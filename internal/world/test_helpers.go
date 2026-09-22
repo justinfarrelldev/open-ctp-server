@@ -28,13 +28,13 @@ func FixtureWorldConfig() WorldConfig {
 // FixtureMutableTurnState returns a representative mutable turn state for tests.
 func FixtureMutableTurnState() MutableTurnState {
 	return MutableTurnState{
-		TurnNumber:        1,
+		TurnNumber:         1,
 		CurrentPlayerIndex: 0,
-		ActivePlayerOrder: []int64{7, 8},
+		ActivePlayerOrder:  []int64{7, 8},
 		RecalculationCount: 1,
-		RNGState:          99,
-		Ratings:           WorldRatings{Overall: 10, Science: 3, Military: 2, Economic: 4, Pollution: 1},
-		Pollution:         WorldPollution{GlobalPollution: 5, TilePollutionCount: 2, UpdatedAt: time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)},
+		RNGState:           99,
+		Ratings:            WorldRatings{Overall: 10, Science: 3, Military: 2, Economic: 4, Pollution: 1},
+		Pollution:          WorldPollution{GlobalPollution: 5, TilePollutionCount: 2, UpdatedAt: time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)},
 		LastRecalculatedAt: time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC),
 	}
 }

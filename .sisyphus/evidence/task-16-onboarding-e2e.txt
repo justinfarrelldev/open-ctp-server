@@ -1,0 +1,31 @@
+Task 16 deterministic onboarding harness verification
+
+Implemented: internal/e2e/onboarding
+- Eight fixed IDs covering 2/3/4/6/8 players and all four styles.
+- Scenario-owned 2-minute testkit context, deterministic namespace/ID source, and barrier-released concurrent signup/start race.
+- Ordered join, duplicate signup/join, owner/nonowner setup, country collision/recovery, stream rejoin/closure, projected-world, teardown, and cleanup-script assertions.
+
+Passed:
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/onboarding
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go build ./...
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m task test-coverage
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -race -count=3 -timeout=8m -p=2 ./internal/e2e/onboarding
+
+Public live-DB execution remains blocked without production changes outside Task 16 test-only scope: CreateLobby responds 201 with no lobby identifier, StartGame uses non-injected world seed, and start writes the legacy world state rather than initializing a gameplay aggregate/event stream. The harness therefore keeps all setup mutations behind a public Client interface and does not direct-seed account/lobby/game/world rows.
+
+2026-07-19 Task 16 completion recheck
+- `timeout --signal=TERM --kill-after=30s 10m supabase db reset --local` exited 0; every migration through `20260719120000_gameplay_persistence_task2.sql` applied.
+- Updated HTTPClient GET contracts to send session/lobby identities as query parameters, matching the public handlers.
+- Added exact deterministic v1 start SQL expectations for snapshot pin, initial aggregate state, revision update, receipt, event, and outbox. StartGameWithSeed remains intact; StartGameWithSeedAndSources is a server-owned integration seam with fixed test sources.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/game -run 'TestStartGame(GeneratesWorldOnce|PersistsWorldInTransaction|StartsSetupGameAndBlocksLaterSetupMutations)'` exited 0.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/onboarding` exited 0.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...` exited 0.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go build ./...` exited 0.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m task test-coverage` exited 0; engine coverage 90.1%.
+
+2026-07-19 live public transport matrix
+- `timeout --signal=TERM --kill-after=30s 10m supabase db reset --local` exited 0 before the matrix.
+- `GAMEPLAY_POSTGRES_DSN='postgresql://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable' GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -timeout=13m -p=2 ./internal/e2e/onboarding -run TestFixedScenariosOverLocalSupabasePublicHTTPAndSSE -v` exited 0.
+- Passed: onboarding-01-sequential-2, onboarding-02-long-turn-3-duplicate-signup, onboarding-03-simultaneous-4-duplicate-join, onboarding-04-hybrid-6-country-collision, onboarding-05-sequential-8-owner-edits, onboarding-06-long-turn-4-stream-rejoin, onboarding-07-simultaneous-6-start-race, onboarding-08-hybrid-8-full-teardown.
+- The test uses `httptest.Server` with production account/lobby/game/world handlers, a local Supabase database, fixed server-owned start sources, real HTTP requests, and validates `player_connected` lobby SSE framing plus public world projection bytes.

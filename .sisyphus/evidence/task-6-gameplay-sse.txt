@@ -1,0 +1,25 @@
+Task 6 durable projected gameplay SSE evidence
+
+RED:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/events
+Initial failure: undefined NewDispatcher/NewStore/Viewer/ProjectorFuncs/NewConnection. HTTP RED then failed: undefined NewHandler. Durable terminal RED then failed: stream.Terminal undefined.
+
+GREEN focused transport + manual httptest flow:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/events -run 'Test(Dispatcher|Stream|StoreTerminal|HandlerWritesOnlyProjectedSSEBytes|ParseLastEventID)' -count=1
+PASS
+
+Validated:
+- dispatcher selects committed undelivered outbox rows in sequence inside a locking transaction, wakes only after rows are visible, then marks them delivered;
+- restart/duplicate dispatch query has no remaining rows;
+- Last-Event-ID parsing is strict, valid resume is sequence-ordered, expired cursors emit projected resync metadata/current revision;
+- terminal data is read from durable world_turn_states and projection-only serialized;
+- cancellation cleanup is idempotent; and
+- httptest raw SSE bytes exclude hidden entity ID and coordinates.
+
+Full suite:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...
+PASS
+
+Build:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build ./...
+PASS

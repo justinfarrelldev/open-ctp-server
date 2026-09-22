@@ -1253,6 +1253,105 @@ const docTemplate = `{
                 }
             }
         },
+        "/game/{game_id}/{command}": {
+            "post": {
+                "description": "The server derives player identity from session_id and submits one canonical command. Unknown fields and client authority are rejected.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gameplay"
+                ],
+                "summary": "Submit a gameplay command",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "game ID",
+                        "name": "game_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "command name",
+                        "name": "command",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "command envelope plus command-specific payload",
+                        "name": "command",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/gameplayhttp.CommandRequestDocs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gameplayhttp.CommandResponseDocs"
+                        }
+                    },
+                    "400": {
+                        "description": "malformed or unknown command field",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "missing or invalid session",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "game membership or controller is not authorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "stale revision or idempotency conflict",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "invalid command phase or terminal game",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "rate limit exceeded",
+                        "schema": {
+                            "$ref": "#/definitions/ratelimit.Message"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Returns the status of the service.",
@@ -2386,6 +2485,9 @@ const docTemplate = `{
         "game.Game": {
             "type": "object",
             "properties": {
+                "climate": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -2403,6 +2505,9 @@ const docTemplate = `{
                 },
                 "lobby_id": {
                     "type": "integer"
+                },
+                "map_size": {
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"
@@ -2442,6 +2547,9 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "wetness": {
+                    "type": "integer"
                 }
             }
         },
@@ -2450,6 +2558,9 @@ const docTemplate = `{
             "properties": {
                 "account_id": {
                     "type": "integer"
+                },
+                "controller_kind": {
+                    "type": "string"
                 },
                 "country": {
                     "type": "string"
@@ -2669,14 +2780,23 @@ const docTemplate = `{
         "game.UpdateStyleArgs": {
             "type": "object",
             "properties": {
+                "climate": {
+                    "type": "string"
+                },
                 "game_id": {
                     "type": "integer"
+                },
+                "map_size": {
+                    "type": "string"
                 },
                 "session_id": {
                     "type": "integer"
                 },
                 "style": {
                     "type": "string"
+                },
+                "wetness": {
+                    "type": "integer"
                 }
             }
         },
@@ -2830,6 +2950,41 @@ const docTemplate = `{
                 }
             }
         },
+        "gameplayhttp.CommandRequestDocs": {
+            "type": "object",
+            "properties": {
+                "command_id": {
+                    "type": "string"
+                },
+                "expected_revision": {
+                    "type": "integer"
+                },
+                "idempotency_key": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "gameplayhttp.CommandResponseDocs": {
+            "type": "object",
+            "properties": {
+                "event_cursor": {
+                    "type": "integer"
+                },
+                "receipt_id": {
+                    "type": "string"
+                },
+                "revision": {
+                    "type": "integer"
+                },
+                "viewer_projection": {
+                    "type": "object",
+                    "additionalProperties": {}
+                }
+            }
+        },
         "health.Response": {
             "type": "object",
             "properties": {
@@ -2974,6 +3129,17 @@ const docTemplate = `{
                 },
                 "session_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "ratelimit.Message": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         }

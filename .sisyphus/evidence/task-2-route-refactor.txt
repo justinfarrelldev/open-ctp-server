@@ -1,0 +1,3 @@
+Task 2 route-contract REFACTOR — 2026-08-10
+
+Route assertions are centralized in `assertRouteSurface`, using HTTP status behavior instead of reading composition source. The test retains a deliberately incorrect mux subtest so future registration changes cannot silently weaken the contract. Production route code was unchanged.

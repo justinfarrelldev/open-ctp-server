@@ -1,0 +1,22 @@
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 go test -timeout=8m -p=2 ./internal/gameplay/engine ./internal/e2e/fullgame -run '^(TestQueuedPlanningLeaveAlsoEarlyEndsDepartedActor|TestPublicPlanningLeaveCloseoutTransitionsToAutonomousAIWithoutDepartedActorRequest|TestPublicPlanningLeavePendingTakeoverSurvivesRestartUntilWorkerCompletesIt)$' -count=1
+
+--- FAIL: TestQueuedPlanningLeaveAlsoEarlyEndsDepartedActor (0.00s)
+    --- FAIL: TestQueuedPlanningLeaveAlsoEarlyEndsDepartedActor/simultaneous (0.00s)
+        lifecycle_task14_test.go:156: queued leave early-end markers = []string(nil), want player-a closed during planning
+    --- FAIL: TestQueuedPlanningLeaveAlsoEarlyEndsDepartedActor/hybrid (0.00s)
+        lifecycle_task14_test.go:156: queued leave early-end markers = []string(nil), want player-a closed during planning
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+--- FAIL: TestPublicPlanningLeaveCloseoutTransitionsToAutonomousAIWithoutDepartedActorRequest (0.24s)
+    --- FAIL: TestPublicPlanningLeaveCloseoutTransitionsToAutonomousAIWithoutDepartedActorRequest/simultaneous (0.13s)
+        continuity_blocker_test.go:161: planning closeout SSE = cursor 4 event "command.queued" payload fullgame.gameplayEventPayload{Type:"command.queued", Sequence:4}
+    --- FAIL: TestPublicPlanningLeaveCloseoutTransitionsToAutonomousAIWithoutDepartedActorRequest/hybrid (0.11s)
+        continuity_blocker_test.go:161: planning closeout SSE = cursor 4 event "command.queued" payload fullgame.gameplayEventPayload{Type:"command.queued", Sequence:4}
+--- FAIL: TestPublicPlanningLeavePendingTakeoverSurvivesRestartUntilWorkerCompletesIt (0.13s)
+    --- FAIL: TestPublicPlanningLeavePendingTakeoverSurvivesRestartUntilWorkerCompletesIt/simultaneous (0.07s)
+        continuity_blocker_test.go:207: planning closeout SSE before restart = cursor 4 event "command.queued" payload fullgame.gameplayEventPayload{Type:"command.queued", Sequence:4}
+    --- FAIL: TestPublicPlanningLeavePendingTakeoverSurvivesRestartUntilWorkerCompletesIt/hybrid (0.06s)
+        continuity_blocker_test.go:207: planning closeout SSE before restart = cursor 4 event "command.queued" payload fullgame.gameplayEventPayload{Type:"command.queued", Sequence:4}
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame	0.408s
+FAIL

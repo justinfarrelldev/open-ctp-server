@@ -1,0 +1,13 @@
+Task 12 negative leak evidence (2026-07-19)
+
+`TestObservationMemoryProjectionAndRawLeakBoundaries` scans the raw bytes of:
+- serialized human viewer projection
+- projected canonical snapshot
+- projected event payload
+- AI input
+- generic reduced error
+
+`TestSSEResyncAndTerminalUseViewerProjection` scans raw SSE resync and terminal event bytes.
+
+Fixture hidden identifiers/current-data sentinels are rejected if present. The tests passed under:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/visibility ./internal/gameplay/service ./internal/gameplay/events

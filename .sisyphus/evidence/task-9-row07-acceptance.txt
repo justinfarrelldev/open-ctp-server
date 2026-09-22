@@ -1,0 +1,10 @@
+2026-08-29 Task 9 Row 07 final retry
+RED command: env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run TestRowSevenScienceScriptReachesCompletedTurnRestartCheckpointBeforeTerminal -count=1
+RED result: immediate science script terminalized before completed-turn restart accounting: turn=4 restart_events=[] want={Point:after-completed-turn CompletedTurn:12}
+GREEN script: internal/e2e/fullgame/scripts/row07-delayed-city-economy-wonder.json
+Accepted Row 07 fixture: 1 scripted human + 2 autonomous AI, simultaneous, small/temperate/wetness-10, StartingSettlers=1, completed-turn restart 12
+Observer command: env TASK9_ROW=7 GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -v -timeout=8m -p=2 ./internal/e2e/fullgame -run TestObserveTask9Row -count=1
+Observed winner=account-1 reason=science_gaia_controller state_sha256=6d5d9101cb9584bd732ee193f7c52fb8c0dbd00e93fb3f41cbd759f1359abb12 event_sha256=b18c365a282df3a1ae4925abbdf31d42e7864a19300dd06a2afb1885f17b6787 ai_commands=32 restart={Point:after-completed-turn CompletedTurn:12}
+Controls: TASK9_ROW=4 pass; TASK9_ROW=6 pass
+Broad verification: ./internal/e2e/fullgame pass; race command pass; go build ./... pass; go vet ./... pass; ./internal/e2e/freeze pass
+

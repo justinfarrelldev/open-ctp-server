@@ -38,6 +38,7 @@ const (
 	CommandFoundCity        = "found-city"
 	CommandQueueProduction  = "queue-production"
 	CommandCancelProduction = "cancel-production"
+	CommandSetResearch      = "set-research"
 	CommandCombat           = "combat"
 	CommandEstablishEmbassy = "establish-embassy"
 	CommandSoothsaying      = "soothsaying"
@@ -124,25 +125,26 @@ type Tile struct {
 }
 
 type Unit struct {
-	ID            string   `json:"id"`
-	OwnerID       string   `json:"owner_id"`
-	TileID        string   `json:"tile_id"`
-	ArmyID        string   `json:"army_id,omitempty"`
-	TransportID   string   `json:"transport_id,omitempty"`
-	Domain        string   `json:"domain,omitempty"`
-	Movement      int      `json:"movement,omitempty"`
-	CargoCapacity int      `json:"cargo_capacity,omitempty"`
-	CargoDomains  []string `json:"cargo_domains,omitempty"`
-	ZOC           bool     `json:"zoc,omitempty"`
-	Fortified     bool     `json:"fortified,omitempty"`
-	Effects       []Effect `json:"effects,omitempty"`
-	Attack        int      `json:"attack,omitempty"`
-	Defense       int      `json:"defense,omitempty"`
-	Ranged        int      `json:"ranged,omitempty"`
-	Strength      int      `json:"strength,omitempty"`
-	Armor         int      `json:"armor,omitempty"`
-	Health        int      `json:"health,omitempty"`
-	MaxHealth     int      `json:"max_health,omitempty"`
+	ID              string   `json:"id"`
+	OwnerID         string   `json:"owner_id"`
+	TileID          string   `json:"tile_id"`
+	ArmyID          string   `json:"army_id,omitempty"`
+	TransportID     string   `json:"transport_id,omitempty"`
+	Domain          string   `json:"domain,omitempty"`
+	Movement        int      `json:"movement,omitempty"`
+	CargoCapacity   int      `json:"cargo_capacity,omitempty"`
+	CargoDomains    []string `json:"cargo_domains,omitempty"`
+	ZOC             bool     `json:"zoc,omitempty"`
+	Fortified       bool     `json:"fortified,omitempty"`
+	Effects         []Effect `json:"effects,omitempty"`
+	Attack          int      `json:"attack,omitempty"`
+	Defense         int      `json:"defense,omitempty"`
+	Ranged          int      `json:"ranged,omitempty"`
+	Strength        int      `json:"strength,omitempty"`
+	Armor           int      `json:"armor,omitempty"`
+	Health          int      `json:"health,omitempty"`
+	MaxHealth       int      `json:"max_health,omitempty"`
+	VisibilityRange int      `json:"visibility_range,omitempty"`
 }
 
 type City struct {
@@ -166,11 +168,14 @@ type Army struct {
 }
 
 type Nation struct {
-	ID          string   `json:"id"`
-	Effects     []Effect `json:"effects,omitempty"`
-	Advances    []string `json:"advances,omitempty"`
-	Embassies   []string `json:"embassies,omitempty"`
-	PublicWorks int      `json:"public_works,omitempty"`
+	ID                 string   `json:"id"`
+	Effects            []Effect `json:"effects,omitempty"`
+	Advances           []string `json:"advances,omitempty"`
+	Embassies          []string `json:"embassies,omitempty"`
+	PublicWorks        int      `json:"public_works,omitempty"`
+	ResearchTargetID   string   `json:"research_target_id,omitempty"`
+	ResearchProgress   int      `json:"research_progress,omitempty"`
+	GaiaCompletionTurn int      `json:"gaia_completion_turn,omitempty"`
 }
 
 type Effect struct {
@@ -341,7 +346,7 @@ func Apply(state State, command Command, pin RulesPin, sources Sources) (State, 
 	if err != nil {
 		return State{}, nil, Result{}, err
 	}
-	if command.Type != CommandSetWar && (command.Type == CommandPass || next.Phase.Mode == turns.ModeLongTurn || next.Phase.Mode == turns.ModeSimultaneous || next.Phase.Mode == turns.ModeHybrid) {
+	if command.Type != CommandSetWar && command.Type != CommandTakeoverAI && (command.Type == CommandPass || next.Phase.Mode == turns.ModeLongTurn || next.Phase.Mode == turns.ModeSimultaneous || next.Phase.Mode == turns.ModeHybrid) {
 		return applyPolicyCommand(next, command, runtime, sources)
 	}
 	eventType, eventPayload, combatResult, err := applyValidatedMutation(&next, command, runtime, sources)
@@ -397,13 +402,13 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 	switch command.Type {
 	case CommandSetWar:
 		eventType, eventPayload, err = applyWarStateCommand(state, command)
-	case CommandRoundComplete, CommandEndGame, CommandLeaveGame, CommandTakeoverAI:
+	case CommandSetResearch, CommandRoundComplete, CommandEndGame, CommandLeaveGame, CommandTakeoverAI:
 		eventType, eventPayload, err = applyLifecycleCommand(state, command, runtime)
 	case CommandCombat:
 		combatResult, eventPayload, err = applyCombat(state, command, sources)
 		eventType = EventCombatResolved
 	case CommandFoundCity, CommandQueueProduction, CommandCancelProduction:
-		eventType, err = applyCityCommand(state, command)
+		eventType, err = applyCityCommand(state, command, runtime)
 	default:
 		if isSpecialCommand(command.Type) {
 			eventType, eventPayload, err = applySpecialCommand(state, command, sources)
@@ -446,6 +451,12 @@ func applyPolicyCommand(next State, command Command, runtime *rules.RuntimeRules
 	if err != nil {
 		return State{}, nil, Result{}, err
 	}
+	if (next.Phase.Mode == turns.ModeSimultaneous || next.Phase.Mode == turns.ModeHybrid) && resolverState.Stage == turns.StagePlanning && command.Type == CommandLeaveGame && !resolved.Immediate {
+		resolvedPolicy, resolved, err = policy.Apply(resolvedPolicy, turns.Command{Kind: turns.CommandEarlyEnd, ActorID: command.ActorPlayerID}, now)
+		if err != nil {
+			return State{}, nil, Result{}, err
+		}
+	}
 	next = next.WithTurnPolicyState(resolvedPolicy)
 	if resolved.Resolved {
 		next.Phase.ResolutionLocked = true
@@ -457,13 +468,32 @@ func applyPolicyCommand(next State, command Command, runtime *rules.RuntimeRules
 		}
 		return finalizeApply(next, command, eventType, eventPayload, combatResult, sources)
 	}
+	var replayBaseline State
+	if resolved.Resolved {
+		replayBaseline, err = canonicalClone(next)
+		if err != nil {
+			return State{}, nil, Result{}, err
+		}
+	}
+	var resolvedDisconnectPayload json.RawMessage
 	for _, queued := range resolved.ResolvedCommands {
 		replayed, err := decodeQueuedCommand(queued)
 		if err != nil {
 			return State{}, nil, Result{}, err
 		}
-		if _, _, _, err := applyValidatedMutation(&next, replayed, runtime, sources); err != nil {
+		replayedEventType, replayedEventPayload, _, err := applyValidatedMutation(&next, replayed, runtime, sources)
+		if err != nil {
+			suppressed, suppressErr := suppressDeterministicPlanningMoveCollision(replayBaseline, replayed, runtime, sources, err)
+			if suppressErr != nil {
+				return State{}, nil, Result{}, suppressErr
+			}
+			if suppressed {
+				continue
+			}
 			return State{}, nil, Result{}, err
+		}
+		if replayedEventType == EventPlayerDisconnected {
+			resolvedDisconnectPayload = append(json.RawMessage(nil), replayedEventPayload...)
 		}
 	}
 	if resolved.Resolved {
@@ -475,10 +505,15 @@ func applyPolicyCommand(next State, command Command, runtime *rules.RuntimeRules
 		}
 	}
 	eventType := "command.queued"
+	eventPayload := canonicalPayload(command.Payload)
 	if resolved.Resolved {
 		eventType = "turn.resolved"
+		if len(resolvedDisconnectPayload) > 0 {
+			eventType = EventPlayerDisconnected
+			eventPayload = resolvedDisconnectPayload
+		}
 	}
-	return finalizeApply(next, command, eventType, canonicalPayload(command.Payload), nil, sources)
+	return finalizeApply(next, command, eventType, eventPayload, nil, sources)
 }
 
 func policyEnvelope(command Command, receiptSequence int64) turns.Command {
@@ -527,12 +562,28 @@ func decodeQueuedCommand(queued turns.Command) (Command, error) {
 	return command, nil
 }
 
+func suppressDeterministicPlanningMoveCollision(replayBaseline State, command Command, runtime *rules.RuntimeRules, sources Sources, replayErr error) (bool, error) {
+	if command.Type != CommandMoveUnit || !errors.Is(replayErr, ErrObstructed) {
+		return false, nil
+	}
+	baseline, err := canonicalClone(replayBaseline)
+	if err != nil {
+		return false, err
+	}
+	_, _, _, err = applyValidatedMutation(&baseline, command, runtime, sources)
+	if err != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
 func completePolicyRound(state *State, runtime *rules.RuntimeRules) error {
 	next, err := RecalculateRound(*state)
 	if err != nil {
 		return err
 	}
 	*state = next
+	updateGaiaCountdown(state, runtime, state.Phase.Turn-1)
 	refreshStarterMovement(state, runtime)
 	if winner, reason := evaluateVictory(*state, runtime); winner != "" {
 		endGame(state, winner, reason)
@@ -627,6 +678,11 @@ func ValidateState(state State) error {
 		}
 		if player.Controller != ControllerHuman && player.Controller != ControllerAI {
 			return fmt.Errorf("unknown player controller %q", player.Controller)
+		}
+	}
+	for _, nation := range state.Nations {
+		if nation.GaiaCompletionTurn < 0 || nation.ResearchProgress < 0 {
+			return errors.New("nation counters must be nonnegative")
 		}
 	}
 	if err := validateUnitState(state); err != nil {

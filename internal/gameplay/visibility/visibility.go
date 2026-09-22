@@ -8,11 +8,18 @@ import (
 	"strconv"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine/turns"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/events"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
 const defaultSightRadius = 2
+
+const (
+	PlanningStatusOpen   = "open"
+	PlanningStatusQueued = "queued"
+	PlanningStatusClosed = "closed"
+)
 
 type TileProjection struct {
 	ID       string        `json:"id"`
@@ -32,14 +39,24 @@ type TilePlanning struct {
 }
 
 type UnitProjection struct {
-	ID        string          `json:"id"`
-	OwnerID   string          `json:"owner_id"`
-	TileID    string          `json:"tile_id"`
-	ArmyID    string          `json:"army_id,omitempty"`
-	Fortified bool            `json:"fortified"`
-	Domain    string          `json:"domain,omitempty"`
-	Movement  int             `json:"movement,omitempty"`
-	Effects   []engine.Effect `json:"effects,omitempty"`
+	ID              string          `json:"id"`
+	OwnerID         string          `json:"owner_id"`
+	TileID          string          `json:"tile_id"`
+	ArmyID          string          `json:"army_id,omitempty"`
+	Fortified       bool            `json:"fortified"`
+	Domain          string          `json:"domain,omitempty"`
+	Movement        int             `json:"movement,omitempty"`
+	CargoCapacity   int             `json:"cargo_capacity,omitempty"`
+	CargoDomains    []string        `json:"cargo_domains,omitempty"`
+	ZOC             bool            `json:"zoc,omitempty"`
+	Attack          int             `json:"attack,omitempty"`
+	Defense         int             `json:"defense,omitempty"`
+	Strength        int             `json:"strength,omitempty"`
+	Armor           int             `json:"armor,omitempty"`
+	Health          int             `json:"health,omitempty"`
+	MaxHealth       int             `json:"max_health,omitempty"`
+	VisibilityRange int             `json:"visibility_range,omitempty"`
+	Effects         []engine.Effect `json:"effects,omitempty"`
 }
 
 type CityProjection struct {
@@ -51,13 +68,22 @@ type CityProjection struct {
 	Observed int             `json:"observed_turn"`
 }
 
+type ResearchProjection struct {
+	Advances  []string `json:"advances,omitempty"`
+	TargetID  string   `json:"target_id,omitempty"`
+	Progress  int      `json:"progress,omitempty"`
+	Available []string `json:"available,omitempty"`
+}
+
 type Projection struct {
-	Revision         int64            `json:"revision"`
-	Turn             int              `json:"turn"`
-	Tiles            []TileProjection `json:"tiles"`
-	Units            []UnitProjection `json:"units"`
-	Cities           []CityProjection `json:"cities"`
-	EmbassyPlayerIDs []string         `json:"embassy_player_ids,omitempty"`
+	Revision         int64               `json:"revision"`
+	Turn             int                 `json:"turn"`
+	Tiles            []TileProjection    `json:"tiles"`
+	Units            []UnitProjection    `json:"units"`
+	Cities           []CityProjection    `json:"cities"`
+	Research         *ResearchProjection `json:"research,omitempty"`
+	EmbassyPlayerIDs []string            `json:"embassy_player_ids,omitempty"`
+	PlanningStatus   string              `json:"planning_status,omitempty"`
 }
 
 // Update records only what each player can currently observe. The returned state
@@ -113,7 +139,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	if err != nil {
 		return Projection{}, err
 	}
-	result := Projection{Revision: state.Revision, Turn: state.Phase.Turn}
+	result := Projection{Revision: state.Revision, Turn: state.Phase.Turn, PlanningStatus: planningStatus(state, playerID)}
 	for _, player := range state.Players {
 		if player.ID != playerID {
 			continue
@@ -122,6 +148,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 			if nation.ID != player.NationID {
 				continue
 			}
+			result.Research = researchProjection(state, nation)
 			for _, embassyNationID := range nation.Embassies {
 				for _, embassyPlayer := range state.Players {
 					if embassyPlayer.NationID == embassyNationID {
@@ -148,6 +175,12 @@ func Project(state engine.State, playerID string) (Projection, error) {
 			projected := UnitProjection{ID: unit.ID, OwnerID: unit.OwnerID, TileID: unit.TileID, ArmyID: unit.ArmyID, Fortified: unit.Fortified}
 			if unit.OwnerID == playerID {
 				projected.Domain, projected.Movement = unit.Domain, unit.Movement
+				projected.CargoCapacity = unit.CargoCapacity
+				projected.CargoDomains = append([]string(nil), unit.CargoDomains...)
+				projected.ZOC = unit.ZOC
+				projected.Attack, projected.Defense, projected.Strength, projected.Armor = unit.Attack, unit.Defense, unit.Strength, unit.Armor
+				projected.Health, projected.MaxHealth = unit.Health, unit.MaxHealth
+				projected.VisibilityRange = unit.VisibilityRange
 				projected.Effects = append([]engine.Effect(nil), unit.Effects...)
 			}
 			result.Units = append(result.Units, projected)
@@ -163,6 +196,75 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	sort.Slice(result.Cities, func(i, j int) bool { return result.Cities[i].ID < result.Cities[j].ID })
 	sort.Strings(result.EmbassyPlayerIDs)
 	return result, nil
+}
+
+func researchProjection(state engine.State, nation engine.Nation) *ResearchProjection {
+	projection := &ResearchProjection{Advances: append([]string(nil), nation.Advances...), TargetID: nation.ResearchTargetID, Progress: nation.ResearchProgress}
+	if len(state.Rules.Definitions) > 0 && string(state.Rules.Definitions) != "null" {
+		if runtime, err := rules.CompileRuntime(state.Rules.Definitions, state.Rules.ContentHash); err == nil {
+			for _, advance := range runtime.Advances {
+				if projectionAdvanceAvailable(nation, runtime, advance.ID) {
+					projection.Available = append(projection.Available, advance.ID)
+				}
+			}
+		}
+	}
+	sort.Strings(projection.Advances)
+	sort.Strings(projection.Available)
+	if len(projection.Advances) == 0 && projection.TargetID == "" && projection.Progress == 0 && len(projection.Available) == 0 {
+		return nil
+	}
+	return projection
+}
+
+func projectionAdvanceAvailable(nation engine.Nation, runtime rules.RuntimeRules, advanceID string) bool {
+	advance, ok := runtime.Advance(advanceID)
+	if !ok || containsString(nation.Advances, advanceID) {
+		return false
+	}
+	for _, prerequisite := range advance.Prerequisites {
+		if !containsString(nation.Advances, prerequisite) {
+			return false
+		}
+	}
+	return true
+}
+
+func planningStatus(state engine.State, playerID string) string {
+	if state.Terminal.Ended {
+		return ""
+	}
+	if state.Phase.Mode != turns.ModeSimultaneous && state.Phase.Mode != turns.ModeHybrid {
+		return ""
+	}
+	stage := state.Policy.Stage
+	if stage == "" {
+		stage = turns.StagePlanning
+	}
+	if stage != turns.StagePlanning {
+		return ""
+	}
+	eligible := false
+	for _, player := range state.Players {
+		if player.ID == playerID && player.Lifecycle == engine.PlayerActive {
+			eligible = true
+			break
+		}
+	}
+	if !eligible {
+		return ""
+	}
+	for _, ended := range state.Policy.EarlyEnds {
+		if ended == playerID {
+			return PlanningStatusClosed
+		}
+	}
+	for _, queued := range state.Policy.Queue {
+		if queued.ActorID == playerID {
+			return PlanningStatusQueued
+		}
+	}
+	return PlanningStatusOpen
 }
 
 func planningTiles(state engine.State, playerID string, visible map[string]bool) (map[string]*TilePlanning, error) {
@@ -390,7 +492,11 @@ func visibleTiles(state engine.State) map[string]map[string]bool {
 		result[player.ID] = make(map[string]bool)
 	}
 	for _, unit := range state.Units {
-		addSight(result[unit.OwnerID], state, unit.TileID, defaultSightRadius)
+		radius := defaultSightRadius
+		if unit.VisibilityRange > radius {
+			radius = unit.VisibilityRange
+		}
+		addSight(result[unit.OwnerID], state, unit.TileID, radius)
 	}
 	for _, city := range state.Cities {
 		addSight(result[city.OwnerID], state, city.TileID, defaultSightRadius)
@@ -472,4 +578,13 @@ func sign(value int) int {
 		return 1
 	}
 	return 0
+}
+
+func containsString(items []string, value string) bool {
+	for _, item := range items {
+		if item == value {
+			return true
+		}
+	}
+	return false
 }

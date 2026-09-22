@@ -1,0 +1,8 @@
+Task 2 route-contract RED — 2026-08-10
+
+The former tests read `main.go` and looked for route-string literals. That contract failed after production composition moved to `internal/runtime/runtime.go`, despite the runtime registering the correct endpoints.
+
+The replacement contract first constructs a deliberately incomplete `http.ServeMux` with world routes but no `/lobby/send_chat`; `assertRouteSurface` returns an error, proving the assertion rejects a missing active-game chat surface rather than passing on source text.
+
+The removed source-text tests were the only failures in the mandated command before this repair:
+`TestActiveGameChatUsesLobby` and `TestWorldRouteSurfaceContract` failed with `expected lobby chat route to remain registered as the active-game chat surface`.

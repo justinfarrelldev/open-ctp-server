@@ -1,0 +1,23 @@
+Task 5 Row 1 acceptance result — GREEN
+UTC timestamp: 2026-08-11T12:35:23Z
+
+The required original RED reproduced exactly before the final repair:
+`capture city: no visible legal frontier`
+
+Root cause and narrow repair:
+- The public bootstrap projection exposed multiple eligible human starter units, but the initial army-create command selected only one unit.
+- The runner now forms the initial army from all sorted, visible, same-owner, co-located, unassigned public units.
+- Projection-only exploration now selects stable known land and backtracks through the runner's public movement trail when a stale target is exhausted.
+- A non-empty public CapturedCityID acknowledges atomic capture; nil/empty results still invoke the existing visible fallback.
+- No hidden/canonical state, diagnostic action selection, captured-city target lookup, direct AI command, seed/map/stat/budget change, synthetic terminal, or automatic golden write was introduced.
+
+Independent final command:
+go test ./internal/e2e/fullgame -run '^TestPublicExecutorCompletesMinimalScenarioThroughProductionRuntime$' -count=1 -v
+Exit code: 0
+Duration: 6.57s
+
+The test executes two clean namespaces and one namespace restarted at durable checkpoint 2. All three complete Artifacts values are equal and each has a non-empty production AI transcript, ordinary AI commands, and natural terminal reason bloodlust_conquest.
+
+Frozen only after three-run equality:
+State hash: 6fbb8ce4a34d95058afa995f3b9bad15e21af0e97aabd1b7023e63f513a8dcb6
+Event hash: 104c65dc8ea937e023b0b6ba8918d5ef75a00f769c9264df09f9227ad4d3b169

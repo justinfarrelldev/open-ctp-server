@@ -130,7 +130,7 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 		playerID := fmt.Sprintf("account-%d", player.AccountID)
 		tileID := spawnTileIDs[player.AccountID]
 		for ordinal := 0; ordinal < snapshot.Config.StartingSettlers; ordinal++ {
-			state.Units = append(state.Units, engine.Unit{ID: fmt.Sprintf("settler-%d-%d", player.AccountID, ordinal+1), OwnerID: playerID, TileID: tileID, Domain: engine.DomainLand, Movement: runtime.Starter.Movement, ZOC: true, Effects: starterEffects(runtime.Starter), Attack: runtime.Starter.Attack, Defense: runtime.Starter.Defense, Strength: runtime.Starter.Strength, Armor: runtime.Starter.Armor, Health: runtime.Starter.Health, MaxHealth: runtime.Starter.Health})
+			state.Units = append(state.Units, engine.Unit{ID: fmt.Sprintf("settler-%d-%d", player.AccountID, ordinal+1), OwnerID: playerID, TileID: tileID, Domain: runtime.Starter.Domain, Movement: runtime.Starter.Movement, CargoCapacity: runtime.Starter.TransportCapacity, CargoDomains: append([]string(nil), runtime.Starter.CargoDomains...), ZOC: runtime.Starter.ZOC, Effects: starterEffects(runtime.Starter), Attack: runtime.Starter.Attack, Defense: runtime.Starter.Defense, Strength: runtime.Starter.Strength, Armor: runtime.Starter.Armor, Health: runtime.Starter.Health, MaxHealth: runtime.Starter.Health, VisibilityRange: runtime.Starter.VisibilityRange})
 		}
 	}
 	if len(state.Units) != len(players)*snapshot.Config.StartingSettlers {

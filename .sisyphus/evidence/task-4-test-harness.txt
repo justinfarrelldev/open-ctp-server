@@ -1,0 +1,25 @@
+Task 4 deterministic test infrastructure evidence
+
+RED (expected missing API failure):
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/testkit
+Result: FAIL before implementation; undefined NewScenario, NewBarrier, FaultPlan, ValidateTestCommand, and ValidateCoverage.
+
+GREEN focused self-tests:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/testkit
+Result: PASS.
+
+Bounded race/repetition self-test:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -timeout=13m -p=2 -race ./internal/gameplay/... -count=10
+Result: PASS. Testkit concurrent case proves eight disjoint namespaces, event evidence hashes, and fake-clock values without sleeps.
+
+Bounded full test wrapper:
+task test
+Result: PASS.
+
+Coverage policy:
+task test-coverage
+Result: expected non-zero enforcement. Aggregate internal coverage is 79.1%, below the preserved >80% gate; the task stops before the engine-specific >=90% gate. The new engine package independently reports 67.2% coverage, so its conditional gate will also correctly fail until Task 3 coverage is raised. No engine files were modified by Task 4.
+
+Diagnostics:
+lsp_diagnostics internal/gameplay/testkit severity=error
+Result: zero errors.

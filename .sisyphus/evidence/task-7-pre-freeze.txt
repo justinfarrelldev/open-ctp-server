@@ -1,0 +1,284 @@
+Task 7 pre-freeze production acceptance matrix
+Recorded UTC: 2026-08-11T14:26:00Z
+
+FINAL CLASSIFICATION: BLOCKED; production behavior gates are green, but the complete freeze gate cannot be declared PASS because the inherited working-tree coverage/format boundary is red. No production source was changed.
+
+Prerequisites and immutable baseline
+- UTC: 2026-08-11T14:09:04Z
+- Branch: game-server-world
+- HEAD: 212e070880dbce3be56b74446c6fc00a4a2cb97e
+- Go: go1.23.0 linux/amd64
+- GNU timeout: 9.1
+- Docker client/server: 29.4.3/29.4.3, linux/x86_64
+- Staged changes: none.
+- Inherited tracked modifications preserved: .github/workflows/coverage.yml, .github/workflows/fly-deploy.yml, Taskfile.yml, docs/docs.go, docs/swagger.json, docs/swagger.yaml, internal/account/create_account.go, main.go.
+- Inherited untracked production-acceptance baseline preserved: internal/e2e/fullgame/** and five internal/e2e/onboarding source/test files, plus prior evidence/notepads/plans/.serena.
+- Exact Task 9 excluded broad failure signature: TestCatalogHasExactlySixtyFixedCoveredCases -> "scenario fullgame-01-sequential-bloodlust_conquest has non-observed rules fixture hash".
+- Pre-existing Docker baseline contained an unrelated running Supabase stack/network/volumes. No pre-existing resource was stopped, changed, or removed.
+- Every Go test command below used GOMAXPROCS=4, an outer GNU timeout, an inner Go -timeout, and -p=2. External database/Supabase variables were unset for DSN-free gates.
+
+1. Task 2 isolated fresh and legacy migrations
+UTC window: 2026-08-11T14:09:04Z--2026-08-11T14:12:04Z
+Command: env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 20m bash supabase/tests/task2/run_isolated_postgres.sh
+Exit: 0
+Result: "Task 2 fresh and legacy migrations passed on isolated PostgreSQL host port 32768."
+Cleanup commands/results: docker ps/network/volume filters for task2 and gameplay-migration, plus publisher filter for port 32768, all returned no output. The script-created container and anonymous volume were removed; no network was created; pre-existing Supabase resources remained.
+
+2. Bridge and named memory SQL
+UTC: 2026-08-11T14:12:04Z--14:12:05Z
+Command: env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/game ./internal/e2e/memorysql -count=1
+Exit: 0
+Result: internal/game and internal/e2e/memorysql passed. Includes rollback/restart persistence, receipt replay/conflict, ordered outbox/SSE resume, and controller bridge behavior.
+
+3. Task 3 setup/import and Task 4 boundary matrix
+UTC: 2026-08-11T14:12:14Z--14:12:16Z
+Command: env -u ... GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/setup ./internal/e2e/onboarding ./internal/e2e/boundary ./internal/e2e/diagnostic ./internal/e2e/puppet ./internal/e2e/testkit -count=1
+Exit: 0
+Result: all packages passed. This executes all 510 controller vectors for counts 2--8, imported playable civilization validation, public setup/start/restart for every count including 5 and 7, every imported playable civilization, diagnostic detachment, public-only puppet planning, exact wrong-actor 422/nonmember 403/authorized progression, production import/route/topic/config guards, hidden canary, deterministic barriers, and bounded timeout policy.
+
+4. Production package matrix
+UTC: 2026-08-11T14:12:32Z--14:12:34Z
+Command: env -u ... GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -timeout=13m -p=2 ./internal/gameplay/... ./internal/world/... ./internal/runtime -count=1
+Exit: 0
+Result: AI, combat, engine, turns, events, HTTP, rules/importer, service, store, visibility, world, and runtime passed.
+
+5. Row 1 independent acceptance fixture
+UTC: 2026-08-11T14:12:42Z--14:12:50Z
+Command: env -u ... GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^TestPublicExecutorCompletesMinimalScenarioThroughProductionRuntime$' -count=1
+Exit: 0
+Result: two clean executions plus typed after-durable-round restart passed. Accepted immutable artifacts remained exact: state 6fbb8ce4a34d95058afa995f3b9bad15e21af0e97aabd1b7023e63f513a8dcb6; events 104c65dc8ea937e023b0b6ba8918d5ef75a00f769c9264df09f9227ad4d3b169.
+
+6. Row 2 independent acceptance fixture
+UTC: 2026-08-11T14:12:57Z--14:13:07Z
+Command: env -u ... GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^TestPublicExecutorCompletesRowTwoThroughProductionRuntime$' -count=1
+Exit: 0
+Result: two clean executions plus typed after-completed-turn-12 restart passed. The test compared the complete Artifacts value (terminal winner/reason, state hash, event hash, AI command count, and complete production-observer AI transcript); Row 2 expected hash literals intentionally remain absent until catalog authoring.
+
+7. Row 1 and Row 2 together
+UTC: 2026-08-11T14:13:14Z--14:13:30Z
+Command: env -u ... GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -timeout=13m -p=2 ./internal/e2e/fullgame -run '^(TestPublicExecutorCompletesMinimalScenarioThroughProductionRuntime|TestPublicExecutorCompletesRowTwoThroughProductionRuntime)$' -count=1
+Exit: 0
+Result: both fixtures passed together without namespace/artifact interference.
+
+8. Complete fullgame acceptance without Task 9 authoring gate
+UTC: 2026-08-11T14:13:42Z--14:14:05Z
+Command: env -u ... GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./internal/e2e/fullgame -skip '^TestCatalogHasExactlySixtyFixedCoveredCases$' -count=1
+Exit: 0
+Result: every fullgame contract, audit, public transport, script, hidden-role, provenance, budget, restart, SSE, terminal, and both acceptance fixtures passed. Exactly one Task 9 test name was excluded.
+
+9. Explicit restart/replay/deadline/SSE/terminal/authorization gate
+UTC: 2026-08-11T14:14:24Z--14:14:26Z
+Command: env -u ... GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/onboarding ./internal/e2e/memorysql ./internal/gameplay/service ./internal/gameplay/events ./internal/gameplay/http ./internal/e2e/fullgame -run '^(TestPublicRuntimeResolvesSimultaneousQueueAfterRestart|TestPublicRuntimeExecutesGameplayCommandAndResumesSSEFromNamedMemoryStore|TestPublicRuntimeDispatchesDueLongTurnPassToSSE|TestGameplayReceiptReplayAndConflictArePersisted|TestGameplayRecordsProvideOrderedOutboxAndSSEResume|TestExecuteCommandCommitsOnceAndReplaysStoredBytes|TestExecuteCommandRejectsReceiptPayloadConflictStaleAndRollsBack|TestExecuteCommandRejectsOwnerTerminalAndIllegalPhase|TestDeadlineWorkerExecutesDueLongTurnPassOnce|TestDeadlineWorkerManualPassOrRestartCannotDoublePass|TestHandlerPreservesStaleAndIdempotencyConflictsWithoutDetails|TestStreamResumeExpiredCursorResyncAndNeverLeaksCanonicalPayload|TestStreamTerminalAndDisconnectCleanup|TestHTTPExplorationTransportRejectsStaleResyncWithoutRegressingCurrentProjection|TestHTTPExplorationTransportCommandReceiptIsReplayStableAndRevisionDistinct|TestValidateTerminalAgreementRejectsSSEMismatchAndUnexpectedReason|TestPuppetCommandTraversesAuthenticatedHumanHTTPPath)$' -count=1
+Exit: 0
+Result: all six packages passed. Active-turn restart resumed event 10 from Last-Event-ID 9; replay/conflict, deadline/manual race, stale cursor/resync, terminal rejection, and wrong-actor/nonmember boundaries passed.
+
+10. Optional local PostgreSQL lock-race diagnostic (not a designated Task 7 production acceptance gate)
+Attempts UTC: 14:14:50Z--14:14:52Z and 14:15:21Z--14:15:23Z
+Result: harness readiness failures before Go because the official image's temporary init server shut down between readiness and bootstrap. Both containers/anonymous volumes were removed.
+Third attempt UTC: 2026-08-11T14:15:53Z--14:15:57Z
+Command: disposable migrated postgres:16-alpine on Docker-assigned loopback port; GAMEPLAY_POSTGRES_DSN=postgres://postgres@127.0.0.1:<dynamic>/postgres?sslmode=disable go test -timeout=8m -p=2 ./internal/gameplay/service -run '^TestExecuteCommandPostgresLockRace$' -count=1
+Exit: 1
+Classification: stale optional test fixture, not production behavior. TestExecuteCommandPostgresLockRace creates its own gameplay_events table without event_id; production store.PersistCommandInTx requires event_id, and accepted migration 20260719130000_gameplay_event_ids_task17.sql adds it to the real schema. Error: "pq: column event_id of relation gameplay_events does not exist". Scope forbids modifying source for this harness-only issue. The designated gameplay race gates below pass. Final task7-lock-race container/volume filters returned no output.
+
+11. Production/non-fullgame race matrix
+UTC: 2026-08-11T14:17:00Z--14:17:21Z
+Command: env -u ... GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 -race ./internal/gameplay/... ./internal/world/... ./internal/runtime ./internal/game ./internal/e2e/memorysql ./internal/e2e/onboarding ./internal/e2e/setup ./internal/e2e/boundary ./internal/e2e/diagnostic ./internal/e2e/puppet ./internal/e2e/testkit -count=1
+Exit: 0
+Result: all packages passed; no DATA RACE report.
+
+12. Fullgame race matrix
+UTC: 2026-08-11T14:17:30Z--14:20:04Z
+Command: env -u ... GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 -race ./internal/e2e/fullgame -skip '^TestCatalogHasExactlySixtyFixedCoveredCases$' -count=1
+Exit: 0
+Result: passed in 152.747s; no DATA RACE report.
+
+13. Aggregate coverage gate
+UTC: 2026-08-11T14:20:29Z--14:20:56Z
+Command: env -u ... GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m sh -c '<mktemp/trap>; go test -timeout=16m -p=2 ./internal/... -skip "^TestCatalogHasExactlySixtyFixedCoveredCases$" -coverprofile="$coverage_file"; go tool cover -func; enforce committed >80% threshold'
+Exit: 1
+Test result: every package test passed; only the Task 9 test was excluded.
+Coverage result: total 76.7%. Selected package values: account 83.5, auth 95.0, fullgame 77.2, memorysql 43.0, onboarding 70.1, setup 95.0, testkit 80.6, game 70.6, AI 85.2, combat 76.2, engine 88.8, turns 93.6, events 54.9, HTTP 77.4, rules 82.7, service 76.6, store 63.7, visibility 76.1, runtime 65.0, world 84.0.
+Classification: genuine pre-freeze blocker caused by inherited baseline coverage debt. The committed workflow threshold is >80%. No selection was weakened and no out-of-scope tests were authored.
+
+14. Gameplay engine coverage gate from the inherited dirty workflow/Taskfile
+UTC: 2026-08-11T14:21:21Z--14:21:22Z
+Command: env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m sh -c '<mktemp/trap>; go test -timeout=16m -p=2 ./internal/gameplay/engine -coverprofile="$coverage_file"; go tool cover -func; enforce >=90%'
+Exit: 1
+Result: engine tests passed; engine statement coverage 88.8%. The >=90% engine gate is an unrelated inherited modification, not present at HEAD. It is not absorbed or edited, but it also cannot be called green in this working tree.
+
+15. Unfiltered broad classification
+UTC: 2026-08-11T14:21:54Z--14:22:19Z
+Command: env -u ... GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./... -count=1
+Exit: 1 (expected Task 9 authoring exclusion only)
+Result: the sole failing test was TestCatalogHasExactlySixtyFixedCoveredCases at fullgame_test.go:13 with exact text "scenario fullgame-01-sequential-bloodlust_conquest has non-observed rules fixture hash". All other packages passed. No panic or race report.
+
+16. Build
+UTC: 2026-08-11T14:22:52Z--14:22:53Z
+Command: env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build -p=2 ./...
+Exit: 0
+Result: passed.
+
+17. Vet
+UTC: 2026-08-11T14:22:58Z--14:23:00Z
+Command: env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go vet -p=2 ./...
+Exit: 0
+Result: passed.
+
+18. Formatting
+UTC: 2026-08-11T14:23:12Z
+Command: timeout --signal=TERM --kill-after=30s 5m sh -c 'files=$(GIT_MASTER=1 git ls-files "*.go"); gofmt -l $files internal/e2e/fullgame/*.go internal/e2e/onboarding/*.go'
+Process exit: 0; acceptance result: FAIL because output was nonempty.
+Tracked pre-existing output: internal/auth/credential_helpers_test.go; internal/gameplay/engine/cities_task10_test.go; internal/gameplay/engine/lifecycle_runtime_test.go; internal/gameplay/rules/runtime.go; internal/gameplay/rules/runtime_test.go; internal/gameplay/service/service_test.go; internal/ratelimit/ratelimit_test.go; internal/world/scaffold_test.go; internal/world/store_update_test.go; internal/world/test_helpers.go.
+Inherited untracked output: internal/e2e/fullgame/diplomacy_scheduler.go; public_helpers_test.go; scheduler_test.go; seed_preflight_test.go; setup_public_test.go; internal/e2e/onboarding/production_runtime_test.go.
+Classification: inherited formatting blocker; Task 7 did not rewrite unrelated/source files.
+
+19. Diff/static/protected/import boundary
+UTC: 2026-08-11T14:23:12Z--14:23:13Z
+Commands/results:
+- GIT_MASTER=1 git diff --check -> exit 0.
+- env GOMAXPROCS=4 timeout ... 10m go test -timeout=8m -p=2 ./internal/gameplay/rules ./internal/e2e/boundary -run '^(TestProtectedAssetGuard|TestProtectedAssetGuardRejectsTrackedContentMarker|TestProductionPackagesDoNotImportOrExposeE2ECode|TestProductionAIGatewayRemainsSeparateFromHumanCommandExecution|TestTaskFourPackagesHaveNoBuildOrRuntimeSwitches)$' -count=1 -> exit 0.
+- Grep/AST-equivalent scans: no GAMEPLAY_POSTGRES_DSN/Supabase/fixed-54322 use under internal/e2e; no scenario-ID dispatch in executor/runner; production import scan found no non-test production import of internal/e2e (only service_test.go imports e2e/testkit); route/topic/config and hidden-canary guards passed; protected retail filename/content-marker guard passed.
+- Skip/provisional scan: one conditional t.Skip exists in TestExecuteCommandPostgresLockRace when GAMEPLAY_POSTGRES_DSN is absent; it is the stale optional test fixture classified in row 10. "disabled"/"provisional" matches in fullgame are validator negative-test vocabulary and typed AcceptanceRestartDisabled, not skipped acceptance. No accepted production test is marked known-red.
+
+20. Deliberate guard sensitivity
+UTC: 2026-08-11T14:24:22Z--14:24:23Z
+See task-7-guard-sensitivity.txt. Intended failure observed and disposable worktree removed.
+
+21. Final resource and Git boundary
+UTC: 2026-08-11T14:25:15Z--14:25:21Z
+- No task2-migrations or task7-lock-race container/network/volume remains.
+- No /tmp/opencode/task7-* file remains.
+- Git worktree list contains only /home/justi/Projects/open-ctp-server.
+- Branch and HEAD remain game-server-world / 212e070880dbce3be56b74446c6fc00a4a2cb97e.
+- No staging, commit, reset, stash, rebase, or user-file rewrite occurred.
+
+Freeze-baseline/commit feasibility
+- Exact currently committed boundary available to Task 8: HEAD 212e070880dbce3be56b74446c6fc00a4a2cb97e, ending with Task 4 correction.
+- Tasks 5--6 acceptance implementation is inherited untracked under internal/e2e/fullgame/**; therefore a clean committed-tree Task 7 acceptance baseline and narrow Task 7 commit are structurally unavailable without absorbing unrelated untracked work, which is forbidden.
+- Task 8 engine-lock generation was not started and internal/e2e/freeze/engine-lock.json was not created.
+
+Blocking summary
+1. Committed aggregate coverage policy >80% is red at 76.7% with only the Task 9 test excluded.
+2. The inherited dirty engine >=90% policy is red at 88.8%.
+3. Repository formatting scan is nonempty across pre-existing tracked and inherited untracked files.
+4. The optional DSN lock-race test's private schema is stale (missing event_id); designated migration/race matrices are green, but the helper itself cannot run green without an out-of-scope test-source correction.
+5. The accepted fullgame baseline is untracked, so no clean committed freeze baseline can be produced without violating preservation rules.
+
+
+=== POST-FIX FINAL PASS — 2026-08-11T15:09:30Z ===
+This section supersedes the earlier BLOCKED classification while preserving its RED history. The committed-policy production acceptance gate is now PASS. The unrelated dirty >=90% engine policy was not enforced, edited, staged, or treated as a blocker.
+
+Acceptance-input binding
+- Branch/HEAD remain game-server-world / 212e070880dbce3be56b74446c6fc00a4a2cb97e.
+- The inherited untracked acceptance inputs remain uncommitted by explicit preservation constraint.
+- Deterministic path+length+content digest over 44 files under internal/e2e/fullgame and internal/e2e/onboarding: SHA-256 c4f125c3983cd178e1d5d8c596aed4f5639a6139f3cbb7bbf141daaa87a907e7.
+- Row 1 accepted hashes remain state 6fbb8ce4a34d95058afa995f3b9bad15e21af0e97aabd1b7023e63f513a8dcb6 and events 104c65dc8ea937e023b0b6ba8918d5ef75a00f769c9264df09f9227ad4d3b169.
+- Per the original Task 7 delegation, Row 2 is accepted by complete Artifacts equality across two clean executions plus typed completed-turn-12 restart; its hashes are intentionally not Task 9 catalog artifacts.
+
+RED–GREEN–REFACTOR coverage families
+RED 2026-08-11T14:32:16Z--14:32:40Z: exact aggregate command reported 76.484% raw / 76.7% displayed and failed HEAD's >80.0 policy.
+GREEN/REFACTOR tests:
+- internal/e2e/memorysql/production_runtime_coverage_test.go: real production runtime public signup/lobby/stream/game/rules/controller/start/world/pass receipt replay/restart persistence; asserts public state and zero unknown SQL.
+- internal/e2e/memorysql/memorysql_test.go: driver transaction completion, unsupported SQL telemetry, fail-closed argument coercion, missing-row reads, duplicate snapshot/turn/outbox rejection, one-time delivery, and persisted long-turn deadline filter/sort.
+- internal/gameplay/events/http_test.go: broker game scoping/coalescing/idempotent unsubscribe, invalid stream requests, path/terminal validation, current resync, membership denial, and non-streaming writer rejection.
+- internal/e2e/puppet/puppet_test.go: exact public HTTP route/body enrichment, revision decode, invalid command/payload, status-only authorization error, malformed response rejection.
+- internal/world/fixtures/catalog_test.go: stable inventory, unique seeds, source-backed invariants, wet/default/dry ordering, copy isolation, missing lookup.
+- internal/e2e/fullgame/diplomacy_scheduler_test.go: stable reachable visible embassy approach and fail-closed stale/blocked alternatives.
+Final exact committed-policy command (2026-08-11T14:56:33Z--14:56:58Z, exit 0):
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m sh -c 'set -eu; coverage_file=/tmp/opencode/task7-final.coverage; go test -timeout=16m -p=2 ./internal/... -skip "^TestCatalogHasExactlySixtyFixedCoveredCases$" -coverprofile="$coverage_file"; total=$(go tool cover -func="$coverage_file" | awk "/^total:/ {print \$3}"); python3 -c "import sys; print(\"committed-policy total:\", sys.argv[1]); raise SystemExit(0 if float(sys.argv[1].rstrip(\"%\")) > 80.0 else 1)" "$total"'
+Result: all package tests passed; total statement coverage 80.4% (>80.0). Key changed package values: fullgame 77.9%, memorysql 81.9%, puppet 77.8%, events 77.1%, world/fixtures 100.0%. The dirty engine >=90% command was deliberately not run.
+
+PostgreSQL lock-race fixture RED–GREEN–REFACTOR
+RED retained above: private gameplay_events DDL omitted event_id and production insert failed.
+GREEN change: internal/gameplay/service/service_test.go private gameplay_events table now includes event_id text in migration/store column position; production logic unchanged.
+Final exact test command (2026-08-11T14:55:05Z--14:55:08Z, exit 0):
+env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m bash -c 'set -euo pipefail; name="task7-lock-race-final-$$"; cid=""; cleanup() { if [ -n "$cid" ]; then docker rm --force --volumes "$cid" >/dev/null 2>&1 || true; fi; }; trap cleanup EXIT HUP INT TERM; cid=$(docker run --detach --publish 127.0.0.1::5432 --env POSTGRES_HOST_AUTH_METHOD=trust --name "$name" postgres:16-alpine); while :; do logs=$(docker logs "$cid" 2>&1 || true); case "$logs" in *"PostgreSQL init process complete; ready for start up."*) break;; esac; done; until docker exec "$cid" psql --username postgres --dbname postgres --set ON_ERROR_STOP=1 --tuples-only --command "SELECT 1" >/dev/null 2>&1; do :; done; port=$(docker port "$cid" 5432/tcp | cut -d: -f2); test -n "$port"; test "$port" != 54322; env GAMEPLAY_POSTGRES_DSN="postgres://postgres@127.0.0.1:${port}/postgres?sslmode=disable" go test -timeout=8m -p=2 ./internal/gameplay/service -run "^TestExecuteCommandPostgresLockRace$" -count=1'
+Result: PASS; post-command docker container/volume filters for task7-lock-race-final returned no output.
+
+Behavior-preserving formatting
+Exact write command used gofmt -d (saved formatter diff) then gofmt -w over these paths:
+internal/auth/credential_helpers_test.go
+internal/gameplay/engine/cities_task10_test.go
+internal/gameplay/engine/lifecycle_runtime_test.go
+internal/gameplay/rules/runtime.go
+internal/gameplay/rules/runtime_test.go
+internal/gameplay/service/service_test.go
+internal/ratelimit/ratelimit_test.go
+internal/world/scaffold_test.go
+internal/world/store_update_test.go
+internal/world/test_helpers.go
+internal/e2e/fullgame/diplomacy_scheduler.go
+internal/e2e/fullgame/public_helpers_test.go
+internal/e2e/fullgame/scheduler_test.go
+internal/e2e/fullgame/seed_preflight_test.go
+internal/e2e/fullgame/setup_public_test.go
+internal/e2e/onboarding/production_runtime_test.go
+internal/e2e/memorysql/production_runtime_coverage_test.go
+internal/e2e/memorysql/memorysql_test.go
+internal/gameplay/events/http_test.go
+internal/e2e/puppet/puppet_test.go
+internal/world/fixtures/catalog_test.go
+internal/e2e/fullgame/diplomacy_scheduler_test.go
+Final exact verification (exit 0):
+files=$(GIT_MASTER=1 git ls-files '*.go'); output=$(gofmt -l $files internal/e2e/fullgame/*.go internal/e2e/onboarding/*.go internal/e2e/memorysql/*.go internal/world/fixtures/*.go); test -z "$output" && GIT_MASTER=1 git diff --check
+Result: no paths and no diff whitespace errors. /tmp/opencode/task7-gofmt-whitespace.diff is formatter-generated and demonstrates whitespace-only formatting.
+
+Final migration rerun
+2026-08-11T14:57:38Z--14:57:44Z, exit 0:
+env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 20m bash supabase/tests/task2/run_isolated_postgres.sh
+Result: Task 2 fresh and legacy migrations passed on isolated PostgreSQL host port 32773; final task2 resource filters return no resources.
+
+Final focused package matrix
+2026-08-11T14:58:06Z--14:58:32Z, exit 0:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./internal/game ./internal/gameplay/... ./internal/world/... ./internal/runtime ./internal/e2e/memorysql ./internal/e2e/onboarding ./internal/e2e/setup ./internal/e2e/boundary ./internal/e2e/diagnostic ./internal/e2e/puppet ./internal/e2e/testkit ./internal/e2e/fullgame -skip '^TestCatalogHasExactlySixtyFixedCoveredCases$' -count=1
+Result: all listed packages passed.
+
+Final acceptance fixtures
+Row 1, 2026-08-11T14:58:44Z--14:58:51Z, exit 0:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^TestPublicExecutorCompletesMinimalScenarioThroughProductionRuntime$' -count=1
+Row 2, 2026-08-11T14:58:59Z--14:59:07Z, exit 0:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^TestPublicExecutorCompletesRowTwoThroughProductionRuntime$' -count=1
+Together, 2026-08-11T14:59:16Z--14:59:31Z, exit 0:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -timeout=13m -p=2 ./internal/e2e/fullgame -run '^(TestPublicExecutorCompletesMinimalScenarioThroughProductionRuntime|TestPublicExecutorCompletesRowTwoThroughProductionRuntime)$' -count=1
+Result: Row 1 exact hashes and Row 2 complete clean/clean/restart Artifacts equality remain accepted.
+
+Final explicit restart/replay/deadline/SSE/authorization gate
+2026-08-11T14:59:46Z--14:59:48Z, exit 0:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/onboarding ./internal/e2e/memorysql ./internal/gameplay/service ./internal/gameplay/events ./internal/gameplay/http ./internal/e2e/fullgame -run '^(TestPublicRuntimeResolvesSimultaneousQueueAfterRestart|TestPublicRuntimeExecutesGameplayCommandAndResumesSSEFromNamedMemoryStore|TestPublicRuntimeDispatchesDueLongTurnPassToSSE|TestGameplayReceiptReplayAndConflictArePersisted|TestGameplayRecordsProvideOrderedOutboxAndSSEResume|TestExecuteCommandCommitsOnceAndReplaysStoredBytes|TestExecuteCommandRejectsReceiptPayloadConflictStaleAndRollsBack|TestExecuteCommandRejectsOwnerTerminalAndIllegalPhase|TestDeadlineWorkerExecutesDueLongTurnPassOnce|TestDeadlineWorkerManualPassOrRestartCannotDoublePass|TestHandlerPreservesStaleAndIdempotencyConflictsWithoutDetails|TestStreamResumeExpiredCursorResyncAndNeverLeaksCanonicalPayload|TestStreamTerminalAndDisconnectCleanup|TestHTTPExplorationTransportRejectsStaleResyncWithoutRegressingCurrentProjection|TestHTTPExplorationTransportCommandReceiptIsReplayStableAndRevisionDistinct|TestValidateTerminalAgreementRejectsSSEMismatchAndUnexpectedReason|TestPuppetCommandTraversesAuthenticatedHumanHTTPPath)$' -count=1
+Result: all six packages passed.
+
+Final race matrices
+Non-fullgame, 2026-08-11T14:59:59Z--15:00:20Z, exit 0:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 -race ./internal/gameplay/... ./internal/world/... ./internal/runtime ./internal/game ./internal/e2e/memorysql ./internal/e2e/onboarding ./internal/e2e/setup ./internal/e2e/boundary ./internal/e2e/diagnostic ./internal/e2e/puppet ./internal/e2e/testkit -count=1
+Fullgame, 2026-08-11T15:04:01Z--15:06:40Z, exit 0:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 -race ./internal/e2e/fullgame -skip '^TestCatalogHasExactlySixtyFixedCoveredCases$' -count=1
+Result: all packages passed; no DATA RACE report.
+
+Final build/vet/static/boundary
+Build, 2026-08-11T15:06:50Z--15:06:51Z, exit 0:
+env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build -p=2 ./...
+Vet, 2026-08-11T15:06:58Z--15:06:59Z, exit 0:
+env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go vet -p=2 ./...
+Protected/import boundary, 2026-08-11T15:07:19Z--15:07:20Z, exit 0:
+env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/rules ./internal/e2e/boundary -run '^(TestProtectedAssetGuard|TestProtectedAssetGuardRejectsTrackedContentMarker|TestProductionPackagesDoNotImportOrExposeE2ECode|TestProductionAIGatewayRemainsSeparateFromHumanCommandExecution|TestTaskFourPackagesHaveNoBuildOrRuntimeSwitches)$' -count=1
+Package-scoped Go LSP diagnostics: auth, gameplay/engine, gameplay/rules, gameplay/service, gameplay/events, ratelimit, world, world/fixtures, e2e/fullgame, e2e/onboarding, e2e/memorysql, e2e/puppet all reported zero errors.
+
+Final unfiltered broad classification
+2026-08-11T15:08:20Z--15:08:44Z:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./... -count=1
+Exit 1, expected only for Task 9. Exact sole failure: TestCatalogHasExactlySixtyFixedCoveredCases at fullgame_test.go:13: "scenario fullgame-01-sequential-bloodlust_conquest has non-observed rules fixture hash". Every other package passed; no panic/race/other red.
+
+Post-fix technical verdict: PASS. Task 8 was not started. Review-work final verdicts are appended separately below after collection.
+
+
+=== REVIEW-WORK FINAL VERDICT — 2026-08-11T15:24:00Z ===
+
+| # | Review area | Task ID | Verdict | Confidence / severity | Blocking issues |
+|---|-------------|---------|---------|-----------------------|-----------------|
+| 1 | Goal & constraint verification | bg_4909786c | PASS | HIGH (98%) | None |
+| 2 | Hands-on QA | bg_48a2a8a6 | PASS | HIGH | None |
+| 3 | Code/evidence quality | bg_780420fa | PASS | HIGH | None |
+| 4 | Security | bg_a760a64e | PASS | Severity NONE | None |
+| 5 | Context mining | bg_5db365c1 | PASS | HIGH | None |
+
+Overall review-work verdict: PASSED (5/5). All verdicts review the post-fix state. Earlier pre-fix FAIL verdicts are superseded by these post-fix reviews. Task 7 final verdict: PASS. Task 8 was not started.

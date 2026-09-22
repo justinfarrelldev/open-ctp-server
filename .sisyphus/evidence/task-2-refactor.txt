@@ -1,0 +1,11 @@
+Task 2 REFACTOR — 2026-08-10
+
+The query contracts were centralized in the existing `gamePlayersSelectByGameID` and `gamePlayerByAccountQuery` constants, removing duplicated SQL literals from SQL-mock tests while retaining exact query-shape assertions. The isolated migration runner factors file application into `apply_sql`/`apply_migrations`, making the fresh and legacy sequences explicit and preserving trap-based cleanup.
+
+Reverification after refactor:
+- focused `internal/game` bridge/start suite: PASS
+- `internal/e2e/memorysql`: PASS
+- fresh + legacy isolated migration runner: PASS
+- `go build ./...`: PASS
+
+The unfiltered `go test ./internal/game ./internal/e2e/memorysql -count=1` remains blocked only by pre-existing `TestActiveGameChatUsesLobby` / `TestWorldRouteSurfaceContract` route-registration assertions in `world_contract_test.go`; this Task 2 change does not alter those files or behavior.

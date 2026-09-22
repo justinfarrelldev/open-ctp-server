@@ -1,0 +1,23 @@
+Task 10 provenance and verification
+
+Source provenance (reviewed CTP2 baseline commit 0668dd199c2519ff8ab7d2871e7c7a89e21c8e52):
+- https://github.com/civctp2/civctp2/blob/0668dd199c2519ff8ab7d2871e7c7a89e21c8e52/ctp2_code/gs/gameobj/CityData.cpp — CityData::Initialize, CityData::GetEffectiveBuildings, CityData::BuildWonder, CityData::AddWonder.
+- https://github.com/civctp2/civctp2/blob/0668dd199c2519ff8ab7d2871e7c7a89e21c8e52/ctp2_code/gs/gameobj/bldque.cpp — BuildQueue::BuildFront*, BuildQueue::FinishBuildFront, duplicate wonder tracking/removal.
+- https://github.com/civctp2/civctp2/blob/0668dd199c2519ff8ab7d2871e7c7a89e21c8e52/ctp2_code/gs/gameobj/Player.cpp — Player::Settle, Player::AddWonder, Player::BeginTurnWonders, Player::BeginTurnProduction.
+
+RED:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine -run '^TestTask10'
+Expected compile failure before Task 10 symbols existed: undefined EffectSettler, CommandFoundCity, FoundCityPayload, and city fields.
+
+GREEN/build:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build ./internal/gameplay/engine
+PASS (exit 0).
+
+Current bounded package-test blocker is pre-existing concurrent Task 9 RED work: combat_task9_test.go uses an unfinished Result/Combat API and combat.go has an unused targetTileID. No Task 10 file has LSP diagnostics.
+
+Final verification (the concurrent Task 9 compilation issue was resolved without Task 10 changes):
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine -run '^TestTask10'` — PASS.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...` — PASS.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go build ./...` — PASS.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m task test-coverage` — PASS; internal aggregate >80% and engine 90.7%.
+- LSP diagnostics: zero errors in `engine.go`, `cities.go`, `cities_task10_test.go`, and `rules.go`.

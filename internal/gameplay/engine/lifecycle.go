@@ -15,8 +15,18 @@ var supportedVictoryEvaluators = []string{
 	"science_gaia_controller",
 }
 
+type setResearchPayload struct {
+	AdvanceID string `json:"advance_id"`
+}
+
 func applyLifecycleCommand(state *State, command Command, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	switch command.Type {
+	case CommandSetResearch:
+		var payload setResearchPayload
+		if err := json.Unmarshal(command.Payload, &payload); err != nil {
+			return "", nil, errors.New("research payload is invalid")
+		}
+		return setResearch(state, command.ActorPlayerID, payload, runtime)
 	case CommandEndGame:
 		if _, ok := playerByID(state, command.ActorPlayerID); !ok {
 			return "", nil, errors.New("owner is not a game player")
@@ -50,6 +60,7 @@ func applyLifecycleCommand(state *State, command Command, runtime *rules.Runtime
 			return "", nil, err
 		}
 		*state = next
+		updateGaiaCountdown(state, runtime, state.Phase.Turn)
 		advanceRound(state, runtime)
 		if winner, reason := evaluateVictory(*state, runtime); winner != "" {
 			endGame(state, winner, reason)
@@ -66,6 +77,32 @@ func endGame(state *State, winner, reason string) {
 	setTerminal(state, winner, reason)
 }
 
+func setResearch(state *State, actorID string, payload setResearchPayload, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
+	player, ok := playerByID(state, actorID)
+	if !ok {
+		return "", nil, errors.New("owner is not a game player")
+	}
+	nation := nationForID(state, player.NationID)
+	if nation == nil {
+		return "", nil, errors.New("actor nation does not exist")
+	}
+	if runtime == nil {
+		return "", nil, errors.New("research rules are unavailable")
+	}
+	if _, ok := runtime.Advance(payload.AdvanceID); !ok {
+		return "", nil, errors.New("research advance is unsupported")
+	}
+	if !canResearchAdvance(*nation, *runtime, payload.AdvanceID) {
+		return "", nil, errors.New("research prerequisite is not met")
+	}
+	nation.ResearchTargetID = payload.AdvanceID
+	nation.ResearchProgress = 0
+	payloadJSON, _ := json.Marshal(struct {
+		AdvanceID string `json:"advance_id"`
+	}{AdvanceID: payload.AdvanceID})
+	return "research.selected", payloadJSON, nil
+}
+
 func advanceRound(state *State, runtime *rules.RuntimeRules) {
 	state.Phase.Turn++
 	if len(state.Phase.ActivePlayerOrder) > 0 {
@@ -79,6 +116,84 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 			state.Units[index].Movement = runtime.Starter.Movement
 		}
 	}
+	advanceResearch(state, runtime)
+}
+
+func advanceResearch(state *State, runtime *rules.RuntimeRules) {
+	if runtime == nil || len(runtime.Advances) == 0 {
+		return
+	}
+	for index := range state.Nations {
+		nation := &state.Nations[index]
+		if nation.ResearchTargetID == "" {
+			continue
+		}
+		rate := researchRate(*state, *nation)
+		if rate < 1 {
+			rate = 1
+		}
+		nation.ResearchProgress += rate
+		for nation.ResearchTargetID != "" {
+			advance, ok := runtime.Advance(nation.ResearchTargetID)
+			if !ok || !canResearchAdvance(*nation, *runtime, advance.ID) {
+				nation.ResearchTargetID = ""
+				nation.ResearchProgress = 0
+				break
+			}
+			if nation.ResearchProgress < advance.Cost {
+				break
+			}
+			nation.ResearchProgress -= advance.Cost
+			nation.Advances = append(nation.Advances, advance.ID)
+			sort.Strings(nation.Advances)
+			nation.ResearchTargetID = nextResearchAdvance(*nation, *runtime)
+			if nation.ResearchTargetID == "" {
+				nation.ResearchProgress = 0
+			}
+		}
+	}
+}
+
+func researchRate(state State, nation Nation) int {
+	rate := 1
+	for _, effect := range nation.Effects {
+		if effect.Kind == EffectResearch {
+			rate += effect.Value
+		}
+	}
+	for _, city := range state.Cities {
+		if nationForPlayer(state, city.OwnerID) != nation.ID {
+			continue
+		}
+		for _, effect := range cityEffects(state, city) {
+			if effect.Kind == EffectResearch {
+				rate += effect.Value
+			}
+		}
+	}
+	return rate
+}
+
+func nextResearchAdvance(nation Nation, runtime rules.RuntimeRules) string {
+	for _, advance := range runtime.Advances {
+		if canResearchAdvance(nation, runtime, advance.ID) {
+			return advance.ID
+		}
+	}
+	return ""
+}
+
+func canResearchAdvance(nation Nation, runtime rules.RuntimeRules, advanceID string) bool {
+	advance, ok := runtime.Advance(advanceID)
+	if !ok || containsString(nation.Advances, advanceID) {
+		return false
+	}
+	for _, prerequisite := range advance.Prerequisites {
+		if !containsString(nation.Advances, prerequisite) {
+			return false
+		}
+	}
+	return true
 }
 
 func endOwnerGame(state *State, owner string) {
@@ -171,23 +286,100 @@ func scoreWinner(state State, runtime *rules.RuntimeRules) string {
 }
 
 func gaiaWinner(state State, runtime *rules.RuntimeRules) string {
-	threshold := 0
-	if runtime != nil {
-		threshold = runtime.Gaia.ActivationTurns
-	}
-	for _, nation := range state.Nations {
-		if threshold > 0 && len(nation.Advances) >= threshold {
-			return playerForNation(state, nation.ID)
-		}
-		if runtime == nil {
+	if runtime == nil {
+		for _, nation := range state.Nations {
 			for _, effect := range nation.Effects {
 				if effect.Kind == EffectVictory && effect.Value > 0 {
 					return playerForNation(state, nation.ID)
 				}
 			}
 		}
+		return ""
+	}
+	buildingID, wonderID, ok := gaiaPrerequisiteIDs(runtime)
+	if !ok {
+		return ""
+	}
+	for _, nation := range state.Nations {
+		if nation.GaiaCompletionTurn > 0 && state.Phase.Turn >= nation.GaiaCompletionTurn && nationHasGaiaPrerequisites(state, nation.ID, buildingID, wonderID) {
+			return playerForNation(state, nation.ID)
+		}
 	}
 	return ""
+}
+
+func updateGaiaCountdown(state *State, runtime *rules.RuntimeRules, resolvedTurn int) {
+	if runtime == nil {
+		return
+	}
+	buildingID, wonderID, ok := gaiaPrerequisiteIDs(runtime)
+	for index := range state.Nations {
+		nation := &state.Nations[index]
+		if !ok || !nationHasGaiaPrerequisites(*state, nation.ID, buildingID, wonderID) {
+			nation.GaiaCompletionTurn = 0
+			continue
+		}
+		if nation.GaiaCompletionTurn == 0 {
+			nation.GaiaCompletionTurn = resolvedTurn + runtime.Gaia.ActivationTurns
+		}
+	}
+}
+
+func gaiaPrerequisiteIDs(runtime *rules.RuntimeRules) (string, string, bool) {
+	if runtime == nil {
+		return "", "", false
+	}
+	buildingID, wonderID := "", ""
+	for _, production := range runtime.Production {
+		switch {
+		case production.Kind == ProductionBuilding && production.ID == "IMPROVE_SYNTHETIC":
+			buildingID = production.ID
+		case production.Kind == ProductionWonder && production.ID == "WONDER_SYNTHETIC":
+			wonderID = production.ID
+		}
+	}
+	return buildingID, wonderID, buildingID != "" && wonderID != ""
+}
+
+func nationHasGaiaPrerequisites(state State, nationID, buildingID, wonderID string) bool {
+	owners := make(map[string]bool)
+	for _, player := range state.Players {
+		if player.NationID == nationID {
+			owners[player.ID] = true
+		}
+	}
+	if len(owners) == 0 {
+		return false
+	}
+	return nationHasGaiaBuilding(state, owners, buildingID) && nationHasGaiaWonder(state, owners, wonderID)
+}
+
+func nationHasGaiaBuilding(state State, owners map[string]bool, buildingID string) bool {
+	for _, city := range state.Cities {
+		if !owners[city.OwnerID] {
+			continue
+		}
+		for _, building := range city.Buildings {
+			if building.ID == buildingID && !isObsolete(city.Obsolete, building.ObsoletedBy) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func nationHasGaiaWonder(state State, owners map[string]bool, wonderID string) bool {
+	for _, wonder := range state.Wonders {
+		if wonder.ID != wonderID || wonder.Destroyed || !owners[wonder.OwnerID] {
+			continue
+		}
+		city, ok := cityByID(state, wonder.CityID)
+		if !ok || isObsolete(city.Obsolete, wonder.ObsoletedBy) {
+			continue
+		}
+		return true
+	}
+	return false
 }
 
 func soleActiveNationPlayer(state State) string {

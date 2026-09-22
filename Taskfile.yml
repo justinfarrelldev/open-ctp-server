@@ -7,19 +7,31 @@ tasks:
       - air
 
   build:
-    cmds: 
+    cmds:
       - task protos
       - mkdir -p build_output
       - (cd src && go build -o ../build_output/open-ctp-server)
 
   test:
     cmds:
-      - go test ./...
+      - GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...
 
   test-coverage:
     cmds:
-      - go test -cover ./internal/...
+      - GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m sh -c 'coverage_file=$(mktemp); trap "rm -f \"$coverage_file\"" EXIT; go test -timeout=16m -p=2 ./internal/... -coverprofile="$coverage_file"; total_coverage=$(go tool cover -func="$coverage_file" | awk '\''/^total:/ {sub(/%/, "", $3); print $3}'\''); awk "BEGIN { exit !($total_coverage > 80.0) }"'
+      - if [ -d internal/gameplay/engine ]; then GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m sh -c 'coverage_file=$(mktemp); trap "rm -f \"$coverage_file\"" EXIT; go test -timeout=16m -p=2 ./internal/gameplay/engine -coverprofile="$coverage_file"; engine_coverage=$(go tool cover -func="$coverage_file" | awk '\''/^total:/ {sub(/%/, "", $3); print $3}'\''); awk "BEGIN { exit !($engine_coverage >= 90.0) }"'; fi
 
+  test-gameplay-migrations:
+    desc: Run isolated local Supabase pgTAP coverage for Task 2 migration and legacy upgrade.
+    cmds:
+      - timeout --signal=TERM --kill-after=30s 5m supabase start
+      - timeout --signal=TERM --kill-after=30s 8m supabase db reset --local --no-seed
+      - timeout --signal=TERM --kill-after=30s 10m supabase test db --local supabase/tests/task2/empty_schema.sql
+      # Supabase CLI v2.101.0 shadows db reset --version with its global flag; --last 1 deterministically retains Task 7 and omits Task 2.
+      - timeout --signal=TERM --kill-after=30s 8m supabase db reset --local --no-seed --last 1
+      - timeout --signal=TERM --kill-after=30s 5m supabase db query --local --file supabase/tests/task2/legacy_v0_fixture.sql
+      - timeout --signal=TERM --kill-after=30s 8m supabase migration up --local
+      - timeout --signal=TERM --kill-after=30s 10m supabase test db --local supabase/tests/task2/legacy_upgrade.sql
 
   docs:
     cmds:

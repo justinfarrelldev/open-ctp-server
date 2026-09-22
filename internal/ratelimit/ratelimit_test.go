@@ -26,27 +26,37 @@ func TestLimiterClassesHaveExpectedRates(t *testing.T) {
 			GetMax() float64
 			GetMessage() string
 			GetMessageContentType() string
-		} { return NewAuthWriteLimiter() }, expected: 10.0 / 60.0},
+		} {
+			return NewAuthWriteLimiter()
+		}, expected: 10.0 / 60.0},
 		{name: "account", limiter: func() interface {
 			GetMax() float64
 			GetMessage() string
 			GetMessageContentType() string
-		} { return NewAccountLimiter() }, expected: 1.0},
+		} {
+			return NewAccountLimiter()
+		}, expected: 1.0},
 		{name: "lobby game", limiter: func() interface {
 			GetMax() float64
 			GetMessage() string
 			GetMessageContentType() string
-		} { return NewLobbyGameLimiter() }, expected: 2.0},
+		} {
+			return NewLobbyGameLimiter()
+		}, expected: 2.0},
 		{name: "lobby sse", limiter: func() interface {
 			GetMax() float64
 			GetMessage() string
 			GetMessageContentType() string
-		} { return NewLobbySSELimiter() }, expected: 20.0 / 60.0},
+		} {
+			return NewLobbySSELimiter()
+		}, expected: 20.0 / 60.0},
 		{name: "health", limiter: func() interface {
 			GetMax() float64
 			GetMessage() string
 			GetMessageContentType() string
-		} { return NewHealthLimiter() }, expected: 5.0},
+		} {
+			return NewHealthLimiter()
+		}, expected: 5.0},
 	}
 
 	for _, tt := range tests {

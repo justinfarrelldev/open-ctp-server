@@ -94,4 +94,3 @@ func TestPureHarnessFilesAvoidForbiddenImports(t *testing.T) {
 		}
 	}
 }
-

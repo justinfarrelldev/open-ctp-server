@@ -16,10 +16,10 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
+	"github.com/justinfarrelldev/open-ctp-server/internal/e2e/testkit"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/store"
-	"github.com/justinfarrelldev/open-ctp-server/internal/e2e/testkit"
 	_ "github.com/lib/pq"
 )
 
@@ -529,7 +529,7 @@ func TestExecuteCommandPostgresLockRace(t *testing.T) {
 		`CREATE TABLE ` + schema + `.world_snapshots (game_id bigint primary key, ruleset_canonical_json jsonb, ruleset_content_hash text, ruleset_version text)`,
 		`CREATE TABLE ` + schema + `.world_turn_states (game_id bigint primary key, state_schema_version integer not null, revision bigint not null, last_event_sequence bigint not null, canonical_state_json jsonb not null, updated_at timestamptz not null default now())`,
 		`CREATE TABLE ` + schema + `.gameplay_command_receipts (game_id bigint, actor_player_id bigint, idempotency_key text, payload_sha256 text, result_json jsonb, resulting_revision bigint, resulting_event_sequence bigint, primary key (game_id, actor_player_id, idempotency_key))`,
-		`CREATE TABLE ` + schema + `.gameplay_events (game_id bigint, sequence bigint, revision bigint, ordinal integer, event_type text, payload_json jsonb, primary key (game_id, sequence))`,
+		`CREATE TABLE ` + schema + `.gameplay_events (game_id bigint, sequence bigint, revision bigint, ordinal integer, event_id text, event_type text, payload_json jsonb, primary key (game_id, sequence))`,
 		`CREATE TABLE ` + schema + `.gameplay_event_outbox (game_id bigint, sequence bigint, primary key (game_id, sequence))`,
 	}
 	for _, statement := range setup {

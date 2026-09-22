@@ -32,10 +32,11 @@ type Config struct {
 }
 
 type Runtime struct {
-	Handler    http.Handler
-	Dispatcher *gameplayevents.Dispatcher
-	Deadlines  *gameplayservice.DeadlineWorker
-	AIDriver   *ai.Driver
+	Handler          http.Handler
+	Dispatcher       *gameplayevents.Dispatcher
+	Deadlines        *gameplayservice.DeadlineWorker
+	PendingTakeovers *gameplayservice.PendingTakeoverWorker
+	AIDriver         *ai.Driver
 }
 
 func New(db *sqlx.DB, config Config) *Runtime {
@@ -116,5 +117,7 @@ func New(db *sqlx.DB, config Config) *Runtime {
 	mux.Handle("/docs/", http.StripPrefix("/docs", swaggerui.Handler(config.Swagger)))
 	deadlines := gameplayservice.NewDeadlineWorker(service)
 	deadlines.AfterCommit = dispatcher.DispatchOnce
-	return &Runtime{Handler: mux, Dispatcher: dispatcher, Deadlines: deadlines, AIDriver: ai.NewDriver(gateway, gateway, ai.Config{ActionBudget: 1, History: gateway, Observe: config.ObserveAICommand})}
+	pendingTakeovers := gameplayservice.NewPendingTakeoverWorker(service)
+	pendingTakeovers.AfterCommit = dispatcher.DispatchOnce
+	return &Runtime{Handler: mux, Dispatcher: dispatcher, Deadlines: deadlines, PendingTakeovers: pendingTakeovers, AIDriver: ai.NewDriver(gateway, gateway, ai.Config{ActionBudget: 1, History: gateway, Observe: config.ObserveAICommand})}
 }

@@ -1,0 +1,18 @@
+Task 5 — transactional ExecuteCommand gateway
+
+RED
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/service -run TestExecuteCommand
+- Expected failure: undefined Service/New/CommandRequest gateway contract.
+
+GREEN
+- Focused SQL mock gateway suite passes: malformed/auth/membership/AI/owner/setup/terminal/phase/stale/idempotency conflict/success replay/rollback.
+- Local PostgreSQL lock race passes:
+  GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m env GAMEPLAY_POSTGRES_DSN='postgresql://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable' go test -timeout=13m -p=2 ./internal/gameplay/service -run TestExecuteCommand
+- The race uses testkit.Barrier and isolated schema gameplay_service_lock_race; one command commits revision/receipt/event/outbox, the other receives 409 stale.
+
+REFACTOR / verification
+- Explicit db tags added to store.CommandReceipt for reliable sqlx receipt scanning.
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./... PASS
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go build ./... PASS
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m task test-coverage PASS
+- LSP diagnostics: zero errors in internal/gameplay/service and internal/gameplay/store/store.go.

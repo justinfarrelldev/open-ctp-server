@@ -1,0 +1,43 @@
+Task 3 GREEN verification
+
+Focused engine:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine -run 'Test(Canonical|Apply|Invariant|Schema|RNG|Decode|Injected)'
+PASS (0.021s)
+
+Complete engine package:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine
+PASS (0.021s)
+
+Repository suite:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...
+PASS
+
+Build:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go build ./...
+PASS
+
+Static boundary scans (ast-grep) found no `database/sql`, `net/http`, `time.Now()`, UUID/process-random calls, or map iteration. LSP diagnostics on `internal/gameplay/engine` reported zero errors.
+
+Task 3/4 audit-hash and coverage GREEN verification
+
+Focused engine:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine
+PASS; engine statement coverage: 90.4%.
+
+Coverage gate:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m task test-coverage
+PASS; enforced engine coverage: 90.4% (>=90.0%).
+
+Aggregate coverage:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./internal/... -coverprofile=/tmp/task3-internal-coverage.out
+PASS; `go tool cover -func=/tmp/task3-internal-coverage.out` total: 80.6% (>80.0%).
+
+Repository suite and build:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go build ./...
+PASS.
+
+Final Task 3/4 recheck after direct state/event hash assertions:
+- `task test-coverage`: PASS; engine coverage 91.7% (>=90.0%).
+- `go tool cover -func=/tmp/task3-final-internal-coverage.out`: total 80.7% (>80.0%).
+- Focused engine, full repository suite, and build: PASS.

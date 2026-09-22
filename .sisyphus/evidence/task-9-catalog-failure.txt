@@ -1,0 +1,53 @@
+Task 9 retry blocker proof — 2026-08-29T02:52:00Z
+
+Focused public blocker proof:
+- Test: `TestPublicLeaveHasNoAutonomousTakeoverPath`
+- Command:
+  `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^TestPublicLeaveHasNoAutonomousTakeoverPath$' -count=1`
+- Result: exit 0
+
+What the proof establishes:
+1. a real public gameplay `leave` command succeeds after production setup/start,
+2. the public gameplay gateway exposes no `takeover-ai` route (HTTP 404), and
+3. the production AI driver cannot autonomously recover the departed slot afterward.
+
+Locked production symbols requiring freeze reopen:
+- `internal/gameplay/http/http.go` — `commands` map does not expose `takeover-ai`
+- `internal/gameplay/ai/ai.go` — `PlanWithHistory` / `Driver` do not generate an autonomous takeover path
+
+Additional observed non-blocker failures while probing completion candidates:
+- 4-player scripted-human candidate timed out at 2m.
+- 6-player all-AI candidate timed out at 2m and 5m.
+- 8-player all-AI candidate failed with `city name already exists` from the frozen AI public command path.
+- 2-player simultaneous conquest candidate failed with `visible unit army is absent or ambiguous`.
+- 3-player hybrid diplomacy candidate exhausted the bounded human action budget.
+
+These probe failures were not accepted as success and no hashes were fabricated for Rows 03–12.
+
+
+Final verification refresh — 2026-08-29T03:00:00Z
+- `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/fullgame -count=1` -> exit 0
+- `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -race -timeout=13m -p=2 ./internal/e2e/fullgame -count=1` -> exit 0
+- `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go build ./...` -> exit 0
+- `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go vet ./internal/e2e/fullgame` -> exit 0
+- `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/freeze -run '^TestEngineLock$' -count=1` -> exit 0
+- `GIT_MASTER=1 git diff --check` -> exit 0
+- `lsp_diagnostics internal/e2e/fullgame` -> 0 errors
+
+
+Task 9 continuation after parent timeout — 2026-08-29T04:22:30Z
+- Parent polling expired during the row-shard investigation phase, specifically while iterating the `TASK9_ROW=3` observation path after a `driveAIPlayers` continuity fix.
+- Preserved valid partial work: Row 01/02 artifacts, separate Row 01 acceptance namespace, continuity worker tests, continuity harness policy, starting-settler support, and fail-closed provisional rows.
+- Current shortest repros after the latest continuity reshaping:
+  * `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=3 GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/fullgame -run '^TestObserveTask9Row$' -count=1 -v` -> exit 1, safe diagnostic `context deadline exceeded` after the public leave/takeover handoff.
+  * `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=6 GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/fullgame -run '^TestObserveTask9Row$' -count=1 -v` -> exit 1, same handoff stall.
+- Updated hypothesis: the remaining blocker is no longer pending takeover itself, but deterministic AI-phase continuation for post-leave sequential/long-turn continuity rows under the frozen public contract. No unobserved row hashes were written.
+
+
+Task 9 design correction pass — 2026-08-29T04:35:00Z
+- Restored truthful Rows 01–12 ID/mode pairings and representative composition diversity in `catalog_rows_01_12.go`; the stable IDs no longer lie about turn mode.
+- Restored required policy coverage in the row envelope: one-human/rest-AI, all-AI observe-only, alternating/test-controlled humans, and designated continuity rows.
+- Corrected continuity harness design in `executor.go`: only the designated leave actor is converted through `RunPendingTakeovers`; surviving humans remain available for projection-derived public actions where present.
+- Removed temporary `zz_task9_observe_test.go` before final reporting.
+- Focused fail-closed verification remains green: `go test ./internal/e2e/fullgame -run '^(TestCatalogSchemaAssemblesExactlySixtyStableCases|TestCatalogRowOneMatchesAcceptedFixture|TestCatalogRows01_12CoverTaskNineRosterAndPolicyEnvelope|TestCatalogRejectsProvisionalScenarios|TestValidate.*|TestPublicLeave.*)$' -count=1`, `go test ./internal/e2e/freeze -run '^TestEngineLock$' -count=1`, `git diff --check`, and LSP diagnostics all pass.
+- Rows 03–12 remain unobserved after the earlier bounded continuity probes; no hashes were written for them.

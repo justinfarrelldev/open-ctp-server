@@ -1,0 +1,18 @@
+# Task 6 advances happy path evidence
+# 2026-09-22T17:34:35-04:00
+
+## Source alignment
+See .sisyphus/evidence/ctp2-systems-task-6-source-inventory.md
+
+## Focused tests
+Command: GOMAXPROCS=4 go test ./internal/gameplay/rules ./internal/gameplay/engine ./internal/gameplay/visibility ./internal/gameplay/http -run "TestTask6|TestParseCTP2StyleSyntheticCatalog|TestCompileRuntimeRules|TestHTTPRequestValidation" -count=1
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules	0.004s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.024s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.007s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/http	0.003s [no tests to run]
+
+## Final verification
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/game ./internal/gameplay/... ./internal/world ./internal/runtime ./internal/e2e/memorysql ./internal/e2e/onboarding ./internal/e2e/fullgame -count=1` exited 0.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 5m go test -timeout=4m -p=2 ./internal/e2e/freeze -run '^TestEngineLock$' -count=1` exited 0.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build -p=2 ./...` exited 0.
+- `git diff --check` exited 0.

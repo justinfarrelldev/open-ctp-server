@@ -1,0 +1,20 @@
+Task 5 REFACTOR/final-code verification
+UTC timestamp: 2026-08-11T12:35:23Z
+
+Final code retains only the public execution repairs and direct regressions: public starter army composition, public capture acknowledgement, projection-only stable land selection/backtracking, and clean-versus-restart execution proof. Temporary diagnostic returns and experiments were removed.
+
+LSP diagnostics:
+- internal/e2e/fullgame/runner.go: zero errors/warnings; modernization hints only.
+- internal/e2e/fullgame/runner_test.go: no diagnostics.
+- internal/e2e/fullgame/fullgame_test.go: zero errors/warnings; modernization hints only.
+- internal/e2e/fullgame/executor.go: zero errors/warnings; modernization hints only.
+
+gofmt -d on all four files: no output.
+go build ./...: exit 0.
+Tracked git diff --check: exit 0. The fullgame directory is inherited untracked baseline, so Git cannot diff-check its individual files; gofmt, LSP, focused tests, race, and build cover the Task 5 files directly.
+
+Boundary scans:
+- No diagnostic or hidden-state read is used for planner action selection.
+- `canonical` in exploration_http.go names deterministic public JSON bytes used for hashing, not canonical engine state.
+- executor AI references only invoke/count results from the production AI gateway; the runner does not construct or submit AI commands.
+- CapturedCityID appears only in the public result acknowledgement and direct tests.

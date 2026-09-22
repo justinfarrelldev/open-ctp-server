@@ -373,6 +373,7 @@ func TestValidateStateRejectsEveryAuthorityViolation(t *testing.T) {
 		{"negative revision", func() State { s := richState(); s.Revision = -1; return s }()},
 		{"negative sequence", func() State { s := richState(); s.EventSequence = -1; return s }()},
 		{"negative turn", func() State { s := richState(); s.Phase.Turn = -1; return s }()},
+		{"negative Gaia completion turn", func() State { s := richState(); s.Nations[0].GaiaCompletionTurn = -1; return s }()},
 		{"missing active order", func() State { s := richState(); s.Phase.ActivePlayerOrder = nil; return s }()},
 		{"negative active index", func() State { s := richState(); s.Phase.ActivePlayerIndex = -1; return s }()},
 		{"duplicate overlay", func() State { s := richState(); s.Overlays = append(s.Overlays, s.Overlays[0]); return s }()},

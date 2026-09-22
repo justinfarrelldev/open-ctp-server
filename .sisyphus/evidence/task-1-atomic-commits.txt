@@ -1,0 +1,45 @@
+Task 1 atomic preservation ledger
+Recorded 2026-08-10
+
+STYLE DETECTION
+- 30 recent commits; English 30/30; semantic conventional style 29/30.
+- Commit messages used English semantic style.
+
+COMMIT-NOW (accepted after clean-worktree verification)
+1. 19a4327 fix(lobby): return created lobby identity
+   Paths: internal/lobby/create_lobby.go; internal/lobby/create_lobby_test.go
+   Parent: ae95c53. Patch preflight/apply, `git diff --check`, bounded `go test ./internal/lobby -run '^TestCreateLobby_(InvalidMethod|PasswordRequired|SuccessReturnsOnlyLobbyID)$' -count=1`, and `go build ./...` each exited 0.
+2. 59e091b fix(world): preserve map seed across victory selection
+   Paths: internal/world/generator.go; internal/world/generation_test.go
+   Parent: 19a4327. Patch preflight/apply, `git diff --check`, bounded `go test ./internal/world -run '^(TestWorldGenerationDeterministic|TestVictorySelectorDoesNotChangeWorldGeneration)$' -count=1`, and `go build ./...` each exited 0.
+3. 56f9cf0 feat(gameplay): import deterministic CTP2 rules
+   Paths: internal/gameplay/rules/{rules.go,runtime.go,rules_test.go,runtime_test.go,movement_task17_test.go,special_task11_test.go,testdata/synthetic-ctp2/EndGameObjects.ctp2synthetic,testdata/synthetic-ctp2/Units.ctp2synthetic,testdata/synthetic-ctp2/Wonder.ctp2synthetic,testdata/synthetic-ctp2/buildings.ctp2synthetic,testdata/synthetic-ctp2/catalog.synthetic,testdata/synthetic-ctp2/terrain.ctp2synthetic}
+   Parent: 59e091b. Patch preflight/apply, `git diff --check`, bounded `go test ./internal/gameplay/rules -count=1`, and `go build ./...` each exited 0.
+4. 4f9461b feat(gameplay): add canonical turn engine
+   Paths: all internal/gameplay/engine/** source and direct-test paths (including engine/turns/**): cities, combat, engine, lifecycle, policy state, special, units, war, and turns implementations/tests.
+   Parent: 56f9cf0. Patch preflight/apply, `git diff --check`, bounded `go test ./internal/gameplay/engine/... -count=1`, and `go build ./...` each exited 0.
+5. dabe0ae feat(rules): add CTP2 import command
+   Paths: cmd/import-rules/main.go; cmd/import-rules/main_test.go
+   Parent: 4f9461b. Patch preflight/apply, `git diff --check`, bounded `go test ./cmd/import-rules -count=1`, and `go build ./...` each exited 0.
+6. d4b7521 feat(gameplay): add visible AI event projection
+   Paths: internal/gameplay/ai/{ai.go,ai_test.go}; internal/gameplay/events/{events.go,events_test.go,http.go,http_test.go}; internal/gameplay/visibility/{visibility.go,visibility_test.go,fog_task17_test.go,movement_task17_test.go,special_task11_test.go}
+   Parent: dabe0ae. Patch preflight/apply, `git diff --check`, bounded `go test ./internal/gameplay/ai ./internal/gameplay/events ./internal/gameplay/visibility -count=1`, and `go build ./...` each exited 0.
+
+BLOCKED-RED (every path remains uncommitted)
+- internal/game/create_game.go, internal/game/create_game_test.go, internal/game/endpoints.go, internal/game/helpers.go, internal/game/models.go, internal/game/player_controls_task11_test.go, internal/game/player_endpoints.go, internal/game/start_game_world_test.go, internal/game/world_contract_stubs.go, internal/game/world_contract_test.go, internal/game/start_gameplay.go, internal/game/start_gameplay_test.go: prohibited internal/game bridge work.
+- internal/e2e/fullgame/{audit.go,audit_test.go,catalog.go,conquest.go,conquest_test.go,diplomacy_scheduler.go,diplomacy_scheduler_test.go,executor.go,exploration.go,exploration_http.go,exploration_http_test.go,exploration_test.go,fullgame_test.go,movement.go,movement_task17_test.go,public_helpers.go,public_helpers_test.go,run.go,runner.go,scheduler.go,scheduler_test.go,scripts.go,scripts_test.go,seed_preflight_test.go,setup_public_test.go,setup_roster_test.go,terminal.go,validate.go,scripts/city-economy-wonder.json,scripts/fog-exploration-lifecycle.json,scripts/military-zoc-combat.json,scripts/special-terraform.json}: prohibited fullgame work and known baseline reds.
+- internal/e2e/memorysql/{memorysql.go,memorysql_test.go}; internal/e2e/onboarding/{http_client.go,onboarding.go,onboarding_test.go,production_runtime_test.go,public_runtime.go}; internal/runtime/runtime.go: blocked runtime/bridge dependency.
+- internal/gameplay/{combat/http.go,combat/http_test.go,http/http.go,http/http_test.go,http/openapi_test.go,service/ai.go,service/deadline.go,service/deadline_test.go,service/fog_task17_test.go,service/service.go,service/service_boundary_test.go,service/service_test.go,store/store.go,store/store_test.go,testkit/policy.go,testkit/testkit.go,testkit/testkit_test.go}: failed clean-worktree candidates; exact failures in task-1-blocked-candidate.txt.
+- internal/world/{snapshot.go,store.go,store_test.go}: migration/bridge-dependent V1 persistence.
+- supabase/migrations/{20260719120000_gameplay_persistence_task2.sql,20260719130000_gameplay_event_ids_task17.sql,20260719140000_game_setup_dimensions_task17.sql,20260810160000_gameplay_ai_exploration_history_task17.sql}; supabase/tests/task2/{empty_schema.sql,legacy_upgrade.sql,legacy_v0_fixture.sql}: prohibited gameplay migrations/tests.
+- .github/workflows/coverage.yml, .github/workflows/fly-deploy.yml, Taskfile.yml, docs/docs.go, docs/swagger.json, docs/swagger.yaml, internal/account/create_account.go, internal/ratelimit/ratelimit.go, main.go: mixed docs/CI/runtime integration dependent on blocked work.
+
+UNRELATED-USER-WORK (preserved, uncommitted)
+- .serena/{.gitignore,project.yml,memories/memory_maintenance.md}
+- .sisyphus/boulder.json
+- .sisyphus/evidence/{task-1-readme-world-review.md,task-2-gameplay-migration-pgtap.txt,task-2-readme-world-validation.txt,task-3-canonical-engine-red.txt,task-3-canonical-engine.txt,task-4-test-harness.txt,task-5-command-gateway.txt,task-6-gameplay-sse.txt,task-7-turn-policies.txt,task-8-unit-actions-error.txt,task-8-unit-actions.txt,task-9-combat-error.txt,task-9-combat.txt,task-10-city-effects.txt,task-11-special-actions-error.txt,task-11-special-actions.txt,task-12-fog-projection-error.txt,task-12-fog-projection.txt,task-13-ai-controller.txt,task-14-lifecycle-victory.txt,task-15-gameplay-api.txt,task-16-onboarding-e2e.txt,task-17-fog-integration.txt,task-17-full-games-error.txt,task-17-public-conquest-blocker.txt,task-17-public-sse-combat-wiring.txt,task-17-visible-frontier-exploration.txt}
+- .sisyphus/notepads/{gameplay-completion/{decisions.md,issues.md,learnings.md,problems.md},readme-world-section/{decisions.md,issues.md,learnings.md,problems.md}}
+- .sisyphus/plans/{gameplay-completion.md,readme-world-section.md}
+- .sisyphus/run-continuation/{ses_013ef6a82ffea4shMy41cWFx6x.json,ses_084aed1cdffeiL3DHShLhxWr6V.json}
+
+No evidence, plan, notepad, .serena, migration, fullgame, or internal/game paths were staged or committed.

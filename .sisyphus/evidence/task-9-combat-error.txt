@@ -1,0 +1,13 @@
+Task 9 combat rejection verification
+
+RED command first failed because Unit lacked combat stats/health and no combat command contract existed. The red vectors now prove:
+- never-visible defender army returns the generic "combat target is unavailable" error and leaves combat RNG unchanged;
+- unknown defender references return the same nonrevealing error;
+- moving onto an occupied enemy tile is obstructed and does not resolve combat;
+- adapter rejects client-supplied roll/outcome fields with HTTP 400;
+- the generic service expected-revision/row-lock tests cover stale/concurrent commands: one commit, one 409, with no second state/RNG/event mutation;
+- receipt replay is stored-result only in Service.ExecuteCommand and does not invoke engine.Apply.
+
+Focused verification passed; see task-9-combat.txt for exact bounded commands.
+
+Resume verification: `TestCombatHandlerHidesGatewayFailureDetails` injects a 422 service error containing `hidden defender army 99` and proves the HTTP body does not contain that detail. The repeated bounded full suite, build, and `/tmp/opencode` coverage run exited 0; internal coverage is 81.8%. Root `coverage.out` was removed.

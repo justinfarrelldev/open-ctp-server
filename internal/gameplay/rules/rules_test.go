@@ -16,7 +16,7 @@ func TestParseCTP2StyleSyntheticCatalog(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Import() error = %v", err)
 	}
-	if got, want := recordIDs(ruleset.Records), "ENDGAME_GAIA_VECTOR,ENDGAME_UNION_VECTOR,IMPROVE_SYNTHETIC,TERRAIN_SYNTHETIC,UNIT_SYNTHETIC,WONDER_SYNTHETIC"; got != want {
+	if got, want := recordIDs(ruleset.Records), "ADVANCE_SYNTHETIC_ROOT,ADVANCE_SYNTHETIC_UNLOCK,ENDGAME_GAIA_VECTOR,ENDGAME_UNION_VECTOR,IMPROVE_SYNTHETIC,TERRAIN_SYNTHETIC,UNIT_SYNTHETIC,WONDER_SYNTHETIC"; got != want {
 		t.Fatalf("record IDs = %q, want %q", got, want)
 	}
 	if ruleset.ContentHash == "" || len(ruleset.CanonicalJSON) == 0 {
@@ -74,10 +74,10 @@ func TestParseRejectsCustomAndUnsupportedCTP2ConstructsWithLocation(t *testing.T
 		id    string
 	}{
 		{name: "legacy custom grammar", files: map[string]string{"Units.txt": "[unit:scout]\nname=Scout\n"}, code: ErrorMalformedValue},
-		{name: "duplicate ID", files: map[string]string{"Units.txt": "UNIT_SYNTHETIC { Description A MaxMovePoints 1 }\n", "units.ctp2synthetic": "UNIT_SYNTHETIC { Description B MaxMovePoints 1 }\n"}, code: ErrorDuplicateID, id: "UNIT_SYNTHETIC"},
-		{name: "malformed value", files: map[string]string{"Units.txt": "UNIT_SYNTHETIC { Description A MaxMovePoints fast }\n"}, code: ErrorMalformedValue, id: "UNIT_SYNTHETIC"},
-		{name: "unsupported behavior", files: map[string]string{"Units.txt": "UNIT_SYNTHETIC { Description A MaxMovePoints 1 TeleportAnywhere }\n"}, code: ErrorUnsupportedRequiredTag, id: "UNIT_SYNTHETIC"},
-		{name: "nested behavior", files: map[string]string{"Units.txt": "UNIT_SYNTHETIC { Description A MaxMovePoints 1 CargoData { MaxCargo 1 } }\n"}, code: ErrorUnsupportedRequiredTag, id: "UNIT_SYNTHETIC"},
+		{name: "duplicate ID", files: map[string]string{"Units.txt": "UNIT_SYNTHETIC { Description A Role starter MaxMovePoints 1 }\n", "units.ctp2synthetic": "UNIT_SYNTHETIC { Description B Role starter MaxMovePoints 1 }\n"}, code: ErrorDuplicateID, id: "UNIT_SYNTHETIC"},
+		{name: "malformed value", files: map[string]string{"Units.txt": "UNIT_SYNTHETIC { Description A Role starter MaxMovePoints fast }\n"}, code: ErrorMalformedValue, id: "UNIT_SYNTHETIC"},
+		{name: "unsupported behavior", files: map[string]string{"Units.txt": "UNIT_SYNTHETIC { Description A Role starter MaxMovePoints 1 TeleportAnywhere }\n"}, code: ErrorUnsupportedRequiredTag, id: "UNIT_SYNTHETIC"},
+		{name: "nested behavior", files: map[string]string{"Units.txt": "UNIT_SYNTHETIC { Description A Role starter MaxMovePoints 1 CargoData { MaxCargo 1 } }\n"}, code: ErrorUnsupportedRequiredTag, id: "UNIT_SYNTHETIC"},
 		{name: "unsupported file semantics", files: map[string]string{"Const.txt": "CONST_SYNTHETIC { Value 1 }\n"}, code: ErrorUnsupportedMechanic, id: "CONST_SYNTHETIC"},
 	}
 
@@ -125,7 +125,8 @@ func TestCanonicalHashIsIndependentOfFileAndRecordOrder(t *testing.T) {
 	}
 	second, err := Import(ImportConfig{Directory: writeCatalog(t, map[string]string{
 		"Wonder.ctp2synthetic":         "WONDER_SYNTHETIC { Description WONDER_SYNTHETIC }\n",
-		"Units.ctp2synthetic":          "UNIT_SYNTHETIC { MaxMovePoints 1 Description UNIT_SYNTHETIC }\n",
+		"Advance.ctp2synthetic":        "ADVANCE_SYNTHETIC_UNLOCK { PrerequisiteAdvanceIDs ADVANCE_SYNTHETIC_ROOT Description ADVANCE_SYNTHETIC_UNLOCK Cost 2 } ADVANCE_SYNTHETIC_ROOT { Cost 2 Description ADVANCE_SYNTHETIC_ROOT }\n",
+		"Units.ctp2synthetic":          "UNIT_SYNTHETIC { ZOC true VisibilityRange 2 Strength 4 Role starter MaxMovePoints 2 Health 10 Effects \"settler,special_embassy,special_steal:100,special_capture:0,special_terraform:1,special_terraform_turns:1\" Domain land Description UNIT_SYNTHETIC Defense 4 Attack 4 Armor 2 }\n",
 		"terrain.ctp2synthetic":        "TERRAIN_SYNTHETIC { Description TERRAIN_SYNTHETIC }\n",
 		"buildings.ctp2synthetic":      "IMPROVE_SYNTHETIC { Description IMPROVE_SYNTHETIC }\n",
 		"EndGameObjects.ctp2synthetic": "ENDGAME_UNION_VECTOR { TurnsToActivate 0 } ENDGAME_GAIA_VECTOR { TurnsToActivate 1 }\n",
@@ -141,7 +142,7 @@ func TestCanonicalHashIsIndependentOfFileAndRecordOrder(t *testing.T) {
 func TestProtectedAssetGuard(t *testing.T) {
 	t.Parallel()
 
-	if err := CheckProtectedAssets([]AssetFile{{Path: "internal/gameplay/rules/testdata/synthetic-ctp2/Units.ctp2synthetic", Content: []byte("UNIT_SYNTHETIC { Description Unit MaxMovePoints 1 }")}}); err != nil {
+	if err := CheckProtectedAssets([]AssetFile{{Path: "internal/gameplay/rules/testdata/synthetic-ctp2/Units.ctp2synthetic", Content: []byte("UNIT_SYNTHETIC { Description Unit Role starter MaxMovePoints 1 }")}}); err != nil {
 		t.Fatalf("synthetic fixture rejected: %v", err)
 	}
 	if err := CheckProtectedAssets([]AssetFile{{Path: "data/Units.txt"}}); err == nil {

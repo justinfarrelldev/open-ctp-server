@@ -1,0 +1,13 @@
+RED evidence
+
+Command:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine -run 'Test(Canonical|Apply|Invariant|Schema|RNG)'
+
+Result: expected failure. The new table-driven contract tests could not compile because the engine package had no State, Command, Event, Sources, Apply, or canonical serialization API. Representative diagnostics: undefined: State; undefined: StateSchemaV1; undefined: RulesPin; undefined: Apply.
+
+Task 3/4 audit-hash RED evidence
+
+Command:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine -run 'TestGameplayHashes'
+
+Result: expected failure. The tests referenced the absent `GameplayArtifactHash` API, with compile diagnostics `undefined: GameplayArtifactHash` at each audit/authoritative artifact assertion.

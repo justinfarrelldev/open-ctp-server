@@ -1,0 +1,35 @@
+Task 6 bounded failure and provenance evidence
+UTC timestamp: 2026-08-11T13:39:00Z
+
+Covered failure paths:
+- Command and turn budgets: TestPublicExecutorCommandAndTurnBudgetsFailWithPublicDiagnostics executes the real Row 1 executor with each budget set to one; both fail quickly, identify budget exhaustion, and do not expose canonical state. Command failure includes the safe AI gateway transcript.
+- Time budget: TestPublicExecutorTimeBudgetIsBoundedAndDiagnostic returns context deadline exhaustion within one second.
+- Stale SSE cursor: TestHTTPExplorationTransportRejectsStaleResyncWithoutRegressingCurrentProjection rejects stale cursor/revision bytes and preserves the current public projection.
+- Wrong human actor: TestPuppetCommandTraversesAuthenticatedHumanHTTPPath asserts 422 for an out-of-turn member, 403 for a nonmember, and revision advance only for the authenticated owner.
+- Duplicate request identity: TestHTTPExplorationTransportCommandReceiptIsReplayStableAndRevisionDistinct proves stable same-revision IDs; TestGameplayReceiptReplayAndConflictArePersisted proves replay persistence and rejects conflicting duplicate payloads.
+- Restart during active turn: Row 2 clean/clean/restart acceptance rebuilds at checkpoint 12, resumes with Last-Event-ID, rejects cursor regression, reaches terminal SSE, and matches complete deterministic artifacts.
+- Terminal agreement: TestValidateTerminalAgreementRejectsSSEMismatchAndUnexpectedReason rejects SSE/audit winner or reason mismatch.
+- AI provenance: TestAITranscriptRequiresProductionGatewayProvenance rejects human actors and missing idempotency identity; both complete fixtures validate every observer submission against expected production AI actors.
+
+Focused and race package commands passed. Broad-suite classification contains only the separate Task 9 catalog-authoring failure.
+
+Task 6 active-turn restart correction — 2026-08-11
+- Supersedes the Row 2 active-turn statement above: Row 2 restarts only after completed turn 12 via AcceptanceRestartAfterCompletedTurn.
+- The actual active-turn restart regression is TestPublicRuntimeResolvesSimultaneousQueueAfterRestart. It rebuilds the production public runtime while a simultaneous/hybrid planning queue is active, resumes SSE with Last-Event-ID 9, receives exactly event 10, and observes no duplicate event.
+- Focused result: PASS (0.16s).
+- Broad-suite classification: the sole failure is the separate Task 9 TestCatalogHasExactlySixtyFixedCoveredCases check for a non-observed rules fixture hash; Task 6 acceptance is not catalog-coupled.
+
+Task 6 post-review correction — 2026-08-11
+- Removed PublicConquestRunner.Checkpoint and the 0/2 adapter; conquest now branches directly on the validated AcceptanceRestartAfterDurableRound point.
+- Every production AI drive now compares observer delta exactly with the independent Driver result.Commands count, including the diplomacy terminal path; missing, extra, and zero-command observations are rejected.
+- TestAIObservationRequiresExactDriverCommandCount: PASS.
+- Fullgame excluding Task 9: PASS (23.804s); race: PASS (155.460s); active-turn restart: PASS (0.312s); go build ./...: PASS; LSP: zero errors.
+
+Task 6 observable restart-boundary evidence — 2026-08-11
+- AcceptanceConfig.ObserveRestart receives a typed event only after an actual runtime rebuild.
+- TestTaskFiveExecutionSemanticsRemainGreen observes exactly one AcceptanceRestartAfterDurableRound rebuild across clean/clean/restart and preserves pinned Row 1 artifacts.
+- TestPublicExecutorCompletesRowTwoThroughProductionRuntime observes exactly one AcceptanceRestartAfterCompletedTurn rebuild with CompletedTurn 12.
+- Focused boundary regressions: PASS (15.183s); fullgame excluding Task 9: PASS (24.483s); race: PASS (156.425s); build/diff/LSP gates: PASS.
+
+Final broad-suite classification — 2026-08-11
+- go test ./...: only TestCatalogHasExactlySixtyFixedCoveredCases failed because fullgame-01-sequential-bloodlust_conquest has a non-observed rules fixture hash. This is the separate Task 9 catalog-authoring gate; no Task 6 acceptance test failed.

@@ -3,6 +3,8 @@ package memorysql
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
+	"fmt"
 	"testing"
 	"time"
 
@@ -342,6 +344,251 @@ func TestGameplayRecordsProvideOrderedOutboxAndSSEResume(t *testing.T) {
 
 const rulesHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 const payloadHash = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+
+func TestDriverInterfacesRejectUnsupportedOperationsAndCompletedTransactions(t *testing.T) {
+	if _, err := (memoryDriver{}).Open(t.Name() + "-missing"); err == nil {
+		t.Fatal("driver opened an unknown named store")
+	}
+	database, telemetry, err := Open(t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	raw, err := (memoryDriver{}).Open(t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	connection := raw.(*conn)
+	defer connection.Close()
+	if err := connection.Ping(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := connection.Prepare("SELECT 1"); err == nil {
+		t.Fatal("prepared statement was accepted")
+	}
+
+	rawTransaction, err := connection.Begin()
+	if err != nil {
+		t.Fatal(err)
+	}
+	transaction := rawTransaction.(*tx)
+	queryRows, err := transaction.QueryContext(context.Background(), "SELECT * FROM sessions WHERE id = $1", []driver.NamedValue{{Ordinal: 1, Value: int64(999)}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := queryRows.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := transaction.ExecContext(context.Background(), "UPDATE lobbies SET last_activity_at = NOW(), updated_at = NOW() WHERE id = $1", []driver.NamedValue{{Ordinal: 1, Value: int64(1)}}); err != nil {
+		t.Fatal(err)
+	}
+	if err := transaction.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	if err := transaction.Commit(); err == nil {
+		t.Fatal("completed transaction committed twice")
+	}
+
+	rawTransaction, err = connection.Begin()
+	if err != nil {
+		t.Fatal(err)
+	}
+	transaction = rawTransaction.(*tx)
+	if err := transaction.Rollback(); err != nil {
+		t.Fatal(err)
+	}
+	if err := transaction.Rollback(); err == nil {
+		t.Fatal("completed transaction rolled back twice")
+	}
+	if _, err := connection.QueryContext(context.Background(), "SELECT unsupported", nil); err == nil {
+		t.Fatal("unsupported query was accepted")
+	}
+	if telemetry.Unknown == nil {
+		t.Fatal("unsupported query was not recorded in telemetry")
+	}
+	if _, err := connection.ExecContext(context.Background(), "UPDATE unsupported", nil); err == nil {
+		t.Fatal("unsupported exec was accepted")
+	}
+}
+
+func TestDriverArgumentCoercionIsDeterministic(t *testing.T) {
+	if got := stringArg([]driver.NamedValue{{Value: []byte("bytes")}}, 0); got != "[98 121 116 101 115]" {
+		t.Fatalf("byte string = %q", got)
+	}
+	if got := stringArg([]driver.NamedValue{{Value: nil}}, 0); got != "" {
+		t.Fatalf("nil string = %q", got)
+	}
+	when := time.Unix(123, 0).UTC()
+	if got := timeArg([]driver.NamedValue{{Value: when}}, 0); !got.Equal(when) {
+		t.Fatalf("time value = %v, want %v", got, when)
+	}
+	if got := timeArg([]driver.NamedValue{{Value: "invalid"}}, 0); !got.IsZero() {
+		t.Fatalf("invalid time = %v, want zero", got)
+	}
+	values := []struct {
+		value any
+		want  int64
+	}{
+		{value: int64(1), want: 1},
+		{value: int(2), want: 2},
+		{value: int32(3), want: 0},
+		{value: float64(4), want: 0},
+		{value: []byte("5"), want: 0},
+		{value: "6", want: 0},
+		{value: "invalid", want: 0},
+	}
+	for _, test := range values {
+		if got := intArgFromValue(test.value); got != test.want {
+			t.Fatalf("intArgFromValue(%T(%v)) = %d, want %d", test.value, test.value, got, test.want)
+		}
+	}
+	if got := intArg([]driver.NamedValue{{Value: "7"}}, 0); got != 0 {
+		t.Fatalf("intArg string = %d, want 0", got)
+	}
+	if got := intArg(nil, 0); got != 0 {
+		t.Fatalf("missing intArg = %d, want 0", got)
+	}
+}
+
+func TestDriverMissingDuplicateAndDeliverySemantics(t *testing.T) {
+	database, telemetry, err := Open(t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	assertRows := func(query string, want int64, args ...any) {
+		t.Helper()
+		result, err := database.Exec(query, args...)
+		if err != nil {
+			t.Fatalf("exec %q: %v", query, err)
+		}
+		got, err := result.RowsAffected()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != want {
+			t.Fatalf("exec %q affected %d rows, want %d", query, got, want)
+		}
+	}
+
+	assertRows("UPDATE game_players SET controller_kind = 'ai', updated_at = NOW() WHERE id = $1", 0, int64(99))
+	assertRows("UPDATE game_players SET controller_kind = $1, controller_changed_at = NOW() WHERE game_id = $2 AND id = $3", 0, "ai", int64(99), int64(1))
+	assertRows("UPDATE games SET status = 'ended', ended_at = NOW(), ended_by = $1, end_reason = $2, updated_at = NOW() WHERE id = $3", 0, int64(1), "test", int64(99))
+	assertRows("UPDATE games SET status = $1, updated_at = NOW() WHERE id = $2", 0, "started", int64(99))
+	assertRows("UPDATE games SET status = $1, started_at = NOW(), updated_at = NOW() WHERE id = $2", 0, "started", int64(99))
+	assertRows("UPDATE games SET rules_json = $1, updated_at = NOW() WHERE id = $2", 0, "[]", int64(99))
+	assertRows("UPDATE games SET starting_settlers = $1, updated_at = NOW() WHERE id = $2", 0, int64(2), int64(99))
+	assertRows("UPDATE games SET style = $1, map_size = $2, climate = $3, wetness = $4, updated_at = NOW() WHERE id = $5", 0, "sequential", "duel", "temperate", int64(50), int64(99))
+
+	assertRows("INSERT INTO world_snapshots (game_id) VALUES ($1)", 1, int64(9))
+	if _, err := database.Exec("INSERT INTO world_snapshots (game_id) VALUES ($1)", int64(9)); err == nil {
+		t.Fatal("duplicate world snapshot was accepted")
+	}
+	assertRows("INSERT INTO world_turn_states (game_id) VALUES ($1)", 1, int64(9))
+	if _, err := database.Exec("INSERT INTO world_turn_states (game_id) VALUES ($1)", int64(9)); err == nil {
+		t.Fatal("duplicate world turn state was accepted")
+	}
+	assertRows("INSERT INTO gameplay_event_outbox (game_id, sequence) VALUES ($1, $2)", 1, int64(9), int64(1))
+	if _, err := database.Exec("INSERT INTO gameplay_event_outbox (game_id, sequence) VALUES ($1, $2)", int64(9), int64(1)); err == nil {
+		t.Fatal("duplicate gameplay outbox record was accepted")
+	}
+	assertRows("UPDATE gameplay_event_outbox SET delivered_at = NOW(), delivery_attempts = delivery_attempts + 1 WHERE game_id = $1 AND sequence = $2 AND delivered_at IS NULL", 1, int64(9), int64(1))
+	assertRows("UPDATE gameplay_event_outbox SET delivered_at = NOW(), delivery_attempts = delivery_attempts + 1 WHERE game_id = $1 AND sequence = $2 AND delivered_at IS NULL", 0, int64(9), int64(1))
+	assertRows("UPDATE gameplay_event_outbox SET delivered_at = NOW(), delivery_attempts = delivery_attempts + 1 WHERE game_id = $1 AND sequence = $2 AND delivered_at IS NULL", 0, int64(9), int64(2))
+	if telemetry.Unknown == nil {
+		t.Fatal("duplicate persistence errors were not recorded")
+	}
+}
+
+func TestDriverEmptyStoreQueriesFailClosedWithoutFabricatedRows(t *testing.T) {
+	database, telemetry, err := Open(t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	assertNoRows := func(query string, args ...any) {
+		t.Helper()
+		rows, err := database.Query(query, args...)
+		if err != nil {
+			t.Fatalf("query %q: %v", query, err)
+		}
+		defer rows.Close()
+		if rows.Next() {
+			t.Fatalf("query %q fabricated a row", query)
+		}
+		if err := rows.Err(); err != nil {
+			t.Fatalf("query %q iteration: %v", query, err)
+		}
+	}
+
+	assertNoRows("SELECT id, status, owner_account_id FROM games WHERE id = $1", int64(99))
+	assertNoRows("SELECT id, controller_kind FROM game_players WHERE game_id = $1 AND account_id = $2", int64(99), int64(1))
+	assertNoRows("SELECT id, account_id FROM game_players WHERE game_id = $1 AND account_id = $2", int64(99), int64(1))
+	assertNoRows("SELECT id, controller_kind FROM game_players WHERE game_id = $1 AND id = $2", int64(99), int64(1))
+	assertNoRows("SELECT id FROM game_players WHERE game_id = $1 AND account_id = $2", int64(99), int64(1))
+	assertNoRows("SELECT * FROM account WHERE email = $1", "missing@example.invalid")
+	assertNoRows("SELECT name FROM account WHERE id = $1", int64(99))
+	assertNoRows("SELECT id, closed_at FROM lobbies WHERE id = $1", int64(99))
+	assertNoRows("SELECT game_id FROM world_snapshots WHERE game_id = $1", int64(99))
+	assertNoRows("SELECT revision, canonical_state_json FROM world_turn_states WHERE game_id = $1 AND state_schema_version = 1", int64(99))
+	assertNoRows("SELECT last_event_sequence, canonical_state_json FROM world_turn_states WHERE game_id = $1 AND state_schema_version = 1", int64(99))
+	assertNoRows("SELECT canonical_state_json::text FROM world_turn_states WHERE game_id = $1 AND state_schema_version = 1", int64(99))
+	assertNoRows("SELECT game_id, actor_player_id, idempotency_key, payload_sha256, result_json::text AS result_json, resulting_revision, resulting_event_sequence FROM gameplay_command_receipts WHERE game_id = $1 AND actor_player_id = $2 AND idempotency_key = $3", int64(99), int64(1), "missing")
+	assertNoRows("SELECT state.game_id, state.revision, player.value->>'id' AS player_id FROM world_turn_states AS state JOIN games ON games.id = state.game_id CROSS JOIN LATERAL jsonb_array_elements(state.canonical_state_json->'players') AS player(value) WHERE state.state_schema_version = 1 AND games.status = 'started' AND COALESCE(player.value->>'controller', '') = 'human' AND COALESCE(player.value->>'takeover_pending', 'false') = 'true' ORDER BY state.game_id ASC, player_id ASC")
+	assertNoRows("SELECT game_id, sequence, revision, ordinal, event_type, payload_json FROM gameplay_events WHERE game_id = $1 AND sequence > $2 ORDER BY sequence ASC", int64(99), int64(0))
+
+	var minimum sql.NullInt64
+	if err := database.QueryRow("SELECT min(sequence) FROM gameplay_events WHERE game_id = $1", int64(99)).Scan(&minimum); err != nil {
+		t.Fatal(err)
+	}
+	if minimum.Valid {
+		t.Fatalf("empty event minimum = %d, want NULL", minimum.Int64)
+	}
+	if telemetry.Unknown != nil {
+		t.Fatalf("recognized empty queries produced unknown SQL: %v", telemetry.Unknown)
+	}
+}
+
+func TestDueLongTurnDeadlinesFilterAndSortPersistedPolicyState(t *testing.T) {
+	database, telemetry, err := Open(t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	states := []struct {
+		gameID   int64
+		mode     string
+		playerID string
+		deadline int64
+	}{
+		{gameID: 20, mode: "long_turn", playerID: "player-20", deadline: 100},
+		{gameID: 10, mode: "long_turn", playerID: "player-10", deadline: 50},
+		{gameID: 30, mode: "long_turn", playerID: "player-30", deadline: 200},
+		{gameID: 40, mode: "sequential", playerID: "player-40", deadline: 25},
+	}
+	for _, state := range states {
+		seedGameplayAggregate(t, database, state.gameID)
+		canonical := fmt.Sprintf(`{"phase":{"mode":%q},"policy":{"deadline":{"player_id":%q,"at_unix":%d}}}`, state.mode, state.playerID, state.deadline)
+		result, err := database.Exec(`UPDATE world_turn_states SET canonical_state_json = $1::jsonb, revision = revision + 1, last_event_sequence = $2, updated_at = NOW() WHERE game_id = $3 AND state_schema_version = 1 AND revision = $4`, canonical, int64(2), state.gameID, int64(1))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if rows, err := result.RowsAffected(); err != nil || rows != 1 {
+			t.Fatalf("update game %d affected %d rows, err=%v", state.gameID, rows, err)
+		}
+	}
+
+	deadlines, err := gameplaystore.New(sqlx.NewDb(database, DriverName)).FindDueLongTurnDeadlines(100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(deadlines) != 2 || deadlines[0].GameID != 10 || deadlines[0].PlayerID != "player-10" || deadlines[0].DeadlineAt != 50 || deadlines[1].GameID != 20 || deadlines[1].PlayerID != "player-20" || deadlines[1].DeadlineAt != 100 {
+		t.Fatalf("due deadlines = %#v", deadlines)
+	}
+	if telemetry.Unknown != nil {
+		t.Fatalf("deadline query used unknown SQL: %v", telemetry.Unknown)
+	}
+}
 
 func seedGameplayAggregate(t *testing.T, db *sql.DB, gameID int64) {
 	t.Helper()

@@ -106,6 +106,56 @@ func TestPlannerUsesOnlyProjectionAndStableCandidateTuples(t *testing.T) {
 	}
 }
 
+func TestPlannerFoundsHomeCityWithSettlersOnly(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		Tiles: []visibility.TileProjection{{ID: "origin", X: 0, Y: 0, Terrain: engine.TerrainPlains}},
+		Units: []visibility.UnitProjection{
+			{ID: "warrior", OwnerID: "ai", TileID: "origin"},
+			{ID: "settler", OwnerID: "ai", TileID: "origin", Effects: []engine.Effect{{ID: "settler", Kind: engine.EffectSettler}}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := PlanWithHistory(input, "ai", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(candidates) == 0 || candidates[0].Type != engine.CommandFoundCity || candidates[0].EntityID != "settler" {
+		t.Fatalf("no-city founding candidates = %#v, want settler-only found-city first", candidates)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandFoundCity && candidate.EntityID != "settler" {
+			t.Fatalf("non-settler found-city candidate leaked: %#v", candidate)
+		}
+	}
+}
+
+func TestPlannerSkipsArmyBoundSettlerWhenChoosingFoundCity(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		Tiles: []visibility.TileProjection{{ID: "origin", X: 0, Y: 0, Terrain: engine.TerrainPlains}},
+		Units: []visibility.UnitProjection{
+			{ID: "settler-army", OwnerID: "ai", TileID: "origin", ArmyID: "army-1", Effects: []engine.Effect{{ID: "settler", Kind: engine.EffectSettler}}},
+			{ID: "settler-free", OwnerID: "ai", TileID: "origin", Effects: []engine.Effect{{ID: "settler", Kind: engine.EffectSettler}}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := PlanWithHistory(input, "ai", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(candidates) == 0 || candidates[0].Type != engine.CommandFoundCity || candidates[0].EntityID != "settler-free" {
+		t.Fatalf("army-bound founding candidates = %#v, want unassigned settler-free found-city first", candidates)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandFoundCity && candidate.EntityID == "settler-army" {
+			t.Fatalf("army-bound settler leaked into found-city candidates: %#v", candidate)
+		}
+	}
+}
+
 func TestPlannerSelectsVisibleLegalEmbassyWithoutRunnerInstruction(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		Tiles:  []visibility.TileProjection{{ID: "a", X: 0, Y: 0}, {ID: "b", X: 1, Y: 0}},
@@ -279,6 +329,162 @@ func TestPlannerExploresAwayFromResolvedVisibleRelationship(t *testing.T) {
 	}
 	if len(payload.Path) != 1 || payload.Path[0] != "east" {
 		t.Fatalf("resolved-relationship coverage move = %#v, want east frontier", candidates[0])
+	}
+}
+
+func planningStatusProjectionJSON(t *testing.T, status string) []byte {
+	t.Helper()
+	projection := map[string]any{
+		"revision": 4,
+		"turn":     2,
+		"tiles": []map[string]any{
+			{"id": "origin", "x": 0, "y": 0, "terrain": engine.TerrainPlains},
+		},
+		"units": []map[string]any{
+			{"id": "settler", "owner_id": "ai", "tile_id": "origin"},
+		},
+		"cities": []map[string]any{},
+	}
+	if status != "" {
+		projection["planning_status"] = status
+	}
+	bytes, err := json.Marshal(projection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return bytes
+}
+
+func openFallbackProjectionJSON(t *testing.T) []byte {
+	t.Helper()
+	bytes, err := json.Marshal(visibility.Projection{
+		Revision:       4,
+		Turn:           2,
+		PlanningStatus: "open",
+		Tiles:          []visibility.TileProjection{{ID: "origin", X: 0, Y: 0, Terrain: engine.TerrainPlains}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return bytes
+}
+
+func TestDriverClosesQueuedPlanningWithOrdinaryRoundComplete(t *testing.T) {
+	gateway := &recordingGateway{revision: 4}
+	driver := NewDriver(staticProjection{bytes: planningStatusProjectionJSON(t, "queued")}, gateway, Config{ActionBudget: 1})
+	result, err := driver.Drive(context.Background(), 55, "ai", 4)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Commands != 1 || result.Revision != 5 {
+		t.Fatalf("unexpected queued-closeout result: %#v", result)
+	}
+	if len(gateway.requests) != 1 {
+		t.Fatalf("queued-closeout requests = %#v, want one round-complete", gateway.requests)
+	}
+	if got := gateway.requests[0].Type; got != engine.CommandRoundComplete {
+		t.Fatalf("queued planning command = %q, want %q", got, engine.CommandRoundComplete)
+	}
+	if payload := string(gateway.requests[0].Payload); payload != `{}` {
+		t.Fatalf("queued planning payload = %s, want {}", payload)
+	}
+}
+
+func TestDriverRebuildsQueuedCloseoutDecisionAfterRestart(t *testing.T) {
+	firstGateway := &recordingGateway{revision: 4}
+	secondGateway := &recordingGateway{revision: 4}
+	input := planningStatusProjectionJSON(t, "queued")
+	first := NewDriver(staticProjection{bytes: input}, firstGateway, Config{ActionBudget: 1})
+	second := NewDriver(staticProjection{bytes: input}, secondGateway, Config{ActionBudget: 1})
+	if _, err := first.Drive(context.Background(), 55, "ai", 4); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := second.Drive(context.Background(), 55, "ai", 4); err != nil {
+		t.Fatal(err)
+	}
+	if len(firstGateway.requests) != 1 || len(secondGateway.requests) != 1 {
+		t.Fatalf("restart queued-closeout requests differ: first=%#v second=%#v", firstGateway.requests, secondGateway.requests)
+	}
+	if firstGateway.requests[0].Type != engine.CommandRoundComplete || secondGateway.requests[0].Type != engine.CommandRoundComplete {
+		t.Fatalf("restart queued-closeout types differ: first=%#v second=%#v", firstGateway.requests, secondGateway.requests)
+	}
+	if firstGateway.requests[0].CommandID != secondGateway.requests[0].CommandID || firstGateway.requests[0].IdempotencyKey != secondGateway.requests[0].IdempotencyKey {
+		t.Fatalf("restart queued-closeout receipt identity differs: first=%#v second=%#v", firstGateway.requests, secondGateway.requests)
+	}
+}
+
+func TestDriverReturnsZeroCommandsWhenPlanningAlreadyClosed(t *testing.T) {
+	gateway := &recordingGateway{revision: 4}
+	driver := NewDriver(staticProjection{bytes: planningStatusProjectionJSON(t, "closed")}, gateway, Config{ActionBudget: 1})
+	result, err := driver.Drive(context.Background(), 55, "ai", 4)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Commands != 0 || result.Revision != 4 || result.Replayed {
+		t.Fatalf("closed planning result = %#v, want zero-command no-op at same revision", result)
+	}
+	if len(gateway.requests) != 0 {
+		t.Fatalf("closed planning submitted commands: %#v", gateway.requests)
+	}
+}
+
+func TestPlannerUsesRoundCompleteFallbackOnlyForOpenPlanning(t *testing.T) {
+	candidates, err := PlanWithHistory(openFallbackProjectionJSON(t), "ai", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(candidates) == 0 {
+		t.Fatal("planner returned no candidates")
+	}
+	if got := candidates[0].Type; got != engine.CommandRoundComplete {
+		t.Fatalf("open planning fallback = %q, want %q; candidates=%#v", got, engine.CommandRoundComplete, candidates)
+	}
+}
+
+func TestDriverClosesOpenPlanningThroughOrdinaryGatewayRoundComplete(t *testing.T) {
+	gateway := &recordingGateway{revision: 4}
+	observed := []Submission{}
+	driver := NewDriver(staticProjection{bytes: openFallbackProjectionJSON(t)}, gateway, Config{ActionBudget: 1, Observe: func(submission Submission) {
+		observed = append(observed, submission)
+	}})
+	result, err := driver.Drive(context.Background(), 55, "ai", 4)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Commands != 1 || result.Revision != 5 || result.Replayed {
+		t.Fatalf("open planning result = %#v, want one accepted ordinary closeout", result)
+	}
+	if len(gateway.requests) != 1 || len(observed) != 1 {
+		t.Fatalf("open planning gateway=%#v observed=%#v, want one ordinary submission", gateway.requests, observed)
+	}
+	if got := gateway.requests[0].Type; got != engine.CommandRoundComplete {
+		t.Fatalf("open planning command = %q, want %q", got, engine.CommandRoundComplete)
+	}
+	if observed[0].CommandID != gateway.requests[0].CommandID || observed[0].IdempotencyKey != gateway.requests[0].IdempotencyKey {
+		t.Fatalf("open planning observed submission = %#v, want %#v", observed[0], gateway.requests[0])
+	}
+}
+
+func TestDriverRebuildsOpenPlanningCloseoutDecisionAfterRestart(t *testing.T) {
+	firstGateway := &recordingGateway{revision: 4}
+	secondGateway := &recordingGateway{revision: 4}
+	input := openFallbackProjectionJSON(t)
+	first := NewDriver(staticProjection{bytes: input}, firstGateway, Config{ActionBudget: 1})
+	second := NewDriver(staticProjection{bytes: input}, secondGateway, Config{ActionBudget: 1})
+	if _, err := first.Drive(context.Background(), 55, "ai", 4); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := second.Drive(context.Background(), 55, "ai", 4); err != nil {
+		t.Fatal(err)
+	}
+	if len(firstGateway.requests) != 1 || len(secondGateway.requests) != 1 {
+		t.Fatalf("restart open-closeout requests differ: first=%#v second=%#v", firstGateway.requests, secondGateway.requests)
+	}
+	if firstGateway.requests[0].Type != engine.CommandRoundComplete || secondGateway.requests[0].Type != engine.CommandRoundComplete {
+		t.Fatalf("restart open-closeout types differ: first=%#v second=%#v", firstGateway.requests, secondGateway.requests)
+	}
+	if firstGateway.requests[0].CommandID != secondGateway.requests[0].CommandID || firstGateway.requests[0].IdempotencyKey != secondGateway.requests[0].IdempotencyKey {
+		t.Fatalf("restart open-closeout receipt identity differs: first=%#v second=%#v", firstGateway.requests, secondGateway.requests)
 	}
 }
 

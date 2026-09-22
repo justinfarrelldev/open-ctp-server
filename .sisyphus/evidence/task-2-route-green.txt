@@ -1,0 +1,13 @@
+Task 2 route-contract GREEN — 2026-08-10
+
+`internal/runtime/runtime_routes_test.go` exercises `runtime.New(...).Handler` through `httptest` and asserts:
+- GET `/world/44` and `/world/44/space` are routed;
+- POST `/lobby/send_chat` is routed;
+- POST `/game/chat` and POST `/world/chat` are not chat surfaces (404/405 only).
+
+Verification:
+`env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/game ./internal/e2e/memorysql -count=1`
+Result: PASS.
+
+`go build ./...`: PASS.
+`supabase/tests/task2/run_isolated_postgres.sh`: PASS fresh + legacy on dynamic port 32775, with no remaining task2-migrations Docker container.

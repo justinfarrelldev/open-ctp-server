@@ -1,0 +1,45 @@
+## Task 9 Row 06 acceptance — 2026-08-29T07:50:58Z
+
+Bounded RED before correction:
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^TestExecuteContinuityAcceptanceCompletesLongTurnThreeCityContinuityOpener$' -count=1`
+- Exit 1 with `full continuity executor opener failed: prepare scripted-human commands for account-1: row 03 continuity script requires three visible owned units, got 2`.
+
+Focused seam diagnosis:
+- `TestLongTurnThreeCityContinuityCandidateOwnerBootstrapShowsThreeOwnedUnits` passed on the exact Row 06 candidate fixture.
+- `TestLongTurnThreeCityContinuityCandidateOwnerProjectionSurvivesObserverBootstrapAndWorker` passed.
+- `TestLongTurnThreeCityContinuitySchedulerCachedTransportPreservesOpener` passed.
+- `TestLongTurnThreeCityContinuitySchedulerCachedTransportSurvivesSecondCycle` was the transport-stage RED: before the fix, the second cycle failed with `prepare scripted-human commands for account-1: row 03 continuity script requires three visible owned units, got 2`.
+
+GREEN correction:
+- Added a full-executor RED in `internal/e2e/fullgame/task9_scheduler_test.go` for the long-turn three-city continuity opener.
+- Kept the fix in unlocked E2E code only.
+- `executeContinuityAcceptance` now pre-bootstraps a continuity leave-actor transport only for `long_turn` continuity rows.
+- `mixedControllerScheduler` now carries long-turn continuity transport state and rewires cached transport `BaseURL` on restart.
+- `driveScriptedHuman` now reuses that stable transport for `long_turn` continuity rows and stops the cycle after accepted preparation moves, refreshing the same public transport/revision instead of falling through into generic puppet planning.
+- No production gameplay package was changed.
+
+Accepted Row 06 immutable artifacts after equality gate:
+- Stable ID: `fullgame-06-long_turn-score_2300`
+- Winner: `account-1`
+- Reason: `score_2300`
+- State SHA-256: `5292b679fa07ec631929e4f4eb36805d89abe2ba00c2ccb2dbe0430c616477b5`
+- Event SHA-256: `b8e31801117572d3cdb441fc16eb3d4eb42d409a953fe74761637573a5017282`
+- AI commands: `232`
+- Restart event: `{Point:after-completed-turn CompletedTurn:12}`
+
+Row 03 control remained unchanged:
+- Winner: `account-1`
+- State SHA-256: `b6e048ab5587ff79e424eeeaff4006a5d37379172663cff729be697a26e206a3`
+- Event SHA-256: `9d072ef27cd301f8fd494e6a263d1d35049b1949efe36c2e3815f4ea5b3e0cb7`
+
+Verification commands/results:
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^TestExecuteContinuityAcceptanceCompletesLongTurnThreeCityContinuityOpener$' -count=1` → exit 0 after seam fix.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^(TestLongTurnThreeCityContinuitySchedulerCachedTransportSurvivesSecondCycle|TestExecuteContinuityAcceptanceCompletesLongTurnThreeCityContinuityOpener)$' -count=1 -v` → exit 0.
+- `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=3 GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/fullgame -run '^TestObserveTask9Row$' -count=1 -v` → exit 0; Row 03 artifacts unchanged.
+- `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=6 GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/fullgame -run '^TestObserveTask9Row$' -count=1 -v` → exit 0; clean-1 == clean-2 == restart-12.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -count=1` → exit 0.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -race -timeout=13m -p=2 ./internal/gameplay/... ./internal/runtime ./internal/e2e/fullgame -count=1` → exit 0.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build ./...` → exit 0.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 5m go vet ./internal/e2e/fullgame` → exit 0.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 5m go test -timeout=4m -p=2 ./internal/e2e/freeze -run '^TestEngineLock$' -count=1` → exit 0.
+- `git diff --check` → exit 0.

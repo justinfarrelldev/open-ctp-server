@@ -1,0 +1,10 @@
+# Synthetic advance tree for server-owned unlock/research tests.
+ADVANCE_SYNTHETIC_ROOT {
+ Description ADVANCE_SYNTHETIC_ROOT
+ Cost 2
+}
+ADVANCE_SYNTHETIC_UNLOCK {
+ Description ADVANCE_SYNTHETIC_UNLOCK
+ Cost 2
+ PrerequisiteAdvanceIDs ADVANCE_SYNTHETIC_ROOT
+}

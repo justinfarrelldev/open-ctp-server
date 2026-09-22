@@ -1,0 +1,20 @@
+Task 9 deterministic combat verification
+
+Source provenance reviewed (no upstream source or game data copied):
+- https://github.com/civctp2/civctp2/blob/0668dd199c2519ff8ab7d2871e7c7a89e21c8e52/ctp2_code/gs/gameobj/CTP2Combat.cpp
+  Symbols: CTP2Combat::ResolveOneRound, DoRangedAttacks, DoRangedCounterAttacks, DoAttacks, DoCounterAttacks, ExecuteRangedAttack, ExecuteAttack, CombatField::Sort.
+- https://github.com/civctp2/civctp2/blob/0668dd199c2519ff8ab7d2871e7c7a89e21c8e52/ctp2_code/gs/gameobj/ArmyData.cpp
+  Symbols: ArmyData::Insert, ArmyData::GetMovementType.
+- https://github.com/civctp2/civctp2/blob/0668dd199c2519ff8ab7d2871e7c7a89e21c8e52/ctp2_code/gs/gameobj/UnitData.cpp
+  Symbols: UnitData::Create, UnitData::Place, UnitData::SetPos, UnitData::ResetMovement.
+
+Implemented supported synthetic order: stable unit ID order, attacker ranged, defender ranged, attacker melee, defender melee. Each possible strike advances only engine.State RNGDomainCombat using the injected named RNG source. Rejected/hidden/stale commands fail before Apply/RNG advancement; gateway row locking and expected revision make one concurrent command stale.
+
+Passed commands:
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine -run TestCombat
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/service ./internal/gameplay/combat
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go build ./...
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m sh -c 'go test -timeout=16m -p=2 ./internal/... -coverprofile=coverage.out && go tool cover -func=coverage.out'
+
+Results: all commands exit 0; internal aggregate coverage is 81.0%.

@@ -110,6 +110,7 @@ func CreateAccount(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *a
 	}
 	committed = true
 
+	w.Header().Set("X-Account-ID", fmt.Sprintf("%d", *accountID))
 	if err := writeAccountJSONResponse(w, http.StatusCreated, session.ID); err != nil {
 		return nil, err
 	}

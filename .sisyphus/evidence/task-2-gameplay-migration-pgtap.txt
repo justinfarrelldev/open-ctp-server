@@ -1,0 +1,18 @@
+Task 2 live Supabase pgTAP evidence
+
+RED
+- Initial local pgTAP invocation reached the test file but failed before assertions because PostgreSQL rejected `statement_timeout = '5 minutes'`; corrected to the accepted `5min` form.
+- Installed Supabase CLI v2.101.0 shadows `supabase db reset --version <migration>` with its global version flag. `--last 1` was verified to reset through 20260606183000, omitting only 20260719120000.
+
+GREEN
+- `timeout --signal=TERM --kill-after=30s 5m supabase start`: local stack running.
+- `timeout --signal=TERM --kill-after=30s 8m supabase db reset --local --no-seed`: applied all migrations through Task 2.
+- `timeout --signal=TERM --kill-after=30s 10m supabase test db --local supabase/tests/task2/empty_schema.sql`: PASS, 13 assertions.
+- `timeout --signal=TERM --kill-after=30s 8m supabase db reset --local --no-seed --last 1`: reset through 20260606183000.
+- `timeout --signal=TERM --kill-after=30s 5m supabase db query --local --file supabase/tests/task2/legacy_v0_fixture.sql`: PASS.
+- `timeout --signal=TERM --kill-after=30s 8m supabase migration up --local`: applied Task 2 migration.
+- `timeout --signal=TERM --kill-after=30s 10m supabase test db --local supabase/tests/task2/legacy_upgrade.sql`: PASS, 7 assertions.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m task test-gameplay-migrations`: PASS end-to-end.
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...`: PASS.
+
+- Missing immutable pin trigger regression: `empty_schema.sql` plan increased from 13 to 14. It inserts a synthetic game/player without `world_snapshots`, attempts a valid-canonical v1 turn state, and asserts SQLSTATE `P0001` with `v1 gameplay state requires pinned immutable ruleset`. The bounded migration target passed with 14 empty-schema and 7 upgrade assertions.

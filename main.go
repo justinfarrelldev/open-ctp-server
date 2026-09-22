@@ -1,28 +1,23 @@
 package main
 
 import (
+	"context"
 	_ "embed"
 	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"sync/atomic"
 	"time"
 
-	"net/http"
-
-	"github.com/didip/tollbooth/v7"
-	"github.com/flowchartsman/swaggerui"
 	"github.com/jmoiron/sqlx"
-	account "github.com/justinfarrelldev/open-ctp-server/internal/account"
-	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
-	game "github.com/justinfarrelldev/open-ctp-server/internal/game"
-	health "github.com/justinfarrelldev/open-ctp-server/internal/health"
-	lobby "github.com/justinfarrelldev/open-ctp-server/internal/lobby"
-	ratelimit "github.com/justinfarrelldev/open-ctp-server/internal/ratelimit"
-
 	"github.com/joho/godotenv"
 	_ "github.com/justinfarrelldev/open-ctp-server/docs"
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
+	gameplayevents "github.com/justinfarrelldev/open-ctp-server/internal/gameplay/events"
+	serverruntime "github.com/justinfarrelldev/open-ctp-server/internal/runtime"
 	_ "github.com/lib/pq"
 )
 
@@ -44,148 +39,75 @@ var (
 //go:embed docs/swagger.json
 var spec []byte
 
+type gameplayRuntimeClock struct{}
+
+func (gameplayRuntimeClock) Now() time.Time { return time.Now().UTC() }
+
+type gameplayRuntimeIDs struct{ next atomic.Uint64 }
+
+func (s *gameplayRuntimeIDs) Next() string {
+	return fmt.Sprintf("gameplay-%d", s.next.Add(1))
+}
+
+type gameplayRuntimeRNG struct{}
+
+func (gameplayRuntimeRNG) Next(_ string, state uint64) (uint64, uint64) {
+	next := state + 0x9e3779b97f4a7c15
+	value := next
+	value = (value ^ (value >> 30)) * 0xbf58476d1ce4e5b9
+	value = (value ^ (value >> 27)) * 0x94d049bb133111eb
+	return next, value ^ (value >> 31)
+}
+
 func main() {
 	if os.Getenv("SUPABASE_DB_URL") == "" {
-		err := godotenv.Load()
-		if err != nil {
+		if err := godotenv.Load(); err != nil {
 			log.Fatalf("Error loading .env file")
 		}
 	}
-
-	authWriteLimiter := ratelimit.NewAuthWriteLimiter()
-	accountLimiter := ratelimit.NewAccountLimiter()
-	lobbyGameLimiter := ratelimit.NewLobbyGameLimiter()
-	lobbySSELimiter := ratelimit.NewLobbySSELimiter()
-	healthLimiter := ratelimit.NewHealthLimiter()
 
 	db, err := sqlx.Open("postgres", os.Getenv("SUPABASE_DB_URL"))
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	defer db.Close()
 	fmt.Println("opened connection to database successfully")
 
-	sessionStore := auth.NewSessionStore(db)
-	mux := http.NewServeMux()
-
-	mux.Handle("/game/create_game", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.CreateGameHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/get_game", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.GetGameHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/update_game", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.UpdateGameHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/delete_game", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.DeleteGameHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/rename_game", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.RenameGameHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/lock_game", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.LockGameHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/set_public", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.SetGamePublicHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/update_style", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.UpdateGameStyleHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/update_rules", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.UpdateGameRulesHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/update_exclusions", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.UpdateGameExclusionsHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/add_ai", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.AddAIHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/kick_player", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.KickGamePlayerHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/select_country", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.SelectGameCountryHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/update_starting_settlers", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.UpdateGameStartingSettlersHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/update_starting_gold", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.UpdateGameStartingGoldHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/update_ping", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.UpdateGamePingHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/game/start_game", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.StartGameHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("GET /world/{game_id}", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.GetWorldHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("GET /world/{game_id}/space", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.GetWorldSpaceLayerHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("GET /world/{game_id}/ratings", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.GetWorldRatingsHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("GET /world/{game_id}/pollution", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		game.GetWorldPollutionHandler(w, r, db, sessionStore)
-	}))
-
-	mux.Handle("/account/create_account", tollbooth.LimitFuncHandler(authWriteLimiter, func(w http.ResponseWriter, r *http.Request) {
-		account.CreateAccountHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/account/login", tollbooth.LimitFuncHandler(authWriteLimiter, func(w http.ResponseWriter, r *http.Request) {
-		account.LoginAccountHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/account/reset_password", tollbooth.LimitFuncHandler(authWriteLimiter, func(w http.ResponseWriter, r *http.Request) {
-		account.ResetPasswordHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/account/get_account", tollbooth.LimitFuncHandler(accountLimiter, func(w http.ResponseWriter, r *http.Request) {
-		account.GetAccountHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/account/update_account", tollbooth.LimitFuncHandler(accountLimiter, func(w http.ResponseWriter, r *http.Request) {
-		account.UpdateAccountHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/account/delete_account", tollbooth.LimitFuncHandler(accountLimiter, func(w http.ResponseWriter, r *http.Request) {
-		account.DeleteAccountHandler(w, r, db, sessionStore)
-	}))
-
-	mux.Handle("/lobby/create_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.CreateLobbyHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/lobby/get_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.GetLobbyHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/lobby/update_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.UpdateLobbyHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/lobby/delete_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.DeleteLobbyHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/lobby/join_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.JoinLobbyHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/lobby/leave_lobby", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.LeaveLobbyHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/lobby/connect_lobby", tollbooth.LimitFuncHandler(lobbySSELimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.ConnectLobbyHandler(w, r, db, sessionStore)
-	}))
-	mux.Handle("/lobby/send_chat", tollbooth.LimitFuncHandler(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) {
-		lobby.SendChatHandler(w, r, db, sessionStore)
-	}))
-
-	mux.Handle("/health", tollbooth.LimitFuncHandler(healthLimiter, health.HealthCheckHandler))
-	mux.Handle("/docs/", http.StripPrefix("/docs", swaggerui.Handler(spec)))
+	runtime := serverruntime.New(db, serverruntime.Config{
+		Sources: engine.Sources{Clock: gameplayRuntimeClock{}, IDs: &gameplayRuntimeIDs{}, RNG: gameplayRuntimeRNG{}},
+		Swagger: spec,
+	})
+	go dispatchGameplayEvents(runtime.Dispatcher)
+	go runGameplayWorker("pending takeover", runtime.PendingTakeovers.RunOnce)
 
 	fmt.Printf("\nNow serving on port %d\n", port)
-	err = http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
-
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), runtime.Handler)
 	if errors.Is(err, http.ErrServerClosed) {
 		fmt.Printf("server closed\n")
 	} else if err != nil {
 		fmt.Printf("error starting server: %s\n", err)
 		os.Exit(1)
+	}
+}
+
+func dispatchGameplayEvents(dispatcher *gameplayevents.Dispatcher) {
+	ticker := time.NewTicker(250 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		if err := dispatcher.DispatchOnce(context.Background()); err != nil {
+			log.Printf("gameplay event outbox dispatch failed: %v", err)
+		}
+		<-ticker.C
+	}
+}
+
+func runGameplayWorker(name string, run func(context.Context) error) {
+	ticker := time.NewTicker(250 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		if err := run(context.Background()); err != nil {
+			log.Printf("gameplay %s failed: %v", name, err)
+		}
+		<-ticker.C
 	}
 }

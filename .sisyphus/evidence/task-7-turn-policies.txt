@@ -1,0 +1,25 @@
+Task 7 deterministic turn-policy verification
+
+RED
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine/turns
+Initial result: build failure because the turn-policy contract did not exist (undefined State, Command, TurnPolicy/New).
+
+GREEN focused verification
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine ./internal/gameplay/service ./internal/gameplay/engine/turns ./internal/game
+Result: PASS
+
+Final verification
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...
+Result: PASS
+
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go build ./...
+Result: PASS
+
+Coverage
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m task test-coverage
+Initial result: FAIL at the pre-existing repository aggregate >80% gate. Focused coverage was engine 92.2% and engine/turns 87.7%; the aggregate command reported 79.0%.
+
+Coverage repair
+Added behavior-level vectors for idempotent early-end retry, owner-only early-end clearing while another planner remains ended, stable receipt-sequence tie-breaking, and valid connected hybrid conflict actions.
+
+Final result: PASS. `task test-coverage` completed both gates: aggregate >80% and engine 92.2% (>=90%). Turn policy coverage is 93.6%.

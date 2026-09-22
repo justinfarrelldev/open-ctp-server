@@ -1,0 +1,28 @@
+Task 1 recovery evidence
+Timestamp: 2026-08-29T18:59:16Z
+
+Recovery artifact root: /tmp/opencode/ctp2-systems-recovery-ktg7khx1
+Recovery worktree: /tmp/opencode/ctp2-systems-recovery-ktg7khx1/reconstructed-worktree
+Recovery HEAD: 212e070880dbce3be56b74446c6fc00a4a2cb97e
+
+Recovery inputs
+- source-staged.patch sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- source-unstaged.patch sha256: d6ac4257ce4ec0062ff6a577a0a4d831197bf09548ba86d1be751efaae746a82
+- source-combined.patch sha256: d6ac4257ce4ec0062ff6a577a0a4d831197bf09548ba86d1be751efaae746a82
+- source-untracked.tar sha256: 7b112a7c1cb2453a0fe56428a8638d9a4341fbefdc86959828c147558b6e84c9
+- source-untracked-inventory sha256: 4dc43d9f744955be6f7b6815cf59a70d3b466b712d68ac93307dcff1c9caf917
+- source-untracked-manifest sha256: 95b3d67456f8e695c7a7b8626ac584af7ea4145a38e8a39903203579206dac3c
+
+Recovery verification
+- recovery_head_matches_source: MATCH
+- recovery_combined_patch_hash: d6ac4257ce4ec0062ff6a577a0a4d831197bf09548ba86d1be751efaae746a82
+- recovery_combined_patch_matches_source: MATCH
+- recovery_untracked_inventory_hash: 4dc43d9f744955be6f7b6815cf59a70d3b466b712d68ac93307dcff1c9caf917
+- recovery_untracked_inventory_matches_source: MATCH
+- recovery_untracked_manifest_hash: 95b3d67456f8e695c7a7b8626ac584af7ea4145a38e8a39903203579206dac3c
+- recovery_untracked_manifest_matches_source: MATCH
+- recovery_untracked_count: 157
+- recovery_combined_patch_bytes: 134529
+
+Recovery conclusion
+The captured baseline artifacts reconstruct the same dirty source baseline in /tmp/opencode without mutating the source worktree.

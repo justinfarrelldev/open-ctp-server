@@ -2,6 +2,8 @@ package engine
 
 import (
 	"testing"
+
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine/turns"
 )
 
 func TestLifecycleVictoryEvaluatorsEndOnceInManifestOrder(t *testing.T) {
@@ -129,5 +131,52 @@ func TestAllDeparturesScheduleOneTakeoverAndRemainReplaySafe(t *testing.T) {
 	}
 	if _, events, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "takeover-again", ActorPlayerID: "player-a", Type: CommandTakeoverAI}, state.Rules, fixtureSources()); err == nil || events != nil {
 		t.Fatal("repeated takeover must not create another controller event")
+	}
+}
+
+func TestQueuedPlanningLeaveAlsoEarlyEndsDepartedActor(t *testing.T) {
+	for _, mode := range []string{turns.ModeSimultaneous, turns.ModeHybrid} {
+		t.Run(mode, func(t *testing.T) {
+			state := fixtureState()
+			state.Phase.Mode = mode
+			state.Phase.ModeVersion = turns.ContractVersion
+			state.Policy.Stage = turns.StagePlanning
+
+			queued, leaveEvents, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "leave", ActorPlayerID: "player-a", Type: CommandLeaveGame}, state.Rules, fixtureSources())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(leaveEvents) != 1 || leaveEvents[0].Type != "command.queued" {
+				t.Fatalf("queued leave event = %#v", leaveEvents)
+			}
+			if len(queued.Policy.Queue) != 1 || queued.Policy.Queue[0].CommandID != "leave" || queued.Policy.Queue[0].ActorID != "player-a" {
+				t.Fatalf("queued leave replay contract = %#v", queued.Policy.Queue)
+			}
+			if len(queued.Policy.EarlyEnds) != 1 || queued.Policy.EarlyEnds[0] != "player-a" {
+				t.Fatalf("queued leave early-end markers = %#v, want player-a closed during planning", queued.Policy.EarlyEnds)
+			}
+			leftPlayer, ok := playerByID(&queued, "player-a")
+			if !ok || leftPlayer.TakeoverPending {
+				t.Fatalf("queued leave replay happened too early: %#v", leftPlayer)
+			}
+
+			resolved, events, _, err := Apply(queued, Command{SchemaVersion: CommandSchemaV1, ID: "closeout", ActorPlayerID: "player-b", Type: CommandRoundComplete}, queued.Rules, fixtureSources())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(events) != 1 || events[0].Type != EventPlayerDisconnected {
+				t.Fatalf("planning closeout event = %#v, want disconnected replay", events)
+			}
+			leftPlayer, ok = playerByID(&resolved, "player-a")
+			if !ok || !leftPlayer.TakeoverPending || leftPlayer.Controller != ControllerHuman {
+				t.Fatalf("planning closeout did not replay leave: %#v", leftPlayer)
+			}
+			if resolved.Phase.Turn != 2 || resolved.Phase.ResolutionLocked {
+				t.Fatalf("planning closeout turn/lock = turn %d locked %v", resolved.Phase.Turn, resolved.Phase.ResolutionLocked)
+			}
+			if len(resolved.Policy.Queue) != 0 || len(resolved.Policy.EarlyEnds) != 0 {
+				t.Fatalf("planning closeout left policy residue: %#v", resolved.Policy)
+			}
+		})
 	}
 }

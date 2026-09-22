@@ -1,0 +1,14 @@
+UTC: 2026-08-29T07:13:08.427359Z
+COMMAND: env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine -run ^(TestSimultaneousPolicyResolutionSuppressesDeterministicSameDestinationCollision|TestSimultaneousPolicyResolutionKeepsBaselineInvalidMoveFatal|TestSimultaneousPolicyResolutionKeepsNonMovementReplayErrorsFatal)$ -count=1
+EXIT CODE: 1
+--- STDOUT ---
+--- FAIL: TestSimultaneousPolicyResolutionSuppressesDeterministicSameDestinationCollision (0.01s)
+    --- FAIL: TestSimultaneousPolicyResolutionSuppressesDeterministicSameDestinationCollision/simultaneous (0.01s)
+        policy_replay_test.go:138: resolve replay: movement obstructed
+    --- FAIL: TestSimultaneousPolicyResolutionSuppressesDeterministicSameDestinationCollision/hybrid (0.01s)
+        policy_replay_test.go:138: resolve replay: movement obstructed
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.024s
+FAIL
+
+--- STDERR ---

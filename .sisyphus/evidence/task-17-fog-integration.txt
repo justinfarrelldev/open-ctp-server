@@ -1,0 +1,13 @@
+Task 17 fog integration verification
+
+RED: direct service persistence matcher initially failed because the SQL driver provides canonical state JSON as []byte; matcher was corrected without changing production behavior.
+
+Focused passing command:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/service ./internal/gameplay/visibility ./internal/e2e/fullgame -run 'TestTask17|TestFixedConquestTemplate' -count=1
+
+Vectors prove:
+- Accepted movement calls visibility.Update before canonical aggregate persistence; the newly visible target is retained in Fog.
+- Before legal movement, raw viewer bytes contain no hidden target identifier.
+- Fullgame fixed conquest scheduling rejects an unseen target and accepts a currently visible adjacent approach only.
+
+Bounded full suite and build passed. No natural terminal artifact was created or retained by this fog-only change.

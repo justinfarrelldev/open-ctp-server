@@ -1,0 +1,23 @@
+Task 8 freeze acceptance evidence
+UTC: 2026-08-11
+Baseline branch/HEAD: current working branch at 212e070880dbce3be56b74446c6fc00a4a2cb97e
+Manifest: internal/e2e/freeze/engine-lock.json
+Manifest entry count: 44
+Definition: regular production .go files in fully locked runtime/gameplay roots, selected world/game integration files, main.go, and four gameplay migrations; excludes tests, fixtures, testdata, E2E harness files, scripts, and generated evidence.
+Campaign write allowlist: internal/e2e/** except internal/e2e/freeze/**; synthetic fixtures/scripts/catalog data; .github/workflows/**; Taskfile.yml; README.md; .sisyphus/evidence/**.
+Guard note: repository-local validation detects ordinary mutations and scope violations; it cannot prevent a malicious self-edit of both code and manifest, so review remains required.
+
+Commands and results:
+- gofmt -w internal/e2e/freeze/lock.go internal/e2e/freeze/lock_test.go: exit 0
+- go test ./internal/e2e/freeze -count=1: exit 0
+- go build ./...: exit 0
+- go vet ./internal/e2e/freeze: exit 0
+- git diff --check: exit 0
+- LSP diagnostics on internal/e2e/freeze/lock.go and lock_test.go: no diagnostics
+
+The import guard parses Go import declarations with go/parser; it rejects imports containing /internal/e2e/ or ending in /internal/e2e.
+
+Correction verification: campaign_write_allowlist is compared exactly, including length, order, duplicates, and value. CI location: .github/workflows/coverage.yml, job coverage, step "Check gameplay freeze", on every pull_request targeting main. Existing coverage steps were preserved unchanged.
+Corrected commands: gofmt -w internal/e2e/freeze/lock.go internal/e2e/freeze/lock_test.go (exit 0); go test ./internal/e2e/freeze -count=1 (exit 0); go vet ./internal/e2e/freeze (exit 0); go build ./... (exit 0); GIT_MASTER=1 git diff --check (exit 0); LSP diagnostics on internal/e2e/freeze (0 errors).
+
+Retry 2 correction: selected static paths are mandatory and checked with Lstat; required-path deletion cannot be hidden by removing its manifest entry. Symlinks are rejected for required and manifest files. Canonical paths reject backslashes and any path.Clean change. Import literals use strconv.Unquote and errors fail closed. CI command is: GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/freeze -count=1.

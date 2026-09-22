@@ -1,5 +1,15 @@
 # Original synthetic CTP2-style unit record.
 UNIT_SYNTHETIC {
  Description UNIT_SYNTHETIC
- MaxMovePoints 1
+ Role starter
+ Domain land
+ MaxMovePoints 2
+ Attack 4
+ Defense 4
+ Strength 4
+ Armor 2
+ Health 10
+ ZOC true
+ VisibilityRange 2
+ Effects "settler,special_embassy,special_steal:100,special_capture:0,special_terraform:1,special_terraform_turns:1"
 }

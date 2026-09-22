@@ -1,0 +1,30 @@
+Task 7 deliberate guard sensitivity
+UTC: 2026-08-11T14:24:22Z--2026-08-11T14:24:23Z
+Baseline HEAD: 212e070880dbce3be56b74446c6fc00a4a2cb97e
+Disposable worktree: .sisyphus/task7-guard-worktree (removed)
+
+Isolation setup
+Command: GIT_MASTER=1 git worktree add --detach .sisyphus/task7-guard-worktree HEAD
+Result: detached worktree created at HEAD without touching the main worktree.
+
+Temporary perturbation
+File in disposable worktree only: internal/e2e/puppet/puppet_test.go
+Change: HIDDEN_CANARY_TILE coordinate changed from X:20,Y:20 to X:0,Y:0, intentionally placing the hidden tile/unit on the public viewer's visible coordinate.
+Main-worktree file was not changed.
+
+Guard command
+Command: env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 5m go test -timeout=4m -p=2 ./internal/e2e/puppet -run '^TestPuppeteerPlansOnlyFromDetachedPublicBytes$' -count=1
+Raw Go test exit: 1 (expected)
+Intended predicate observed:
+--- FAIL: TestPuppeteerPlansOnlyFromDetachedPublicBytes
+puppet_test.go:54: public input fixture leaked hidden canary
+The failure projection included HIDDEN_CANARY_TILE and HIDDEN_CANARY_UNIT.
+Classification: PASS; the hidden-state guard is sensitive and non-vacuous.
+
+Cleanup
+Command: GIT_MASTER=1 git worktree remove --force .sisyphus/task7-guard-worktree
+Checks:
+- path .sisyphus/task7-guard-worktree does not exist;
+- GIT_MASTER=1 git worktree list --porcelain contains no matching registration;
+- final worktree list contains only /home/justi/Projects/open-ctp-server.
+Cleanup result: PASS.

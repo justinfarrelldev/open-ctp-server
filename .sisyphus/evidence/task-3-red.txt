@@ -1,0 +1,5 @@
+Timestamp: 2026-08-11 UTC
+Command: env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 2m go test -timeout=90s -p=2 ./internal/e2e/setup -count=1
+Exit: 1
+Expected RED predicate: reusable setup contract does not exist.
+Observed: setup_test.go failed to compile with undefined Slot and undefined Validate.

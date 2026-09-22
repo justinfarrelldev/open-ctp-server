@@ -1,0 +1,11 @@
+Task 17 public SSE/combat wiring
+
+RED: fullgame public bootstrap/combat transport surface was absent.
+GREEN direct vectors pass for:
+- initial `Last-Event-ID: 0` public SSE resync, including envelope/snapshot validation;
+- revision-bound public move response projection refresh;
+- dedicated `/game/{id}/combat` request with only attacker/defender army IDs and revision-bound projection refresh.
+
+`events.Store.Resume` now serves a viewer-projected resync snapshot for initial cursor zero, preserving raw event projection after nonzero cursors.
+
+Bounded `go test ./...` and `go build ./...` pass. No terminal/golden artifact was written because the clean two-run public scheduler has not yet executed a natural terminal.

@@ -1,0 +1,126 @@
+Task 9 retry final status — 2026-08-29T02:52:00Z
+
+Outcome: BLOCKED pending freeze reopen. Rows 01–12 were not completed. Row 1 and Row 2 were fully observed through the public production handler path; the required leave/disconnect continuity path has an executable frozen-production blocker, and additional 4+ player candidate rows did not converge under the bounded public runtime before that blocker was established.
+
+Observed successful rows:
+1. Row 01
+   ID: fullgame-01-sequential-bloodlust_conquest
+   Name: fullgame-minimal-public-executor
+   Seed: 4851590874263453699 (seedBase+3)
+   Winner: account-1
+   Terminal: bloodlust_conquest
+   State hash: 6fbb8ce4a34d95058afa995f3b9bad15e21af0e97aabd1b7023e63f513a8dcb6
+   Event hash: 104c65dc8ea937e023b0b6ba8918d5ef75a00f769c9264df09f9227ad4d3b169
+   Clean/restart result: first == second == restart
+   Source: /home/justi/.local/share/opencode/tool-output/tool_04b61c693001U9734yuUm8isB9
+2. Row 02
+   ID: fullgame-02-long_turn-diplomatic_world_union
+   Name: fullgame-02-long_turn-diplomatic_world_union
+   Seed: 4851590874263453698 (seedBase+2)
+   Winner: account-1
+   Terminal: diplomatic_world_union
+   State hash: e12b2a683037003ab4ad6b5c61867c7c408df43a37d5c45594714452aaea2204
+   Event hash: ccc11fb47c241e516693700c5d0454d29ee6f70710a9a8567bdbcd35c6af01fc
+   Clean/restart result: first == second == restart
+   Source: /home/justi/.local/share/opencode/tool-output/tool_04b61c8640011U1EpyZ5B0ziZR
+
+Observed candidate failures before blocker closeout:
+- Row 03 `fullgame-03-simultaneous-score_2300`: timed out at 2m while driving 4-player scripted-human/AI campaign through public runtime. Command used: `TASK9_ROW=3 ... go test -run '^TestObserveTask9Row$'`; output: `/home/justi/.local/share/opencode/tool-output/tool_04b61d2af001j4zqfvJAMN2sKZ`.
+- Row 04 `fullgame-04-hybrid-science_gaia_controller`: timed out at both 2m and 5m in all-AI observe-only mode while refreshing SSE after AI drive. Outputs: `/home/justi/.local/share/opencode/tool-output/tool_04b63fd30001pY7Uxw18I6gJod` and `/home/justi/.local/share/opencode/tool-output/tool_04b66d4cd001iViHFjoNQ0FxwQ`.
+- Row 05 `fullgame-05-sequential-diplomatic_world_union`: all-AI candidate failed quickly because the frozen production AI attempted a duplicate city name (`gameplay command is invalid: city name already exists`). Output: `/home/justi/.local/share/opencode/tool-output/tool_04b63eeec001e6TieXp38vgPsY`.
+- Row 11 `fullgame-11-simultaneous-bloodlust_conquest`: conquest runner failed at `attacker army: visible unit army is absent or ambiguous` under simultaneous mode. Output: `/home/justi/.local/share/opencode/tool-output/tool_04b63fd30001pY7Uxw18I6gJod`.
+- Row 12 `fullgame-12-hybrid-diplomatic_world_union`: diplomatic scheduler exhausted its bounded human-action budget before natural terminal. Output: `/home/justi/.local/share/opencode/tool-output/tool_04b63eeec001e6TieXp38vgPsY`.
+
+Executable freeze-reopen blocker (required continuity path):
+- Focused RED-style public proof test: `TestPublicLeaveHasNoAutonomousTakeoverPath`
+- Command:
+  `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^TestPublicLeaveHasNoAutonomousTakeoverPath$' -count=1`
+- Result: exit 0; the test proves the blocker by showing:
+  1. public `leave` succeeds,
+  2. public `takeover-ai` is unavailable from the gameplay gateway (HTTP 404), and
+  3. the production AI driver cannot autonomously recover the departed human slot.
+- Frozen production symbols implicated:
+  - `internal/gameplay/http/http.go` — `commands` map omits `takeover-ai`
+  - `internal/gameplay/ai/ai.go` — `PlanWithHistory` / `Driver` provide no autonomous takeover path
+
+Freeze guard:
+- Pre and post commands both passed:
+  `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/freeze -run '^TestEngineLock$' -count=1`
+
+Other kept verification:
+- `GIT_MASTER=1 git diff --check` exit 0
+- Focused regression command after final Row 1 drift fix and blocker test:
+  `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^(TestPublicLeaveHasNoAutonomousTakeoverPath|TestCatalogRowOneMatchesAcceptedFixture)$' -count=1`
+  Result: exit 0
+
+Final blocker statement:
+- Task 9 cannot be completed inside the frozen production boundary because the required source-compatible leave/disconnect continuity path cannot progress from public leave to AI takeover and then onward to natural terminal under the current locked gameplay HTTP/AI contract.
+
+
+Final verification refresh — 2026-08-29T03:00:00Z
+- `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/fullgame -count=1` -> exit 0
+- `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -race -timeout=13m -p=2 ./internal/e2e/fullgame -count=1` -> exit 0
+- `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go build ./...` -> exit 0
+- `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go vet ./internal/e2e/fullgame` -> exit 0
+- `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/freeze -run '^TestEngineLock$' -count=1` -> exit 0
+- `GIT_MASTER=1 git diff --check` -> exit 0
+- `lsp_diagnostics internal/e2e/fullgame` -> 0 errors
+
+
+Task 9 continuation after parent timeout — 2026-08-29T04:22:30Z
+- Parent polling expired during the row-shard investigation phase, specifically while iterating the `TASK9_ROW=3` observation path after a `driveAIPlayers` continuity fix.
+- Preserved valid partial work: Row 01/02 artifacts, separate Row 01 acceptance namespace, continuity worker tests, continuity harness policy, starting-settler support, and fail-closed provisional rows.
+- Current shortest repros after the latest continuity reshaping:
+  * `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=3 GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/fullgame -run '^TestObserveTask9Row$' -count=1 -v` -> exit 1, safe diagnostic `context deadline exceeded` after the public leave/takeover handoff.
+  * `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=6 GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/fullgame -run '^TestObserveTask9Row$' -count=1 -v` -> exit 1, same handoff stall.
+- Updated hypothesis: the remaining blocker is no longer pending takeover itself, but deterministic AI-phase continuation for post-leave sequential/long-turn continuity rows under the frozen public contract. No unobserved row hashes were written.
+
+
+Task 9 design correction pass — 2026-08-29T04:35:00Z
+- Restored truthful Rows 01–12 ID/mode pairings and representative composition diversity in `catalog_rows_01_12.go`; the stable IDs no longer lie about turn mode.
+- Restored required policy coverage in the row envelope: one-human/rest-AI, all-AI observe-only, alternating/test-controlled humans, and designated continuity rows.
+- Corrected continuity harness design in `executor.go`: only the designated leave actor is converted through `RunPendingTakeovers`; surviving humans remain available for projection-derived public actions where present.
+- Removed temporary `zz_task9_observe_test.go` before final reporting.
+- Focused fail-closed verification remains green: `go test ./internal/e2e/fullgame -run '^(TestCatalogSchemaAssemblesExactlySixtyStableCases|TestCatalogRowOneMatchesAcceptedFixture|TestCatalogRows01_12CoverTaskNineRosterAndPolicyEnvelope|TestCatalogRejectsProvisionalScenarios|TestValidate.*|TestPublicLeave.*)$' -count=1`, `go test ./internal/e2e/freeze -run '^TestEngineLock$' -count=1`, `git diff --check`, and LSP diagnostics all pass.
+- Rows 03–12 remain unobserved after the earlier bounded continuity probes; no hashes were written for them.
+
+Task 9 Row 04 blocker — 2026-08-29T09:11:11Z
+- Initial bounded observer repro (original declared Row 04): `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=4 GOMAXPROCS=4 go test -timeout=10m -p=2 ./internal/e2e/fullgame -run '^TestObserveTask9Row$' -count=1 -v` -> exit 1 with `mixed-controller command budget exhausted in mode hybrid at turn 21 revision 246 after 245 accepted commands (budget 240)`.
+- Verified unlocked harness defect: `driveScriptedHuman` treated every non-empty `Rules.HumanScript` as a continuity script. Focused GREEN after fix: `go test ./internal/e2e/fullgame -run '^(TestResolveScriptedHumanCommandsUsesDirectScriptForNonContinuityPolicy|TestResolveContinuityPreparationCommandsSpreadsStackedRowThreeSettlers|TestResolveContinuityLeaveCommandsQueuesThreeDistinctCitiesBeforeLeave|TestCampaignExecutorCannotDirectAICommands)$' -count=1` -> exit 0.
+- Truthful Row 04 science probes after the harness fix still failed before acceptance: observe-only variants remained nonterminal, diplomacy exhausted the human diplomacy scheduler, and the most direct scripted city/economy/wonder probe failed in locked production behavior with `production AI drive for account-6: submit round-complete for account-6/ with payload {}: gameplay command is invalid: city is not owned by actor`.
+- Because the remaining failure occurs in the frozen production AI/gameplay path during ordinary public closeout, Row 04 hashes/winner/reason were intentionally not written to `catalog_rows_01_12.go`.
+
+Task 9 Row 04 blocker correction — 2026-08-29T09:31:22Z
+- Focused RED proved the harness bug directly: `go test ./internal/e2e/fullgame -run '^TestScriptedHumanStagesDependentCityScriptAcrossHybridPlanningBoundaries$' -count=1` initially failed because the hybrid scripted-human city script accepted 3 dependent commands in one planning phase and later advanced script progress while the actor was still publicly `queued`.
+- GREEN in unlocked E2E code: `driveScriptedHuman` now keeps per-player non-continuity script progress, resolves only the pending raw command against the current public projection, and short-circuits queued planning closeout before resolving later script steps. Row 03 continuity planning regressions remained green.
+- Staged Row 04 probe after GREEN: the earlier `city is not owned by actor` failure disappeared. The updated Row 04 fixture (hybrid, 6 players, one scripted human + five AI, `scripts/city-economy-wonder.json`, `StartingSettlers: 1`) now reaches a later nonterminal repro instead.
+- Current exact repro: `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=4 GOMAXPROCS=4 go test -timeout=10m -p=2 ./internal/e2e/fullgame -run '^TestObserveTask9Row$' -count=1 -v` with Row 04 set to `Turns: 72` and `Commands: 480` still exits 1 with `context deadline exceeded`.
+- Safety verification: `TASK9_ROW=3 ... TestObserveTask9Row` still passed with winner `account-1`, reason `score_2300`, state `b6e048ab5587ff79e424eeeaff4006a5d37379172663cff729be697a26e206a3`, and events `9d072ef27cd301f8fd494e6a263d1d35049b1949efe36c2e3815f4ea5b3e0cb7`.
+- Conclusion superseding the earlier note: the queued dependent-script ownership failure was harness-caused and is fixed; the remaining Row 04 blocker is failure to reach a natural `science_gaia_controller` terminal under the staged public harness, so no immutable Row 04 artifacts were written.
+
+Task 9 Row 04 default-budget correction — 2026-08-29T09:39:03Z
+- The Row-04-only budget helpers and overrides were removed. Row 04 is back to the default acceptance envelope (`Commands: 240`, `Turns: 48`, normal deadline) while keeping the provisional staged hybrid fixture (`StartingSettlers: 1`, one human + five AI, `scripts/city-economy-wonder.json`).
+- New focused RED/GREEN: `go test ./internal/e2e/fullgame -run '^(TestScriptedHumanStagesDependentCityScriptAcrossHybridPlanningBoundaries|TestScriptedHumanFailedSubmissionDoesNotConsumeProgress|TestResolveScriptedHumanCommandsUsesDirectScriptForNonContinuityPolicy|TestPublicPlanningLeaveCloseoutTransitionsToAutonomousAIWithoutDepartedActorRequest|TestPublicPlanningLeavePendingTakeoverSurvivesRestartUntilWorkerCompletesIt)$' -count=1` -> exit 0. This proves failed public submission does not consume `scriptProgress` and retry succeeds.
+- Exact default-budget Row 04 observer repro: `env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=4 GOMAXPROCS=4 go test -timeout=10m -p=2 ./internal/e2e/fullgame -run '^TestObserveTask9Row$' -count=1 -v` -> exit 1 with `mixed-controller command budget exhausted in mode hybrid at turn 39 revision 243 after 242 accepted commands (budget 240); actor=account-6`.
+- Row 03 safety check still passes unchanged with winner `account-1`, reason `score_2300`, state `b6e048ab5587ff79e424eeeaff4006a5d37379172663cff729be697a26e206a3`, and events `9d072ef27cd301f8fd494e6a263d1d35049b1949efe36c2e3815f4ea5b3e0cb7`.
+- No Row 04 immutable artifacts were written in this pass.
+
+[2026-08-29T10:09:05Z] RED gaia countdown TDD
+Command: go test ./internal/gameplay/engine -run 'TestRuntimeRulesNaturalVictoryTransitions|TestRuntimeRulesGaia' -count=1
+Output:
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/lifecycle_runtime_test.go:89:28: next.Nations[0].GaiaCompletionTurn undefined (type Nation has no field or method GaiaCompletionTurn)
+internal/gameplay/engine/lifecycle_runtime_test.go:112:37: afterBuilding.Nations[0].GaiaCompletionTurn undefined (type Nation has no field or method GaiaCompletionTurn)
+internal/gameplay/engine/lifecycle_runtime_test.go:120:35: afterWonder.Nations[0].GaiaCompletionTurn undefined (type Nation has no field or method GaiaCompletionTurn)
+internal/gameplay/engine/lifecycle_runtime_test.go:140:32: counting.Nations[0].GaiaCompletionTurn undefined (type Nation has no field or method GaiaCompletionTurn)
+internal/gameplay/engine/lifecycle_runtime_test.go:149:33: cancelled.Nations[0].GaiaCompletionTurn undefined (type Nation has no field or method GaiaCompletionTurn)
+internal/gameplay/engine/lifecycle_runtime_test.go:158:33: restarted.Nations[0].GaiaCompletionTurn undefined (type Nation has no field or method GaiaCompletionTurn)
+internal/gameplay/engine/lifecycle_runtime_test.go:175:36: midCountdown.Nations[0].GaiaCompletionTurn undefined (type Nation has no field or method GaiaCompletionTurn)
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL
+
+[2026-08-29T10:25:45Z] IMPLEMENTATION findings
+- Replaced Gaia advance-count victory with persisted nation.gaia_completion_turn countdown semantics.
+- Countdown starts from synthetic prerequisites (IMPROVE_SYNTHETIC + WONDER_SYNTHETIC) and clears if either prerequisite is lost before completion.
+- Hybrid/simultaneous/long-turn policy resolution required the same countdown update path as direct lifecycle round completion; completePolicyRound now seeds Gaia from the resolved turn.
+- Row 04 bounded observation: winner=account-1 reason=science_gaia_controller state_sha256=eaf7533a03a1d7efee31f1e0f2ad960f0d1d1f79f09b09bae0597be243812fa9 event_sha256=4b0c590d1b1acce527e4e405f8f122b3e0302adf7f29f963ef0d8179204963a2 ai_commands=20.

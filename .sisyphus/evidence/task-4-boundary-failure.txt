@@ -1,0 +1,17 @@
+Task 4 negative-boundary evidence
+UTC: 2026-08-11T12:07:29Z
+
+Negative cases proven:
+- AST import scan rejects any non-test production import under internal/e2e.
+- Production string scan rejects diagnostic/puppet route, topic, command, environment, or runtime-config registrations.
+- Task 4 helper scan rejects build tags and environment switches.
+- Runtime probes require 404/405 for /diagnostic, /puppet, /game/44/{diagnostic,puppet}, and SSE topic-style /game/44/events/{diagnostic,puppet} paths.
+- Puppet rejects a non-test-harness policy label before submission.
+- Puppet rejects malformed or non-monotonic public exploration history before submission.
+- Out-of-turn joined human fails through the public handler with 422.
+- Nonmember human fails through the public handler with 403.
+- Actor identity is never included in the submitted payload; the server derives it from session_id.
+- HIDDEN_CANARY_TILE and HIDDEN_CANARY_UNIT are absent from observed raw serialized AI and puppet planning inputs.
+- Production AIGateway source guard requires ExecuteAICommand and rejects ExecuteCommand.
+
+No production route, SSE topic, command, build tag, environment switch, runtime config switch, diagnostic planning input, canonical-state puppet input, or direct service submission was added.

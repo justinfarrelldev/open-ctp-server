@@ -1,0 +1,9 @@
+Task 11 negative and confidentiality evidence
+
+Focused command:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine ./internal/gameplay/visibility ./internal/gameplay/rules -run TestTask11
+Result: PASS.
+
+Checked failures: absent unit capability, non-adjacent/unknown hidden city, insufficient public works, illegal terrain conversion, duplicate embassy state, invalid negative overlay duration, failed steal with and without capture, and missing manifest action vectors/provenance.
+
+Leak assertions: engine errors never contain hidden city identifiers; special event payloads omit target city and selected technology; fog projection omits SECRET_ACTOR while an overlay is queued; AI input is byte-identical to the controlling player's projection. Base Tile.Terrain remains unchanged after terraforming completion.

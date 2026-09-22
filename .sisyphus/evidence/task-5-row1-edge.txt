@@ -1,0 +1,28 @@
+Task 5 edge and preservation verification
+UTC timestamp: 2026-08-11T12:35:23Z
+
+Direct Row 2 preservation:
+go test ./internal/e2e/fullgame -run '^TestPublicExecutorCompletesRowTwoThroughProductionRuntime$' -count=1 -v
+Exit code: 0
+Duration: 5.42s
+
+Focused gameplay matrix excluding only the separate catalog-authoring gate:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/game ./internal/gameplay/... ./internal/world ./internal/runtime ./internal/e2e/memorysql ./internal/e2e/onboarding ./internal/e2e/fullgame -count=1 -skip '^TestCatalogHasExactlySixtyFixedCoveredCases$'
+Exit code: 0
+Result: engine, service, visibility, AI, runtime, world, memorysql, onboarding, Row 1, Row 2, and fullgame edge tests passed.
+
+Race matrix excluding only the separate catalog-authoring gate:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -race -timeout=13m -p=2 ./internal/gameplay/... ./internal/runtime ./internal/e2e/fullgame -count=1 -skip '^TestCatalogHasExactlySixtyFixedCoveredCases$'
+Exit code: 0
+Result: no race detector reports; fullgame passed under race in 84.39s.
+
+Unfiltered focused plan command:
+Exit code: 1
+Only failure: TestCatalogHasExactlySixtyFixedCoveredCases reports `scenario fullgame-01-sequential-bloodlust_conquest has non-observed rules fixture hash`. This is the pre-existing Task 9 catalog fixture gate and is not modified in Task 5.
+
+Boundary preservation:
+- CapturedCityID is checked only as a non-empty public acknowledgement and is never used for targeting or lookup.
+- Nil/empty combat capture results retain the public projection fallback.
+- Human movement choices use public projections/history only.
+- AI actions remain produced and submitted by the production AI gateway.
+- No scenario seed, map, movement, visibility, combat vectors, budgets, timeout, or terminal rules changed.

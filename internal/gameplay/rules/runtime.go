@@ -14,15 +14,50 @@ import (
 const calendarFinalTurn = 48
 
 type RuntimeRules struct {
-	CompatibilityVersion string              `json:"compatibility_version"`
-	ContentHash          string              `json:"content_hash"`
-	Victory              []RuntimeVictory    `json:"victory"`
-	Calendar             RuntimeCalendar     `json:"calendar"`
-	Gaia                 RuntimeGaia         `json:"gaia"`
-	Production           []RuntimeProduction `json:"production"`
-	Effects              []RuntimeEffect     `json:"effects"`
-	Starter              RuntimeStarter      `json:"starter"`
-	Movement             RuntimeMovement     `json:"movement"`
+	CompatibilityVersion string                     `json:"compatibility_version"`
+	ContentHash          string                     `json:"content_hash"`
+	Victory              []RuntimeVictory           `json:"victory"`
+	Calendar             RuntimeCalendar            `json:"calendar"`
+	Gaia                 RuntimeGaia                `json:"gaia"`
+	Production           []RuntimeProduction        `json:"production"`
+	Effects              []RuntimeEffect            `json:"effects"`
+	Starter              RuntimeStarter             `json:"starter"`
+	Movement             RuntimeMovement            `json:"movement"`
+	Advances             []RuntimeAdvanceDefinition `json:"advances,omitempty"`
+	Units                []RuntimeUnitDefinition    `json:"units"`
+}
+
+// RuntimeAdvanceDefinition is the bounded synthetic technology model. It keeps
+// CTP2's prerequisite/cost shape without copying the retail tree.
+type RuntimeAdvanceDefinition struct {
+	ID            string   `json:"id"`
+	Cost          int      `json:"cost"`
+	Prerequisites []string `json:"prerequisites,omitempty"`
+}
+
+// RuntimeUnitDefinition is the bounded, client-safe unit capability model compiled
+// from synthetic CTP2 unit records. It intentionally models only mechanics the
+// server can execute deterministically; unsupported source tags still fail closed
+// during import/runtime compilation.
+type RuntimeUnitDefinition struct {
+	ID                string                 `json:"id"`
+	Role              string                 `json:"role,omitempty"`
+	Domain            string                 `json:"domain"`
+	Movement          int                    `json:"movement"`
+	Attack            int                    `json:"attack"`
+	Defense           int                    `json:"defense"`
+	Strength          int                    `json:"strength"`
+	Armor             int                    `json:"armor"`
+	Health            int                    `json:"health"`
+	ZOC               bool                   `json:"zoc"`
+	TransportCapacity int                    `json:"transport_capacity,omitempty"`
+	CargoDomains      []string               `json:"cargo_domains,omitempty"`
+	ProductionCost    int                    `json:"production_cost,omitempty"`
+	Upkeep            int                    `json:"upkeep,omitempty"`
+	Prerequisites     []string               `json:"prerequisites,omitempty"`
+	ObsoleteBy        []string               `json:"obsolete_by,omitempty"`
+	VisibilityRange   int                    `json:"visibility_range,omitempty"`
+	Effects           []RuntimeStarterEffect `json:"effects,omitempty"`
 }
 
 type RuntimeMovement struct {
@@ -52,14 +87,35 @@ func (terrain RuntimeTerrain) Allows(domain string) bool {
 	return index < len(terrain.Domains) && terrain.Domains[index] == domain
 }
 
+func (runtime RuntimeRules) Advance(id string) (RuntimeAdvanceDefinition, bool) {
+	index := sort.Search(len(runtime.Advances), func(index int) bool { return runtime.Advances[index].ID >= id })
+	if index == len(runtime.Advances) || runtime.Advances[index].ID != id {
+		return RuntimeAdvanceDefinition{}, false
+	}
+	return runtime.Advances[index], true
+}
+
+func (runtime RuntimeRules) Unit(id string) (RuntimeUnitDefinition, bool) {
+	index := sort.Search(len(runtime.Units), func(index int) bool { return runtime.Units[index].ID >= id })
+	if index == len(runtime.Units) || runtime.Units[index].ID != id {
+		return RuntimeUnitDefinition{}, false
+	}
+	return runtime.Units[index], true
+}
+
 type RuntimeStarter struct {
-	Movement int                    `json:"movement"`
-	Attack   int                    `json:"attack"`
-	Defense  int                    `json:"defense"`
-	Strength int                    `json:"strength"`
-	Armor    int                    `json:"armor"`
-	Health   int                    `json:"health"`
-	Effects  []RuntimeStarterEffect `json:"effects"`
+	Domain            string                 `json:"domain"`
+	Movement          int                    `json:"movement"`
+	Attack            int                    `json:"attack"`
+	Defense           int                    `json:"defense"`
+	Strength          int                    `json:"strength"`
+	Armor             int                    `json:"armor"`
+	Health            int                    `json:"health"`
+	ZOC               bool                   `json:"zoc"`
+	TransportCapacity int                    `json:"transport_capacity,omitempty"`
+	CargoDomains      []string               `json:"cargo_domains,omitempty"`
+	VisibilityRange   int                    `json:"visibility_range,omitempty"`
+	Effects           []RuntimeStarterEffect `json:"effects"`
 }
 
 type RuntimeStarterEffect struct {
@@ -144,9 +200,9 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 		return RuntimeRules{}, errors.New("rules content hash mismatch")
 	}
 	var definition struct {
-		CompatibilityVersion string                 `json:"compatibility_version"`
-		Manifest                    SupportedRulesManifest `json:"manifest"`
-		Records                     []Record               `json:"records"`
+		CompatibilityVersion       string                 `json:"compatibility_version"`
+		Manifest                   SupportedRulesManifest `json:"manifest"`
+		Records                    []Record               `json:"records"`
 		EnabledVictoryEvaluatorIDs []string               `json:"enabled_victory_evaluator_ids,omitempty"`
 	}
 	if err := json.Unmarshal(definitions, &definition); err != nil {
@@ -209,16 +265,18 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 	if runtime.Movement.Configured && (!runtime.Movement.PolicyConfigured || len(runtime.Movement.Terrains) == 0) {
 		return RuntimeRules{}, errors.New("rules definitions require complete synthetic movement definitions")
 	}
+	sort.Slice(runtime.Advances, func(i, j int) bool { return runtime.Advances[i].ID < runtime.Advances[j].ID })
+	if err := validateRuntimeAdvances(runtime.Advances); err != nil {
+		return RuntimeRules{}, err
+	}
+	sort.Slice(runtime.Units, func(i, j int) bool { return runtime.Units[i].ID < runtime.Units[j].ID })
+	starterUnit, ok := runtime.Unit("UNIT_SYNTHETIC")
+	if !ok {
+		return RuntimeRules{}, errors.New("rules definitions require the synthetic starter unit")
+	}
 	runtime.Starter = RuntimeStarter{
-		Movement: 2, Attack: 4, Defense: 4, Strength: 4, Armor: 2, Health: 10,
-		Effects: []RuntimeStarterEffect{
-			{ID: "settler", Kind: "settler"},
-			{ID: "embassy", Kind: "special_embassy"},
-			{ID: "steal", Kind: "special_steal", Value: 100},
-			{ID: "capture", Kind: "special_capture", Value: 0},
-			{ID: "terraform", Kind: "special_terraform", Value: 1},
-			{ID: "terraform-turns", Kind: "special_terraform_turns", Value: 1},
-		},
+		Domain: starterUnit.Domain, Movement: starterUnit.Movement, Attack: starterUnit.Attack, Defense: starterUnit.Defense, Strength: starterUnit.Strength, Armor: starterUnit.Armor, Health: starterUnit.Health, ZOC: starterUnit.ZOC, TransportCapacity: starterUnit.TransportCapacity, CargoDomains: append([]string(nil), starterUnit.CargoDomains...), VisibilityRange: starterUnit.VisibilityRange,
+		Effects: append([]RuntimeStarterEffect(nil), starterUnit.Effects...),
 	}
 	sort.Slice(runtime.Victory, func(i, j int) bool { return runtime.Victory[i].ID < runtime.Victory[j].ID })
 	sort.Slice(runtime.Production, func(i, j int) bool { return runtime.Production[i].ID < runtime.Production[j].ID })
@@ -240,7 +298,9 @@ func ServerOwnedSyntheticRuleset(victoryEvaluatorIDs ...string) (Ruleset, error)
 		{Kind: "terrain", ID: "ocean", Tags: map[string]string{"MovementCost": "1", "MovementDomains": "amphibious,sea"}},
 		{Kind: "terrain", ID: "plains", Tags: map[string]string{"MovementCost": "1", "MovementDomains": "amphibious,land"}},
 		{Kind: "movement", ID: "MOVEMENT_SYNTHETIC", Tags: map[string]string{"OpenAccess": "true", "ZOCStopsPath": "true"}},
-		{Kind: "unit", ID: "UNIT_SYNTHETIC", Tags: map[string]string{"Description": "UNIT_SYNTHETIC", "MaxMovePoints": "1"}},
+		{Kind: "advance", ID: "ADVANCE_SYNTHETIC_ROOT", Tags: map[string]string{"Description": "ADVANCE_SYNTHETIC_ROOT", "Cost": "2"}},
+		{Kind: "advance", ID: "ADVANCE_SYNTHETIC_UNLOCK", Tags: map[string]string{"Description": "ADVANCE_SYNTHETIC_UNLOCK", "Cost": "2", "PrerequisiteAdvanceIDs": "ADVANCE_SYNTHETIC_ROOT"}},
+		{Kind: "unit", ID: "UNIT_SYNTHETIC", Tags: map[string]string{"Description": "UNIT_SYNTHETIC", "Role": "starter", "Domain": "land", "MaxMovePoints": "2", "Attack": "4", "Defense": "4", "Strength": "4", "Armor": "2", "Health": "10", "ZOC": "true", "VisibilityRange": "2", "Effects": "settler,special_embassy,special_steal:100,special_capture:0,special_terraform:1,special_terraform_turns:1"}},
 		{Kind: "wonder", ID: "WONDER_SYNTHETIC", Tags: map[string]string{"Description": "WONDER_SYNTHETIC"}},
 	}
 	enabled := append([]string(nil), victoryEvaluatorIDs...)
@@ -268,10 +328,18 @@ func ServerOwnedSyntheticRuleset(victoryEvaluatorIDs ...string) (Ruleset, error)
 
 func compileRecord(runtime *RuntimeRules, record Record) error {
 	switch record.Kind {
-	case "unit":
-		if err := requirePositiveInteger(record, "MaxMovePoints"); err != nil {
+	case "advance":
+		advance, err := compileAdvanceDefinition(record)
+		if err != nil {
 			return err
 		}
+		runtime.Advances = append(runtime.Advances, advance)
+	case "unit":
+		unit, err := compileUnitDefinition(record)
+		if err != nil {
+			return err
+		}
+		runtime.Units = append(runtime.Units, unit)
 		runtime.Production = append(runtime.Production, RuntimeProduction{ID: record.ID, Kind: "unit"})
 	case "building":
 		runtime.Production = append(runtime.Production, RuntimeProduction{ID: record.ID, Kind: "building"})
@@ -338,6 +406,188 @@ func containsRuntimeProduction(production []RuntimeProduction, id string) bool {
 	return false
 }
 
+func compileAdvanceDefinition(record Record) (RuntimeAdvanceDefinition, error) {
+	cost, err := positiveInteger(record, "Cost")
+	if err != nil {
+		return RuntimeAdvanceDefinition{}, err
+	}
+	prerequisites, err := optionalIDs(record, "PrerequisiteAdvanceIDs")
+	if err != nil {
+		return RuntimeAdvanceDefinition{}, err
+	}
+	return RuntimeAdvanceDefinition{ID: record.ID, Cost: cost, Prerequisites: prerequisites}, nil
+}
+
+func validateRuntimeAdvances(advances []RuntimeAdvanceDefinition) error {
+	byID := make(map[string]RuntimeAdvanceDefinition, len(advances))
+	for _, advance := range advances {
+		if advance.ID == "" || advance.Cost < 1 {
+			return fmt.Errorf("rules definition advance %q is malformed", advance.ID)
+		}
+		if _, duplicate := byID[advance.ID]; duplicate {
+			return fmt.Errorf("rules definition advance %q is duplicated", advance.ID)
+		}
+		byID[advance.ID] = advance
+	}
+	for _, advance := range advances {
+		for _, prerequisite := range advance.Prerequisites {
+			if prerequisite == advance.ID {
+				return fmt.Errorf("rules definition advance %q has cyclic prerequisites", advance.ID)
+			}
+			if _, ok := byID[prerequisite]; !ok {
+				return fmt.Errorf("rules definition advance %q references missing prerequisite %q", advance.ID, prerequisite)
+			}
+		}
+	}
+	visiting := map[string]bool{}
+	visited := map[string]bool{}
+	var visit func(string) error
+	visit = func(id string) error {
+		if visited[id] {
+			return nil
+		}
+		if visiting[id] {
+			return fmt.Errorf("rules definition advance %q has cyclic prerequisites", id)
+		}
+		visiting[id] = true
+		advance := byID[id]
+		for _, prerequisite := range advance.Prerequisites {
+			if err := visit(prerequisite); err != nil {
+				return err
+			}
+		}
+		visiting[id] = false
+		visited[id] = true
+		return nil
+	}
+	for _, advance := range advances {
+		if err := visit(advance.ID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func compileUnitDefinition(record Record) (RuntimeUnitDefinition, error) {
+	movement, err := positiveInteger(record, "MaxMovePoints")
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	domain := optionalString(record, "Domain", "land")
+	if domain != "land" && domain != "sea" && domain != "amphibious" {
+		return RuntimeUnitDefinition{}, fmt.Errorf("rules definition record %q has invalid Domain", record.ID)
+	}
+	attack, err := optionalPositiveInteger(record, "Attack", 4)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	defense, err := optionalPositiveInteger(record, "Defense", 4)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	strength, err := optionalPositiveInteger(record, "Strength", attack)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	armor, err := optionalPositiveInteger(record, "Armor", 2)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	health, err := optionalPositiveInteger(record, "Health", 10)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	transportCapacity, err := optionalNonNegativeInteger(record, "TransportCapacity", 0)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	productionCost, err := optionalNonNegativeInteger(record, "ProductionCost", 0)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	upkeep, err := optionalNonNegativeInteger(record, "Upkeep", 0)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	visibilityRange, err := optionalNonNegativeInteger(record, "VisibilityRange", 0)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	zoc, err := optionalBool(record, "ZOC", true)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	cargoDomains, err := optionalCSV(record, "CargoDomains", []string{"land", "sea", "amphibious"})
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	if transportCapacity == 0 && len(cargoDomains) > 0 {
+		return RuntimeUnitDefinition{}, fmt.Errorf("rules definition record %q has CargoDomains without TransportCapacity", record.ID)
+	}
+	prerequisites, err := optionalIDs(record, "Prerequisites")
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	obsoleteBy, err := optionalIDs(record, "ObsoleteBy")
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	effects, err := unitEffects(record)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	return RuntimeUnitDefinition{ID: record.ID, Role: record.Tags["Role"], Domain: domain, Movement: movement, Attack: attack, Defense: defense, Strength: strength, Armor: armor, Health: health, ZOC: zoc, TransportCapacity: transportCapacity, CargoDomains: cargoDomains, ProductionCost: productionCost, Upkeep: upkeep, Prerequisites: prerequisites, ObsoleteBy: obsoleteBy, VisibilityRange: visibilityRange, Effects: effects}, nil
+}
+
+func unitEffects(record Record) ([]RuntimeStarterEffect, error) {
+	value := record.Tags["Effects"]
+	if value == "" {
+		return nil, nil
+	}
+	items := strings.Split(value, ",")
+	effects := make([]RuntimeStarterEffect, 0, len(items))
+	seen := make(map[string]struct{}, len(items))
+	for _, item := range items {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			return nil, fmt.Errorf("rules definition record %q has invalid Effects", record.ID)
+		}
+		kind, rawValue, hasValue := strings.Cut(item, ":")
+		kind = strings.TrimSpace(kind)
+		if !validUnitEffectKind(kind) {
+			return nil, fmt.Errorf("rules definition record %q has invalid Effects", record.ID)
+		}
+		if _, duplicate := seen[kind]; duplicate {
+			return nil, fmt.Errorf("rules definition record %q has duplicate Effects", record.ID)
+		}
+		seen[kind] = struct{}{}
+		effect := RuntimeStarterEffect{ID: effectID(kind), Kind: kind}
+		if hasValue {
+			parsed, err := strconv.Atoi(strings.TrimSpace(rawValue))
+			if err != nil || parsed < 0 {
+				return nil, fmt.Errorf("rules definition record %q has invalid Effects", record.ID)
+			}
+			effect.Value = parsed
+		}
+		effects = append(effects, effect)
+	}
+	sort.Slice(effects, func(i, j int) bool { return effects[i].Kind < effects[j].Kind })
+	return effects, nil
+}
+
+func validUnitEffectKind(kind string) bool {
+	switch kind {
+	case "settler", "special_embassy", "special_soothsaying", "special_steal", "special_capture", "special_terraform", "special_terraform_turns":
+		return true
+	default:
+		return false
+	}
+}
+
+func effectID(kind string) string {
+	return strings.ReplaceAll(strings.TrimPrefix(kind, "special_"), "_", "-")
+}
+
 func requirePositiveInteger(record Record, tag string) error {
 	_, err := positiveInteger(record, tag)
 	return err
@@ -397,4 +647,81 @@ func boolean(record Record, tag string) (bool, error) {
 		return false, fmt.Errorf("rules definition record %q has invalid %s", record.ID, tag)
 	}
 	return parsed, nil
+}
+
+func optionalString(record Record, tag, fallback string) string {
+	if value := record.Tags[tag]; value != "" {
+		return value
+	}
+	return fallback
+}
+
+func optionalPositiveInteger(record Record, tag string, fallback int) (int, error) {
+	if _, ok := record.Tags[tag]; !ok {
+		return fallback, nil
+	}
+	return positiveInteger(record, tag)
+}
+
+func optionalNonNegativeInteger(record Record, tag string, fallback int) (int, error) {
+	if _, ok := record.Tags[tag]; !ok {
+		return fallback, nil
+	}
+	return nonNegativeInteger(record, tag)
+}
+
+func optionalBool(record Record, tag string, fallback bool) (bool, error) {
+	if _, ok := record.Tags[tag]; !ok {
+		return fallback, nil
+	}
+	return boolean(record, tag)
+}
+
+func optionalCSV(record Record, tag string, allowed []string) ([]string, error) {
+	value := record.Tags[tag]
+	if value == "" {
+		return nil, nil
+	}
+	allowedSet := make(map[string]struct{}, len(allowed))
+	for _, item := range allowed {
+		allowedSet[item] = struct{}{}
+	}
+	items := strings.Split(value, ",")
+	for index, item := range items {
+		items[index] = strings.TrimSpace(item)
+		if items[index] == "" {
+			return nil, fmt.Errorf("rules definition record %q has invalid %s", record.ID, tag)
+		}
+		if _, ok := allowedSet[items[index]]; !ok {
+			return nil, fmt.Errorf("rules definition record %q has invalid %s", record.ID, tag)
+		}
+	}
+	sort.Strings(items)
+	for index := 1; index < len(items); index++ {
+		if items[index] == items[index-1] {
+			return nil, fmt.Errorf("rules definition record %q has duplicate %s", record.ID, tag)
+		}
+	}
+	return items, nil
+}
+
+func optionalIDs(record Record, tag string) ([]string, error) {
+	value := record.Tags[tag]
+	if value == "" || value == "none" {
+		return nil, nil
+	}
+	ids := strings.Split(value, ",")
+	for index, id := range ids {
+		ids[index] = strings.TrimSpace(id)
+		if ids[index] == "" {
+			return nil, fmt.Errorf("rules definition record %q has invalid %s", record.ID, tag)
+		}
+	}
+	sort.Strings(ids)
+	for index := 1; index < len(ids); index++ {
+		if ids[index] == ids[index-1] {
+			return nil, fmt.Errorf("rules definition record %q has duplicate %s", record.ID, tag)
+		}
+	}
+	return ids, nil
 }

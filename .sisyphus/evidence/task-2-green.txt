@@ -1,0 +1,16 @@
+Task 2 GREEN — 2026-08-10
+
+Bridge implementation:
+- `loadStartControllers` rejects an empty persisted player list before indexing, so malformed/missing roster persistence fails closed.
+- Ordered and account-scoped player queries both select `country` and `controller_kind`; sqlmock contracts reference the production query constants.
+- Named `memorysql` mirrors the account-scoped ninth column and returns the persisted controller (or the legacy/default human value).
+
+Verification:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 8m go test -timeout=7m -p=2 ./internal/game -run '^(TestLoadStartControllersRejectsEmptyPlayers|TestInitialGameplayState|TestServerRuntimePin|TestStartGameGeneratesWorldOnce|TestStartGamePersistsWorldInTransaction|TestStartGameDoesNotStartOnWorldGenerationFailure|TestStartGameSerialization|TestCreateGame_WithLobbyCopiesLobbyMembersIntoGamePlayers|TestGetGame_AllowsJoinedPlayerAndIncludesPingValues|TestKickPlayer_RemovesPlayerAndKickedPlayerCanNoLongerReadGame|TestUpdatePing_PersistsNonNegativeValue)$' -count=1
+Result: PASS.
+
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 8m go test -timeout=7m -p=2 ./internal/e2e/memorysql -count=1
+Result: PASS.
+
+timeout --signal=TERM --kill-after=30s 12m supabase/tests/task2/run_isolated_postgres.sh
+Result: PASS fresh and legacy migrations using dynamic host port 32772; post-run `docker ps --all --filter name=task2-migrations-` was empty.

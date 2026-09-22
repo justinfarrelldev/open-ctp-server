@@ -1,0 +1,30 @@
+Task 5 invalid unit capability proof
+Date: 2026-09-22T21:13:39Z
+
+Source evidence: .sisyphus/evidence/ctp2-systems-task-5-source-inventory.md
+
+Command: go test ./internal/gameplay/rules -run TestCompileRuntimeRejectsMalformedUnitCapabilities -count=1 -v
+=== RUN   TestCompileRuntimeRejectsMalformedUnitCapabilities
+=== PAUSE TestCompileRuntimeRejectsMalformedUnitCapabilities
+=== CONT  TestCompileRuntimeRejectsMalformedUnitCapabilities
+=== RUN   TestCompileRuntimeRejectsMalformedUnitCapabilities/domain
+=== PAUSE TestCompileRuntimeRejectsMalformedUnitCapabilities/domain
+=== RUN   TestCompileRuntimeRejectsMalformedUnitCapabilities/cargo_without_capacity
+=== PAUSE TestCompileRuntimeRejectsMalformedUnitCapabilities/cargo_without_capacity
+=== RUN   TestCompileRuntimeRejectsMalformedUnitCapabilities/duplicate_prerequisites
+=== PAUSE TestCompileRuntimeRejectsMalformedUnitCapabilities/duplicate_prerequisites
+=== RUN   TestCompileRuntimeRejectsMalformedUnitCapabilities/invalid_effect
+=== PAUSE TestCompileRuntimeRejectsMalformedUnitCapabilities/invalid_effect
+=== CONT  TestCompileRuntimeRejectsMalformedUnitCapabilities/domain
+=== CONT  TestCompileRuntimeRejectsMalformedUnitCapabilities/duplicate_prerequisites
+=== CONT  TestCompileRuntimeRejectsMalformedUnitCapabilities/invalid_effect
+=== CONT  TestCompileRuntimeRejectsMalformedUnitCapabilities/cargo_without_capacity
+--- PASS: TestCompileRuntimeRejectsMalformedUnitCapabilities (0.00s)
+    --- PASS: TestCompileRuntimeRejectsMalformedUnitCapabilities/domain (0.00s)
+    --- PASS: TestCompileRuntimeRejectsMalformedUnitCapabilities/invalid_effect (0.00s)
+    --- PASS: TestCompileRuntimeRejectsMalformedUnitCapabilities/cargo_without_capacity (0.00s)
+    --- PASS: TestCompileRuntimeRejectsMalformedUnitCapabilities/duplicate_prerequisites (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules	0.005s
+
+Negative cases covered: invalid Domain, CargoDomains without TransportCapacity, duplicate Prerequisites, invalid Effects. Import still rejects unsupported source tags through TestImportRejectsUnsupportedOrMalformedFiles in the full rules package run recorded in ctp2-systems-task-5-units.txt.

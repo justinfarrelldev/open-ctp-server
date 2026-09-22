@@ -1,0 +1,2 @@
+# Decisions
+- 2026-09-22T21:07:00Z User clarified that final gameplay-system completion must include an explicit CTP2 source-code audit for units, improvements, wonders, buildings, movement, and related mechanics. Treat the original source under `ctp2/` / pinned civctp2 commit as the authority when behavior is ambiguous, and do not mark mechanic families complete without source-cited coverage evidence.

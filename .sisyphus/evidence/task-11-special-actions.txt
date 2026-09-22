@@ -1,0 +1,27 @@
+Task 11 special actions verification
+
+Original-source provenance (symbols only; no copied source/data): pinned civctp2 commit 0668dd199c2519ff8ab7d2871e7c7a89e21c8e52; ArmyData::EstablishEmbassy, ArmyData::Soothsay; UnitData::StealTechnology, UnitData::CanEstablishEmbassy, UnitData::CanStealTechnology; Player::EstablishEmbassy / HasEmbassyWith.
+
+RED (expected missing API):
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine -run TestTask11
+Result: failed before implementation with missing Task 11 action constants, effect kinds, canonical nation fields, and overlay resolver.
+
+GREEN/refactor focused vectors:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine ./internal/gameplay/visibility ./internal/gameplay/rules -run TestTask11
+Result: PASS.
+
+Vectors cover embassy and soothsaying authorization/effects; sorted eligible-tech selection with named special-action RNG; success, failure and capture; disclosure-safe event payloads; capability/range/cost/hidden errors; queued/cancelled/completed forest-to-plains overlay; immutable base tiles; completed-overlay yield/movement/LOS behavior; AI/player projection equality; and manifest evaluator/vector fail-closed validation.
+
+Full suite:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...
+Result: PASS.
+
+Build:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build ./...
+Result: PASS.
+
+Coverage:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m task test-coverage
+Result: PASS; internal aggregate >80%; engine 90.1%.
+
+Source URLs: https://github.com/civctp2/civctp2/blob/0668dd199c2519ff8ab7d2871e7c7a89e21c8e52/ctp2_code/gs/gameobj/ArmyData.cpp ; https://github.com/civctp2/civctp2/blob/0668dd199c2519ff8ab7d2871e7c7a89e21c8e52/ctp2_code/gs/gameobj/UnitData.cpp ; https://github.com/civctp2/civctp2/blob/0668dd199c2519ff8ab7d2871e7c7a89e21c8e52/ctp2_code/gs/gameobj/Player.cpp ; https://github.com/civctp2/civctp2/blob/0668dd199c2519ff8ab7d2871e7c7a89e21c8e52/ctp2_code/gs/gameobj/CityData.cpp.

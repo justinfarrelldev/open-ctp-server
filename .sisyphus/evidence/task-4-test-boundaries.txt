@@ -1,0 +1,36 @@
+Task 4 test-only boundaries evidence
+UTC: 2026-08-11T12:07:29Z
+
+Focused command:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/testkit ./internal/e2e/diagnostic ./internal/e2e/puppet ./internal/e2e/boundary ./internal/e2e/onboarding ./internal/gameplay/service ./internal/runtime -count=1
+Exit: 0
+
+Build command:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build ./...
+Exit: 0
+
+Checks:
+- internal/gameplay/testkit absent; old import scan returned no matches.
+- Diagnostic snapshot tests mutate copied players/countries/controllers/city/unit/phase slices and re-read unchanged canonical bytes.
+- Puppet decodes serialized public exploration history and calls production ai.PlanWithHistory; a visited-tile fixture proves history changes selection to a fresh visible route.
+- Puppet-selected commands reach the ordinary authenticated POST /game/{game_id}/{command} handler.
+- Out-of-turn joined actor returns exact 422, nonmember returns exact 403, and authorized actor advances revision 1 -> 2.
+- Production AI canary/gateway tests prove raw AI bytes exclude HIDDEN_CANARY and AIGateway uses ExecuteAICommand.
+- Static/runtime guards prove no production E2E import, diagnostic/puppet route/topic/command/config/env/build-tag surface.
+- git diff --check and git diff --cached --check exited 0.
+- LSP diagnostics reported zero errors for every changed Go file.
+
+Clean-parent commits:
+504c49d test(e2e): relocate deterministic gameplay testkit
+ffa0a52 test(e2e): add detached gameplay diagnostics
+a562569 test(e2e): puppet humans through public HTTP
+0dd5455 test(e2e): guard production test boundaries
+212e070 fix(e2e): use public history for puppet planning
+Each staged patch passed direct tests, go build ./..., and git diff --check in a detached worktree based on its parent.
+
+Post-implementation review:
+- Goal verification: PASS after 212e070
+- Hands-on QA: PASS
+- Code quality: PASS after 212e070
+- Security: PASS
+- Context mining: PASS

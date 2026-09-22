@@ -1,0 +1,1 @@
+{"version":1,"commands":[{"command":"army-create","actor_role":"human-1","payload":{"army_id":{"role":"human-1.army-1"},"unit_ids":[{"role":"human-1.unit-1"}]}},{"command":"fortify","actor_role":"human-1","payload":{"unit_id":{"role":"human-1.unit-1"}}}]}

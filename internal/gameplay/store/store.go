@@ -37,6 +37,19 @@ WHERE state.game_id = $1`
 
 const selectAggregateForUpdateQuery = selectAggregateQuery + ` FOR UPDATE OF state`
 
+const PendingTakeoversQuery = `SELECT
+	state.game_id,
+	state.revision,
+	player.value->>'id' AS player_id
+FROM world_turn_states AS state
+JOIN games ON games.id = state.game_id
+CROSS JOIN LATERAL jsonb_array_elements(state.canonical_state_json->'players') AS player(value)
+WHERE state.state_schema_version = 1
+	AND games.status = 'started'
+	AND COALESCE(player.value->>'controller', '') = 'human'
+	AND COALESCE(player.value->>'takeover_pending', 'false') = 'true'
+ORDER BY state.game_id ASC, player_id ASC`
+
 const DueLongTurnDeadlinesQuery = `SELECT
 	game_id,
 	revision,
@@ -103,6 +116,12 @@ type Aggregate struct {
 	Ruleset            RulesetPin
 }
 
+type PendingTakeover struct {
+	GameID   int64  `db:"game_id"`
+	Revision int64  `db:"revision"`
+	PlayerID string `db:"player_id"`
+}
+
 // DueDeadline is a long-turn deadline discovered from canonical policy state.
 type DueDeadline struct {
 	GameID     int64  `db:"game_id"`
@@ -160,6 +179,18 @@ func (s *Store) ReadAggregate(gameID int64) (Aggregate, error) {
 		return Aggregate{}, errors.New("gameplay store requires a database")
 	}
 	return loadAggregate(s.db, selectAggregateQuery, gameID)
+}
+
+// FindPendingTakeovers reads persisted pending human-to-AI transitions without mutating state.
+func (s *Store) FindPendingTakeovers() ([]PendingTakeover, error) {
+	if s == nil || s.db == nil {
+		return nil, errors.New("gameplay store requires a database")
+	}
+	var takeovers []PendingTakeover
+	if err := s.db.Select(&takeovers, PendingTakeoversQuery); err != nil {
+		return nil, fmt.Errorf("reading pending takeovers: %w", err)
+	}
+	return takeovers, nil
 }
 
 // FindDueLongTurnDeadlines reads due long-turn deadlines from canonical policy state.

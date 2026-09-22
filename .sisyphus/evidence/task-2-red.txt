@@ -1,0 +1,11 @@
+Task 2 RED — 2026-08-10
+
+1. Existing focused bridge baseline:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/game ./internal/e2e/memorysql -count=1
+
+FAILED as expected: stale sqlmock contracts expected the eight-column ordered `game_players` SELECT while production selected `controller_kind`; this caused `TestCreateGame_WithLobbyCopiesLobbyMembersIntoGamePlayers`, `TestGetGame_AllowsJoinedPlayerAndIncludesPingValues`, `TestKickPlayer_RemovesPlayerAndKickedPlayerCanNoLongerReadGame`, and `TestUpdatePing_PersistsNonNegativeValue` to return 500. The known active-game-chat route failures were separately identified as unrelated.
+
+2. New narrow fail-closed regression:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 2m go test -timeout=90s -p=2 ./internal/game -run '^TestLoadStartControllersRejectsEmptyPlayers$' -count=1
+
+FAILED as intended with `panic: runtime error: index out of range [0] with length 0` at `internal/game/start_gameplay.go:75` in `loadStartControllers`. This proves malformed/missing player persistence did not fail closed before GREEN.

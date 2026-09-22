@@ -86,6 +86,11 @@ type Driver struct {
 	active      map[int64]bool
 }
 
+type closeoutProjection struct {
+	Revision       int64  `json:"revision"`
+	PlanningStatus string `json:"planning_status,omitempty"`
+}
+
 func NewDriver(projections ProjectionSource, gateway Gateway, config Config) *Driver {
 	budget := config.ActionBudget
 	if budget < 1 {
@@ -174,7 +179,11 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 		return nil, err
 	}
 	visited := visitedDestinations(history)
-	candidates := []Candidate{{Type: engine.CommandPass, EntityID: playerID, Score: 100, Payload: json.RawMessage(`{}`)}}
+	fallbackType := engine.CommandPass
+	if projection.PlanningStatus == visibility.PlanningStatusOpen {
+		fallbackType = engine.CommandRoundComplete
+	}
+	candidates := []Candidate{{Type: fallbackType, EntityID: playerID, Score: 100, Payload: json.RawMessage(`{}`)}}
 	embassy := embassyCandidates(projection, playerID, visited)
 	candidates = append(candidates, embassy...)
 	if len(embassy) == 0 {
@@ -188,7 +197,7 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 		if unit.OwnerID != playerID {
 			continue
 		}
-		if !hasCity {
+		if !hasCity && unit.ArmyID == "" && hasEffect(unit.Effects, engine.EffectSettler) {
 			candidates = append(candidates, candidate(engine.CommandFoundCity, unit.ID, unit.TileID, 300, map[string]string{"unit_id": unit.ID, "city_id": "ai-city-" + unit.ID, "name": "AI-" + playerID}))
 		}
 		if unit.ArmyID == "" {
@@ -526,6 +535,26 @@ func Compare(left, right Candidate) int {
 
 // Drive repeatedly projects and selects ordinary commands until the planner completes its turn or
 // reaches its action budget. Stable receipt keys make post-commit scheduling and restart replay safe.
+func (d *Driver) submitCandidate(ctx context.Context, gameID int64, playerID string, revision int64, candidate Candidate) (SubmissionResult, error) {
+	request := Submission{GameID: gameID, ExpectedRevision: revision, ActorPlayerID: playerID, Type: candidate.Type, Payload: candidate.Payload}
+	request.IdempotencyKey = receiptKey(gameID, playerID, revision, candidate)
+	request.CommandID = "ai-" + request.IdempotencyKey
+	submitted, err := d.gateway.Submit(ctx, request)
+	if err != nil {
+		return SubmissionResult{}, fmt.Errorf("submit %s for %s/%s with payload %s: %w", candidate.Type, candidate.EntityID, candidate.TargetID, candidate.Payload, err)
+	}
+	d.observeSubmission(request)
+	return submitted, nil
+}
+
+func planningCloseout(input []byte) (closeoutProjection, error) {
+	var projection closeoutProjection
+	if err := json.Unmarshal(input, &projection); err != nil {
+		return closeoutProjection{}, err
+	}
+	return projection, nil
+}
+
 func (d *Driver) Drive(ctx context.Context, gameID int64, playerID string, revision int64) (Result, error) {
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
@@ -552,6 +581,30 @@ func (d *Driver) Drive(ctx context.Context, gameID int64, playerID string, revis
 		if err != nil {
 			return Result{}, err
 		}
+		projection, err := planningCloseout(input)
+		if err != nil {
+			return Result{}, err
+		}
+		if projection.Revision != 0 {
+			result.Revision = projection.Revision
+		}
+		switch projection.PlanningStatus {
+		case visibility.PlanningStatusClosed:
+			return result, nil
+		case visibility.PlanningStatusQueued:
+			selected := Candidate{Type: engine.CommandRoundComplete, EntityID: playerID, Payload: json.RawMessage(`{}`)}
+			submitted, err := d.submitCandidate(ctx, gameID, playerID, result.Revision, selected)
+			if err != nil {
+				return Result{}, err
+			}
+			result.Commands++
+			result.Revision = submitted.Revision
+			result.Replayed = result.Replayed || submitted.Replayed
+			if submitted.Terminal {
+				return result, ErrTerminal
+			}
+			return result, nil
+		}
 		var history []ExplorationStep
 		if d.history != nil {
 			history, err = d.history.ExplorationHistory(ctx, gameID, playerID)
@@ -567,14 +620,10 @@ func (d *Driver) Drive(ctx context.Context, gameID int64, playerID string, revis
 			return Result{}, errors.New("AI planner returned no pass candidate")
 		}
 		selected := candidates[0]
-		request := Submission{GameID: gameID, ExpectedRevision: result.Revision, ActorPlayerID: playerID, Type: selected.Type, Payload: selected.Payload}
-		request.IdempotencyKey = receiptKey(gameID, playerID, result.Revision, selected)
-		request.CommandID = "ai-" + request.IdempotencyKey
-		submitted, err := d.gateway.Submit(ctx, request)
+		submitted, err := d.submitCandidate(ctx, gameID, playerID, result.Revision, selected)
 		if err != nil {
-			return Result{}, fmt.Errorf("submit %s for %s/%s with payload %s: %w", selected.Type, selected.EntityID, selected.TargetID, selected.Payload, err)
+			return Result{}, err
 		}
-		d.observeSubmission(request)
 		result.Commands++
 		result.Revision = submitted.Revision
 		result.Replayed = result.Replayed || submitted.Replayed
@@ -597,14 +646,10 @@ func (d *Driver) Pass(ctx context.Context, gameID int64, playerID string, revisi
 		return Result{}, errors.New("AI driver is not configured")
 	}
 	candidate := Candidate{Type: engine.CommandRoundComplete, EntityID: playerID, Payload: json.RawMessage(`{}`)}
-	request := Submission{GameID: gameID, ExpectedRevision: revision, ActorPlayerID: playerID, Type: candidate.Type, Payload: candidate.Payload}
-	request.IdempotencyKey = receiptKey(gameID, playerID, revision, candidate)
-	request.CommandID = "ai-" + request.IdempotencyKey
-	submitted, err := d.gateway.Submit(ctx, request)
+	submitted, err := d.submitCandidate(ctx, gameID, playerID, revision, candidate)
 	if err != nil {
 		return Result{}, err
 	}
-	d.observeSubmission(request)
 	return Result{Commands: 1, Revision: submitted.Revision, Replayed: submitted.Replayed}, nil
 }
 

@@ -1,0 +1,9 @@
+Task 15 verification
+
+RED: GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/http failed before implementation with undefined Handler/request/writeError symbols.
+GREEN focused: GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/http ./internal/gameplay/combat ./internal/gameplay/events ./internal/ratelimit exited 0.
+OpenAPI generation: timeout --signal=TERM --kill-after=30s 5m swag init exited 0.
+Full: GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./... exited 0.
+Build: GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build ./... exited 0.
+Coverage: GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m task test-coverage exited 0; internal aggregate gate and engine >=90% gate passed (engine 90.1%).
+Diagnostics: zero LSP errors in main.go, internal/gameplay/http, and internal/ratelimit/ratelimit.go.

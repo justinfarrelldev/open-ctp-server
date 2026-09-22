@@ -1,0 +1,18 @@
+Task 5 pre-change Row 1 RED
+UTC date: 2026-08-11
+Environment: GAMEPLAY_POSTGRES_DSN, SUPABASE_DB_URL, SUPABASE_PROJECT_URL, SUPABASE_API_KEY, and SUPABASE_SERVICE_ROLE unset; GOMAXPROCS=4
+Command:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^TestPublicExecutorCompletesMinimalScenarioThroughProductionRuntime$' -count=1 -v
+Exit code: 1
+Required failure predicate:
+fullgame_test.go:59: capture city: no visible legal frontier
+Result: reproduced exactly before any behavior change. The test used the existing fixed Row 1 seed and ordinary public HTTP/SSE executor path.
+
+Focused runner RED
+Command:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^TestCaptureAfterCombat' -count=1
+Exit code: 1
+Failure predicate:
+internal/e2e/fullgame/runner_test.go:13:9: undefined: captureAfterCombat
+internal/e2e/fullgame/runner_test.go:30:9: undefined: captureAfterCombat
+Result: the narrow regression failed before implementation because the post-combat public-result decision did not exist.

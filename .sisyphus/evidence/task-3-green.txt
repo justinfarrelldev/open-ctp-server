@@ -1,0 +1,4 @@
+Timestamp: 2026-08-11 UTC
+Command: env GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 2m go test -timeout=90s -p=2 ./internal/e2e/setup -count=1
+Exit: 0
+Result: reusable setup contract accepts all 510 ordered controller vectors, accepts every imported playable synthetic civilization, and rejects counts 1/9, duplicate/missing slots, duplicate/unknown countries, and unsupported controllers.

@@ -1,0 +1,18 @@
+Task 8 RED/GREEN/REFACTOR evidence
+
+RED
+- `GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/engine -run '^TestTask8'`
+- Before the Task 8 canonical surfaces existed, compilation failed on missing Tile, terrain/domain fields, and command constants.
+
+GREEN/REFACTOR
+- Synthetic vectors: TestTask8MoveTerrainZOCAndVisibilityVectors, TestTask8CargoFortifyDisbandAndArmyVectors, TestTask8CapacityPhaseAndTransportLossVectors, TestTask8RejectsUnknownDomainsAndCargoDomainIntersection, TestTask8ArmyJoinRemovalAndInvalidVectors, TestTask8MovementAndCargoFailureVectors, TestTask8ArmyMovementAndOpenAccessVectors, TestTask8RejectsSplitArmiesAndLockedResolution.
+- Exact canonical transition validation covers terrain cost, server-derived adjacent steps/access/ZOC, ownership/phase, visibility observation, cargo capacity/intersection, transport loss, fortify/disband, army create/join/leave/removal, and split-army rejection.
+- Pinned source provenance (paraphrased only): https://github.com/civctp2/civctp2/blob/0668dd199c2519ff8ab7d2871e7c7a89e21c8e52/ctp2_code/gs/gameobj/ArmyData.cpp (`ArmyData::GetMovementType`, cargo methods, `Entrench`); https://github.com/civctp2/civctp2/blob/0668dd199c2519ff8ab7d2871e7c7a89e21c8e52/ctp2_code/gs/gameobj/UnitData.cpp (cargo/placement/movement handling).
+
+Verification
+- Focused engine/rules test: PASS.
+- Full repository test with bounded inner/outer timeouts: PASS.
+- `go build ./...` with bounded outer timeout: PASS.
+- Engine package coverage: 90.0%.
+- Internal aggregate coverage command: PASS (80.2% total).
+- LSP diagnostics: zero errors in engine.go, units.go, units_task8_test.go, rules.go.

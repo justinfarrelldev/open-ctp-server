@@ -1,0 +1,5 @@
+Task 8 negative-path evidence
+
+PASS: Synthetic vectors reject unknown domains, unauthorized ownership, inactive/locked phase actions, closed foreign terrain, forbidden domain terrain, insufficient movement, mid-path ZOC continuation, invalid/unknown payloads, full transport, re-embark, water disembark, cargo-domain intersection, split armies, and unknown commands.
+
+All engine errors occur before revision/event/RNG changes. The service maps rejected engine actions to its existing stable generic 422 `gameplay command is invalid`; stale revisions remain the existing 409 path.

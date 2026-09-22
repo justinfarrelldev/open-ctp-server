@@ -184,30 +184,30 @@ func TestTask10CityCommandAuthorizationAndQueueRejections(t *testing.T) {
 	if err := foundCity(&state, "player-a", FoundCityPayload{UnitID: "settler-b", CityID: "city-a", Name: "Beta"}); err == nil {
 		t.Fatal("duplicate city id accepted")
 	}
-	if _, err := applyCityCommand(&state, Command{ActorPlayerID: "player-a", Type: "unknown"}); err == nil {
+	if _, err := applyCityCommand(&state, Command{ActorPlayerID: "player-a", Type: "unknown"}, nil); err == nil {
 		t.Fatal("unknown city command accepted")
 	}
-	if err := queueProduction(&state, "player-b", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "x", Kind: ProductionUnit, Cost: 1}}); err == nil {
+	if err := queueProduction(&state, "player-b", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "x", Kind: ProductionUnit, Cost: 1}}, nil); err == nil {
 		t.Fatal("foreign city queue accepted")
 	}
-	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "locked", Kind: ProductionBuilding, Cost: 1, Prerequisite: "missing"}}); err == nil {
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "locked", Kind: ProductionBuilding, Cost: 1, Prerequisite: "missing"}}, nil); err == nil {
 		t.Fatal("missing prerequisite accepted")
 	}
 	state.Wonders = []Wonder{{ID: "built", OwnerID: "player-b", CityID: "other"}}
-	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "built", Kind: ProductionWonder, Cost: 1}}); err == nil {
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "built", Kind: ProductionWonder, Cost: 1}}, nil); err == nil {
 		t.Fatal("existing wonder accepted")
 	}
 	item := ProductionItem{ID: "repeat", Kind: ProductionUnit, Cost: 1}
-	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: item}); err != nil {
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: item}, nil); err != nil {
 		t.Fatal(err)
 	}
-	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: item}); err == nil {
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: item}, nil); err == nil {
 		t.Fatal("duplicate queue item accepted")
 	}
 	if err := cancelProduction(&state, "player-b", CancelProductionPayload{CityID: "city-a", ItemID: "repeat"}); err == nil {
 		t.Fatal("foreign cancellation accepted")
 	}
-	if _, err := applyCityCommand(&state, Command{ActorPlayerID: "player-a", Type: CommandQueueProduction, Payload: []byte("{")}); err == nil {
+	if _, err := applyCityCommand(&state, Command{ActorPlayerID: "player-a", Type: CommandQueueProduction, Payload: []byte("{")}, nil); err == nil {
 		t.Fatal("malformed city payload accepted")
 	}
 }
@@ -220,7 +220,9 @@ func TestTask10CanonicalCityStateValidationVectors(t *testing.T) {
 		edit func(*State)
 	}{
 		{"invalid recalculation", func(s *State) { s.RecalculatedTurn = 2 }},
-		{"duplicate wonder", func(s *State) { s.Wonders = []Wonder{{ID: "w", OwnerID: "player-a", CityID: "city-a"}, {ID: "w", OwnerID: "player-b", CityID: "city-a"}} }},
+		{"duplicate wonder", func(s *State) {
+			s.Wonders = []Wonder{{ID: "w", OwnerID: "player-a", CityID: "city-a"}, {ID: "w", OwnerID: "player-b", CityID: "city-a"}}
+		}},
 		{"missing city id", func(s *State) { s.Cities[0].ID = "" }},
 		{"missing city owner", func(s *State) { s.Cities[0].OwnerID = "" }},
 		{"missing city tile", func(s *State) { s.Cities[0].TileID = "" }},
@@ -230,7 +232,9 @@ func TestTask10CanonicalCityStateValidationVectors(t *testing.T) {
 		{"negative building upkeep", func(s *State) { s.Cities[0].Buildings = []Building{{ID: "b", Upkeep: -1}} }},
 		{"invalid queued item", func(s *State) { s.Cities[0].Queue = []ProductionItem{{}} }},
 		{"invalid wonder", func(s *State) { s.Wonders = []Wonder{{ID: "w"}} }},
-		{"invalid wonder scope", func(s *State) { s.Wonders = []Wonder{{ID: "w", OwnerID: "player-a", CityID: "city-a", Scope: "script"}} }},
+		{"invalid wonder scope", func(s *State) {
+			s.Wonders = []Wonder{{ID: "w", OwnerID: "player-a", CityID: "city-a", Scope: "script"}}
+		}},
 		{"invalid nation effect", func(s *State) { s.Nations = []Nation{{ID: "nation-a", Effects: []Effect{{ID: "x", Kind: "script"}}}} }},
 	}
 	for _, tc := range cases {

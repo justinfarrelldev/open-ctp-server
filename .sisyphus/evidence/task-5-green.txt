@@ -1,0 +1,24 @@
+Task 5 focused GREEN
+UTC timestamp: 2026-08-11T12:35:23Z
+
+Implementation:
+- Initial human army composition is derived only from the public bootstrap projection and includes every sorted, eligible, co-located, same-owner, unassigned visible unit.
+- Combat success trusts a non-empty public CombatTransition.Result.CapturedCityID without using that ID for lookup; nil/empty results retain the projection-only fallback.
+- Exploration recovery uses only current/stale public tile projections and the runner's public movement trail.
+- Restart checkpoint 0 represents an uninterrupted run; checkpoint 2 rebuilds the runtime and resumes through SSE.
+
+Row 1 deterministic acceptance:
+go test ./internal/e2e/fullgame -run '^TestPublicExecutorCompletesMinimalScenarioThroughProductionRuntime$' -count=1 -v
+Exit code: 0
+Result: two clean executions plus one checkpoint-2 restart execution reached natural bloodlust_conquest terminality and returned identical complete Artifacts, including terminal result, AI command count/transcript, state hash, and event hash.
+State hash: 6fbb8ce4a34d95058afa995f3b9bad15e21af0e97aabd1b7023e63f513a8dcb6
+Event hash: 104c65dc8ea937e023b0b6ba8918d5ef75a00f769c9264df09f9227ad4d3b169
+
+Focused gameplay matrix:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/game ./internal/gameplay/... ./internal/world ./internal/runtime ./internal/e2e/memorysql ./internal/e2e/onboarding ./internal/e2e/fullgame -count=1 -skip '^TestCatalogHasExactlySixtyFixedCoveredCases$'
+Exit code: 0
+Result: all required packages, Row 1, and Row 2 passed. The exclusion is the separate Task 9 catalog-authoring gate.
+
+Build:
+go build ./...
+Exit code: 0

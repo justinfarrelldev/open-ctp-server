@@ -1,0 +1,27 @@
+Task 13 AI controller verification
+
+RED:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/ai
+Expected initial failure: undefined AI planner/driver API.
+
+GREEN focused checks:
+- internal/gameplay/ai: PASS
+- internal/gameplay/service: PASS
+- AI targeted coverage: 72.5%
+- service targeted coverage: 70.5%
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go build ./...: PASS
+
+Full suite:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./...
+Blocked by concurrent pre-existing Task 14 lifecycle failures in internal/gameplay/engine:
+- TestLifecycleVictoryEvaluatorsEndOnceInManifestOrder/score_2300
+- TestOwnerEarlyEndAndLeaveTakeoverLifecycle
+AI/service packages pass in the same run.
+
+Provenance reviewed only: pinned CTP2 commit 0668dd199c2519ff8ab7d2871e7c7a89e21c8e52 AI strategy scheduler/plan/goal and game-object identity layers. No source or protected data copied.
+
+Final verification after takeover persistence integration:
+- focused ai/service tests: PASS
+- full bounded go test ./...: PASS
+- bounded go build ./...: PASS
+- bounded internal coverage: 81.6% total; engine 90.0%

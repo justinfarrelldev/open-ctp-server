@@ -1,0 +1,66 @@
+Task 9 autonomous takeover GREEN evidence — restored reviewed implementation
+Workspace: /home/justi/Projects/open-ctp-server
+Note: the RED was reconstructed separately after independent review; this GREEN reruns the exact focused continuity command against the preserved reviewed implementation, then records refactor verification.
+
+## GREEN exact focused command
+Command:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^(TestPublicLeaveTransitionsToAutonomousAIWithoutPublicTakeoverCall|TestPublicLeavePendingTakeoverSurvivesRestartUntilWorkerCompletesIt)$' -count=1
+
+Exit code: 0
+
+Output:
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame	0.258s
+
+## REFACTOR focused service/fullgame verification
+Command:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/gameplay/service ./internal/e2e/fullgame -run '^(TestPendingTakeoverWorker|TestPublicLeaveTransitionsToAutonomousAIWithoutPublicTakeoverCall|TestPublicLeavePendingTakeoverSurvivesRestartUntilWorkerCompletesIt)$' -count=1
+
+Exit code: 0
+
+Output:
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/service	0.003s [no tests to run]
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame	0.260s
+
+## REFACTOR race verification
+Command:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -race -timeout=13m -p=2 ./internal/gameplay/service ./internal/runtime ./internal/e2e/fullgame -count=1
+
+Exit code: 0
+
+Output:
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/service	1.174s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/runtime	1.016s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame	156.855s
+
+## REFACTOR build verification
+Command:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build ./...
+
+Exit code: 0
+
+Output:
+
+## REFACTOR vet verification
+Command:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go vet ./...
+
+Exit code: 0
+
+Output:
+
+## REFACTOR diff check
+Command:
+export CI=true DEBIAN_FRONTEND=noninteractive GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never HOMEBREW_NO_AUTO_UPDATE=1 GIT_EDITOR=: EDITOR=: VISUAL='' GIT_SEQUENCE_EDITOR=: GIT_MERGE_AUTOEDIT=no GIT_PAGER=cat PAGER=cat npm_config_yes=true PIP_NO_INPUT=1 YARN_ENABLE_IMMUTABLE_INSTALLS=false; git diff --check
+
+Exit code: 0
+
+Output:
+
+## REFACTOR freeze guard
+Command:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/freeze -run '^(TestEngineLock|TestManifestJSONIsStable|TestRequiredPathsCannotBeOmitted|TestCampaignWriteAllowlistRejectsTampering)$' -count=1
+
+Exit code: 0
+
+Output:
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze	0.080s

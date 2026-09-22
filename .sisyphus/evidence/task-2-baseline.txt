@@ -1,0 +1,10 @@
+Task 2 baseline — 2026-08-10
+
+Command:
+env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/game ./internal/e2e/memorysql -count=1
+
+Result: FAIL in internal/game. Intended bridge mismatch: production ordered game_players query now selects controller_kind, while player_controls_task11_test SQL mock expects only id, created_at, updated_at, game_id, account_id, joined_at, country, ping_ms. This produces HTTP 500 in TestCreateGame_WithLobbyCopiesLobbyMembersIntoGamePlayers, TestGetGame_AllowsJoinedPlayerAndIncludesPingValues, TestKickPlayer_RemovesPlayerAndKickedPlayerCanNoLongerReadGame, and TestUpdatePing_PersistsNonNegativeValue.
+
+Known unrelated failures preserved: TestActiveGameChatUsesLobby and TestWorldRouteSurfaceContract (active-game chat route registration), documented outside this Task 2 bridge/migration repair.
+
+internal/e2e/memorysql passed in the same bounded run.

@@ -1,0 +1,16 @@
+--- FAIL: TestProjectionExposesOnlyCurrentActorPlanningStatusInPlanningModes (0.00s)
+    --- FAIL: TestProjectionExposesOnlyCurrentActorPlanningStatusInPlanningModes/other_actors_keep_eligible_viewer_open (0.00s)
+        visibility_test.go:248: planning_status omitted from projection JSON: map[string]interface {}{"cities":[]interface {}{map[string]interface {}{"id":"HIDDEN_CITY_TOKEN", "observed_turn":4, "owner_id":"b", "stale":false, "tile_id":"2,0"}}, "revision":7, "tiles":[]interface {}{map[string]interface {}{"id":"0,0", "observed_turn":4, "stale":false, "terrain":"plains", "x":0, "y":0}, map[string]interface {}{"id":"1,0", "observed_turn":4, "stale":false, "terrain":"plains", "x":1, "y":0}, map[string]interface {}{"id":"2,0", "observed_turn":4, "stale":false, "terrain":"forest", "x":2, "y":0}}, "turn":4, "units":[]interface {}{map[string]interface {}{"fortified":false, "id":"HIDDEN_UNIT_TOKEN", "owner_id":"b", "tile_id":"2,0"}, map[string]interface {}{"fortified":false, "id":"scout", "owner_id":"a", "tile_id":"0,0"}}}
+    --- FAIL: TestProjectionExposesOnlyCurrentActorPlanningStatusInPlanningModes/hybrid_planning_open (0.00s)
+        visibility_test.go:248: planning_status omitted from projection JSON: map[string]interface {}{"cities":[]interface {}{map[string]interface {}{"id":"HIDDEN_CITY_TOKEN", "observed_turn":4, "owner_id":"b", "stale":false, "tile_id":"2,0"}}, "revision":7, "tiles":[]interface {}{map[string]interface {}{"id":"0,0", "observed_turn":4, "stale":false, "terrain":"plains", "x":0, "y":0}, map[string]interface {}{"id":"1,0", "observed_turn":4, "stale":false, "terrain":"plains", "x":1, "y":0}, map[string]interface {}{"id":"2,0", "observed_turn":4, "stale":false, "terrain":"forest", "x":2, "y":0}}, "turn":4, "units":[]interface {}{map[string]interface {}{"fortified":false, "id":"HIDDEN_UNIT_TOKEN", "owner_id":"b", "tile_id":"2,0"}, map[string]interface {}{"fortified":false, "id":"scout", "owner_id":"a", "tile_id":"0,0"}}}
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.006s
+--- FAIL: TestPlannerUsesRoundCompleteFallbackOnlyForOpenPlanning (0.00s)
+    ai_test.go:390: open planning fallback = "pass", want "round-complete"; candidates=[]ai.Candidate{ai.Candidate{Type:"pass", EntityID:"ai", TargetID:"", Score:100, Payload:json.RawMessage{0x7b, 0x7d}}}
+--- FAIL: TestDriverClosesOpenPlanningThroughOrdinaryGatewayRoundComplete (0.00s)
+    ai_test.go:411: open planning command = "pass", want "round-complete"
+--- FAIL: TestDriverRebuildsOpenPlanningCloseoutDecisionAfterRestart (0.00s)
+    ai_test.go:434: restart open-closeout types differ: first=[]ai.Submission{ai.Submission{GameID:55, ExpectedRevision:4, IdempotencyKey:"ai-3f6ff85503ae805f5408c52186d3da13b070818760dabbff7f80ab7910a367d0", CommandID:"ai-ai-3f6ff85503ae805f5408c52186d3da13b070818760dabbff7f80ab7910a367d0", ActorPlayerID:"ai", Type:"pass", Payload:json.RawMessage{0x7b, 0x7d}}} second=[]ai.Submission{ai.Submission{GameID:55, ExpectedRevision:4, IdempotencyKey:"ai-3f6ff85503ae805f5408c52186d3da13b070818760dabbff7f80ab7910a367d0", CommandID:"ai-ai-3f6ff85503ae805f5408c52186d3da13b070818760dabbff7f80ab7910a367d0", ActorPlayerID:"ai", Type:"pass", Payload:json.RawMessage{0x7b, 0x7d}}}
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai	0.004s
+FAIL

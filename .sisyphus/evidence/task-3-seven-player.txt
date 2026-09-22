@@ -1,0 +1,4 @@
+Timestamp: 2026-08-11 UTC
+Covered by: TestPublicOrderedSetupStartsAndRestartsForEveryCount/slots-7
+Path: runtime.New -> authenticated HTTP signup/lobby/game setup -> country selection -> add_ai -> start -> get_game -> named memorysql reopen -> runtime.New -> get_game.
+Assertion: seven ordered country/controller/account records persist across restart. The full focused onboarding command exited 0.

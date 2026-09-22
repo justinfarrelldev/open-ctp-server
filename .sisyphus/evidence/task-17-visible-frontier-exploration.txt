@@ -1,0 +1,12 @@
+Task 17 visible-only frontier exploration
+
+RED:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run TestFrontierExplorer -count=1
+Failed because FixedFrontierExplorer and ErrNoVisibleFrontier were undefined.
+
+GREEN focused command passed:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run TestFrontierExplorer -count=1
+
+Vectors prove stable (y, x, id) frontier selection, one-step PlanVisibleRoute validation, refresh after every submitted move, first-visible-enemy stop, and no-frontier failure without hidden-map fallback.
+
+Bounded repository suite and build passed. No terminal or golden artifact was created by this planner-only change.

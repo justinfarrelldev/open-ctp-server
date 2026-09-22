@@ -1,0 +1,4 @@
+Timestamp: 2026-08-11 UTC
+Covered by: internal/e2e/setup TestValidateRejectsInvalidSlots.
+Rejected: counts 1 and 9, duplicate and missing slots, duplicate country, unknown country, special country, barbarian country, and unsupported controller.
+Contract suite also accepts every ordered human/AI vector for counts 2-8 and each of ten imported playable synthetic civilization IDs. Focused setup test exited 0; no retail civilization data was added.

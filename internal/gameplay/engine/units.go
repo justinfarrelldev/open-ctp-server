@@ -348,7 +348,7 @@ func validateUnitState(state State) error {
 		}
 	}
 	for _, unit := range state.Units {
-		if unit.ID == "" || unit.OwnerID == "" || (unit.Domain != "" && !supportedDomain(unit.Domain)) || unit.Movement < 0 || unit.CargoCapacity < 0 {
+		if unit.ID == "" || unit.OwnerID == "" || (unit.Domain != "" && !supportedDomain(unit.Domain)) || unit.Movement < 0 || unit.CargoCapacity < 0 || unit.VisibilityRange < 0 {
 			return errors.New("unit capability is invalid")
 		}
 		if unit.TransportID != "" {

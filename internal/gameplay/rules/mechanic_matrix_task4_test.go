@@ -12,20 +12,20 @@ func TestTask4ManifestMechanicMatrixAndContractsAreComplete(t *testing.T) {
 	if err := manifest.Validate(); err != nil {
 		t.Fatalf("Validate() error = %v", err)
 	}
-	if got, want := len(manifest.MechanicMatrix), 10; got != want {
+	if got, want := len(manifest.MechanicMatrix), len(requiredMechanicFamilies())+1; got != want {
 		t.Fatalf("mechanic matrix rows = %d, want %d", got, want)
 	}
 	if got, want := len(manifest.SyntheticContracts), 10; got != want {
 		t.Fatalf("synthetic contract rows = %d, want %d", got, want)
 	}
-	if got, want := strings.Join(mechanicFamilies(manifest.MechanicMatrix), ","), strings.Join(requiredMechanicFamilies(), ","); got != want {
+	if got, want := strings.Join(mechanicFamilies(manifest.MechanicMatrix), ","), strings.Join(append(requiredMechanicFamilies(), "client-presentation-assets"), ","); got != want {
 		t.Fatalf("mechanic families = %q, want %q", got, want)
 	}
 	if got, want := strings.Join(contractFamilies(manifest.SyntheticContracts), ","), strings.Join(requiredMechanicFamilies(), ","); got != want {
 		t.Fatalf("contract families = %q, want %q", got, want)
 	}
 	for _, row := range manifest.MechanicMatrix {
-		if row.ContractID == "" {
+		if row.Status != mechanicStatusExplicitlyExcluded && row.ContractID == "" {
 			t.Fatalf("mechanic row %q is missing contract id", row.Family)
 		}
 	}

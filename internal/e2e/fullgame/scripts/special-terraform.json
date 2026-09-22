@@ -1,0 +1,1 @@
+{"version":1,"commands":[{"command":"terraform","actor_role":"human-1","payload":{"unit_id":{"role":"human-1.unit-1"},"tile_id":{"role":"human-1.tile-2"},"target_terrain":"plains"}},{"command":"cancel-terraform","actor_role":"human-1","payload":{"tile_id":{"role":"human-1.tile-2"}}}]}

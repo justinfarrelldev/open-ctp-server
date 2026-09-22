@@ -1,0 +1,17 @@
+Task 17 fixed full-game catalog RED evidence
+
+Command:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./internal/e2e/fullgame/... -run '^TestCatalogRejectsProvisionalScenarios$' -count=1
+
+Result: exit 1 (expected RED)
+
+Failure:
+Validate accepted provisional scenarios without immutable terminal and hash artifacts
+
+Safety: no game was started, no protected asset was read, no golden was written, and no failure transcript included canonical state or event payloads.
+
+Blocker: public natural terminals cannot currently be reached with the required legal public HTTP/SSE flow. Two-player spawn separation, visibility radius, one-time starter movement, and a projection-only planner prevent legal discovery/combat; production AI deterministically selects fortify and does not advance victory conditions. Correcting those production prerequisites is out of Task 17's permitted file scope.
+
+Live-runtime check:
+GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m go test -timeout=16m -p=2 ./internal/e2e/onboarding -run '^TestPublicConquestRunnerOverLocalSupabase$' -count=1
+Result: exit 0 in 0.004s via the test's no-PostgreSQL-DSN skip path; it executed no game and produced no terminal/hash artifact.

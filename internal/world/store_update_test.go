@@ -362,32 +362,32 @@ func fixtureStoredWorldRows(t *testing.T) (worldSnapshotRow, worldTurnStateRow) 
 	pollutionJSON := MustCanonicalString(t, turn.Pollution)
 
 	return worldSnapshotRow{
-		GameID:           snapshot.GameID,
-		GameStatus:       snapshot.GameStatus,
-		GeneratorVersion: snapshot.GeneratorVersion,
-		Style:            snapshot.Config.Style,
-		RulesJSON:        snapshot.Config.RulesJSON,
-		ExclusionsJSON:   snapshot.Config.ExclusionsJSON,
-		StartingSettlers: snapshot.Config.StartingSettlers,
-		StartingGold:     snapshot.Config.StartingGold,
-		Seed:             snapshot.Config.Seed,
-		Wetness:          snapshot.Config.Wetness,
-		MapSize:          snapshot.Config.MapSize,
-		Climate:          snapshot.Config.Climate,
-		PlayerOrderJSON:  playerOrderJSON,
-		SpawnsJSON:       spawnsJSON,
-		TilesJSON:        tilesJSON,
-	}, worldTurnStateRow{
-		GameID:                snapshot.GameID,
-		TurnNumber:            turn.TurnNumber,
-		CurrentPlayerIndex:    turn.CurrentPlayerIndex,
-		ActivePlayerOrderJSON: activePlayerOrderJSON,
-		RecalculationCount:    turn.RecalculationCount,
-		RNGState:              "99",
-		RatingsJSON:           ratingsJSON,
-		PollutionJSON:         pollutionJSON,
-		LastRecalculatedAt:    turn.LastRecalculatedAt,
-	}
+			GameID:           snapshot.GameID,
+			GameStatus:       snapshot.GameStatus,
+			GeneratorVersion: snapshot.GeneratorVersion,
+			Style:            snapshot.Config.Style,
+			RulesJSON:        snapshot.Config.RulesJSON,
+			ExclusionsJSON:   snapshot.Config.ExclusionsJSON,
+			StartingSettlers: snapshot.Config.StartingSettlers,
+			StartingGold:     snapshot.Config.StartingGold,
+			Seed:             snapshot.Config.Seed,
+			Wetness:          snapshot.Config.Wetness,
+			MapSize:          snapshot.Config.MapSize,
+			Climate:          snapshot.Config.Climate,
+			PlayerOrderJSON:  playerOrderJSON,
+			SpawnsJSON:       spawnsJSON,
+			TilesJSON:        tilesJSON,
+		}, worldTurnStateRow{
+			GameID:                snapshot.GameID,
+			TurnNumber:            turn.TurnNumber,
+			CurrentPlayerIndex:    turn.CurrentPlayerIndex,
+			ActivePlayerOrderJSON: activePlayerOrderJSON,
+			RecalculationCount:    turn.RecalculationCount,
+			RNGState:              "99",
+			RatingsJSON:           ratingsJSON,
+			PollutionJSON:         pollutionJSON,
+			LastRecalculatedAt:    turn.LastRecalculatedAt,
+		}
 }
 
 func sqlmockDB(t *testing.T) *sqlx.DB {

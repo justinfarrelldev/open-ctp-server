@@ -1,0 +1,19 @@
+Task 6 explicit acceptance executor — GREEN
+UTC timestamp: 2026-08-11T13:39:00Z
+
+Implementation:
+- PublicExecutor.Execute consumes AcceptanceConfig and delegates only to the explicit AcceptanceHumanPolicy; static AST/grep scans found no scenario-ID or dimension dispatch.
+- Standalone RowOneConquestAcceptance and RowTwoDiplomacyAcceptance do not read Catalog or call Validate(Catalog).
+- Rules.Hash is pinned to the production ServerOwnedSyntheticRuleset content hash: Row 1 71e43ec5ee638292dd1853b221698ce39998c7cd491559392e28440cd34653a3; Row 2 5940497b463e9253d5e0c1cbb578cd29ff382ab9c4431c2daa9d48c5d8671b46. Unsupported decorative ID/Profile fields were removed.
+- Row 1 phase-bounded budget semantics were restored after a later shared-counter overwrite regressed the accepted Task 5 path. Row 1 hashes remain state 6fbb8ce4a34d95058afa995f3b9bad15e21af0e97aabd1b7023e63f513a8dcb6 and events 104c65dc8ea937e023b0b6ba8918d5ef75a00f769c9264df09f9227ad4d3b169.
+- AI transcript audit records and validates game ID, actor player ID, idempotency key, command ID, type, and public payload from the production AI observer.
+- Restart cursor is non-regressing during active-turn rebuild; terminal SSE cursor must advance beyond the resumed cursor.
+
+Verification:
+- go test ./internal/e2e/fullgame ./internal/e2e/onboarding ./internal/e2e/memorysql -skip '^TestCatalogHasExactlySixtyFixedCoveredCases$' -count=1: PASS (21.909s / 1.575s / 0.003s).
+- go test -race on the same packages/exclusion: PASS (152.651s / 8.490s / 1.018s), no race reports.
+- go build ./...: PASS.
+- gofmt -d on all five modified Go files: no output.
+- LSP: zero errors/warnings on all five modified Go files; modernization hints only.
+- git diff --check: PASS.
+- go test ./... -count=1: only TestCatalogHasExactlySixtyFixedCoveredCases fails with the separate Task 9 non-observed catalog rules hash; every other package passes.

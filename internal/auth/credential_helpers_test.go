@@ -42,11 +42,11 @@ func TestGetHashAndSalt_Success(t *testing.T) {
 
 func TestGetHashAndSalt_QueryOrDecodeErrors(t *testing.T) {
 	tests := []struct {
-		name        string
-		rowHash     string
-		rowSalt     string
-		queryErr    error
-		wantErrSub  string
+		name       string
+		rowHash    string
+		rowSalt    string
+		queryErr   error
+		wantErrSub string
 	}{
 		{
 			name:       "query error",

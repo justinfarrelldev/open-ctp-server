@@ -39,6 +39,7 @@ type CatalogFile struct {
 // same basename with a .ctp2synthetic suffix; retail filenames are never tracked.
 var CatalogFiles = []CatalogFile{
 	{Filename: "Units.txt", Kind: "unit", Prefix: "UNIT_"},
+	{Filename: "Advance.txt", Kind: "advance", Prefix: "ADVANCE_"},
 	{Filename: "buildings.txt", Kind: "building", Prefix: "IMPROVE_"},
 	{Filename: "Wonder.txt", Kind: "wonder", Prefix: "WONDER_"},
 	{Filename: "terrain.txt", Kind: "terrain", Prefix: "TERRAIN_"},
@@ -199,7 +200,7 @@ func SupportedManifest() SupportedRulesManifest {
 		SpecialActionVectors: []SpecialActionVector{{ID: "embassy_vector", EvaluatorID: "embassy", Original: true}, {ID: "soothsaying_vector", EvaluatorID: "soothsaying", Original: true}, {ID: "steal_technology_vector", EvaluatorID: "steal_technology", Original: true}, {ID: "terraform_vector", EvaluatorID: "terraform", Original: true}},
 		MechanicMatrix: []MechanicReadiness{
 			{Family: "units", Status: mechanicStatusIncludedNow, ContractID: "contract-units", Importer: "CatalogFiles Units.txt -> parseCTP2File(unit)", Runtime: "compileRecord(kind=unit) and starter-unit presence gate", Engine: "production and unit command slice already consumes runtime production/unit records", API: "existing gameplay setup and projection contracts expose unit production and unit actions", AI: "basic legal-use slice exists through current deterministic command legality; richer tactics remain deferred", Notes: "Included now as a bounded synthetic production and action family, not retail-stat parity."},
-			{Family: "advances", Status: mechanicStatusDeferred, ContractID: "contract-advances", Notes: "Deferred until Task 5 because prerequisite trees, unlocks, and research progression need new importer/runtime/engine/API work."},
+			{Family: "advances", Status: mechanicStatusDeferred, ContractID: "contract-advances", Notes: "Deferred until Task 6 because prerequisite trees, unlocks, and research progression need new importer/runtime/engine/API work."},
 			{Family: "buildings", Status: mechanicStatusIncludedNow, ContractID: "contract-buildings", Importer: "CatalogFiles buildings.txt -> parseCTP2File(building)", Runtime: "compileRecord(kind=building) produces production and effect inventory", Engine: "city production and upkeep slice can already bind generic building production/effect records", API: "existing gameplay projections already expose production choices and city-state consequences", AI: "basic legal-use slice can choose bounded synthetic production; optimization remains deferred", Notes: "Included now only for generic city production/effect wiring and bounded synthetic upkeep semantics."},
 			{Family: "wonders", Status: mechanicStatusIncludedNow, ContractID: "contract-wonders", Importer: "CatalogFiles Wonder.txt -> parseCTP2File(wonder)", Runtime: "compileRecord(kind=wonder) produces production and effect inventory", Engine: "city production and wonder uniqueness hooks can already consume generic wonder/effect records", API: "existing gameplay projections already expose production choices and resulting wonder state", AI: "basic legal-use slice can pick bounded synthetic wonders; strategic wonder timing remains deferred", Notes: "Included now for bounded production/effect and uniqueness contracts only."},
 			{Family: "terrain", Status: mechanicStatusIncludedNow, ContractID: "contract-terrain", Importer: "CatalogFiles terrain.txt -> parseCTP2File(terrain)", Runtime: "compileRecord(kind=terrain) and movement policy synthesize terrain movement tables", Engine: "movement, visibility, and world traversal already consume bounded terrain movement definitions", API: "existing world and gameplay projections expose terrain-backed movement legality", AI: "basic legal-use slice can issue commands against current movement legality; advanced path heuristics remain deferred", Notes: "Included now for bounded movement/yield anchors, not full terrain ecology parity."},
@@ -208,6 +209,7 @@ func SupportedManifest() SupportedRulesManifest {
 			{Family: "trade-routes-agreements", Status: mechanicStatusDeferred, ContractID: "contract-trade-routes-agreements", Notes: "Deferred until route pathing, agreement lifecycle, and diplomatic/public projections share a single deterministic server contract."},
 			{Family: "pollution-sources", Status: mechanicStatusDeferred, ContractID: "contract-pollution-sources", Notes: "Deferred until city and world pollution sources can be imported, accumulated, and surfaced without implying full disaster parity."},
 			{Family: "special-actions", Status: mechanicStatusIncludedNow, ContractID: "contract-special-actions", Importer: "SupportedManifest special-action evaluator/vector inventory pins bounded action families", Runtime: "manifest validation plus starter action effects provide executable bounded action hooks", Engine: "engine command slice already names embassy, steal, and terraform style actions as bounded mechanics", API: "existing gameplay command/projection contracts can expose bounded special-action legality and outcomes", AI: "basic legal-use slice can stay bounded to current command legality; richer targeting and sequencing remain deferred", Notes: "Included now for bounded action-vector contracts and starter hooks only."},
+			{Family: "client-presentation-assets", Status: mechanicStatusExplicitlyExcluded, Notes: "Explicitly excluded from Task 4 and this server slice because graphics, audio, UI presentation, and localization stay on the client side and must not gain fake synthetic readiness layers or contracts."},
 		},
 		SyntheticContracts: []SyntheticRecordContract{
 			{ID: "contract-units", Family: "units", RecordKind: "unit", SyntheticIDPrefix: "UNIT_SYNTHETIC_", RequiredTags: []string{"Description", "MaxMovePoints", "Role"}, Purpose: "Synthetic units must at minimum name their role and movement budget so runtime production and legal action slices stay deterministic.", Source: SourceProvenance{Repository: upstreamRepository, Commit: upstreamCommit, Path: "ctp2_code/gs/gameobj/Player.cpp", Symbol: "Player::CreateUnit", Purpose: "unit creation branches on unit record properties and movement domain constraints"}},
@@ -348,8 +350,13 @@ func validateSyntheticContracts(contracts []SyntheticRecordContract) (map[string
 
 func validateMechanicMatrix(rows []MechanicReadiness, contracts map[string]SyntheticRecordContract) error {
 	seenFamilies := make(map[string]bool, len(rows))
+	requiredFamilies := make(map[string]bool, len(contracts))
+	statusSeen := make(map[string]bool, 3)
+	for _, contract := range contracts {
+		requiredFamilies[contract.Family] = true
+	}
 	for _, row := range rows {
-		if row.Family == "" || row.Status == "" || row.ContractID == "" || strings.TrimSpace(row.Notes) == "" {
+		if row.Family == "" || row.Status == "" || strings.TrimSpace(row.Notes) == "" {
 			return fmt.Errorf("invalid mechanic matrix row %q", row.Family)
 		}
 		if !validMechanicStatus(row.Status) {
@@ -358,14 +365,11 @@ func validateMechanicMatrix(rows []MechanicReadiness, contracts map[string]Synth
 		if seenFamilies[row.Family] {
 			return fmt.Errorf("duplicate mechanic matrix family %q", row.Family)
 		}
-		contract, ok := contracts[row.ContractID]
-		if !ok {
-			return fmt.Errorf("mechanic %q references unknown contract %q", row.Family, row.ContractID)
-		}
-		if contract.Family != row.Family {
-			return fmt.Errorf("mechanic %q contract mismatch %q", row.Family, row.ContractID)
-		}
-		if row.Status == mechanicStatusIncludedNow {
+		switch row.Status {
+		case mechanicStatusExplicitlyExcluded:
+			if strings.TrimSpace(row.ContractID) != "" {
+				return fmt.Errorf("explicitly excluded mechanic %q must not reference a synthetic contract", row.Family)
+			}
 			for layer, value := range map[string]string{
 				"importer": row.Importer,
 				"runtime":  row.Runtime,
@@ -373,15 +377,44 @@ func validateMechanicMatrix(rows []MechanicReadiness, contracts map[string]Synth
 				"api":      row.API,
 				"ai":       row.AI,
 			} {
-				if strings.TrimSpace(value) == "" {
-					return fmt.Errorf("mechanic %q missing %s readiness", row.Family, layer)
+				if strings.TrimSpace(value) != "" {
+					return fmt.Errorf("explicitly excluded mechanic %q must not declare %s readiness", row.Family, layer)
+				}
+			}
+		default:
+			if strings.TrimSpace(row.ContractID) == "" {
+				return fmt.Errorf("mechanic %q is missing synthetic contract linkage", row.Family)
+			}
+			contract, ok := contracts[row.ContractID]
+			if !ok {
+				return fmt.Errorf("mechanic %q references unknown contract %q", row.Family, row.ContractID)
+			}
+			if contract.Family != row.Family {
+				return fmt.Errorf("mechanic %q contract mismatch %q", row.Family, row.ContractID)
+			}
+			delete(requiredFamilies, row.Family)
+			if row.Status == mechanicStatusIncludedNow {
+				for layer, value := range map[string]string{
+					"importer": row.Importer,
+					"runtime":  row.Runtime,
+					"engine":   row.Engine,
+					"api":      row.API,
+					"ai":       row.AI,
+				} {
+					if strings.TrimSpace(value) == "" {
+						return fmt.Errorf("mechanic %q missing %s readiness", row.Family, layer)
+					}
 				}
 			}
 		}
+		statusSeen[row.Status] = true
 		seenFamilies[row.Family] = true
 	}
-	if !sameStrings(mapKeys(seenFamilies), requiredMechanicFamilies()) {
+	if len(requiredFamilies) != 0 {
 		return errors.New("mechanic matrix inventory is incomplete")
+	}
+	if !sameStrings(mapKeys(statusSeen), []string{mechanicStatusIncludedNow, mechanicStatusDeferred, mechanicStatusExplicitlyExcluded}) {
+		return errors.New("mechanic matrix status coverage is incomplete")
 	}
 	return nil
 }
@@ -534,8 +567,11 @@ func validateCTP2Tags(kind string, id token, tags map[string]string, path string
 	required := []string{}
 	switch kind {
 	case "unit":
-		allowed = map[string]bool{"Description": true, "MaxMovePoints": true}
-		required = []string{"Description", "MaxMovePoints"}
+		allowed = map[string]bool{"Description": true, "MaxMovePoints": true, "Role": true, "Domain": true, "Attack": true, "Defense": true, "Strength": true, "Armor": true, "Health": true, "ZOC": true, "TransportCapacity": true, "CargoDomains": true, "ProductionCost": true, "Upkeep": true, "Prerequisites": true, "ObsoleteBy": true, "VisibilityRange": true, "Effects": true}
+		required = []string{"Description", "MaxMovePoints", "Role"}
+	case "advance":
+		allowed = map[string]bool{"Description": true, "Cost": true, "PrerequisiteAdvanceIDs": true}
+		required = []string{"Description", "Cost"}
 	case "building", "wonder", "terrain":
 		allowed = map[string]bool{"Description": true}
 		required = []string{"Description"}
@@ -550,10 +586,13 @@ func validateCTP2Tags(kind string, id token, tags map[string]string, path string
 		if !allowed[key] {
 			return importError(ErrorUnsupportedRequiredTag, path, id.line, id.value, "unsupported behavior-bearing field "+key)
 		}
-		if key == "MaxMovePoints" || key == "TurnsToActivate" {
+		if key == "MaxMovePoints" || key == "TurnsToActivate" || key == "Cost" || key == "Attack" || key == "Defense" || key == "Strength" || key == "Armor" || key == "Health" || key == "TransportCapacity" || key == "ProductionCost" || key == "Upkeep" || key == "VisibilityRange" {
 			if _, err := strconv.Atoi(value); err != nil {
 				return importError(ErrorMalformedValue, path, id.line, id.value, key+" must be an integer")
 			}
+		}
+		if key == "ZOC" && value != "true" && value != "false" {
+			return importError(ErrorMalformedValue, path, id.line, id.value, key+" must be true or false")
 		}
 		if kind == "civilization" {
 			if value != "true" && value != "false" {

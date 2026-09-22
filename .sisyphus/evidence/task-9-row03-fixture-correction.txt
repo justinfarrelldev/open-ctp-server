@@ -1,0 +1,78 @@
+Task 9 Row 03 fixture correction evidence — 2026-08-29T03:54:00Z
+
+RED preserved before edits:
+- env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=3 GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/fullgame -run '^TestObserveTask9Row$' -count=1 -v
+- Result: FAIL at turn 31/revision 242 with mixed-controller command budget exhausted after 240 accepted commands on the four-slot Row 03 declaration.
+
+Unlocked GREEN/fix work completed:
+- Row 03 catalog declaration changed from four mixed slots to exactly [human, ai].
+- Added focused catalog truthfulness test for Row 03 stable ID/mode/victory/continuity/restart/two-slot declaration.
+- Fixed continuity restart harness in internal/e2e/fullgame/executor.go so maybeRestartAfterCompletedTurn rewires both scheduler.client.BaseURL and scheduler.transport.BaseURL after restart.
+- Added focused restart regression: TestMixedControllerSchedulerReusesRestartedPublicBaseURLForContinuityTakeover.
+
+Passing verification commands:
+- env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^(TestCatalogRowThreeDeclaresTwoSlotContinuityScoreReachability|TestCatalogRows01_12CoverTaskNineRosterAndPolicyEnvelope)$' -count=1
+- env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^(TestMixedControllerSchedulerReusesRestartedPublicBaseURLForContinuityTakeover|TestPublicExecutorContinuitySurvivorRepetitionCompletesSequentialMixedControllerCampaign)$' -count=1
+- env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run '^(TestPublicExecutorCompletesMinimalScenarioThroughProductionRuntime|TestPublicExecutorCompletesRowTwoThroughProductionRuntime)$' -count=1
+- env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -count=1
+- env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -race -timeout=13m -p=2 ./internal/e2e/fullgame -count=1
+- env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/freeze -run '^TestEngineLock$' -count=1
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build ./...
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go vet ./...
+- gofmt -w internal/e2e/fullgame/catalog_rows_01_12.go internal/e2e/fullgame/fullgame_test.go internal/e2e/fullgame/executor.go internal/e2e/fullgame/task9_scheduler_test.go
+- GIT_MASTER=1 git diff --check
+
+Public blocker evidence after truthful two-slot declaration and restart fix:
+- TASK9_ROW=3 observer still fails: context deadline exceeded while waiting for a natural terminal.
+- Disposable public-only probe results (not committed):
+  * medium: runErr=nil, aiCommands=190, terminal=false, turn=49, auditErr='post-terminal audit requires terminal state'
+  * small: runErr=nil, aiCommands=190, terminal=false, turn=49, auditErr='post-terminal audit requires terminal state'
+  * duel: runErr='production AI drive for account-2 ... gameplay command is invalid: city name already exists', turn=23, auditErr='post-terminal audit requires terminal state'
+- Conclusion: no truthful Row 03 winner/state/event hashes were written because the public observer never reached score_2300 terminal under the tested two-slot map-size variants.
+
+
+Row 03 score-fixture acceptance evidence — 2026-08-29T04:28:00Z
+
+RED preserved before Row 03 score-fixture changes:
+- env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=3 GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/fullgame -run ^TestObserveTask9Row$ -count=1 -v
+- Result: FAIL with public observer nonterminal/timeout before any immutable Row 03 hashes were written.
+
+GREEN implementation details:
+- Added Row-03-only script internal/e2e/fullgame/scripts/score-resignation-continuity.json with three deterministic found-city commands for human-1.unit-1, .unit-2, .unit-3, then leave.
+- Row 03 now declares StartingSettlers: 3 through the unlocked withStartingSettlers helper while preserving Commands=240, Turns=48, Deadline=2m, seed, restart plan, slots, and victory.
+- Added resolveContinuityPreparationCommands so the designated leaving human publicly spreads stacked starters onto distinct visible accessible tiles before the Row-03 script runs; the actual script still queues the three found-city commands and leave in the same planning phase once the sites are distinct.
+- Fixed the mixed-controller restart audit path by running the campaign against the real scheduler instance instead of a stale copy, so post-restart controller reads use the live server URL.
+- Updated fail-closed catalog validation to mutate a still-provisional row now that Row 03 is accepted.
+
+Accepted immutable Row 03 artifacts after clean-1 == clean-2 == restart:
+- winner: account-1
+- reason: score_2300
+- state_sha256: b6e048ab5587ff79e424eeeaff4006a5d37379172663cff729be697a26e206a3
+- event_sha256: 9d072ef27cd301f8fd494e6a263d1d35049b1949efe36c2e3815f4ea5b3e0cb7
+- AI transcript equality: verified by TestObserveTask9Row exact artifact comparison across clean-1, clean-2, and restart.
+
+Focused verification:
+- env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -run focused Row 03 and catalog guards -> exit 0
+- env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE TASK9_ROW=3 GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/e2e/fullgame -run ^TestObserveTask9Row$ -count=1 -> exit 0 after hashes were written
+
+Broad verification:
+- env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/fullgame -count=1 -> exit 0
+- env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 15m go test -race -timeout=13m -p=2 ./internal/e2e/fullgame -count=1 -> exit 0
+- env -u GAMEPLAY_POSTGRES_DSN -u SUPABASE_DB_URL -u SUPABASE_PROJECT_URL -u SUPABASE_API_KEY -u SUPABASE_SERVICE_ROLE GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/freeze -run ^TestEngineLock$ -count=1 -> exit 0
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go build ./... -> exit 0
+- GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go vet ./... -> exit 0
+- GIT_MASTER=1 git diff --check -> exit 0
+
+Guard scans:
+- AST grep ai.Submission { $$$ } over modified Row 03 files: no matches.
+- Grep over internal/e2e/fullgame found only the existing negative guard literals in scripts_test.go and the hidden-canary detector in executor.go; no direct .Driver.Pass( or .Gateway.Submit( usage was introduced by this work.
+
+
+Row 03 starter-spread legality correction - 2026-08-29T04:42:00Z
+
+Correction: resolveContinuityPreparationCommands now iterates stable sorted visible targets, calls production visibility.Plan(public, unit.ID, target.ID), accepts only non-empty legal visible routes, submits exactly path[0], and tracks actual first-step destinations so stacked settlers do not collide. Original occupied tiles remain excluded.
+
+Focused legality verification: go test ./internal/e2e/fullgame -run legality-and-row03-focused -count=1 exited 0.
+Independent Row 03 rerun after correction: TASK9_ROW=3 go test ./internal/e2e/fullgame -run ^TestObserveTask9Row$ -count=1 -v exited 0.
+Artifacts remained unchanged: winner=account-1 reason=score_2300 state=b6e048ab5587ff79e424eeeaff4006a5d37379172663cff729be697a26e206a3 events=9d072ef27cd301f8fd494e6a263d1d35049b1949efe36c2e3815f4ea5b3e0cb7 ai_commands=139.
+Regression verification after correction: go test ./internal/e2e/fullgame -count=1, go test -race ./internal/e2e/fullgame -count=1, go test ./internal/e2e/freeze -run ^TestEngineLock$ -count=1, go build ./..., and go vet ./... all exited 0.

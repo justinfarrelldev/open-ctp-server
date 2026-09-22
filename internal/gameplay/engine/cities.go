@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
 const (
@@ -79,7 +81,7 @@ type CancelProductionPayload struct {
 	ItemID string `json:"item_id"`
 }
 
-func applyCityCommand(state *State, command Command) (string, error) {
+func applyCityCommand(state *State, command Command, runtime *rules.RuntimeRules) (string, error) {
 	if err := activeActor(*state, command.ActorPlayerID); err != nil {
 		return "", err
 	}
@@ -95,7 +97,7 @@ func applyCityCommand(state *State, command Command) (string, error) {
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", err
 		}
-		return "production.queued", queueProduction(state, command.ActorPlayerID, payload)
+		return "production.queued", queueProduction(state, command.ActorPlayerID, payload, runtime)
 	case CommandCancelProduction:
 		var payload CancelProductionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -138,7 +140,7 @@ func foundCity(state *State, actor string, payload FoundCityPayload) error {
 	return nil
 }
 
-func queueProduction(state *State, actor string, payload QueueProductionPayload) error {
+func queueProduction(state *State, actor string, payload QueueProductionPayload, runtime *rules.RuntimeRules) error {
 	city, ok := cityByID(*state, payload.CityID)
 	if !ok || city.OwnerID != actor {
 		return errors.New("city is not owned by actor")
@@ -146,8 +148,8 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload)
 	if err := validateProductionItem(payload.Item); err != nil {
 		return err
 	}
-	if !hasPrerequisite(*state, *city, payload.Item.Prerequisite) {
-		return errors.New("production prerequisite is not met")
+	if err := requireProductionUnlock(*state, *city, payload.Item, runtime); err != nil {
+		return err
 	}
 	if payload.Item.Kind == ProductionWonder && wonderExists(*state, payload.Item.ID) {
 		return errors.New("wonder already exists")
@@ -418,6 +420,27 @@ func wonderExists(state State, id string) bool {
 	return false
 }
 
+func requireProductionUnlock(state State, city City, item ProductionItem, runtime *rules.RuntimeRules) error {
+	prerequisite := item.Prerequisite
+	obsolete := item.ObsoletedBy
+	if runtime != nil && item.Kind == ProductionUnit {
+		if unit, ok := runtime.Unit(item.ID); ok {
+			if prerequisite == "" && len(unit.Prerequisites) > 0 {
+				prerequisite = unit.Prerequisites[0]
+			} else if prerequisite != "" && len(unit.Prerequisites) > 0 && !containsString(unit.Prerequisites, prerequisite) {
+				return errors.New("production prerequisite is not met")
+			}
+			if obsolete == "" && len(unit.ObsoleteBy) > 0 {
+				obsolete = unit.ObsoleteBy[0]
+			}
+		}
+	}
+	if !hasPrerequisite(state, city, prerequisite) || isProductionObsolete(state, city, obsolete) {
+		return errors.New("production prerequisite is not met")
+	}
+	return nil
+}
+
 func hasPrerequisite(state State, city City, prerequisite string) bool {
 	if prerequisite == "" {
 		return true
@@ -427,7 +450,29 @@ func hasPrerequisite(state State, city City, prerequisite string) bool {
 			return true
 		}
 	}
-	return wonderExists(state, prerequisite)
+	if wonderExists(state, prerequisite) {
+		return true
+	}
+	nationID := nationForPlayer(state, city.OwnerID)
+	for _, nation := range state.Nations {
+		if nation.ID == nationID && containsString(nation.Advances, prerequisite) {
+			return true
+		}
+	}
+	return false
+}
+
+func isProductionObsolete(state State, city City, obsoleteID string) bool {
+	if obsoleteID == "" {
+		return false
+	}
+	nationID := nationForPlayer(state, city.OwnerID)
+	for _, nation := range state.Nations {
+		if nation.ID == nationID && containsString(nation.Advances, obsoleteID) {
+			return true
+		}
+	}
+	return wonderExists(state, obsoleteID)
 }
 
 func nationForPlayer(state State, playerID string) string {

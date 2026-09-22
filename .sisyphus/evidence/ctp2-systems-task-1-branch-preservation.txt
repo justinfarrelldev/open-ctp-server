@@ -1,0 +1,69 @@
+Task 1 branch preservation evidence
+Timestamp: 2026-08-29T18:59:16Z
+
+Source worktree: /home/justi/Projects/open-ctp-server
+Source branch: game-server-world
+Source HEAD: 212e070880dbce3be56b74446c6fc00a4a2cb97e
+Destination worktree: /home/justi/Projects/open-ctp-server-gameplay-systems
+Destination branch: gameplay-systems-completion
+Destination HEAD: 212e070880dbce3be56b74446c6fc00a4a2cb97e
+
+Parent directory check: /home/justi/Projects exists
+Destination path precheck: missing before creation
+Destination branch precheck: missing before creation
+
+Source baseline hashes (captured before duplication)
+- status_hash: 1ab4e5da9d86ace1138a52985032100eedb04deb64ce2573a6e19e3a155015ff
+- staged_patch_hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- unstaged_patch_hash: d6ac4257ce4ec0062ff6a577a0a4d831197bf09548ba86d1be751efaae746a82
+- combined_patch_hash: d6ac4257ce4ec0062ff6a577a0a4d831197bf09548ba86d1be751efaae746a82
+- untracked_inventory_hash: 4dc43d9f744955be6f7b6815cf59a70d3b466b712d68ac93307dcff1c9caf917
+- untracked_manifest_hash: 95b3d67456f8e695c7a7b8626ac584af7ea4145a38e8a39903203579206dac3c
+- untracked_tar_hash: 7b112a7c1cb2453a0fe56428a8638d9a4341fbefdc86959828c147558b6e84c9
+- tracked_changed_count: 33
+- untracked_count: 157
+
+Destination hashes before Task 1 evidence writes
+- destination_status_hash: 1ab4e5da9d86ace1138a52985032100eedb04deb64ce2573a6e19e3a155015ff
+- destination_combined_patch_hash: d6ac4257ce4ec0062ff6a577a0a4d831197bf09548ba86d1be751efaae746a82
+- destination_untracked_inventory_hash: 4dc43d9f744955be6f7b6815cf59a70d3b466b712d68ac93307dcff1c9caf917
+- destination_untracked_manifest_hash: 95b3d67456f8e695c7a7b8626ac584af7ea4145a38e8a39903203579206dac3c
+- destination_untracked_count: 157
+- destination_combined_patch_bytes: 134529
+
+Source hashes after duplication
+- source_status_hash_after: 1ab4e5da9d86ace1138a52985032100eedb04deb64ce2573a6e19e3a155015ff
+- source_combined_patch_hash_after: d6ac4257ce4ec0062ff6a577a0a4d831197bf09548ba86d1be751efaae746a82
+- source_untracked_inventory_hash_after: 4dc43d9f744955be6f7b6815cf59a70d3b466b712d68ac93307dcff1c9caf917
+- source_untracked_manifest_hash_after: 95b3d67456f8e695c7a7b8626ac584af7ea4145a38e8a39903203579206dac3c
+- source_untracked_count_after: 157
+- source_HEAD_after: 212e070880dbce3be56b74446c6fc00a4a2cb97e
+
+Comparisons
+- source_head_preserved: MATCH
+- source_status_preserved: MATCH
+- source_combined_patch_preserved: MATCH
+- source_untracked_inventory_preserved: MATCH
+- source_untracked_manifest_preserved: MATCH
+- destination_head_matches_source: MATCH
+- destination_branch_matches_expected: MATCH
+- destination_combined_patch_matches_source: MATCH
+- destination_untracked_inventory_matches_source: MATCH
+- destination_untracked_manifest_matches_source: MATCH
+
+Excluded files: none
+
+Git worktree registration
+worktree /home/justi/Projects/open-ctp-server
+HEAD 212e070880dbce3be56b74446c6fc00a4a2cb97e
+branch refs/heads/game-server-world
+
+worktree /home/justi/Projects/open-ctp-server-gameplay-systems
+HEAD 212e070880dbce3be56b74446c6fc00a4a2cb97e
+branch refs/heads/gameplay-systems-completion
+
+worktree /tmp/opencode/ctp2-systems-recovery-ktg7khx1/reconstructed-worktree
+HEAD 212e070880dbce3be56b74446c6fc00a4a2cb97e
+detached
+
+

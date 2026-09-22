@@ -1,0 +1,8 @@
+# Task 6 advances failure evidence
+# 2026-09-22T17:34:52-04:00
+
+## Failure/hidden-access tests
+Command: GOMAXPROCS=4 go test ./internal/gameplay/rules ./internal/gameplay/engine ./internal/gameplay/visibility -run "TestCompileRuntimeRejectsInvalidOrTamperedDefinitions|TestRuntimeRulesRejectInvalidResearchSelection|TestTask6ProjectionExposesOwnedResearchOnly" -count=1
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules	0.005s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.009s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.006s
