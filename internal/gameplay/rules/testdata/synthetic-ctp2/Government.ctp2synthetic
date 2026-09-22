@@ -1,0 +1,6 @@
+# Synthetic government for bounded diplomacy/government tests.
+GOVERNMENT_SYNTHETIC_REPUBLIC {
+ Description GOVERNMENT_SYNTHETIC_REPUBLIC
+ EnableAdvanceID ADVANCE_SYNTHETIC_ROOT
+ ResearchBonus 1
+}

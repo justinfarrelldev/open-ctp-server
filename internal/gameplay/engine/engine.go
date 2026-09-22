@@ -26,6 +26,10 @@ const (
 
 	CommandNoop             = "noop"
 	CommandSetWar           = "set-war"
+	CommandEstablishContact = "establish-contact"
+	CommandProposeAgreement = "propose-agreement"
+	CommandRespondAgreement = "respond-agreement"
+	CommandSetGovernment    = "set-government"
 	CommandPass             = "pass"
 	CommandMoveUnit         = "move-unit"
 	CommandDisband          = "disband-unit"
@@ -52,6 +56,10 @@ const (
 	CommandTakeoverAI       = "takeover-ai"
 
 	EventWarStateChanged    = "war.state_changed"
+	EventContactEstablished = "diplomacy.contact_established"
+	EventAgreementProposed  = "diplomacy.agreement_proposed"
+	EventAgreementResponded = "diplomacy.agreement_responded"
+	EventGovernmentChanged  = "government.changed"
 	EventUnitMoved          = "unit.moved"
 	EventCombatResolved     = "combat.resolved"
 	EventUnitDisbanded      = "unit.disbanded"
@@ -182,6 +190,7 @@ type Nation struct {
 	Advances           []string `json:"advances,omitempty"`
 	Embassies          []string `json:"embassies,omitempty"`
 	PublicWorks        int      `json:"public_works,omitempty"`
+	GovernmentID       string   `json:"government_id,omitempty"`
 	ResearchTargetID   string   `json:"research_target_id,omitempty"`
 	ResearchProgress   int      `json:"research_progress,omitempty"`
 	GaiaCompletionTurn int      `json:"gaia_completion_turn,omitempty"`
@@ -191,6 +200,24 @@ type Effect struct {
 	ID    string `json:"id"`
 	Kind  string `json:"kind"`
 	Value int    `json:"value,omitempty"`
+}
+
+type DiplomaticRelation struct {
+	ID            string `json:"id"`
+	PlayerAID     string `json:"player_a_id"`
+	PlayerBID     string `json:"player_b_id"`
+	Contact       bool   `json:"contact"`
+	Treaty        string `json:"treaty,omitempty"`
+	Trade         bool   `json:"trade,omitempty"`
+	EstablishedAt int    `json:"established_at,omitempty"`
+}
+
+type DiplomaticProposal struct {
+	ID           string `json:"id"`
+	FromPlayerID string `json:"from_player_id"`
+	ToPlayerID   string `json:"to_player_id"`
+	Kind         string `json:"kind"`
+	CreatedTurn  int    `json:"created_turn"`
 }
 
 type Player struct {
@@ -285,27 +312,29 @@ type Audit struct {
 
 // State is the complete versioned dynamic authority. Storage bytes retain audit timestamps; gameplay hashes exclude them.
 type State struct {
-	SchemaVersion    int              `json:"schema_version"`
-	Rules            RulesPin         `json:"rules"`
-	Revision         int64            `json:"revision"`
-	EventSequence    int64            `json:"event_sequence"`
-	RecalculatedTurn int              `json:"recalculated_turn,omitempty"`
-	Overlays         []TileOverlay    `json:"overlays"`
-	Tiles            []Tile           `json:"tiles"`
-	Units            []Unit           `json:"units"`
-	Cities           []City           `json:"cities"`
-	Armies           []Army           `json:"armies"`
-	Nations          []Nation         `json:"nations"`
-	Wonders          []Wonder         `json:"wonders,omitempty"`
-	Players          []Player         `json:"players"`
-	Phase            PhaseState       `json:"phase"`
-	Policy           TurnPolicyState  `json:"policy"`
-	Fog              []FogObservation `json:"fog"`
-	RNG              []RNGDomainState `json:"rng"`
-	Deadlines        []Deadline       `json:"deadlines"`
-	Victory          VictoryState     `json:"victory"`
-	Terminal         TerminalState    `json:"terminal"`
-	Audit            Audit            `json:"audit,omitempty"`
+	SchemaVersion    int                  `json:"schema_version"`
+	Rules            RulesPin             `json:"rules"`
+	Revision         int64                `json:"revision"`
+	EventSequence    int64                `json:"event_sequence"`
+	RecalculatedTurn int                  `json:"recalculated_turn,omitempty"`
+	Overlays         []TileOverlay        `json:"overlays"`
+	Tiles            []Tile               `json:"tiles"`
+	Units            []Unit               `json:"units"`
+	Cities           []City               `json:"cities"`
+	Armies           []Army               `json:"armies"`
+	Nations          []Nation             `json:"nations"`
+	Wonders          []Wonder             `json:"wonders,omitempty"`
+	Diplomacy        []DiplomaticRelation `json:"diplomacy,omitempty"`
+	Proposals        []DiplomaticProposal `json:"diplomatic_proposals,omitempty"`
+	Players          []Player             `json:"players"`
+	Phase            PhaseState           `json:"phase"`
+	Policy           TurnPolicyState      `json:"policy"`
+	Fog              []FogObservation     `json:"fog"`
+	RNG              []RNGDomainState     `json:"rng"`
+	Deadlines        []Deadline           `json:"deadlines"`
+	Victory          VictoryState         `json:"victory"`
+	Terminal         TerminalState        `json:"terminal"`
+	Audit            Audit                `json:"audit,omitempty"`
 }
 
 type Command struct {
@@ -409,8 +438,10 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 	}
 	var err error
 	switch command.Type {
-	case CommandSetWar:
-		eventType, eventPayload, err = applyWarStateCommand(state, command)
+	case CommandSetWar, CommandEstablishContact, CommandProposeAgreement, CommandRespondAgreement:
+		eventType, eventPayload, err = applyDiplomacyCommand(state, command)
+	case CommandSetGovernment:
+		eventType, eventPayload, err = applyGovernmentCommand(state, command, runtime)
 	case CommandSetResearch, CommandRoundComplete, CommandEndGame, CommandLeaveGame, CommandTakeoverAI:
 		eventType, eventPayload, err = applyLifecycleCommand(state, command, runtime)
 	case CommandCombat:
@@ -666,6 +697,15 @@ func ValidateState(state State) error {
 	if err := uniqueIDs("player", playerIDs(state.Players)); err != nil {
 		return err
 	}
+	if err := uniqueIDs("diplomatic relation", relationIDs(state.Diplomacy)); err != nil {
+		return err
+	}
+	if err := uniqueIDs("diplomatic proposal", proposalIDs(state.Proposals)); err != nil {
+		return err
+	}
+	if err := validateDiplomacyState(state); err != nil {
+		return err
+	}
 	if err := uniqueIDs("deadline", deadlineIDs(state.Deadlines)); err != nil {
 		return err
 	}
@@ -916,6 +956,8 @@ func cloneStateForNormalization(state State) State {
 	for index := range state.Wonders {
 		state.Wonders[index].Effects = append([]Effect(nil), state.Wonders[index].Effects...)
 	}
+	state.Diplomacy = append([]DiplomaticRelation(nil), state.Diplomacy...)
+	state.Proposals = append([]DiplomaticProposal(nil), state.Proposals...)
 	state.Players = append([]Player(nil), state.Players...)
 	state.Phase.ActivePlayerOrder = append([]string(nil), state.Phase.ActivePlayerOrder...)
 	state.Policy.Queue = append([]TurnPolicyCommand(nil), state.Policy.Queue...)
@@ -946,6 +988,8 @@ func normalizeState(state *State) {
 	sort.Slice(state.Armies, func(i, j int) bool { return state.Armies[i].ID < state.Armies[j].ID })
 	sort.Slice(state.Nations, func(i, j int) bool { return state.Nations[i].ID < state.Nations[j].ID })
 	sort.Slice(state.Wonders, func(i, j int) bool { return state.Wonders[i].ID < state.Wonders[j].ID })
+	sort.Slice(state.Diplomacy, func(i, j int) bool { return state.Diplomacy[i].ID < state.Diplomacy[j].ID })
+	sort.Slice(state.Proposals, func(i, j int) bool { return state.Proposals[i].ID < state.Proposals[j].ID })
 	sort.Slice(state.Players, func(i, j int) bool { return state.Players[i].ID < state.Players[j].ID })
 	sort.Slice(state.Fog, func(i, j int) bool {
 		if state.Fog[i].PlayerID == state.Fog[j].PlayerID {
@@ -1180,6 +1224,22 @@ func playerIDs(items []Player) []string {
 	}
 	return ids
 }
+func relationIDs(items []DiplomaticRelation) []string {
+	ids := make([]string, len(items))
+	for i := range items {
+		ids[i] = items[i].ID
+	}
+	return ids
+}
+
+func proposalIDs(items []DiplomaticProposal) []string {
+	ids := make([]string, len(items))
+	for i := range items {
+		ids[i] = items[i].ID
+	}
+	return ids
+}
+
 func deadlineIDs(items []Deadline) []string {
 	ids := make([]string, len(items))
 	for i := range items {

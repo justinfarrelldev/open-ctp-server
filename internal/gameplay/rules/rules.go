@@ -45,6 +45,7 @@ var CatalogFiles = []CatalogFile{
 	{Filename: "terrain.txt", Kind: "terrain", Prefix: "TERRAIN_"},
 	{Filename: "TerrainImprovement.txt", Kind: "terrain_improvement", Prefix: "TERRAIN_IMPROVEMENT_"},
 	{Filename: "PollutionSource.txt", Kind: "pollution_source", Prefix: "POLLUTION_SOURCE_"},
+	{Filename: "Government.txt", Kind: "government", Prefix: "GOVERNMENT_"},
 	{Filename: "Const.txt", Kind: "rules", Prefix: "CONST_"},
 	{Filename: "EndGameObjects.txt", Kind: "endgame", Prefix: "ENDGAME_"},
 	{Filename: "Civilisation.txt", Kind: "civilization", Prefix: "CIVILIZATION_"},
@@ -207,8 +208,8 @@ func SupportedManifest() SupportedRulesManifest {
 			{Family: "wonders", Status: mechanicStatusIncludedNow, ContractID: "contract-wonders", Importer: "CatalogFiles Wonder.txt -> parseCTP2File(wonder)", Runtime: "compileRecord(kind=wonder) produces production and effect inventory", Engine: "city production and wonder uniqueness hooks can already consume generic wonder/effect records", API: "existing gameplay projections already expose production choices and resulting wonder state", AI: "basic legal-use slice can pick bounded synthetic wonders; strategic wonder timing remains deferred", Notes: "Included now for bounded production/effect and uniqueness contracts only."},
 			{Family: "terrain", Status: mechanicStatusIncludedNow, ContractID: "contract-terrain", Importer: "CatalogFiles terrain.txt -> parseCTP2File(terrain)", Runtime: "compileRecord(kind=terrain) and movement policy synthesize terrain movement tables", Engine: "movement, visibility, and world traversal already consume bounded terrain movement definitions", API: "existing world and gameplay projections expose terrain-backed movement legality", AI: "basic legal-use slice can issue commands against current movement legality; advanced path heuristics remain deferred", Notes: "Included now for bounded movement/yield anchors, not full terrain ecology parity."},
 			{Family: "terrain-improvements", Status: mechanicStatusIncludedNow, ContractID: "contract-terrain-improvements", Importer: "CatalogFiles TerrainImprovement.txt -> parseCTP2File(terrain_improvement)", Runtime: "compileRecord(kind=terrain_improvement) builds public-works cost, build turns, movement, yield, and pollution deltas", Engine: "build-improvement queues deterministic overlays that complete through round recalculation", API: "gameplay commands and projections expose visible terrain/pollution state", AI: "basic legal-use can prefer projected public-works actions; optimization remains deferred", Notes: "Included for roads/farms/cleanup style synthetic overlays, not full retail improvement catalog."},
-			{Family: "governments", Status: mechanicStatusDeferred, ContractID: "contract-governments", Notes: "Deferred until advance-enabled government switching, tax/readiness consequences, and public projections become executable in this server slice."},
-			{Family: "trade-routes-agreements", Status: mechanicStatusDeferred, ContractID: "contract-trade-routes-agreements", Notes: "Deferred until route pathing, agreement lifecycle, and diplomatic/public projections share a single deterministic server contract."},
+			{Family: "governments", Status: mechanicStatusIncludedNow, ContractID: "contract-governments", Importer: "CatalogFiles Government.txt -> parseCTP2File(government)", Runtime: "compileRecord(kind=government) validates bounded modifiers and advance unlocks", Engine: "set-government mutates nation government and bounded effects", API: "public projection exposes only viewer government", AI: "basic legal-use can pick available governments from public state", Notes: "Included for bounded synthetic switching/modifiers, not full retail tax/readiness parity."},
+			{Family: "trade-routes-agreements", Status: mechanicStatusIncludedNow, ContractID: "contract-trade-routes-agreements", Importer: "agreement kind is command-level bounded rather than separate retail route catalog", Runtime: "relationship state has deterministic treaty/trade booleans", Engine: "contact/proposal/response commands mutate canonical relations", API: "public projection filters viewer relations/proposals", AI: "basic legal-use can respond/propose visible agreements", Notes: "Included for diplomatic agreements/trade flags, not route pathfinding parity."},
 			{Family: "pollution-sources", Status: mechanicStatusIncludedNow, ContractID: "contract-pollution-sources", Importer: "CatalogFiles PollutionSource.txt -> parseCTP2File(pollution_source)", Runtime: "compileRecord(kind=pollution_source) validates bounded point/scope definitions", Engine: "terrain cleanup overlays mutate tile pollution deterministically", API: "visible tile pollution is projected; hidden pollution remains redacted", AI: "basic legal-use can avoid hidden pollution and choose cleanup only from projection", Notes: "Included for bounded tile pollution counters and cleanup, not global disaster parity."},
 			{Family: "special-actions", Status: mechanicStatusIncludedNow, ContractID: "contract-special-actions", Importer: "SupportedManifest special-action evaluator/vector inventory pins bounded action families", Runtime: "manifest validation plus starter action effects provide executable bounded action hooks", Engine: "engine command slice already names embassy, steal, and terraform style actions as bounded mechanics", API: "existing gameplay command/projection contracts can expose bounded special-action legality and outcomes", AI: "basic legal-use slice can stay bounded to current command legality; richer targeting and sequencing remain deferred", Notes: "Included now for bounded action-vector contracts and starter hooks only."},
 			{Family: "client-presentation-assets", Status: mechanicStatusExplicitlyExcluded, Notes: "Explicitly excluded from Task 4 and this server slice because graphics, audio, UI presentation, and localization stay on the client side and must not gain fake synthetic readiness layers or contracts."},
@@ -415,8 +416,10 @@ func validateMechanicMatrix(rows []MechanicReadiness, contracts map[string]Synth
 	if len(requiredFamilies) != 0 {
 		return errors.New("mechanic matrix inventory is incomplete")
 	}
-	if !sameStrings(mapKeys(statusSeen), []string{mechanicStatusIncludedNow, mechanicStatusDeferred, mechanicStatusExplicitlyExcluded}) {
-		return errors.New("mechanic matrix status coverage is incomplete")
+	for _, requiredStatus := range []string{mechanicStatusIncludedNow, mechanicStatusExplicitlyExcluded} {
+		if !statusSeen[requiredStatus] {
+			return errors.New("mechanic matrix status coverage is incomplete")
+		}
 	}
 	return nil
 }
@@ -580,6 +583,9 @@ func validateCTP2Tags(kind string, id token, tags map[string]string, path string
 	case "pollution_source":
 		allowed = map[string]bool{"Description": true, "PollutionPoints": true, "EffectScope": true}
 		required = []string{"Description", "PollutionPoints", "EffectScope"}
+	case "government":
+		allowed = map[string]bool{"Description": true, "EnableAdvanceID": true, "ResearchBonus": true, "PublicWorksBonus": true}
+		required = []string{"Description"}
 	case "building", "wonder", "terrain":
 		allowed = map[string]bool{"Description": true}
 		required = []string{"Description"}
@@ -594,7 +600,7 @@ func validateCTP2Tags(kind string, id token, tags map[string]string, path string
 		if !allowed[key] {
 			return importError(ErrorUnsupportedRequiredTag, path, id.line, id.value, "unsupported behavior-bearing field "+key)
 		}
-		if key == "MaxMovePoints" || key == "TurnsToActivate" || key == "Cost" || key == "BuildTurns" || key == "PublicWorksCost" || key == "MovementCostDelta" || key == "YieldFood" || key == "YieldProduction" || key == "YieldGold" || key == "PollutionDelta" || key == "PollutionPoints" || key == "Attack" || key == "Defense" || key == "Strength" || key == "Armor" || key == "Health" || key == "TransportCapacity" || key == "ProductionCost" || key == "Upkeep" || key == "VisibilityRange" {
+		if key == "MaxMovePoints" || key == "TurnsToActivate" || key == "Cost" || key == "BuildTurns" || key == "PublicWorksCost" || key == "MovementCostDelta" || key == "YieldFood" || key == "YieldProduction" || key == "YieldGold" || key == "PollutionDelta" || key == "PollutionPoints" || key == "ResearchBonus" || key == "PublicWorksBonus" || key == "Attack" || key == "Defense" || key == "Strength" || key == "Armor" || key == "Health" || key == "TransportCapacity" || key == "ProductionCost" || key == "Upkeep" || key == "VisibilityRange" {
 			if _, err := strconv.Atoi(value); err != nil {
 				return importError(ErrorMalformedValue, path, id.line, id.value, key+" must be an integer")
 			}
@@ -743,7 +749,7 @@ func CheckProtectedAssets(files []AssetFile) error {
 			continue
 		}
 		base := strings.ToLower(filepath.Base(path))
-		if base == "units.txt" || base == "advance.txt" || base == "buildings.txt" || base == "wonder.txt" || base == "terrain.txt" || base == "terrainimprovement.txt" || base == "pollutionsource.txt" || base == "endgameobjects.txt" || strings.Contains(strings.ToLower(path), "retail-snapshot") {
+		if base == "units.txt" || base == "advance.txt" || base == "buildings.txt" || base == "wonder.txt" || base == "terrain.txt" || base == "terrainimprovement.txt" || base == "pollutionsource.txt" || base == "government.txt" || base == "endgameobjects.txt" || strings.Contains(strings.ToLower(path), "retail-snapshot") {
 			return fmt.Errorf("protected asset path: %s", path)
 		}
 	}

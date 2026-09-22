@@ -37,6 +37,9 @@ func TestCompileRuntimeBuildsClosedDeterministicModel(t *testing.T) {
 	if len(runtime.PollutionSources) != 1 || runtime.PollutionSources[0].PollutionPoints != 2 || runtime.PollutionSources[0].EffectScope != "city" {
 		t.Fatalf("pollution sources = %#v", runtime.PollutionSources)
 	}
+	if government, ok := runtime.Government("GOVERNMENT_SYNTHETIC_REPUBLIC"); !ok || government.EnableAdvanceID != "ADVANCE_SYNTHETIC_ROOT" || government.ResearchBonus != 1 {
+		t.Fatalf("government = %#v, %v", government, ok)
+	}
 	if got, want := runtime.ProductionIDs(), "IMPROVE_SYNTHETIC,UNIT_SYNTHETIC,WONDER_SYNTHETIC"; got != want {
 		t.Fatalf("production IDs = %q, want %q", got, want)
 	}
@@ -89,6 +92,7 @@ func TestCompileRuntimeRejectsMalformedUnitCapabilities(t *testing.T) {
 		{name: "cyclic advance prerequisite", old: `"PrerequisiteAdvanceIDs":"ADVANCE_SYNTHETIC_ROOT"`, new: `"PrerequisiteAdvanceIDs":"ADVANCE_SYNTHETIC_UNLOCK"`, want: "cyclic prerequisites"},
 		{name: "invalid terrain improvement effect", old: `"MovementCostDelta":"-1"`, new: `"MovementCostDelta":"0"`, want: "no terrain improvement effect"},
 		{name: "invalid pollution source scope", old: `"EffectScope":"city"`, new: `"EffectScope":"script"`, want: "invalid EffectScope"},
+		{name: "missing government advance", old: `"EnableAdvanceID":"ADVANCE_SYNTHETIC_ROOT"`, new: `"EnableAdvanceID":"ADVANCE_MISSING"`, want: "references missing advance"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

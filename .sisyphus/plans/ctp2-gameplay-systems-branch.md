@@ -483,7 +483,7 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
 
   **Commit**: YES | Message: `feat(gameplay): add deterministic terrain improvements and pollution` | Files: rules/engine/world/visibility/http tests and implementation
 
-- [ ] 9. Complete diplomacy, trade, governments, agreements, and relationship state
+- [x] 9. Complete diplomacy, trade, governments, agreements, and relationship state
 
   **What to do**: Move beyond embassy-only diplomacy into deterministic relationship state: contact, war/peace, proposals/responses, treaties, trade routes or agreements, government/civic modifiers if included by the mechanic matrix, and World Union prerequisites. Public commands must validate actor authority and stale revisions; AI may use only public projections/history.
   **Must NOT do**: script AI diplomatic objectives, inject hidden contact, or make World Union a synthetic shortcut disconnected from public relationship state.
@@ -503,11 +503,11 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
   - Existing Row 02/05 diplomacy fixtures in `internal/e2e/fullgame/catalog_rows_01_12.go`.
 
   **Acceptance Criteria**:
-  - [ ] Relationship state is canonical, restart-stable, and viewer-filtered.
-  - [ ] Public commands cover contact/proposal/response/trade/peace-war transitions included by the matrix.
-  - [ ] World Union/diplomatic terminal conditions depend on durable relationship state.
-  - [ ] AI demonstrates basic legal relationship action or legal closeout without hidden directives.
-  - [ ] Unauthorized, duplicate, stale, impossible, and terminal diplomacy commands fail predictably.
+  - [x] Relationship state is canonical, restart-stable, and viewer-filtered.
+  - [x] Public commands cover contact/proposal/response/trade/peace-war transitions included by the matrix.
+  - [x] World Union/diplomatic terminal conditions depend on durable relationship state.
+  - [x] AI demonstrates basic legal relationship action or legal closeout without hidden directives.
+  - [x] Unauthorized, duplicate, stale, impossible, and terminal diplomacy commands fail predictably.
 
   **QA Scenarios**:
   ```

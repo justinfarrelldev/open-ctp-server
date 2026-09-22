@@ -16,7 +16,7 @@ func TestParseCTP2StyleSyntheticCatalog(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Import() error = %v", err)
 	}
-	if got, want := recordIDs(ruleset.Records), "ADVANCE_SYNTHETIC_ROOT,ADVANCE_SYNTHETIC_UNLOCK,ENDGAME_GAIA_VECTOR,ENDGAME_UNION_VECTOR,IMPROVE_SYNTHETIC,POLLUTION_SOURCE_SYNTHETIC_FACTORY,TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP,TERRAIN_IMPROVEMENT_SYNTHETIC_FARM,TERRAIN_IMPROVEMENT_SYNTHETIC_ROAD,TERRAIN_SYNTHETIC,UNIT_SYNTHETIC,WONDER_SYNTHETIC"; got != want {
+	if got, want := recordIDs(ruleset.Records), "ADVANCE_SYNTHETIC_ROOT,ADVANCE_SYNTHETIC_UNLOCK,ENDGAME_GAIA_VECTOR,ENDGAME_UNION_VECTOR,GOVERNMENT_SYNTHETIC_REPUBLIC,IMPROVE_SYNTHETIC,POLLUTION_SOURCE_SYNTHETIC_FACTORY,TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP,TERRAIN_IMPROVEMENT_SYNTHETIC_FARM,TERRAIN_IMPROVEMENT_SYNTHETIC_ROAD,TERRAIN_SYNTHETIC,UNIT_SYNTHETIC,WONDER_SYNTHETIC"; got != want {
 		t.Fatalf("record IDs = %q, want %q", got, want)
 	}
 	if ruleset.ContentHash == "" || len(ruleset.CanonicalJSON) == 0 {
@@ -130,6 +130,7 @@ func TestCanonicalHashIsIndependentOfFileAndRecordOrder(t *testing.T) {
 		"terrain.ctp2synthetic":            "TERRAIN_SYNTHETIC { Description TERRAIN_SYNTHETIC }\n",
 		"TerrainImprovement.ctp2synthetic": "TERRAIN_IMPROVEMENT_SYNTHETIC_ROAD { Description TERRAIN_IMPROVEMENT_SYNTHETIC_ROAD BuildTurns 1 PublicWorksCost 1 MovementCostDelta -1 } TERRAIN_IMPROVEMENT_SYNTHETIC_FARM { Description TERRAIN_IMPROVEMENT_SYNTHETIC_FARM BuildTurns 1 PublicWorksCost 1 YieldFood 1 } TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP { Description TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP BuildTurns 1 PublicWorksCost 1 PollutionDelta -2 }\n",
 		"PollutionSource.ctp2synthetic":    "POLLUTION_SOURCE_SYNTHETIC_FACTORY { Description POLLUTION_SOURCE_SYNTHETIC_FACTORY PollutionPoints 2 EffectScope city }\n",
+		"Government.ctp2synthetic":         "GOVERNMENT_SYNTHETIC_REPUBLIC { Description GOVERNMENT_SYNTHETIC_REPUBLIC EnableAdvanceID ADVANCE_SYNTHETIC_ROOT ResearchBonus 1 }\n",
 		"buildings.ctp2synthetic":          "IMPROVE_SYNTHETIC { Description IMPROVE_SYNTHETIC }\n",
 		"EndGameObjects.ctp2synthetic":     "ENDGAME_UNION_VECTOR { TurnsToActivate 0 } ENDGAME_GAIA_VECTOR { TurnsToActivate 1 }\n",
 	})})

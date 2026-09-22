@@ -50,12 +50,20 @@
       "sha256": "2def61cda4cbd7add361b1e75daf6c440f3ea5f6352f492f5fbaf2aa6381d7c7"
     },
     {
+      "path": "internal/gameplay/engine/diplomacy.go",
+      "sha256": "5fefc6c3d92a37ae027cb91734b1831f57795430c95d1ccfbdf3c2a35a88457e"
+    },
+    {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "d106c6b643f1e52214f9d44f9df8ef047fcfb52e470331eacc9d25a8770051bd"
+      "sha256": "1df251704c99b1b5debc8c433652b6c4f3f8547557d0a788aa4ae402b97ef5d2"
+    },
+    {
+      "path": "internal/gameplay/engine/government.go",
+      "sha256": "19b738318f2ddb12effd01e1c16211ff39298392166275df7acf8a864492c4e4"
     },
     {
       "path": "internal/gameplay/engine/lifecycle.go",
-      "sha256": "b77708c7b604877e549f2fba5ba9a8ec624a702242d64deefdf91fd194211854"
+      "sha256": "669883ebfb77dc072318ea6ca7342ef3fcb24094b76f1251b77c25294bed6e91"
     },
     {
       "path": "internal/gameplay/engine/policy_state.go",
@@ -87,15 +95,15 @@
     },
     {
       "path": "internal/gameplay/http/http.go",
-      "sha256": "550c60b3377886b3812ebe83471ff43d11f0843fcb579632c20787bb9d1d9f82"
+      "sha256": "3e7ff2a0ace7e1e5dcde9431a4376b596c9b5027a06d0da3ae310eebdf4ae23e"
     },
     {
       "path": "internal/gameplay/rules/rules.go",
-      "sha256": "3ee975c93dd8a672fbed1c4581f5ef5fa1dbafa4293a311549566a0fec3db10a"
+      "sha256": "cc291de5a3b9adf37d77c64620af9870d76cd956b58061f648dfbf45f0417037"
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "68fb3d9cdaae84912234364e785af6855c55d4b47cfb963f582800933f4f7b2a"
+      "sha256": "2a3ffe3ad9087ae8bf73f279c79b386d316b3273a7272c10d5f8a9bf1b7885e1"
     },
     {
       "path": "internal/gameplay/service/ai.go",
@@ -119,7 +127,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "ac798c3b7ac6036dea50fbb16896f1067b5dd2c18729b945bffb26e4adf02ce1"
+      "sha256": "cc84db3206989e17dbe5243d054523fc5d1d880705f698d127a482290aae261d"
     },
     {
       "path": "internal/runtime/runtime.go",

@@ -247,13 +247,43 @@ func unionWinner(state State) string {
 	if len(activeNations) < 2 {
 		return ""
 	}
+	activePlayers := activePlayerIDs(state)
 	for _, nationID := range activeNations {
 		nation := nationForID(&state, nationID)
 		if nation == nil || !containsAll(nation.Embassies, activeNations, nationID) {
-			return ""
+			if !hasUnionTreaties(state, activePlayers) {
+				return ""
+			}
+			break
 		}
 	}
 	return playerForNation(state, activeNations[0])
+}
+
+func hasUnionTreaties(state State, players []string) bool {
+	if len(players) < 2 {
+		return false
+	}
+	for i := 0; i < len(players); i++ {
+		for j := i + 1; j < len(players); j++ {
+			relation := relationForPlayers(state, players[i], players[j])
+			if relation == nil || relation.Treaty != "union" {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func activePlayerIDs(state State) []string {
+	ids := make([]string, 0, len(state.Players))
+	for _, player := range state.Players {
+		if player.Lifecycle == PlayerActive {
+			ids = append(ids, player.ID)
+		}
+	}
+	sort.Strings(ids)
+	return ids
 }
 
 func scoreWinner(state State, runtime *rules.RuntimeRules) string {

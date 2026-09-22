@@ -84,6 +84,24 @@ func TestObservationMemoryProjectionAndRawLeakBoundaries(t *testing.T) {
 	}
 }
 
+func TestTask9ProjectionExposesOnlyViewerDiplomacy(t *testing.T) {
+	state := fixtureState()
+	state.Nations = []engine.Nation{{ID: "a", GovernmentID: "GOVERNMENT_SYNTHETIC_REPUBLIC"}, {ID: "b"}}
+	state.Diplomacy = []engine.DiplomaticRelation{{ID: "a:b", PlayerAID: "a", PlayerBID: "b", Contact: true, Treaty: "trade", Trade: true}}
+	state.Proposals = []engine.DiplomaticProposal{{ID: "p1", FromPlayerID: "b", ToPlayerID: "a", Kind: "union"}}
+	state, err := Update(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if projection.Diplomacy == nil || projection.Diplomacy.GovernmentID != "GOVERNMENT_SYNTHETIC_REPUBLIC" || len(projection.Diplomacy.Relations) != 1 || projection.Diplomacy.Relations[0].TargetPlayerID != "b" || len(projection.Diplomacy.Proposals) != 1 {
+		t.Fatalf("diplomacy projection = %#v", projection.Diplomacy)
+	}
+}
+
 func TestTask8ProjectionShowsOnlyVisiblePollution(t *testing.T) {
 	state := fixtureState()
 	state.Tiles = []engine.Tile{{ID: "0,0", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true, Pollution: 1}, {ID: "9,9", X: 9, Y: 9, Terrain: engine.TerrainForest, Open: true, Pollution: 9}}

@@ -26,6 +26,7 @@ type RuntimeRules struct {
 	Advances             []RuntimeAdvanceDefinition            `json:"advances,omitempty"`
 	TerrainImprovements  []RuntimeTerrainImprovementDefinition `json:"terrain_improvements,omitempty"`
 	PollutionSources     []RuntimePollutionSourceDefinition    `json:"pollution_sources,omitempty"`
+	Governments          []RuntimeGovernmentDefinition         `json:"governments,omitempty"`
 	Units                []RuntimeUnitDefinition               `json:"units"`
 }
 
@@ -79,6 +80,13 @@ type RuntimePollutionSourceDefinition struct {
 	EffectScope     string `json:"effect_scope"`
 }
 
+type RuntimeGovernmentDefinition struct {
+	ID               string `json:"id"`
+	EnableAdvanceID  string `json:"enable_advance_id,omitempty"`
+	ResearchBonus    int    `json:"research_bonus,omitempty"`
+	PublicWorksBonus int    `json:"public_works_bonus,omitempty"`
+}
+
 type RuntimeMovement struct {
 	Configured       bool             `json:"configured"`
 	PolicyConfigured bool             `json:"-"`
@@ -112,6 +120,14 @@ func (runtime RuntimeRules) Advance(id string) (RuntimeAdvanceDefinition, bool) 
 		return RuntimeAdvanceDefinition{}, false
 	}
 	return runtime.Advances[index], true
+}
+
+func (runtime RuntimeRules) Government(id string) (RuntimeGovernmentDefinition, bool) {
+	index := sort.Search(len(runtime.Governments), func(index int) bool { return runtime.Governments[index].ID >= id })
+	if index == len(runtime.Governments) || runtime.Governments[index].ID != id {
+		return RuntimeGovernmentDefinition{}, false
+	}
+	return runtime.Governments[index], true
 }
 
 func (runtime RuntimeRules) TerrainImprovement(id string) (RuntimeTerrainImprovementDefinition, bool) {
@@ -296,8 +312,16 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 	if err := validateRuntimeAdvances(runtime.Advances); err != nil {
 		return RuntimeRules{}, err
 	}
+	for _, government := range runtime.Governments {
+		if government.EnableAdvanceID != "" {
+			if _, ok := runtime.Advance(government.EnableAdvanceID); !ok {
+				return RuntimeRules{}, fmt.Errorf("rules definition government %q references missing advance %q", government.ID, government.EnableAdvanceID)
+			}
+		}
+	}
 	sort.Slice(runtime.TerrainImprovements, func(i, j int) bool { return runtime.TerrainImprovements[i].ID < runtime.TerrainImprovements[j].ID })
 	sort.Slice(runtime.PollutionSources, func(i, j int) bool { return runtime.PollutionSources[i].ID < runtime.PollutionSources[j].ID })
+	sort.Slice(runtime.Governments, func(i, j int) bool { return runtime.Governments[i].ID < runtime.Governments[j].ID })
 	sort.Slice(runtime.Units, func(i, j int) bool { return runtime.Units[i].ID < runtime.Units[j].ID })
 	starterUnit, ok := runtime.Unit("UNIT_SYNTHETIC")
 	if !ok {
@@ -331,6 +355,7 @@ func ServerOwnedSyntheticRuleset(victoryEvaluatorIDs ...string) (Ruleset, error)
 		{Kind: "terrain_improvement", ID: "TERRAIN_IMPROVEMENT_SYNTHETIC_FARM", Tags: map[string]string{"Description": "TERRAIN_IMPROVEMENT_SYNTHETIC_FARM", "BuildTurns": "1", "PublicWorksCost": "1", "YieldFood": "1"}},
 		{Kind: "terrain_improvement", ID: "TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP", Tags: map[string]string{"Description": "TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP", "BuildTurns": "1", "PublicWorksCost": "1", "PollutionDelta": "-2"}},
 		{Kind: "pollution_source", ID: "POLLUTION_SOURCE_SYNTHETIC_FACTORY", Tags: map[string]string{"Description": "POLLUTION_SOURCE_SYNTHETIC_FACTORY", "PollutionPoints": "2", "EffectScope": "city"}},
+		{Kind: "government", ID: "GOVERNMENT_SYNTHETIC_REPUBLIC", Tags: map[string]string{"Description": "GOVERNMENT_SYNTHETIC_REPUBLIC", "EnableAdvanceID": "ADVANCE_SYNTHETIC_ROOT", "ResearchBonus": "1"}},
 		{Kind: "advance", ID: "ADVANCE_SYNTHETIC_ROOT", Tags: map[string]string{"Description": "ADVANCE_SYNTHETIC_ROOT", "Cost": "2"}},
 		{Kind: "advance", ID: "ADVANCE_SYNTHETIC_UNLOCK", Tags: map[string]string{"Description": "ADVANCE_SYNTHETIC_UNLOCK", "Cost": "2", "PrerequisiteAdvanceIDs": "ADVANCE_SYNTHETIC_ROOT"}},
 		{Kind: "unit", ID: "UNIT_SYNTHETIC", Tags: map[string]string{"Description": "UNIT_SYNTHETIC", "Role": "starter", "Domain": "land", "MaxMovePoints": "2", "Attack": "4", "Defense": "4", "Strength": "4", "Armor": "2", "Health": "10", "ZOC": "true", "VisibilityRange": "2", "Effects": "settler,special_embassy,special_steal:100,special_capture:0,special_terraform:1,special_terraform_turns:1"}},
@@ -392,6 +417,12 @@ func compileRecord(runtime *RuntimeRules, record Record) error {
 			return err
 		}
 		runtime.PollutionSources = append(runtime.PollutionSources, source)
+	case "government":
+		government, err := compileGovernmentDefinition(record)
+		if err != nil {
+			return err
+		}
+		runtime.Governments = append(runtime.Governments, government)
 	case "terrain":
 		if _, ok := record.Tags["MovementCost"]; !ok {
 			return nil
@@ -508,6 +539,21 @@ func compilePollutionSourceDefinition(record Record) (RuntimePollutionSourceDefi
 		return RuntimePollutionSourceDefinition{}, fmt.Errorf("rules definition record %q has invalid EffectScope", record.ID)
 	}
 	return RuntimePollutionSourceDefinition{ID: record.ID, PollutionPoints: points, EffectScope: scope}, nil
+}
+
+func compileGovernmentDefinition(record Record) (RuntimeGovernmentDefinition, error) {
+	researchBonus, err := optionalInteger(record, "ResearchBonus", 0)
+	if err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	publicWorksBonus, err := optionalInteger(record, "PublicWorksBonus", 0)
+	if err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if researchBonus < 0 || publicWorksBonus < 0 {
+		return RuntimeGovernmentDefinition{}, fmt.Errorf("rules definition record %q has invalid government bonus", record.ID)
+	}
+	return RuntimeGovernmentDefinition{ID: record.ID, EnableAdvanceID: record.Tags["EnableAdvanceID"], ResearchBonus: researchBonus, PublicWorksBonus: publicWorksBonus}, nil
 }
 
 func validateRuntimeAdvances(advances []RuntimeAdvanceDefinition) error {

@@ -65,6 +65,10 @@ var commands = map[string]struct {
 }{
 	"pass":              {engine.CommandPass, fields()},
 	"set-war":           {engine.CommandSetWar, fields("target_player_id", "at_war")},
+	"establish-contact": {engine.CommandEstablishContact, fields("target_player_id")},
+	"propose-agreement": {engine.CommandProposeAgreement, fields("proposal_id", "target_player_id", "kind")},
+	"respond-agreement": {engine.CommandRespondAgreement, fields("proposal_id", "accept")},
+	"set-government":    {engine.CommandSetGovernment, fields("government_id")},
 	"round-complete":    {engine.CommandRoundComplete, fields()},
 	"set-research":      {engine.CommandSetResearch, fields("advance_id")},
 	"move":              {engine.CommandMoveUnit, fields("unit_id", "path")},

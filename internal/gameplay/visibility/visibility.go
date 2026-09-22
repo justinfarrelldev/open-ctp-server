@@ -80,15 +80,35 @@ type ResearchProjection struct {
 	Available []string `json:"available,omitempty"`
 }
 
+type DiplomacyRelationProjection struct {
+	TargetPlayerID string `json:"target_player_id"`
+	Treaty         string `json:"treaty,omitempty"`
+	Trade          bool   `json:"trade,omitempty"`
+}
+
+type DiplomacyProposalProjection struct {
+	ID           string `json:"id"`
+	FromPlayerID string `json:"from_player_id"`
+	ToPlayerID   string `json:"to_player_id"`
+	Kind         string `json:"kind"`
+}
+
+type DiplomacyProjection struct {
+	GovernmentID string                        `json:"government_id,omitempty"`
+	Relations    []DiplomacyRelationProjection `json:"relations,omitempty"`
+	Proposals    []DiplomacyProposalProjection `json:"proposals,omitempty"`
+}
+
 type Projection struct {
-	Revision         int64               `json:"revision"`
-	Turn             int                 `json:"turn"`
-	Tiles            []TileProjection    `json:"tiles"`
-	Units            []UnitProjection    `json:"units"`
-	Cities           []CityProjection    `json:"cities"`
-	Research         *ResearchProjection `json:"research,omitempty"`
-	EmbassyPlayerIDs []string            `json:"embassy_player_ids,omitempty"`
-	PlanningStatus   string              `json:"planning_status,omitempty"`
+	Revision         int64                `json:"revision"`
+	Turn             int                  `json:"turn"`
+	Tiles            []TileProjection     `json:"tiles"`
+	Units            []UnitProjection     `json:"units"`
+	Cities           []CityProjection     `json:"cities"`
+	Research         *ResearchProjection  `json:"research,omitempty"`
+	Diplomacy        *DiplomacyProjection `json:"diplomacy,omitempty"`
+	EmbassyPlayerIDs []string             `json:"embassy_player_ids,omitempty"`
+	PlanningStatus   string               `json:"planning_status,omitempty"`
 }
 
 // Update records only what each player can currently observe. The returned state
@@ -154,6 +174,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 				continue
 			}
 			result.Research = researchProjection(state, nation)
+			result.Diplomacy = diplomacyProjection(state, playerID, nation)
 			for _, embassyNationID := range nation.Embassies {
 				for _, embassyPlayer := range state.Players {
 					if embassyPlayer.NationID == embassyNationID {
@@ -201,6 +222,33 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	sort.Slice(result.Cities, func(i, j int) bool { return result.Cities[i].ID < result.Cities[j].ID })
 	sort.Strings(result.EmbassyPlayerIDs)
 	return result, nil
+}
+
+func diplomacyProjection(state engine.State, playerID string, nation engine.Nation) *DiplomacyProjection {
+	projection := &DiplomacyProjection{GovernmentID: nation.GovernmentID}
+	for _, relation := range state.Diplomacy {
+		if relation.PlayerAID != playerID && relation.PlayerBID != playerID || !relation.Contact {
+			continue
+		}
+		target := relation.PlayerAID
+		if target == playerID {
+			target = relation.PlayerBID
+		}
+		projection.Relations = append(projection.Relations, DiplomacyRelationProjection{TargetPlayerID: target, Treaty: relation.Treaty, Trade: relation.Trade})
+	}
+	for _, proposal := range state.Proposals {
+		if proposal.FromPlayerID == playerID || proposal.ToPlayerID == playerID {
+			projection.Proposals = append(projection.Proposals, DiplomacyProposalProjection{ID: proposal.ID, FromPlayerID: proposal.FromPlayerID, ToPlayerID: proposal.ToPlayerID, Kind: proposal.Kind})
+		}
+	}
+	sort.Slice(projection.Relations, func(i, j int) bool {
+		return projection.Relations[i].TargetPlayerID < projection.Relations[j].TargetPlayerID
+	})
+	sort.Slice(projection.Proposals, func(i, j int) bool { return projection.Proposals[i].ID < projection.Proposals[j].ID })
+	if projection.GovernmentID == "" && len(projection.Relations) == 0 && len(projection.Proposals) == 0 {
+		return nil
+	}
+	return projection
 }
 
 func projectCity(city engine.City, playerID string, observed int) CityProjection {
