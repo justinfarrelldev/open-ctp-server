@@ -101,6 +101,24 @@ type DiplomacyProjection struct {
 	Proposals    []DiplomacyProposalProjection `json:"proposals,omitempty"`
 }
 
+type RulesProjection struct {
+	ContentHash         string                                      `json:"content_hash"`
+	Units               []rules.RuntimeUnitDefinition               `json:"units,omitempty"`
+	Advances            []rules.RuntimeAdvanceDefinition            `json:"advances,omitempty"`
+	Governments         []rules.RuntimeGovernmentDefinition         `json:"governments,omitempty"`
+	TerrainImprovements []rules.RuntimeTerrainImprovementDefinition `json:"terrain_improvements,omitempty"`
+	Movement            *rules.RuntimeMovement                      `json:"movement,omitempty"`
+}
+
+type ActionProjection struct {
+	Command  string          `json:"command"`
+	Route    string          `json:"route"`
+	EntityID string          `json:"entity_id,omitempty"`
+	TargetID string          `json:"target_id,omitempty"`
+	Fields   []string        `json:"fields,omitempty"`
+	Payload  json.RawMessage `json:"payload,omitempty"`
+}
+
 type Projection struct {
 	Revision         int64                `json:"revision"`
 	Turn             int                  `json:"turn"`
@@ -109,6 +127,8 @@ type Projection struct {
 	Cities           []CityProjection     `json:"cities"`
 	Research         *ResearchProjection  `json:"research,omitempty"`
 	Diplomacy        *DiplomacyProjection `json:"diplomacy,omitempty"`
+	Rules            *RulesProjection     `json:"rules,omitempty"`
+	LegalActions     []ActionProjection   `json:"legal_actions,omitempty"`
 	EmbassyPlayerIDs []string             `json:"embassy_player_ids,omitempty"`
 	PlanningStatus   string               `json:"planning_status,omitempty"`
 }
@@ -166,7 +186,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	if err != nil {
 		return Projection{}, err
 	}
-	result := Projection{Revision: state.Revision, Turn: state.Phase.Turn, PlanningStatus: planningStatus(state, playerID)}
+	result := Projection{Revision: state.Revision, Turn: state.Phase.Turn, PlanningStatus: planningStatus(state, playerID), Rules: rulesProjection(state)}
 	for _, player := range state.Players {
 		if player.ID != playerID {
 			continue
@@ -223,6 +243,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	sort.Slice(result.Units, func(i, j int) bool { return result.Units[i].ID < result.Units[j].ID })
 	sort.Slice(result.Cities, func(i, j int) bool { return result.Cities[i].ID < result.Cities[j].ID })
 	sort.Strings(result.EmbassyPlayerIDs)
+	result.LegalActions = legalActions(state, result, playerID)
 	return result, nil
 }
 
@@ -267,12 +288,10 @@ func projectCity(city engine.City, playerID string, observed int) CityProjection
 
 func researchProjection(state engine.State, nation engine.Nation) *ResearchProjection {
 	projection := &ResearchProjection{Advances: append([]string(nil), nation.Advances...), TargetID: nation.ResearchTargetID, Progress: nation.ResearchProgress}
-	if len(state.Rules.Definitions) > 0 && string(state.Rules.Definitions) != "null" {
-		if runtime, err := rules.CompileRuntime(state.Rules.Definitions, state.Rules.ContentHash); err == nil {
-			for _, advance := range runtime.Advances {
-				if projectionAdvanceAvailable(nation, runtime, advance.ID) {
-					projection.Available = append(projection.Available, advance.ID)
-				}
+	if runtime, ok := runtimeRules(state); ok {
+		for _, advance := range runtime.Advances {
+			if projectionAdvanceAvailable(nation, runtime, advance.ID) {
+				projection.Available = append(projection.Available, advance.ID)
 			}
 		}
 	}
@@ -282,6 +301,30 @@ func researchProjection(state engine.State, nation engine.Nation) *ResearchProje
 		return nil
 	}
 	return projection
+}
+
+func rulesProjection(state engine.State) *RulesProjection {
+	runtime, ok := runtimeRules(state)
+	if !ok {
+		return nil
+	}
+	movement := runtime.Movement
+	return &RulesProjection{
+		ContentHash:         runtime.ContentHash,
+		Units:               append([]rules.RuntimeUnitDefinition(nil), runtime.Units...),
+		Advances:            append([]rules.RuntimeAdvanceDefinition(nil), runtime.Advances...),
+		Governments:         append([]rules.RuntimeGovernmentDefinition(nil), runtime.Governments...),
+		TerrainImprovements: append([]rules.RuntimeTerrainImprovementDefinition(nil), runtime.TerrainImprovements...),
+		Movement:            &movement,
+	}
+}
+
+func runtimeRules(state engine.State) (rules.RuntimeRules, bool) {
+	if len(state.Rules.Definitions) == 0 || string(state.Rules.Definitions) == "null" {
+		return rules.RuntimeRules{}, false
+	}
+	runtime, err := rules.CompileRuntime(state.Rules.Definitions, state.Rules.ContentHash)
+	return runtime, err == nil
 }
 
 func projectionAdvanceAvailable(nation engine.Nation, runtime rules.RuntimeRules, advanceID string) bool {
@@ -295,6 +338,403 @@ func projectionAdvanceAvailable(nation engine.Nation, runtime rules.RuntimeRules
 		}
 	}
 	return true
+}
+
+func legalActions(state engine.State, projection Projection, playerID string) []ActionProjection {
+	if !viewerCanAct(state, projection, playerID) {
+		return nil
+	}
+	actions := make([]ActionProjection, 0)
+	if projection.PlanningStatus == PlanningStatusOpen {
+		actions = append(actions, action(engine.CommandRoundComplete, "round-complete", playerID, "", map[string]any{}, nil))
+	} else {
+		actions = append(actions, action(engine.CommandPass, "pass", playerID, "", map[string]any{}, nil))
+	}
+	actions = append(actions, researchActions(projection, playerID)...)
+	actions = append(actions, governmentActions(projection, playerID)...)
+	actions = append(actions, diplomacyActions(projection, playerID)...)
+	actions = append(actions, productionActions(projection, playerID)...)
+	actions = append(actions, unitActions(projection, playerID)...)
+	sort.Slice(actions, func(i, j int) bool {
+		if actions[i].Command == actions[j].Command {
+			if actions[i].EntityID == actions[j].EntityID {
+				if actions[i].TargetID == actions[j].TargetID {
+					return string(actions[i].Payload) < string(actions[j].Payload)
+				}
+				return actions[i].TargetID < actions[j].TargetID
+			}
+			return actions[i].EntityID < actions[j].EntityID
+		}
+		return actions[i].Command < actions[j].Command
+	})
+	return actions
+}
+
+func viewerCanAct(state engine.State, projection Projection, playerID string) bool {
+	if state.Terminal.Ended || playerID == "" {
+		return false
+	}
+	if projection.PlanningStatus == PlanningStatusOpen {
+		return true
+	}
+	if state.Phase.ResolutionLocked || len(state.Phase.ActivePlayerOrder) == 0 || state.Phase.ActivePlayerIndex < 0 || state.Phase.ActivePlayerIndex >= len(state.Phase.ActivePlayerOrder) {
+		return false
+	}
+	return state.Phase.ActivePlayerOrder[state.Phase.ActivePlayerIndex] == playerID
+}
+
+func researchActions(projection Projection, playerID string) []ActionProjection {
+	if projection.Research == nil || projection.Research.TargetID != "" {
+		return nil
+	}
+	actions := make([]ActionProjection, 0, len(projection.Research.Available))
+	for _, advanceID := range projection.Research.Available {
+		actions = append(actions, action(engine.CommandSetResearch, "set-research", playerID, advanceID, map[string]string{"advance_id": advanceID}, []string{"advance_id"}))
+	}
+	return actions
+}
+
+func governmentActions(projection Projection, playerID string) []ActionProjection {
+	if projection.Rules == nil || projection.Diplomacy == nil {
+		return nil
+	}
+	known := []string(nil)
+	if projection.Research != nil {
+		known = projection.Research.Advances
+	}
+	actions := make([]ActionProjection, 0)
+	for _, government := range projection.Rules.Governments {
+		if government.ID == "" || government.ID == projection.Diplomacy.GovernmentID || !advanceSatisfied(known, government.EnableAdvanceID) {
+			continue
+		}
+		actions = append(actions, action(engine.CommandSetGovernment, "set-government", playerID, government.ID, map[string]string{"government_id": government.ID}, []string{"government_id"}))
+	}
+	return actions
+}
+
+func diplomacyActions(projection Projection, playerID string) []ActionProjection {
+	if projection.Diplomacy == nil {
+		return nil
+	}
+	pending := make(map[string]bool, len(projection.Diplomacy.Proposals))
+	actions := make([]ActionProjection, 0)
+	for _, proposal := range projection.Diplomacy.Proposals {
+		if proposal.Kind != "" && proposal.FromPlayerID != "" && proposal.ToPlayerID != "" {
+			pending[proposal.Kind+"\x00"+proposal.FromPlayerID+"\x00"+proposal.ToPlayerID] = true
+			pending[proposal.Kind+"\x00"+proposal.ToPlayerID+"\x00"+proposal.FromPlayerID] = true
+		}
+		if proposal.ToPlayerID == playerID {
+			actions = append(actions, action(engine.CommandRespondAgreement, "respond-agreement", proposal.ID, proposal.FromPlayerID, map[string]any{"proposal_id": proposal.ID, "accept": true}, []string{"proposal_id", "accept"}))
+		}
+	}
+	for _, relation := range projection.Diplomacy.Relations {
+		if relation.TargetPlayerID == "" || relation.Treaty == "union" || pending["union\x00"+playerID+"\x00"+relation.TargetPlayerID] {
+			continue
+		}
+		proposalID := "client-union-" + playerID + "-" + relation.TargetPlayerID
+		actions = append(actions, action(engine.CommandProposeAgreement, "propose-agreement", playerID, relation.TargetPlayerID, map[string]string{"proposal_id": proposalID, "target_player_id": relation.TargetPlayerID, "kind": "union"}, []string{"proposal_id", "target_player_id", "kind"}))
+	}
+	return actions
+}
+
+func productionActions(projection Projection, playerID string) []ActionProjection {
+	actions := make([]ActionProjection, 0)
+	known := []string(nil)
+	if projection.Research != nil {
+		known = projection.Research.Advances
+	}
+	for _, city := range projection.Cities {
+		if city.OwnerID != playerID || city.Stale {
+			continue
+		}
+		for _, queued := range city.Queue {
+			actions = append(actions, action(engine.CommandCancelProduction, "cancel-production", city.ID, queued.ID, map[string]string{"city_id": city.ID, "item_id": queued.ID}, []string{"city_id", "item_id"}))
+		}
+		if len(city.Queue) != 0 || projection.Rules == nil {
+			continue
+		}
+		for _, unit := range projection.Rules.Units {
+			if unit.ID == "" || !allAdvancesSatisfied(known, unit.Prerequisites) || anyAdvanceSatisfied(known, unit.ObsoleteBy) {
+				continue
+			}
+			cost := unit.ProductionCost
+			if cost < 1 {
+				cost = 1
+			}
+			item := engine.ProductionItem{ID: unit.ID, Kind: engine.ProductionUnit, Cost: cost, Upkeep: unit.Upkeep}
+			if len(unit.Prerequisites) > 0 {
+				item.Prerequisite = unit.Prerequisites[0]
+			}
+			if len(unit.ObsoleteBy) > 0 {
+				item.ObsoletedBy = unit.ObsoleteBy[0]
+			}
+			actions = append(actions, action(engine.CommandQueueProduction, "queue-production", city.ID, unit.ID, map[string]any{"city_id": city.ID, "item": item}, []string{"city_id", "item"}))
+			break
+		}
+	}
+	return actions
+}
+
+func unitActions(projection Projection, playerID string) []ActionProjection {
+	tiles := projectedTiles(projection)
+	units := projectedUnits(projection)
+	cities := projectedCities(projection)
+	actions := make([]ActionProjection, 0)
+	for _, unit := range projection.Units {
+		if unit.OwnerID != playerID {
+			continue
+		}
+		if unit.TransportID != "" {
+			actions = append(actions, disembarkActions(projection, tiles, units, unit)...)
+			continue
+		}
+		if unit.ArmyID == "" && unit.TileID != "" {
+			actions = append(actions, action(engine.CommandArmyCreate, "army-create", unit.ID, "", map[string]any{"army_id": "client-army-" + unit.ID, "unit_ids": []string{unit.ID}}, []string{"army_id", "unit_ids"}))
+		}
+		if unit.TileID != "" && !unit.Fortified {
+			actions = append(actions, action(engine.CommandFortify, "fortify", unit.ID, unit.TileID, map[string]string{"unit_id": unit.ID}, []string{"unit_id"}))
+		}
+		if unit.ArmyID == "" && unit.TileID != "" && hasEffect(unit.Effects, engine.EffectSettler) && !cityOnTile(projection, unit.TileID) {
+			actions = append(actions, action(engine.CommandFoundCity, "found-city", unit.ID, unit.TileID, map[string]string{"unit_id": unit.ID, "city_id": "client-city-" + unit.ID, "name": "City " + unit.ID}, []string{"unit_id", "city_id", "name"}))
+		}
+		actions = append(actions, moveActions(projection, tiles, unit)...)
+		actions = append(actions, embarkActions(projection, unit)...)
+		actions = append(actions, combatActions(projection, tiles, unit)...)
+		actions = append(actions, specialActions(projection, tiles, cities, unit, playerID)...)
+		actions = append(actions, terrainActions(projection, tiles, unit)...)
+	}
+	return actions
+}
+
+func moveActions(projection Projection, tiles map[string]TileProjection, unit UnitProjection) []ActionProjection {
+	if unit.TileID == "" || unit.Movement < 1 || unit.Domain == "" {
+		return nil
+	}
+	origin, ok := tiles[unit.TileID]
+	if !ok {
+		return nil
+	}
+	occupied := make(map[string]bool)
+	for _, other := range projection.Units {
+		if other.OwnerID != unit.OwnerID && other.TileID != "" {
+			occupied[other.TileID] = true
+		}
+	}
+	actions := make([]ActionProjection, 0)
+	for _, tile := range projection.Tiles {
+		if tile.Stale || tile.ID == unit.TileID || tile.Planning == nil || !tile.Planning.Accessible || tile.Planning.Cost > unit.Movement || !containsString(tile.Planning.Domains, unit.Domain) || occupied[tile.ID] || !adjacentProjection(origin, tile) {
+			continue
+		}
+		actions = append(actions, action(engine.CommandMoveUnit, "move", unit.ID, tile.ID, map[string]any{"unit_id": unit.ID, "path": []string{tile.ID}}, []string{"unit_id", "path"}))
+	}
+	return actions
+}
+
+func embarkActions(projection Projection, unit UnitProjection) []ActionProjection {
+	if unit.TileID == "" || unit.ArmyID != "" {
+		return nil
+	}
+	actions := make([]ActionProjection, 0)
+	for _, transport := range projection.Units {
+		if transport.OwnerID != unit.OwnerID || transport.ID == unit.ID || transport.TileID != unit.TileID || transport.TransportID != "" || transport.CargoCapacity <= cargoCount(projection, transport.ID) || !containsString(transport.CargoDomains, unit.Domain) {
+			continue
+		}
+		actions = append(actions, action(engine.CommandEmbark, "embark", unit.ID, transport.ID, map[string]string{"unit_id": unit.ID, "transport_id": transport.ID}, []string{"unit_id", "transport_id"}))
+	}
+	return actions
+}
+
+func disembarkActions(projection Projection, tiles map[string]TileProjection, units map[string]UnitProjection, unit UnitProjection) []ActionProjection {
+	transport, ok := units[unit.TransportID]
+	origin, tileOK := tiles[transport.TileID]
+	if !ok || !tileOK || unit.Movement < 1 || unit.Domain == "" {
+		return nil
+	}
+	actions := make([]ActionProjection, 0)
+	for _, tile := range projection.Tiles {
+		if tile.Stale || tile.Planning == nil || !tile.Planning.Accessible || tile.Planning.EnemyZOC || !containsString(tile.Planning.Domains, unit.Domain) || !adjacentProjection(origin, tile) {
+			continue
+		}
+		actions = append(actions, action(engine.CommandDisembark, "disembark", unit.ID, tile.ID, map[string]string{"unit_id": unit.ID, "tile_id": tile.ID}, []string{"unit_id", "tile_id"}))
+	}
+	return actions
+}
+
+func combatActions(projection Projection, tiles map[string]TileProjection, attacker UnitProjection) []ActionProjection {
+	if attacker.ArmyID == "" || attacker.Attack < 1 || attacker.TileID == "" {
+		return nil
+	}
+	origin, ok := tiles[attacker.TileID]
+	if !ok {
+		return nil
+	}
+	seen := map[string]bool{}
+	actions := make([]ActionProjection, 0)
+	for _, defender := range projection.Units {
+		if defender.OwnerID == attacker.OwnerID || defender.ArmyID == "" || defender.TileID == "" || defender.TransportID != "" || seen[defender.ArmyID] {
+			continue
+		}
+		target, ok := tiles[defender.TileID]
+		if !ok || !adjacentProjection(origin, target) || !projectionDomainsCompatible(attacker, defender) {
+			continue
+		}
+		seen[defender.ArmyID] = true
+		actions = append(actions, action(engine.CommandCombat, "combat", attacker.ArmyID, defender.ArmyID, map[string]string{"attacker_army_id": attacker.ArmyID, "defender_army_id": defender.ArmyID}, []string{"attacker_army_id", "defender_army_id"}))
+	}
+	return actions
+}
+
+func specialActions(projection Projection, tiles map[string]TileProjection, cities map[string]CityProjection, unit UnitProjection, playerID string) []ActionProjection {
+	if unit.TileID == "" || unit.Movement < 1 {
+		return nil
+	}
+	origin, ok := tiles[unit.TileID]
+	if !ok {
+		return nil
+	}
+	actions := make([]ActionProjection, 0)
+	for _, city := range cities {
+		cityTile, ok := tiles[city.TileID]
+		if !ok || city.OwnerID == playerID || !adjacentProjection(origin, cityTile) {
+			continue
+		}
+		if hasEffect(unit.Effects, engine.EffectSpecialEmbassy) && !containsString(projection.EmbassyPlayerIDs, city.OwnerID) {
+			actions = append(actions, action(engine.CommandEstablishEmbassy, "establish-embassy", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
+		}
+		if hasEffect(unit.Effects, engine.EffectSpecialSoothsaying) {
+			actions = append(actions, action(engine.CommandSoothsaying, "soothsaying", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
+		}
+		if hasEffect(unit.Effects, engine.EffectSpecialSteal) || hasEffect(unit.Effects, engine.EffectSpecialCapture) {
+			actions = append(actions, action(engine.CommandStealTechnology, "steal-technology", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
+		}
+	}
+	return actions
+}
+
+func terrainActions(projection Projection, tiles map[string]TileProjection, unit UnitProjection) []ActionProjection {
+	if unit.TileID == "" || unit.Movement < 1 || projection.Diplomacy == nil || !hasEffect(unit.Effects, engine.EffectSpecialTerraform) {
+		return nil
+	}
+	origin, ok := tiles[unit.TileID]
+	if !ok {
+		return nil
+	}
+	actions := make([]ActionProjection, 0)
+	terraformCost, terraformTurns := effectValue(unit.Effects, engine.EffectSpecialTerraform), effectValue(unit.Effects, engine.EffectSpecialTerraformTurns)
+	for _, tile := range projection.Tiles {
+		if tile.Stale || !adjacentProjection(origin, tile) {
+			continue
+		}
+		if tile.Terrain == engine.TerrainForest && terraformCost > 0 && terraformTurns > 0 && projection.Diplomacy.PublicWorks >= terraformCost {
+			actions = append(actions, action(engine.CommandTerraform, "terraform", unit.ID, tile.ID, map[string]string{"unit_id": unit.ID, "tile_id": tile.ID, "target_terrain": engine.TerrainPlains}, []string{"unit_id", "tile_id", "target_terrain"}))
+		}
+		if projection.Rules != nil {
+			for _, improvement := range projection.Rules.TerrainImprovements {
+				if improvement.PublicWorksCost < 1 || improvement.BuildTurns < 1 || projection.Diplomacy.PublicWorks < improvement.PublicWorksCost {
+					continue
+				}
+				actions = append(actions, action(engine.CommandBuildImprovement, "build-improvement", unit.ID, tile.ID, map[string]string{"unit_id": unit.ID, "tile_id": tile.ID, "improvement_id": improvement.ID}, []string{"unit_id", "tile_id", "improvement_id"}))
+				break
+			}
+		}
+	}
+	return actions
+}
+
+func action(command, route, entityID, targetID string, payload any, fields []string) ActionProjection {
+	encoded, _ := json.Marshal(payload)
+	return ActionProjection{Command: command, Route: route, EntityID: entityID, TargetID: targetID, Fields: append([]string(nil), fields...), Payload: encoded}
+}
+
+func projectedTiles(projection Projection) map[string]TileProjection {
+	result := make(map[string]TileProjection, len(projection.Tiles))
+	for _, tile := range projection.Tiles {
+		if !tile.Stale {
+			result[tile.ID] = tile
+		}
+	}
+	return result
+}
+
+func projectedUnits(projection Projection) map[string]UnitProjection {
+	result := make(map[string]UnitProjection, len(projection.Units))
+	for _, unit := range projection.Units {
+		result[unit.ID] = unit
+	}
+	return result
+}
+
+func projectedCities(projection Projection) map[string]CityProjection {
+	result := make(map[string]CityProjection, len(projection.Cities))
+	for _, city := range projection.Cities {
+		if !city.Stale {
+			result[city.ID] = city
+		}
+	}
+	return result
+}
+
+func cityOnTile(projection Projection, tileID string) bool {
+	for _, city := range projection.Cities {
+		if !city.Stale && city.TileID == tileID {
+			return true
+		}
+	}
+	return false
+}
+
+func cargoCount(projection Projection, transportID string) int {
+	count := 0
+	for _, unit := range projection.Units {
+		if unit.TransportID == transportID {
+			count++
+		}
+	}
+	return count
+}
+
+func projectionDomainsCompatible(attacker, defender UnitProjection) bool {
+	return attacker.Domain == "" || defender.Domain == "" || attacker.Domain == defender.Domain || attacker.Domain == engine.DomainAmphibious || defender.Domain == engine.DomainAmphibious
+}
+
+func advanceSatisfied(known []string, advanceID string) bool {
+	return advanceID == "" || containsString(known, advanceID)
+}
+
+func allAdvancesSatisfied(known, required []string) bool {
+	for _, advanceID := range required {
+		if !containsString(known, advanceID) {
+			return false
+		}
+	}
+	return true
+}
+
+func anyAdvanceSatisfied(known, blocked []string) bool {
+	for _, advanceID := range blocked {
+		if containsString(known, advanceID) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasEffect(effects []engine.Effect, kind string) bool {
+	for _, effect := range effects {
+		if effect.Kind == kind {
+			return true
+		}
+	}
+	return false
+}
+
+func effectValue(effects []engine.Effect, kind string) int {
+	for _, effect := range effects {
+		if effect.Kind == kind {
+			return effect.Value
+		}
+	}
+	return 0
 }
 
 func planningStatus(state engine.State, playerID string) string {
@@ -554,7 +994,9 @@ func (p Projector) ProjectEvent(_ events.Viewer, event events.Event) ([]byte, er
 	return json.Marshal(struct {
 		Type     string `json:"type"`
 		Sequence int64  `json:"sequence"`
-	}{Type: event.Type, Sequence: event.Sequence})
+		Revision int64  `json:"revision"`
+		Ordinal  int    `json:"ordinal"`
+	}{Type: event.Type, Sequence: event.Sequence, Revision: event.Revision, Ordinal: event.Ordinal})
 }
 func (p Projector) viewerPlayerID(viewer events.Viewer) string {
 	if p.PlayerID != "" {

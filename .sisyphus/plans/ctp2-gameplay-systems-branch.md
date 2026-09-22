@@ -611,7 +611,7 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
 
   **Commit**: YES | Message: `feat(ai): use gameplay systems from public projections` | Files: ai/visibility/service/e2e tests and implementation
 
-- [ ] 12. Expose client-ready public API, projection, and SSE contracts for included systems
+- [x] 12. Expose client-ready public API, projection, and SSE contracts for included systems
 
   **What to do**: Ensure clients can discover legal actions and render state for all included systems through authenticated public APIs and SSE only. Add/extend DTOs for unit definitions/capabilities, advances/research, city economy/queues, diplomacy/trade, terrain improvements/pollution, combat summaries, and terminal conditions. Regenerate docs only if public routes or schemas change.
   **Must NOT do**: add debug/test routes to production, expose hidden canonical state, or rely on diagnostics for client-facing data.
@@ -631,11 +631,11 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
   - Swagger docs: `docs/docs.go`, `docs/swagger.json`, `docs/swagger.yaml`.
 
   **Acceptance Criteria**:
-  - [ ] Public projection includes client-safe render/action metadata for every included family.
-  - [ ] SSE emits deterministic filtered events for command success/failure-relevant state transitions.
-  - [ ] Unauthorized/nonmember/wrong-turn/stale/terminal API cases return stable status codes and no hidden data.
-  - [ ] Generated docs, if changed, are reproducible and match route/schema tests.
-  - [ ] Existing onboarding/setup routes still support 2–8 players and arbitrary ordered controllers.
+  - [x] Public projection includes client-safe render/action metadata for every included family.
+  - [x] SSE emits deterministic filtered events for command success/failure-relevant state transitions.
+  - [x] Unauthorized/nonmember/wrong-turn/stale/terminal API cases return stable status codes and no hidden data.
+  - [x] Generated docs, if changed, are reproducible and match route/schema tests.
+  - [x] Existing onboarding/setup routes still support 2–8 players and arbitrary ordered controllers.
 
   **QA Scenarios**:
   ```

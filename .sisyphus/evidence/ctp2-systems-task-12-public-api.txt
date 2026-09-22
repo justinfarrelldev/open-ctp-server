@@ -1,0 +1,25 @@
+# Task 12 public API/projection/SSE evidence
+# 2026-09-22T19:00:00-04:00
+
+## Source alignment
+See .sisyphus/evidence/ctp2-systems-task-12-source-inventory.md.
+
+## Client-ready projection and SSE validation
+Command: GOMAXPROCS=4 go test ./internal/gameplay/visibility ./internal/gameplay/events ./internal/gameplay/http ./internal/e2e/onboarding ./internal/e2e/boundary -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility
+ok   github.com/justinfarrelldev/open-ctp-server/internal/gameplay/events
+ok   github.com/justinfarrelldev/open-ctp-server/internal/gameplay/http
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/onboarding
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/boundary
+
+Command: GOMAXPROCS=4 go test ./internal/e2e/freeze -run '^TestEngineLock$' -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze
+
+Command: GOMAXPROCS=4 go test ./internal/e2e/freeze -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze
+
+Command: GOMAXPROCS=4 go test ./internal/e2e/fullgame -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame
+
+Command: git diff --check
+(no output)

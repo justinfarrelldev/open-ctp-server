@@ -479,27 +479,27 @@ func TestHybridQueuedAICloseoutSurvivesRuntimeReconstruction(t *testing.T) {
 	if err != nil {
 		t.Fatalf("initial AI queued action: %v", err)
 	}
-	if result.Commands != 1 || result.Revision != 2 {
+	if result.Commands != 2 || result.Revision != 3 {
 		t.Fatalf("initial queued AI result=%+v", result)
 	}
 	projection := simultaneousProjection(t, server.URL, gameID, guest.Session)
-	if projection.PlanningStatus != visibility.PlanningStatusQueued {
-		t.Fatalf("post-action planning status = %q, want queued", projection.PlanningStatus)
+	if projection.PlanningStatus != visibility.PlanningStatusClosed {
+		t.Fatalf("post-action planning status = %q, want closed", projection.PlanningStatus)
 	}
 	server.Close()
 	runtime = RestartPublicRuntime(db, sources, seed)
 	server = httptest.NewServer(runtime.Handler)
 	client.BaseURL = server.URL
 	restartedProjection := simultaneousProjection(t, server.URL, gameID, guest.Session)
-	if restartedProjection.PlanningStatus != visibility.PlanningStatusQueued {
-		t.Fatalf("restarted planning status = %q, want queued", restartedProjection.PlanningStatus)
+	if restartedProjection.PlanningStatus != visibility.PlanningStatusClosed {
+		t.Fatalf("restarted planning status = %q, want closed", restartedProjection.PlanningStatus)
 	}
-	result, err = runtime.Driver.Drive(ctx, gameID, aiPlayerID, 2)
+	result, err = runtime.Driver.Drive(ctx, gameID, aiPlayerID, 3)
 	if err != nil {
-		t.Fatalf("restarted AI queued closeout: %v", err)
+		t.Fatalf("restarted closed AI drive: %v", err)
 	}
-	if result.Commands != 1 || result.Revision != 3 {
-		t.Fatalf("restarted queued closeout result=%+v", result)
+	if result.Commands != 0 || result.Revision != 3 {
+		t.Fatalf("restarted closed result=%+v", result)
 	}
 	if telemetry.Unknown != nil {
 		t.Fatalf("unknown SQL = %v", telemetry.Unknown)
@@ -634,7 +634,7 @@ func TestPublicRuntimePersistsThreePlayerOwnedUnitsAcrossRestart(t *testing.T) {
 	if err != nil {
 		t.Fatalf("restarted AI command: %v", err)
 	}
-	if result.Commands != 1 || result.Revision != 3 {
+	if result.Commands != 2 || result.Revision != 4 {
 		t.Fatalf("restarted AI result=%+v", result)
 	}
 	var raw string

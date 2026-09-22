@@ -308,6 +308,96 @@ func TestSSEResyncAndTerminalUseViewerProjection(t *testing.T) {
 	}
 }
 
+func TestTask12ProjectionIncludesRulesAndLegalActionMetadata(t *testing.T) {
+	ruleset, err := rules.ServerOwnedSyntheticRuleset()
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := fixtureState()
+	state.Rules = engine.RulesPin{Version: ruleset.CompatibilityVersion, ContentHash: ruleset.ContentHash, Definitions: ruleset.CanonicalJSON}
+	state.Tiles = []engine.Tile{
+		{ID: "home", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true},
+		{ID: "site", X: 1, Y: 0, Terrain: engine.TerrainPlains, Open: true},
+		{ID: "forest", X: 0, Y: 1, Terrain: engine.TerrainForest, Open: true, Pollution: 1},
+		{ID: "enemy", X: 1, Y: 1, Terrain: engine.TerrainPlains, Open: true},
+	}
+	state.Nations = []engine.Nation{{ID: "a", Advances: []string{"ADVANCE_SYNTHETIC_ROOT"}, PublicWorks: 5}, {ID: "b"}}
+	state.Diplomacy = []engine.DiplomaticRelation{{ID: "a:b", PlayerAID: "a", PlayerBID: "b", Contact: true, Treaty: "peace"}}
+	state.Cities = []engine.City{{ID: "city-a", OwnerID: "a", TileID: "home"}, {ID: "city-b", OwnerID: "b", TileID: "enemy"}}
+	state.Armies = []engine.Army{{ID: "army-a", OwnerID: "a", UnitIDs: []string{"attacker"}}, {ID: "army-b", OwnerID: "b", UnitIDs: []string{"defender"}}}
+	state.Units = []engine.Unit{
+		{ID: "settler", OwnerID: "a", TileID: "site", Domain: engine.DomainLand, Movement: 2, Health: 1, MaxHealth: 1, Effects: []engine.Effect{{ID: "settle", Kind: engine.EffectSettler}}},
+		{ID: "worker", OwnerID: "a", TileID: "home", Domain: engine.DomainLand, Movement: 2, Health: 1, MaxHealth: 1, Effects: []engine.Effect{{ID: "terraform", Kind: engine.EffectSpecialTerraform, Value: 1}, {ID: "turns", Kind: engine.EffectSpecialTerraformTurns, Value: 1}}},
+		{ID: "diplomat", OwnerID: "a", TileID: "home", Domain: engine.DomainLand, Movement: 2, Health: 1, MaxHealth: 1, Effects: []engine.Effect{{ID: "embassy", Kind: engine.EffectSpecialEmbassy}, {ID: "steal", Kind: engine.EffectSpecialSteal}}},
+		{ID: "cargo", OwnerID: "a", TileID: "home", Domain: engine.DomainLand, Movement: 2, Health: 1, MaxHealth: 1},
+		{ID: "ship", OwnerID: "a", TileID: "home", Domain: engine.DomainSea, Movement: 2, Health: 1, MaxHealth: 1, CargoCapacity: 1, CargoDomains: []string{engine.DomainLand}},
+		{ID: "attacker", OwnerID: "a", TileID: "home", ArmyID: "army-a", Domain: engine.DomainLand, Movement: 2, Attack: 2, Health: 1, MaxHealth: 1},
+		{ID: "defender", OwnerID: "b", TileID: "enemy", ArmyID: "army-b", Domain: engine.DomainLand, Movement: 2, Attack: 2, Health: 1, MaxHealth: 1},
+	}
+	state.Phase.ActivePlayerOrder = []string{"a", "b"}
+	state.Phase.ActivePlayerIndex = 0
+	state, err = Update(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if projection.Rules == nil || len(projection.Rules.Units) == 0 || len(projection.Rules.Advances) == 0 || len(projection.Rules.Governments) == 0 || len(projection.Rules.TerrainImprovements) == 0 || projection.Rules.Movement == nil {
+		t.Fatalf("rules projection incomplete: %#v", projection.Rules)
+	}
+	for _, command := range []string{engine.CommandPass, engine.CommandSetResearch, engine.CommandSetGovernment, engine.CommandProposeAgreement, engine.CommandQueueProduction, engine.CommandFoundCity, engine.CommandArmyCreate, engine.CommandMoveUnit, engine.CommandEmbark, engine.CommandCombat, engine.CommandEstablishEmbassy, engine.CommandStealTechnology, engine.CommandTerraform, engine.CommandBuildImprovement} {
+		if !hasAction(projection.LegalActions, command) {
+			t.Fatalf("legal action %q missing from %#v", command, projection.LegalActions)
+		}
+	}
+	encoded, err := json.Marshal(projection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(encoded, []byte("HIDDEN_UNIT_TOKEN")) || bytes.Contains(encoded, []byte("SECRET_TERRAIN_TOKEN")) {
+		t.Fatalf("projection leaked hidden data: %s", encoded)
+	}
+	state.Phase.ActivePlayerIndex = 1
+	projection, err = Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(projection.LegalActions) != 0 {
+		t.Fatalf("wrong-turn projection exposed actions: %#v", projection.LegalActions)
+	}
+}
+
+func TestTask12ProjectEventExposesStableEnvelopeOnly(t *testing.T) {
+	projector := NewProjector("a")
+	event, err := projector.ProjectEvent(events.Viewer{GameID: 1, PlayerID: 1}, events.Event{Type: engine.EventCombatResolved, Sequence: 4, Revision: 3, Ordinal: 2, PayloadJSON: []byte(`{"target":"HIDDEN_UNIT_TOKEN","terrain":"SECRET_TERRAIN_TOKEN"}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(event, []byte("HIDDEN_UNIT_TOKEN")) || bytes.Contains(event, []byte("SECRET_TERRAIN_TOKEN")) {
+		t.Fatalf("event projection leaked payload: %s", event)
+	}
+	var decoded struct {
+		Type     string `json:"type"`
+		Sequence int64  `json:"sequence"`
+		Revision int64  `json:"revision"`
+		Ordinal  int    `json:"ordinal"`
+	}
+	if err := json.Unmarshal(event, &decoded); err != nil || decoded.Type != engine.EventCombatResolved || decoded.Sequence != 4 || decoded.Revision != 3 || decoded.Ordinal != 2 {
+		t.Fatalf("event projection = %#v err=%v raw=%s", decoded, err, event)
+	}
+}
+
+func hasAction(actions []ActionProjection, command string) bool {
+	for _, action := range actions {
+		if action.Command == command && len(action.Payload) > 0 && action.Route != "" {
+			return true
+		}
+	}
+	return false
+}
+
 func TestProjectionExposesOnlyCurrentActorPlanningStatusInPlanningModes(t *testing.T) {
 	queuedCommand := func(actor string) engine.TurnPolicyCommand {
 		return engine.TurnPolicyCommand{Kind: turns.CommandAction, ActorID: actor, CommandID: "command-" + actor, IdempotencyKey: "receipt-" + actor, Payload: json.RawMessage(`{}`)}

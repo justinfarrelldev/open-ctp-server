@@ -1,0 +1,15 @@
+# Task 12 public API redaction/failure evidence
+# 2026-09-22T19:00:00-04:00
+
+## Guard coverage
+- `TestTask12ProjectionIncludesRulesAndLegalActionMetadata` verifies legal action metadata is present only for an eligible viewer and is absent on the wrong turn.
+- `TestTask12ProjectEventExposesStableEnvelopeOnly` verifies projected SSE event envelopes expose type/sequence/revision/ordinal and do not pass through hidden payload bytes.
+- Existing gameplay HTTP tests verify unauthenticated, malformed, unknown authority fields, stale/idempotency conflicts, and gateway details map to stable public status/errors without hidden diagnostics.
+- Existing boundary/onboarding SSE tests verify nonmember/member projection and durable resync behavior through authenticated public routes.
+
+Command: GOMAXPROCS=4 go test ./internal/gameplay/visibility ./internal/gameplay/events ./internal/gameplay/http ./internal/e2e/onboarding ./internal/e2e/boundary -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility
+ok   github.com/justinfarrelldev/open-ctp-server/internal/gameplay/events
+ok   github.com/justinfarrelldev/open-ctp-server/internal/gameplay/http
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/onboarding
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/boundary
