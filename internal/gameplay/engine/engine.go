@@ -624,6 +624,7 @@ func completePolicyRound(state *State, runtime *rules.RuntimeRules) error {
 	}
 	*state = next
 	updateGaiaCountdown(state, runtime, state.Phase.Turn-1)
+	advanceResearch(state, runtime)
 	refreshStarterMovement(state, runtime)
 	if winner, reason := evaluateVictory(*state, runtime); winner != "" {
 		endGame(state, winner, reason)

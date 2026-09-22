@@ -654,7 +654,7 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
 
   **Commit**: YES | Message: `feat(api): expose client-ready gameplay projections` | Files: runtime/http/service/events/visibility/docs/tests
 
-- [ ] 13. Prove cross-system client-ready gameplay scenarios before returning to campaign rows
+- [x] 13. Prove cross-system client-ready gameplay scenarios before returning to campaign rows
 
   **What to do**: Add a small set of deterministic cross-system scenarios that are not Row 09 continuations and are not the 60-row campaign acceptance track. Each scenario must combine imported synthetic content, advances/unlocks, production, movement/combat or diplomacy, public API/SSE, AI legal action, restart, and terminal or durable objective verification. Use these as product-readiness gates before any future catalog-row expansion.
   **Must NOT do**: promote 60-row catalog artifacts, target Row 09 acceptance, or accept scripts that cannot be derived from public projection.
@@ -673,11 +673,11 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
   - Accepted-row validation from Task 3.
 
   **Acceptance Criteria**:
-  - [ ] At least three cross-system scenarios pass two clean runs and one restart run each.
-  - [ ] One scenario proves advance unlock → production → unit/building use → public projection/SSE.
-  - [ ] One scenario proves terrain/public works/pollution interaction with movement/economy.
-  - [ ] One scenario proves diplomacy/trade/government or relationship state with AI legal participation.
-  - [ ] Scenario success is based on durable objective/terminal state, not row count or budget exhaustion.
+  - [x] At least three cross-system scenarios pass two clean runs and one restart run each.
+  - [x] One scenario proves advance unlock → production → unit/building use → public projection/SSE.
+  - [x] One scenario proves terrain/public works/pollution interaction with movement/economy.
+  - [x] One scenario proves diplomacy/trade/government or relationship state with AI legal participation.
+  - [x] Scenario success is based on durable objective/terminal state, not row count or budget exhaustion.
 
   **QA Scenarios**:
   ```

@@ -1,0 +1,32 @@
+# Task 13 cross-system client-ready gameplay evidence
+# 2026-09-22T19:20:00-04:00
+
+## Source alignment
+See `.sisyphus/evidence/ctp2-systems-task-13-source-inventory.md`.
+
+## Product-readiness scenarios
+`TestTask13PublicCrossSystemScenariosAreDeterministic` runs each scenario twice clean and once with an in-place public-runtime restart. Each run computes deterministic state, event, and owner-projection hashes and fails if the clean/restart fingerprints diverge.
+
+Scenarios:
+1. `advance-production-movement`: public projection -> set research -> move -> found city -> AI public commands -> advance unlock -> queue and complete prerequisite building -> restart durability.
+2. `terrain-public-works-pollution`: public projection -> move -> public-works cleanup terrain action -> AI public commands -> pollution clamp/public-works objective.
+3. `diplomacy-government-ai`: contact/propose trade through public HTTP -> AI accepts through production gateway -> research/government unlock -> public government switch.
+
+## Validation commands
+Command: GOMAXPROCS=4 go test ./internal/e2e/onboarding -run TestTask13PublicCrossSystemScenariosAreDeterministic -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/onboarding
+
+Command: GOMAXPROCS=4 go test ./internal/e2e/onboarding -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/onboarding
+
+Command: GOMAXPROCS=4 go test ./internal/gameplay/... ./internal/e2e/boundary ./internal/e2e/puppet ./internal/e2e/freeze -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/gameplay/...
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/boundary
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/puppet
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze
+
+Command: GOMAXPROCS=4 go test ./internal/e2e/fullgame -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame
+
+Command: git diff --check
+(no output)

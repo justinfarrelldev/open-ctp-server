@@ -1,0 +1,17 @@
+# Task 13 cross-system failure/guard evidence
+# 2026-09-22T19:20:00-04:00
+
+## Failures caught during implementation
+- Initial cross-system run exposed that policy-based public turn completion did not advance research, so advance unlocks never occurred in sequential public games. Fixed by advancing research during `completePolicyRound`.
+- Restart determinism guard initially attempted to replay already-completed commands after restart and failed on public conflicts; the final harness restarts the runtime and compares durable state/event/projection hashes instead.
+- Terrain scenario initially required road/terraform projection details that are not part of the stable public contract; final guard uses public-works cleanup, movement, pollution clamp, and public-works balance objectives.
+- Diplomacy scenario initially used `union`, which can legitimately satisfy terminal diplomacy objectives before government validation; final guard uses `trade` so diplomacy, AI response, research, and government all execute in one public scenario.
+
+## Anti-cheat/harness guard coverage
+- Scenario commands are submitted exclusively through `HTTPClient.GameplayCommand` and public SSE projection resync (`simultaneousProjection`).
+- AI participation uses `runtime.Driver.Drive`, the production AI gateway, and fails when the AI submits no public command.
+- Hidden canonical state is read only after scenario completion to hash deterministic artifacts; it is not used to choose commands.
+- Existing boundary/fullgame/visibility tests continue to cover nonmember, hidden projection, stale revision, terminal, and protected projection behavior.
+
+Command: GOMAXPROCS=4 go test ./internal/e2e/onboarding -run TestTask13PublicCrossSystemScenariosAreDeterministic -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/onboarding
