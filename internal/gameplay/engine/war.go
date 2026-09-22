@@ -31,8 +31,17 @@ func applyWarStateCommand(state *State, command Command) (string, json.RawMessag
 			filtered = append(filtered, edge)
 		}
 	}
+	relation := ensureRelation(state, command.ActorPlayerID, payload.TargetPlayerID)
+	relation.Contact = true
+	if relation.EstablishedAt == 0 {
+		relation.EstablishedAt = state.Phase.Turn
+	}
 	if payload.AtWar {
 		filtered = append(filtered, TurnPolicyWar{A: left, B: right})
+		relation.Treaty = ""
+		relation.Trade = false
+	} else if relation.Treaty == "" {
+		relation.Treaty = "peace"
 	}
 	state.Policy.Wars = filtered
 	encoded, err := json.Marshal(warStatePayload{TargetPlayerID: payload.TargetPlayerID, AtWar: payload.AtWar})

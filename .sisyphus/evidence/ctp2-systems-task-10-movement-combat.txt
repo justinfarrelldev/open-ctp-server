@@ -1,0 +1,11 @@
+# Task 10 movement/combat/armies/transports/special integration evidence
+# 2026-09-22T18:23:14-04:00
+
+## Source alignment
+See .sisyphus/evidence/ctp2-systems-task-10-source-inventory.md
+
+## Happy path/integration tests
+Command: GOMAXPROCS=4 go test ./internal/gameplay/engine ./internal/gameplay/http ./internal/gameplay/visibility -run "TestTask10|TestTask8RejectsUnknownDomainsAndAllowsLoadedTransportMovement|TestCombatVectorsResolveAtomicallyWithSourceOrderAndCapture|TestTask10HandlerDelegatesCombatRoute" -count=1
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.053s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/http	0.003s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.004s [no tests to run]

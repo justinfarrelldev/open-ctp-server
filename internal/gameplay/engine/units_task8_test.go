@@ -100,11 +100,11 @@ func TestTask8CargoFortifyDisbandAndArmyVectors(t *testing.T) {
 	if next.Units[0].TransportID != "ship" || next.Units[0].TileID != "" {
 		t.Fatalf("cargo was not canonicalized: %#v", next.Units[0])
 	}
-	next, _, err = applyTask8(t, next, CommandDisembark, map[string]string{"unit_id": "cargo", "tile_id": "d"})
+	next, _, err = applyTask8(t, next, CommandDisembark, map[string]string{"unit_id": "cargo", "tile_id": "e"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if next.Units[0].TransportID != "" || next.Units[0].TileID != "d" {
+	if next.Units[0].TransportID != "" || next.Units[0].TileID != "e" {
 		t.Fatalf("cargo was not disembarked: %#v", next.Units[0])
 	}
 	next, _, err = applyTask8(t, next, CommandFortify, map[string]string{"unit_id": "cargo"})
@@ -155,7 +155,7 @@ func TestTask8CapacityPhaseAndTransportLossVectors(t *testing.T) {
 	}
 }
 
-func TestTask8RejectsUnknownDomainsAndCargoDomainIntersection(t *testing.T) {
+func TestTask8RejectsUnknownDomainsAndAllowsLoadedTransportMovement(t *testing.T) {
 	state := task8State()
 	state.Units[0].Domain = "unsupported"
 	if err := ValidateState(state); err == nil {
@@ -167,8 +167,13 @@ func TestTask8RejectsUnknownDomainsAndCargoDomainIntersection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := applyTask8(t, next, CommandMoveUnit, map[string]any{"unit_id": "ship", "path": []string{"d"}}); err == nil || !strings.Contains(err.Error(), ErrObstructed.Error()) {
-		t.Fatalf("cargo-domain intersection must obstruct transport movement, got %v", err)
+	next.Tiles = append(next.Tiles, Tile{ID: "f", X: 3, Y: 0, Terrain: TerrainOcean})
+	moved, _, err := applyTask8(t, next, CommandMoveUnit, map[string]any{"unit_id": "ship", "path": []string{"f"}})
+	if err != nil {
+		t.Fatalf("loaded transport should move using transport movement domain, got %v", err)
+	}
+	if ship, ok := unitByID(moved, "ship"); !ok || ship.TileID != "f" {
+		t.Fatalf("loaded transport did not move: %#v", moved.Units)
 	}
 }
 

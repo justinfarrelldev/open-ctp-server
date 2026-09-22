@@ -80,6 +80,7 @@ var commands = map[string]struct {
 	"army-create":       {engine.CommandArmyCreate, fields("army_id", "unit_ids")},
 	"army-join":         {engine.CommandArmyJoin, fields("army_id", "unit_id")},
 	"army-leave":        {engine.CommandArmyLeave, fields("army_id", "unit_id")},
+	"combat":            {engine.CommandCombat, fields("attacker_army_id", "defender_army_id")},
 	"establish-embassy": {engine.CommandEstablishEmbassy, fields("unit_id", "city_id")},
 	"soothsaying":       {engine.CommandSoothsaying, fields("unit_id", "city_id")},
 	"steal-technology":  {engine.CommandStealTechnology, fields("unit_id", "city_id")},
@@ -104,7 +105,7 @@ func fields(names ...string) map[string]bool {
 }
 
 // ServeHTTP accepts the documented command routes (pass, move, disband, embark,
-// disembark, fortify, found-city, army-*, special actions, terraform, production,
+// disembark, fortify, found-city, army-*, combat, special actions, terraform, production,
 // leave, and end-early) through one authenticated gateway adapter.
 //
 // @Summary Submit a gameplay command

@@ -233,7 +233,7 @@ func disembark(state *State, actorID string, payload disembarkPayload, runtime *
 	transport, ok := unitByID(*state, unit.TransportID)
 	to, found := tileByID(*state, payload.TileID)
 	from, originFound := tileByID(*state, transport.TileID)
-	if !ok || !found || !originFound || !adjacent(from, to) || !canAccessTile(runtime, actorID, to) || !domainCanEnter(runtime, []string{unit.Domain}, to.Terrain) || stackCount(*state, to.ID) >= maxArmySize {
+	if !ok || !found || !originFound || !adjacent(from, to) || !canAccessTile(runtime, actorID, to) || !domainCanEnter(runtime, []string{unit.Domain}, EffectiveTerrain(*state, to.ID)) || occupiedByEnemy(*state, actorID, to.ID) || stackCount(*state, to.ID) >= maxArmySize {
 		return ErrObstructed
 	}
 	cost, ok := terrainCost(*state, runtime, to.ID)
@@ -550,11 +550,6 @@ func movementDomains(state State, unit Unit) []string {
 					domains = intersectDomains(domains, []string{other.Domain})
 				}
 			}
-		}
-	}
-	for _, cargo := range state.Units {
-		if cargo.TransportID == unit.ID {
-			domains = intersectDomains(domains, []string{cargo.Domain})
 		}
 	}
 	return domains

@@ -72,6 +72,11 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 				return "", nil, err
 			}
 			actorNation.Embassies = append(actorNation.Embassies, targetNation.ID)
+			relation := ensureRelation(state, command.ActorPlayerID, city.OwnerID)
+			relation.Contact = true
+			if relation.EstablishedAt == 0 {
+				relation.EstablishedAt = state.Phase.Turn
+			}
 			return EventEmbassyEstablished, json.RawMessage(`{"disclosed":true}`), nil
 		case CommandSoothsaying:
 			if !hasEffect(unit.Effects, EffectSpecialSoothsaying) {

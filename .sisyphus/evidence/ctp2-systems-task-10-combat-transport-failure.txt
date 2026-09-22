@@ -1,0 +1,6 @@
+# Task 10 failure evidence
+# 2026-09-22T18:23:14-04:00
+
+## Rejection/fail-closed tests
+Command: GOMAXPROCS=4 go test ./internal/gameplay/engine -run "TestTask10CombatRejectsIncompatibleDomainsAndNonCombatArmies|TestTask10DisembarkRejectsEnemyOccupiedTile|TestCombatRejectsHiddenAndInvalidTargetsWithoutRNG" -count=1
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.019s

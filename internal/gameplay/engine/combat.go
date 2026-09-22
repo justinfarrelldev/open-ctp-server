@@ -57,6 +57,9 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 			return nil, nil, errors.New("combat unit is invalid")
 		}
 	}
+	if !canArmyFight(*state, attackerUnits, defenderUnits) {
+		return nil, nil, errors.New("combat target is unavailable")
+	}
 
 	result := &CombatResult{AttackerArmyID: attackers.ID, DefenderArmyID: defenders.ID}
 	// The fixed CTP2-derived sequence is attacker ranged, defender ranged,
@@ -107,6 +110,32 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 		return nil, nil, err
 	}
 	return result, eventPayload, nil
+}
+
+func canArmyFight(state State, attackers, defenders []*Unit) bool {
+	defenderCity := false
+	if len(defenders) > 0 {
+		for _, city := range state.Cities {
+			if city.TileID == defenders[0].TileID {
+				defenderCity = true
+				break
+			}
+		}
+	}
+	for _, attacker := range attackers {
+		if attacker.Attack <= 0 && attacker.Ranged <= 0 {
+			continue
+		}
+		if defenderCity {
+			return true
+		}
+		for _, defender := range defenders {
+			if attacker.Domain == "" || defender.Domain == "" || attacker.Domain == defender.Domain || attacker.Domain == DomainAmphibious || defender.Domain == DomainAmphibious {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func combatStrike(state *State, sources Sources, attackers, defenders []*Unit, ranged bool, result *CombatResult) {

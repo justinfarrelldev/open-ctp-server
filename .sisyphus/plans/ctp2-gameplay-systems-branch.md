@@ -526,7 +526,7 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
 
   **Commit**: YES | Message: `feat(gameplay): model deterministic diplomacy and trade` | Files: engine/service/http/visibility/ai/e2e tests and implementation
 
-- [ ] 10. Complete movement, combat, armies, transports, and special-action interactions across domains
+- [x] 10. Complete movement, combat, armies, transports, and special-action interactions across domains
 
   **What to do**: Integrate expanded unit capabilities with movement and combat: land/sea/amphibious domains, transport capacity/cargo, army capacity/composition, ZOC, embark/disembark, ranged or special combat modifiers if included, deterministic combat RNG, soothsaying, capture, steal technology, and terraform interactions. Ensure public errors never leak hidden defenders or tiles.
   **Must NOT do**: client-supply RNG, retry until desired outcomes, or reveal hidden enemy positions.
@@ -546,11 +546,11 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
   - Current fullgame scripts: `internal/e2e/fullgame/scripts/military-zoc-combat.json`, `scripts/special-terraform.json`.
 
   **Acceptance Criteria**:
-  - [ ] Domain/cargo/army legality is enforced from runtime unit definitions.
-  - [ ] Combat outcomes are deterministic from canonical RNG and source-cited formulas/simplifications.
-  - [ ] ZOC/path blocking and transport interactions work across restart.
-  - [ ] Special actions integrate with advances/economy/visibility without hidden leaks.
-  - [ ] Public projections expose legal action hints sufficient for a client to avoid avoidable invalid commands.
+  - [x] Domain/cargo/army legality is enforced from runtime unit definitions.
+  - [x] Combat outcomes are deterministic from canonical RNG and source-cited formulas/simplifications.
+  - [x] ZOC/path blocking and transport interactions work across restart.
+  - [x] Special actions integrate with advances/economy/visibility without hidden leaks.
+  - [x] Public projections expose legal action hints sufficient for a client to avoid avoidable invalid commands.
 
   **QA Scenarios**:
   ```

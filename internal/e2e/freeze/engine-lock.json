@@ -47,7 +47,7 @@
     },
     {
       "path": "internal/gameplay/engine/combat.go",
-      "sha256": "2def61cda4cbd7add361b1e75daf6c440f3ea5f6352f492f5fbaf2aa6381d7c7"
+      "sha256": "3326b3bcd5f77d5cf1b21742022d3f72ab27cb57c2f3e29c7fc0d45e247d1c63"
     },
     {
       "path": "internal/gameplay/engine/diplomacy.go",
@@ -71,7 +71,7 @@
     },
     {
       "path": "internal/gameplay/engine/special.go",
-      "sha256": "019cf01b0f18d9df09b1c9335e3d304871d916fab36d8064eb7d761355963d89"
+      "sha256": "64f749e73af1992372c04cccbef4d5d9fc1bb4517808770f79b09f4d2e4bf1a8"
     },
     {
       "path": "internal/gameplay/engine/turns/turns.go",
@@ -79,11 +79,11 @@
     },
     {
       "path": "internal/gameplay/engine/units.go",
-      "sha256": "6bdb446fdb34394da681580ce7a16f9f8853e893b549cd6e0d5c940ae15b4e2d"
+      "sha256": "fc55cfce2f7176b3d08227162fbd0258be81327fe7213abf80d378c628d419da"
     },
     {
       "path": "internal/gameplay/engine/war.go",
-      "sha256": "a075051e4b79ac23144ba8e086353931d4316675e586b5d79d8fdc28b01b7e3d"
+      "sha256": "51ed2336bfdf9ba1a7e411b2af1671f143a8cd54c1b99db62bb4970d47ab99f0"
     },
     {
       "path": "internal/gameplay/events/events.go",
@@ -95,7 +95,7 @@
     },
     {
       "path": "internal/gameplay/http/http.go",
-      "sha256": "3e7ff2a0ace7e1e5dcde9431a4376b596c9b5027a06d0da3ae310eebdf4ae23e"
+      "sha256": "844a6564a41af0365895bbe133eda3bc2b61dd93f796a19f687c0c2ed90f6675"
     },
     {
       "path": "internal/gameplay/rules/rules.go",

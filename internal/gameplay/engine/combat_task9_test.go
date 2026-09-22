@@ -80,7 +80,7 @@ func TestCombatRejectsHiddenAndInvalidTargetsWithoutRNG(t *testing.T) {
 func TestCombatRetreatRetainsBothArmies(t *testing.T) {
 	state := combatState()
 	for i := range state.Units {
-		state.Units[i].Attack, state.Units[i].Ranged = 0, 0
+		state.Units[i].Attack, state.Units[i].Ranged, state.Units[i].Defense, state.Units[i].Health, state.Units[i].MaxHealth = 1, 0, 100, 100, 100
 	}
 	next, _, result, err := Apply(state, combatCommand(), state.Rules, fixtureSources())
 	if err != nil {
