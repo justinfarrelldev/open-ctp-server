@@ -1,0 +1,8 @@
+# Task 8 terrain public works failure evidence
+# 2026-09-22T18:01:09-04:00
+
+## Failure/edge tests
+Command: GOMAXPROCS=4 go test ./internal/gameplay/rules ./internal/gameplay/engine ./internal/gameplay/visibility -run "TestTask8InvalidTerrainImprovementCommandsFailClosed|TestCompileRuntimeRejectsMalformedUnitCapabilities|TestTask8ProjectionShowsOnlyVisiblePollution" -count=1
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules	0.010s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.022s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.003s

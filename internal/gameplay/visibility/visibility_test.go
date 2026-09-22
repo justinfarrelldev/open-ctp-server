@@ -84,6 +84,31 @@ func TestObservationMemoryProjectionAndRawLeakBoundaries(t *testing.T) {
 	}
 }
 
+func TestTask8ProjectionShowsOnlyVisiblePollution(t *testing.T) {
+	state := fixtureState()
+	state.Tiles = []engine.Tile{{ID: "0,0", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true, Pollution: 1}, {ID: "9,9", X: 9, Y: 9, Terrain: engine.TerrainForest, Open: true, Pollution: 9}}
+	state.Units = []engine.Unit{{ID: "scout", OwnerID: "a", TileID: "0,0", VisibilityRange: 0}}
+	state.Cities = nil
+	state, err := Update(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(projection.Tiles) != 1 || projection.Tiles[0].ID != "0,0" || projection.Tiles[0].Pollution != 1 {
+		t.Fatalf("pollution projection = %#v", projection.Tiles)
+	}
+	encoded, err := json.Marshal(projection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(encoded, []byte("9,9")) || bytes.Contains(encoded, []byte("9")) && bytes.Contains(encoded, []byte("pollution")) {
+		t.Fatalf("hidden pollution leaked: %s", encoded)
+	}
+}
+
 func TestTask7ProjectionExposesOwnedCityEconomyOnly(t *testing.T) {
 	state := fixtureState()
 	state.Tiles = []engine.Tile{{ID: "0,0", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "1,0", X: 1, Y: 0, Terrain: engine.TerrainPlains, Open: true}}

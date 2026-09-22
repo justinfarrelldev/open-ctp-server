@@ -1,0 +1,6 @@
+# Synthetic pollution source for bounded pollution tests.
+POLLUTION_SOURCE_SYNTHETIC_FACTORY {
+ Description POLLUTION_SOURCE_SYNTHETIC_FACTORY
+ PollutionPoints 2
+ EffectScope city
+}

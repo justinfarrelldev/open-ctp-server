@@ -175,7 +175,7 @@ func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *ru
 		if !ok || !adjacent(from, to) || !canAccessTile(runtime, actorID, to) || !domainCanEnter(runtime, domains, EffectiveTerrain(*state, to.ID)) || occupiedByEnemy(*state, actorID, to.ID) {
 			return ErrObstructed
 		}
-		cost, ok := terrainCost(runtime, EffectiveTerrain(*state, to.ID))
+		cost, ok := terrainCost(*state, runtime, to.ID)
 		if !ok {
 			return ErrObstructed
 		}
@@ -236,7 +236,7 @@ func disembark(state *State, actorID string, payload disembarkPayload, runtime *
 	if !ok || !found || !originFound || !adjacent(from, to) || !canAccessTile(runtime, actorID, to) || !domainCanEnter(runtime, []string{unit.Domain}, to.Terrain) || stackCount(*state, to.ID) >= maxArmySize {
 		return ErrObstructed
 	}
-	cost, ok := terrainCost(runtime, EffectiveTerrain(*state, to.ID))
+	cost, ok := terrainCost(*state, runtime, to.ID)
 	if !ok {
 		return ErrObstructed
 	}
@@ -468,12 +468,24 @@ func domainCanEnter(runtime *rules.RuntimeRules, domains []string, terrainID str
 	return false
 }
 
-func terrainCost(runtime *rules.RuntimeRules, terrainID string) (int, bool) {
+func terrainCost(state State, runtime *rules.RuntimeRules, tileID string) (int, bool) {
 	if runtime == nil || !runtime.Movement.Configured {
 		return 0, false
 	}
-	terrain, ok := runtime.Movement.Terrain(terrainID)
-	return terrain.Cost, ok
+	terrain, ok := runtime.Movement.Terrain(EffectiveTerrain(state, tileID))
+	if !ok {
+		return 0, false
+	}
+	cost := terrain.Cost
+	for _, overlay := range state.Overlays {
+		if overlay.TileID == tileID && overlay.Kind == "improvement" && overlay.Remaining == 0 {
+			cost += overlay.MovementCostDelta
+		}
+	}
+	if cost < 1 {
+		cost = 1
+	}
+	return cost, true
 }
 func containsString(items []string, value string) bool {
 	for _, item := range items {

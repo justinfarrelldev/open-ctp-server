@@ -441,7 +441,7 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
 
   **Commit**: YES | Message: `feat(gameplay): complete deterministic city economy` | Files: engine/rules/service/http/visibility tests and implementation
 
-- [ ] 8. Complete terrain, tile improvements, roads, public works, and pollution systems
+- [x] 8. Complete terrain, tile improvements, roads, public works, and pollution systems
 
   **What to do**: Extend terrain runtime and engine overlays to cover deterministic tile improvements: roads/movement modifiers, farms/mines or generic yield improvements, terraform lifecycle, pollution generation/cleanup, public works cost, and projection/event redaction. Tie world pollution read endpoints to gameplay state where appropriate.
   **Must NOT do**: conflate old world-scaffold pollution with gameplay pollution unless tests define the bridge, or expose hidden tile pollution before visibility.
@@ -460,11 +460,11 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
   - World pollution scaffold: `internal/world/recalculation.go`, `internal/game/world_ratings_pollution_endpoints.go`.
 
   **Acceptance Criteria**:
-  - [ ] Synthetic terrain-improvement records compile into runtime definitions.
-  - [ ] Roads/improvements modify movement/economy deterministically only after completion.
-  - [ ] Pollution is generated and cleaned according to synthetic rules and visible only when appropriate.
-  - [ ] Public works costs and cancellation/refund semantics are deterministic.
-  - [ ] Public projection, SSE, canonical state, and restart equality cover overlay lifecycles.
+  - [x] Synthetic terrain-improvement records compile into runtime definitions.
+  - [x] Roads/improvements modify movement/economy deterministically only after completion.
+  - [x] Pollution is generated and cleaned according to synthetic rules and visible only when appropriate.
+  - [x] Public works costs and cancellation/refund semantics are deterministic.
+  - [x] Public projection, SSE, canonical state, and restart equality cover overlay lifecycles.
 
   **QA Scenarios**:
   ```

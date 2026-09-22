@@ -16,7 +16,7 @@ func TestParseCTP2StyleSyntheticCatalog(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Import() error = %v", err)
 	}
-	if got, want := recordIDs(ruleset.Records), "ADVANCE_SYNTHETIC_ROOT,ADVANCE_SYNTHETIC_UNLOCK,ENDGAME_GAIA_VECTOR,ENDGAME_UNION_VECTOR,IMPROVE_SYNTHETIC,TERRAIN_SYNTHETIC,UNIT_SYNTHETIC,WONDER_SYNTHETIC"; got != want {
+	if got, want := recordIDs(ruleset.Records), "ADVANCE_SYNTHETIC_ROOT,ADVANCE_SYNTHETIC_UNLOCK,ENDGAME_GAIA_VECTOR,ENDGAME_UNION_VECTOR,IMPROVE_SYNTHETIC,POLLUTION_SOURCE_SYNTHETIC_FACTORY,TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP,TERRAIN_IMPROVEMENT_SYNTHETIC_FARM,TERRAIN_IMPROVEMENT_SYNTHETIC_ROAD,TERRAIN_SYNTHETIC,UNIT_SYNTHETIC,WONDER_SYNTHETIC"; got != want {
 		t.Fatalf("record IDs = %q, want %q", got, want)
 	}
 	if ruleset.ContentHash == "" || len(ruleset.CanonicalJSON) == 0 {
@@ -124,12 +124,14 @@ func TestCanonicalHashIsIndependentOfFileAndRecordOrder(t *testing.T) {
 		t.Fatalf("first Import() error = %v", err)
 	}
 	second, err := Import(ImportConfig{Directory: writeCatalog(t, map[string]string{
-		"Wonder.ctp2synthetic":         "WONDER_SYNTHETIC { Description WONDER_SYNTHETIC }\n",
-		"Advance.ctp2synthetic":        "ADVANCE_SYNTHETIC_UNLOCK { PrerequisiteAdvanceIDs ADVANCE_SYNTHETIC_ROOT Description ADVANCE_SYNTHETIC_UNLOCK Cost 2 } ADVANCE_SYNTHETIC_ROOT { Cost 2 Description ADVANCE_SYNTHETIC_ROOT }\n",
-		"Units.ctp2synthetic":          "UNIT_SYNTHETIC { ZOC true VisibilityRange 2 Strength 4 Role starter MaxMovePoints 2 Health 10 Effects \"settler,special_embassy,special_steal:100,special_capture:0,special_terraform:1,special_terraform_turns:1\" Domain land Description UNIT_SYNTHETIC Defense 4 Attack 4 Armor 2 }\n",
-		"terrain.ctp2synthetic":        "TERRAIN_SYNTHETIC { Description TERRAIN_SYNTHETIC }\n",
-		"buildings.ctp2synthetic":      "IMPROVE_SYNTHETIC { Description IMPROVE_SYNTHETIC }\n",
-		"EndGameObjects.ctp2synthetic": "ENDGAME_UNION_VECTOR { TurnsToActivate 0 } ENDGAME_GAIA_VECTOR { TurnsToActivate 1 }\n",
+		"Wonder.ctp2synthetic":             "WONDER_SYNTHETIC { Description WONDER_SYNTHETIC }\n",
+		"Advance.ctp2synthetic":            "ADVANCE_SYNTHETIC_UNLOCK { PrerequisiteAdvanceIDs ADVANCE_SYNTHETIC_ROOT Description ADVANCE_SYNTHETIC_UNLOCK Cost 2 } ADVANCE_SYNTHETIC_ROOT { Cost 2 Description ADVANCE_SYNTHETIC_ROOT }\n",
+		"Units.ctp2synthetic":              "UNIT_SYNTHETIC { ZOC true VisibilityRange 2 Strength 4 Role starter MaxMovePoints 2 Health 10 Effects \"settler,special_embassy,special_steal:100,special_capture:0,special_terraform:1,special_terraform_turns:1\" Domain land Description UNIT_SYNTHETIC Defense 4 Attack 4 Armor 2 }\n",
+		"terrain.ctp2synthetic":            "TERRAIN_SYNTHETIC { Description TERRAIN_SYNTHETIC }\n",
+		"TerrainImprovement.ctp2synthetic": "TERRAIN_IMPROVEMENT_SYNTHETIC_ROAD { Description TERRAIN_IMPROVEMENT_SYNTHETIC_ROAD BuildTurns 1 PublicWorksCost 1 MovementCostDelta -1 } TERRAIN_IMPROVEMENT_SYNTHETIC_FARM { Description TERRAIN_IMPROVEMENT_SYNTHETIC_FARM BuildTurns 1 PublicWorksCost 1 YieldFood 1 } TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP { Description TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP BuildTurns 1 PublicWorksCost 1 PollutionDelta -2 }\n",
+		"PollutionSource.ctp2synthetic":    "POLLUTION_SOURCE_SYNTHETIC_FACTORY { Description POLLUTION_SOURCE_SYNTHETIC_FACTORY PollutionPoints 2 EffectScope city }\n",
+		"buildings.ctp2synthetic":          "IMPROVE_SYNTHETIC { Description IMPROVE_SYNTHETIC }\n",
+		"EndGameObjects.ctp2synthetic":     "ENDGAME_UNION_VECTOR { TurnsToActivate 0 } ENDGAME_GAIA_VECTOR { TurnsToActivate 1 }\n",
 	})})
 	if err != nil {
 		t.Fatalf("second Import() error = %v", err)

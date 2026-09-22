@@ -330,7 +330,7 @@ func TestRNGDomainsAreNamedAndSerializable(t *testing.T) {
 
 func richState() State {
 	state := fixtureState()
-	state.Overlays = []TileOverlay{{ID: "overlay-b", TileID: "tile-b", Kind: "road"}, {ID: "overlay-a", TileID: "tile-a", Kind: "farm"}}
+	state.Overlays = []TileOverlay{{ID: "overlay-b", TileID: "tile-b", Kind: "improvement", ImprovementID: "road", OwnerID: "player-b"}, {ID: "overlay-a", TileID: "tile-a", Kind: "improvement", ImprovementID: "farm", OwnerID: "player-a"}}
 	state.Units = []Unit{{ID: "unit-b", OwnerID: "player-b", TileID: "tile-b", Effects: []Effect{{ID: "effect-b", Kind: "bonus"}, {ID: "effect-a", Kind: "vision"}}}, {ID: "unit-a", OwnerID: "player-a", TileID: "tile-a"}}
 	state.Cities = []City{{ID: "city-b", OwnerID: "player-b", TileID: "tile-b", Effects: []Effect{{ID: "city-effect", Kind: "production"}}}}
 	state.Armies = []Army{{ID: "army-b", OwnerID: "player-b", UnitIDs: []string{"unit-b", "unit-a"}}}

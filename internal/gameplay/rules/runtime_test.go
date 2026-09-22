@@ -31,6 +31,12 @@ func TestCompileRuntimeBuildsClosedDeterministicModel(t *testing.T) {
 	if len(runtime.Advances) != 2 || runtime.Advances[0].ID != "ADVANCE_SYNTHETIC_ROOT" || runtime.Advances[1].Prerequisites[0] != "ADVANCE_SYNTHETIC_ROOT" {
 		t.Fatalf("advances = %#v, want deterministic synthetic prerequisite tree", runtime.Advances)
 	}
+	if improvement, ok := runtime.TerrainImprovement("TERRAIN_IMPROVEMENT_SYNTHETIC_ROAD"); !ok || improvement.BuildTurns != 1 || improvement.PublicWorksCost != 1 || improvement.MovementCostDelta != -1 {
+		t.Fatalf("road improvement = %#v, %v", improvement, ok)
+	}
+	if len(runtime.PollutionSources) != 1 || runtime.PollutionSources[0].PollutionPoints != 2 || runtime.PollutionSources[0].EffectScope != "city" {
+		t.Fatalf("pollution sources = %#v", runtime.PollutionSources)
+	}
 	if got, want := runtime.ProductionIDs(), "IMPROVE_SYNTHETIC,UNIT_SYNTHETIC,WONDER_SYNTHETIC"; got != want {
 		t.Fatalf("production IDs = %q, want %q", got, want)
 	}
@@ -81,6 +87,8 @@ func TestCompileRuntimeRejectsMalformedUnitCapabilities(t *testing.T) {
 		{name: "invalid effect", old: `"Effects":"settler,special_embassy,special_steal:100,special_capture:0,special_terraform:1,special_terraform_turns:1"`, new: `"Effects":"teleport"`, want: "invalid Effects"},
 		{name: "missing advance prerequisite", old: `"PrerequisiteAdvanceIDs":"ADVANCE_SYNTHETIC_ROOT"`, new: `"PrerequisiteAdvanceIDs":"ADVANCE_SYNTHETIC_MISSING"`, want: "missing prerequisite"},
 		{name: "cyclic advance prerequisite", old: `"PrerequisiteAdvanceIDs":"ADVANCE_SYNTHETIC_ROOT"`, new: `"PrerequisiteAdvanceIDs":"ADVANCE_SYNTHETIC_UNLOCK"`, want: "cyclic prerequisites"},
+		{name: "invalid terrain improvement effect", old: `"MovementCostDelta":"-1"`, new: `"MovementCostDelta":"0"`, want: "no terrain improvement effect"},
+		{name: "invalid pollution source scope", old: `"EffectScope":"city"`, new: `"EffectScope":"script"`, want: "invalid EffectScope"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

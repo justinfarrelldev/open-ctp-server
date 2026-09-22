@@ -44,6 +44,7 @@ const (
 	CommandSoothsaying      = "soothsaying"
 	CommandStealTechnology  = "steal-technology"
 	CommandTerraform        = "terraform"
+	CommandBuildImprovement = "build-improvement"
 	CommandCancelTerraform  = "cancel-terraform"
 	CommandRoundComplete    = "round-complete"
 	CommandEndGame          = "end-game"
@@ -60,6 +61,7 @@ const (
 	EventTechnologyFailed   = "technology.failed"
 	EventTechnologyCapture  = "technology.capture"
 	EventTerraformQueued    = "terraform.queued"
+	EventImprovementQueued  = "improvement.queued"
 	EventTerraformCancelled = "terraform.cancelled"
 	EventTerminal           = "terminal"
 	EventPlayerDisconnected = "player.disconnected"
@@ -105,23 +107,30 @@ type RulesPin struct {
 }
 
 type TileOverlay struct {
-	ID            string `json:"id"`
-	TileID        string `json:"tile_id"`
-	Kind          string `json:"kind"`
-	OwnerID       string `json:"owner_id,omitempty"`
-	Remaining     int    `json:"remaining,omitempty"`
-	TargetTerrain string `json:"target_terrain,omitempty"`
+	ID                string `json:"id"`
+	TileID            string `json:"tile_id"`
+	Kind              string `json:"kind"`
+	OwnerID           string `json:"owner_id,omitempty"`
+	Remaining         int    `json:"remaining,omitempty"`
+	TargetTerrain     string `json:"target_terrain,omitempty"`
+	ImprovementID     string `json:"improvement_id,omitempty"`
+	MovementCostDelta int    `json:"movement_cost_delta,omitempty"`
+	YieldFood         int    `json:"yield_food,omitempty"`
+	YieldProduction   int    `json:"yield_production,omitempty"`
+	YieldGold         int    `json:"yield_gold,omitempty"`
+	PollutionDelta    int    `json:"pollution_delta,omitempty"`
 }
 
 // Tile is canonical server terrain/access input for unit transitions. Coordinates
 // are used only to validate submitted adjacent path steps.
 type Tile struct {
-	ID      string `json:"id"`
-	X       int    `json:"x"`
-	Y       int    `json:"y"`
-	Terrain string `json:"terrain"`
-	OwnerID string `json:"owner_id,omitempty"`
-	Open    bool   `json:"open"`
+	ID        string `json:"id"`
+	X         int    `json:"x"`
+	Y         int    `json:"y"`
+	Terrain   string `json:"terrain"`
+	OwnerID   string `json:"owner_id,omitempty"`
+	Open      bool   `json:"open"`
+	Pollution int    `json:"pollution,omitempty"`
 }
 
 type Unit struct {
@@ -411,7 +420,7 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 		eventType, err = applyCityCommand(state, command, runtime)
 	default:
 		if isSpecialCommand(command.Type) {
-			eventType, eventPayload, err = applySpecialCommand(state, command, sources)
+			eventType, eventPayload, err = applySpecialCommand(state, command, sources, runtime)
 		} else {
 			eventType, err = applyUnitCommand(state, command, runtime)
 		}
@@ -662,6 +671,11 @@ func ValidateState(state State) error {
 	}
 	if err := uniqueIDs("active player", state.Phase.ActivePlayerOrder); err != nil {
 		return err
+	}
+	for _, tile := range state.Tiles {
+		if tile.Pollution < 0 {
+			return errors.New("tile pollution must be nonnegative")
+		}
 	}
 	players := makeIDSet(playerIDs(state.Players))
 	for _, id := range state.Phase.ActivePlayerOrder {

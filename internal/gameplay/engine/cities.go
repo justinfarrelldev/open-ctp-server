@@ -313,16 +313,25 @@ func terrainYield(state State, tileID string) (Yield, error) {
 	if !ok {
 		return Yield{}, errors.New("worked tile does not exist")
 	}
+	var yield Yield
 	switch EffectiveTerrain(state, tile.ID) {
 	case TerrainPlains:
-		return Yield{Food: 2, Production: 3, Gold: 1}, nil
+		yield = Yield{Food: 2, Production: 3, Gold: 1}
 	case TerrainForest:
-		return Yield{Food: 1, Production: 2}, nil
+		yield = Yield{Food: 1, Production: 2}
 	case TerrainOcean:
-		return Yield{Food: 1, Gold: 2}, nil
+		yield = Yield{Food: 1, Gold: 2}
 	default:
 		return Yield{}, errors.New("unsupported terrain yield")
 	}
+	for _, overlay := range state.Overlays {
+		if overlay.TileID == tile.ID && overlay.Kind == "improvement" && overlay.Remaining == 0 {
+			yield.Food += overlay.YieldFood
+			yield.Production += overlay.YieldProduction
+			yield.Gold += overlay.YieldGold
+		}
+	}
+	return yield, nil
 }
 
 func addYield(a, b Yield) Yield {

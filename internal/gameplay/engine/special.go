@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
 const (
@@ -28,20 +30,26 @@ type TerraformPayload struct {
 	TargetTerrain string `json:"target_terrain"`
 }
 
+type BuildImprovementPayload struct {
+	UnitID        string `json:"unit_id"`
+	TileID        string `json:"tile_id"`
+	ImprovementID string `json:"improvement_id"`
+}
+
 type CancelTerraformPayload struct {
 	TileID string `json:"tile_id"`
 }
 
 func isSpecialCommand(kind string) bool {
 	switch kind {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandTerraform, CommandCancelTerraform:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
 		return true
 	default:
 		return false
 	}
 }
 
-func applySpecialCommand(state *State, command Command, sources Sources) (string, json.RawMessage, error) {
+func applySpecialCommand(state *State, command Command, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if err := activeActor(*state, command.ActorPlayerID); err != nil {
 		return "", nil, err
 	}
@@ -102,6 +110,12 @@ func applySpecialCommand(state *State, command Command, sources Sources) (string
 		actorNation.PublicWorks -= cost
 		state.Overlays = append(state.Overlays, TileOverlay{ID: "terraform:" + tile.ID, TileID: tile.ID, Kind: "terraform", OwnerID: command.ActorPlayerID, Remaining: turns, TargetTerrain: payload.TargetTerrain})
 		return EventTerraformQueued, json.RawMessage(`{"disclosed":false}`), nil
+	case CommandBuildImprovement:
+		var payload BuildImprovementPayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", nil, err
+		}
+		return buildTerrainImprovement(state, command.ActorPlayerID, payload, runtime)
 	case CommandCancelTerraform:
 		var payload CancelTerraformPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -115,6 +129,35 @@ func applySpecialCommand(state *State, command Command, sources Sources) (string
 		return EventTerraformCancelled, json.RawMessage(`{"disclosed":false}`), nil
 	}
 	return "", nil, fmt.Errorf("unsupported special command %q", command.Type)
+}
+
+func buildTerrainImprovement(state *State, actorID string, payload BuildImprovementPayload, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
+	if runtime == nil {
+		return "", nil, errors.New("terrain action is not eligible")
+	}
+	definition, ok := runtime.TerrainImprovement(payload.ImprovementID)
+	if !ok {
+		return "", nil, errors.New("terrain action is not eligible")
+	}
+	unit, err := ownedUnit(state, actorID, payload.UnitID)
+	if err != nil || !hasEffect(unit.Effects, EffectSpecialTerraform) {
+		return "", nil, errors.New("terrain action is not eligible")
+	}
+	tile, ok := tileByID(*state, payload.TileID)
+	unitTile, unitOK := tileByID(*state, unit.TileID)
+	if !ok || !unitOK || !adjacent(tile, unitTile) || pendingOverlayForTile(*state, tile.ID) != nil {
+		return "", nil, errors.New("terrain action is not eligible")
+	}
+	actorNation := nationForID(state, nationForPlayer(*state, actorID))
+	if actorNation == nil || definition.PublicWorksCost < 1 || definition.BuildTurns < 1 || actorNation.PublicWorks < definition.PublicWorksCost {
+		return "", nil, errors.New("terrain action is not eligible")
+	}
+	if err := spendSpecialMove(unit); err != nil {
+		return "", nil, err
+	}
+	actorNation.PublicWorks -= definition.PublicWorksCost
+	state.Overlays = append(state.Overlays, TileOverlay{ID: "improvement:" + tile.ID + ":" + definition.ID, TileID: tile.ID, Kind: "improvement", OwnerID: actorID, Remaining: definition.BuildTurns, ImprovementID: definition.ID, MovementCostDelta: definition.MovementCostDelta, YieldFood: definition.YieldFood, YieldProduction: definition.YieldProduction, YieldGold: definition.YieldGold, PollutionDelta: definition.PollutionDelta})
+	return EventImprovementQueued, json.RawMessage(`{"disclosed":false}`), nil
 }
 
 func specialTarget(state *State, actorID string, payload SpecialActionPayload) (*Unit, *City, *Nation, *Nation, error) {
@@ -193,10 +236,43 @@ func EffectiveTerrain(state State, tileID string) string {
 
 func advanceTerraform(state *State) {
 	for i := range state.Overlays {
-		if state.Overlays[i].Kind == "terraform" && state.Overlays[i].Remaining > 0 {
-			state.Overlays[i].Remaining--
+		if state.Overlays[i].Remaining <= 0 {
+			continue
+		}
+		before := state.Overlays[i].Remaining
+		state.Overlays[i].Remaining--
+		if state.Overlays[i].Kind == "improvement" && before == 1 {
+			applyImprovementCompletion(state, &state.Overlays[i])
 		}
 	}
+	state.Overlays = filterCompletedOneShotImprovements(state.Overlays)
+}
+
+func applyImprovementCompletion(state *State, overlay *TileOverlay) {
+	if overlay.PollutionDelta == 0 {
+		return
+	}
+	for i := range state.Tiles {
+		if state.Tiles[i].ID != overlay.TileID {
+			continue
+		}
+		state.Tiles[i].Pollution += overlay.PollutionDelta
+		if state.Tiles[i].Pollution < 0 {
+			state.Tiles[i].Pollution = 0
+		}
+		return
+	}
+}
+
+func filterCompletedOneShotImprovements(overlays []TileOverlay) []TileOverlay {
+	kept := overlays[:0]
+	for _, overlay := range overlays {
+		if overlay.Kind == "improvement" && overlay.Remaining == 0 && overlay.MovementCostDelta == 0 && overlay.YieldFood == 0 && overlay.YieldProduction == 0 && overlay.YieldGold == 0 {
+			continue
+		}
+		kept = append(kept, overlay)
+	}
+	return kept
 }
 
 func validateSpecialState(state State) error {
@@ -206,7 +282,16 @@ func validateSpecialState(state State) error {
 		}
 	}
 	for _, overlay := range state.Overlays {
-		if overlay.Kind == "terraform" && (overlay.TileID == "" || overlay.OwnerID == "" || overlay.Remaining < 0 || !terraformLegal(terrainOf(state, overlay.TileID), overlay.TargetTerrain)) {
+		switch overlay.Kind {
+		case "terraform":
+			if overlay.TileID == "" || overlay.OwnerID == "" || overlay.Remaining < 0 || !terraformLegal(terrainOf(state, overlay.TileID), overlay.TargetTerrain) {
+				return errors.New("terrain overlay is invalid")
+			}
+		case "improvement":
+			if overlay.TileID == "" || overlay.OwnerID == "" || overlay.Remaining < 0 || overlay.ImprovementID == "" {
+				return errors.New("terrain overlay is invalid")
+			}
+		default:
 			return errors.New("terrain overlay is invalid")
 		}
 	}
@@ -256,6 +341,15 @@ func setRNG(state *State, domain string, value uint64) {
 func overlayForTile(state State, tileID string) *TileOverlay {
 	for i := range state.Overlays {
 		if state.Overlays[i].TileID == tileID {
+			return &state.Overlays[i]
+		}
+	}
+	return nil
+}
+
+func pendingOverlayForTile(state State, tileID string) *TileOverlay {
+	for i := range state.Overlays {
+		if state.Overlays[i].TileID == tileID && state.Overlays[i].Remaining > 0 {
 			return &state.Overlays[i]
 		}
 	}

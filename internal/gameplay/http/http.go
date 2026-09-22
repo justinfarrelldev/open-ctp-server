@@ -80,6 +80,7 @@ var commands = map[string]struct {
 	"soothsaying":       {engine.CommandSoothsaying, fields("unit_id", "city_id")},
 	"steal-technology":  {engine.CommandStealTechnology, fields("unit_id", "city_id")},
 	"terraform":         {engine.CommandTerraform, fields("unit_id", "tile_id", "target_terrain")},
+	"build-improvement": {engine.CommandBuildImprovement, fields("unit_id", "tile_id", "improvement_id")},
 	"cancel-terraform":  {engine.CommandCancelTerraform, fields("tile_id")},
 	"queue-production":  {engine.CommandQueueProduction, fields("city_id", "item")},
 	"cancel-production": {engine.CommandCancelProduction, fields("city_id", "item_id")},

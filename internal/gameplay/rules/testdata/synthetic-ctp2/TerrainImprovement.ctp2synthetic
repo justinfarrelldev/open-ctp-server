@@ -1,0 +1,19 @@
+# Synthetic terrain improvements for server-owned public-works tests.
+TERRAIN_IMPROVEMENT_SYNTHETIC_ROAD {
+ Description TERRAIN_IMPROVEMENT_SYNTHETIC_ROAD
+ BuildTurns 1
+ PublicWorksCost 1
+ MovementCostDelta -1
+}
+TERRAIN_IMPROVEMENT_SYNTHETIC_FARM {
+ Description TERRAIN_IMPROVEMENT_SYNTHETIC_FARM
+ BuildTurns 1
+ PublicWorksCost 1
+ YieldFood 1
+}
+TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP {
+ Description TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP
+ BuildTurns 1
+ PublicWorksCost 1
+ PollutionDelta -2
+}

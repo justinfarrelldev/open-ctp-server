@@ -14,17 +14,19 @@ import (
 const calendarFinalTurn = 48
 
 type RuntimeRules struct {
-	CompatibilityVersion string                     `json:"compatibility_version"`
-	ContentHash          string                     `json:"content_hash"`
-	Victory              []RuntimeVictory           `json:"victory"`
-	Calendar             RuntimeCalendar            `json:"calendar"`
-	Gaia                 RuntimeGaia                `json:"gaia"`
-	Production           []RuntimeProduction        `json:"production"`
-	Effects              []RuntimeEffect            `json:"effects"`
-	Starter              RuntimeStarter             `json:"starter"`
-	Movement             RuntimeMovement            `json:"movement"`
-	Advances             []RuntimeAdvanceDefinition `json:"advances,omitempty"`
-	Units                []RuntimeUnitDefinition    `json:"units"`
+	CompatibilityVersion string                                `json:"compatibility_version"`
+	ContentHash          string                                `json:"content_hash"`
+	Victory              []RuntimeVictory                      `json:"victory"`
+	Calendar             RuntimeCalendar                       `json:"calendar"`
+	Gaia                 RuntimeGaia                           `json:"gaia"`
+	Production           []RuntimeProduction                   `json:"production"`
+	Effects              []RuntimeEffect                       `json:"effects"`
+	Starter              RuntimeStarter                        `json:"starter"`
+	Movement             RuntimeMovement                       `json:"movement"`
+	Advances             []RuntimeAdvanceDefinition            `json:"advances,omitempty"`
+	TerrainImprovements  []RuntimeTerrainImprovementDefinition `json:"terrain_improvements,omitempty"`
+	PollutionSources     []RuntimePollutionSourceDefinition    `json:"pollution_sources,omitempty"`
+	Units                []RuntimeUnitDefinition               `json:"units"`
 }
 
 // RuntimeAdvanceDefinition is the bounded synthetic technology model. It keeps
@@ -60,6 +62,23 @@ type RuntimeUnitDefinition struct {
 	Effects           []RuntimeStarterEffect `json:"effects,omitempty"`
 }
 
+type RuntimeTerrainImprovementDefinition struct {
+	ID                string `json:"id"`
+	BuildTurns        int    `json:"build_turns"`
+	PublicWorksCost   int    `json:"public_works_cost"`
+	MovementCostDelta int    `json:"movement_cost_delta,omitempty"`
+	YieldFood         int    `json:"yield_food,omitempty"`
+	YieldProduction   int    `json:"yield_production,omitempty"`
+	YieldGold         int    `json:"yield_gold,omitempty"`
+	PollutionDelta    int    `json:"pollution_delta,omitempty"`
+}
+
+type RuntimePollutionSourceDefinition struct {
+	ID              string `json:"id"`
+	PollutionPoints int    `json:"pollution_points"`
+	EffectScope     string `json:"effect_scope"`
+}
+
 type RuntimeMovement struct {
 	Configured       bool             `json:"configured"`
 	PolicyConfigured bool             `json:"-"`
@@ -93,6 +112,14 @@ func (runtime RuntimeRules) Advance(id string) (RuntimeAdvanceDefinition, bool) 
 		return RuntimeAdvanceDefinition{}, false
 	}
 	return runtime.Advances[index], true
+}
+
+func (runtime RuntimeRules) TerrainImprovement(id string) (RuntimeTerrainImprovementDefinition, bool) {
+	index := sort.Search(len(runtime.TerrainImprovements), func(index int) bool { return runtime.TerrainImprovements[index].ID >= id })
+	if index == len(runtime.TerrainImprovements) || runtime.TerrainImprovements[index].ID != id {
+		return RuntimeTerrainImprovementDefinition{}, false
+	}
+	return runtime.TerrainImprovements[index], true
 }
 
 func (runtime RuntimeRules) Unit(id string) (RuntimeUnitDefinition, bool) {
@@ -269,6 +296,8 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 	if err := validateRuntimeAdvances(runtime.Advances); err != nil {
 		return RuntimeRules{}, err
 	}
+	sort.Slice(runtime.TerrainImprovements, func(i, j int) bool { return runtime.TerrainImprovements[i].ID < runtime.TerrainImprovements[j].ID })
+	sort.Slice(runtime.PollutionSources, func(i, j int) bool { return runtime.PollutionSources[i].ID < runtime.PollutionSources[j].ID })
 	sort.Slice(runtime.Units, func(i, j int) bool { return runtime.Units[i].ID < runtime.Units[j].ID })
 	starterUnit, ok := runtime.Unit("UNIT_SYNTHETIC")
 	if !ok {
@@ -298,6 +327,10 @@ func ServerOwnedSyntheticRuleset(victoryEvaluatorIDs ...string) (Ruleset, error)
 		{Kind: "terrain", ID: "ocean", Tags: map[string]string{"MovementCost": "1", "MovementDomains": "amphibious,sea"}},
 		{Kind: "terrain", ID: "plains", Tags: map[string]string{"MovementCost": "1", "MovementDomains": "amphibious,land"}},
 		{Kind: "movement", ID: "MOVEMENT_SYNTHETIC", Tags: map[string]string{"OpenAccess": "true", "ZOCStopsPath": "true"}},
+		{Kind: "terrain_improvement", ID: "TERRAIN_IMPROVEMENT_SYNTHETIC_ROAD", Tags: map[string]string{"Description": "TERRAIN_IMPROVEMENT_SYNTHETIC_ROAD", "BuildTurns": "1", "PublicWorksCost": "1", "MovementCostDelta": "-1"}},
+		{Kind: "terrain_improvement", ID: "TERRAIN_IMPROVEMENT_SYNTHETIC_FARM", Tags: map[string]string{"Description": "TERRAIN_IMPROVEMENT_SYNTHETIC_FARM", "BuildTurns": "1", "PublicWorksCost": "1", "YieldFood": "1"}},
+		{Kind: "terrain_improvement", ID: "TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP", Tags: map[string]string{"Description": "TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP", "BuildTurns": "1", "PublicWorksCost": "1", "PollutionDelta": "-2"}},
+		{Kind: "pollution_source", ID: "POLLUTION_SOURCE_SYNTHETIC_FACTORY", Tags: map[string]string{"Description": "POLLUTION_SOURCE_SYNTHETIC_FACTORY", "PollutionPoints": "2", "EffectScope": "city"}},
 		{Kind: "advance", ID: "ADVANCE_SYNTHETIC_ROOT", Tags: map[string]string{"Description": "ADVANCE_SYNTHETIC_ROOT", "Cost": "2"}},
 		{Kind: "advance", ID: "ADVANCE_SYNTHETIC_UNLOCK", Tags: map[string]string{"Description": "ADVANCE_SYNTHETIC_UNLOCK", "Cost": "2", "PrerequisiteAdvanceIDs": "ADVANCE_SYNTHETIC_ROOT"}},
 		{Kind: "unit", ID: "UNIT_SYNTHETIC", Tags: map[string]string{"Description": "UNIT_SYNTHETIC", "Role": "starter", "Domain": "land", "MaxMovePoints": "2", "Attack": "4", "Defense": "4", "Strength": "4", "Armor": "2", "Health": "10", "ZOC": "true", "VisibilityRange": "2", "Effects": "settler,special_embassy,special_steal:100,special_capture:0,special_terraform:1,special_terraform_turns:1"}},
@@ -347,6 +380,18 @@ func compileRecord(runtime *RuntimeRules, record Record) error {
 	case "wonder":
 		runtime.Production = append(runtime.Production, RuntimeProduction{ID: record.ID, Kind: "wonder"})
 		runtime.Effects = append(runtime.Effects, RuntimeEffect{ID: record.ID, Kind: "wonder"})
+	case "terrain_improvement":
+		improvement, err := compileTerrainImprovementDefinition(record)
+		if err != nil {
+			return err
+		}
+		runtime.TerrainImprovements = append(runtime.TerrainImprovements, improvement)
+	case "pollution_source":
+		source, err := compilePollutionSourceDefinition(record)
+		if err != nil {
+			return err
+		}
+		runtime.PollutionSources = append(runtime.PollutionSources, source)
 	case "terrain":
 		if _, ok := record.Tags["MovementCost"]; !ok {
 			return nil
@@ -416,6 +461,53 @@ func compileAdvanceDefinition(record Record) (RuntimeAdvanceDefinition, error) {
 		return RuntimeAdvanceDefinition{}, err
 	}
 	return RuntimeAdvanceDefinition{ID: record.ID, Cost: cost, Prerequisites: prerequisites}, nil
+}
+
+func compileTerrainImprovementDefinition(record Record) (RuntimeTerrainImprovementDefinition, error) {
+	buildTurns, err := positiveInteger(record, "BuildTurns")
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	publicWorksCost, err := positiveInteger(record, "PublicWorksCost")
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	movementCostDelta, err := optionalInteger(record, "MovementCostDelta", 0)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	yieldFood, err := optionalInteger(record, "YieldFood", 0)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	yieldProduction, err := optionalInteger(record, "YieldProduction", 0)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	yieldGold, err := optionalInteger(record, "YieldGold", 0)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	pollutionDelta, err := optionalInteger(record, "PollutionDelta", 0)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	if movementCostDelta == 0 && yieldFood == 0 && yieldProduction == 0 && yieldGold == 0 && pollutionDelta == 0 {
+		return RuntimeTerrainImprovementDefinition{}, fmt.Errorf("rules definition record %q has no terrain improvement effect", record.ID)
+	}
+	return RuntimeTerrainImprovementDefinition{ID: record.ID, BuildTurns: buildTurns, PublicWorksCost: publicWorksCost, MovementCostDelta: movementCostDelta, YieldFood: yieldFood, YieldProduction: yieldProduction, YieldGold: yieldGold, PollutionDelta: pollutionDelta}, nil
+}
+
+func compilePollutionSourceDefinition(record Record) (RuntimePollutionSourceDefinition, error) {
+	points, err := positiveInteger(record, "PollutionPoints")
+	if err != nil {
+		return RuntimePollutionSourceDefinition{}, err
+	}
+	scope := record.Tags["EffectScope"]
+	if scope != "city" && scope != "nation" && scope != "global" {
+		return RuntimePollutionSourceDefinition{}, fmt.Errorf("rules definition record %q has invalid EffectScope", record.ID)
+	}
+	return RuntimePollutionSourceDefinition{ID: record.ID, PollutionPoints: points, EffectScope: scope}, nil
 }
 
 func validateRuntimeAdvances(advances []RuntimeAdvanceDefinition) error {
@@ -668,6 +760,18 @@ func optionalNonNegativeInteger(record Record, tag string, fallback int) (int, e
 		return fallback, nil
 	}
 	return nonNegativeInteger(record, tag)
+}
+
+func optionalInteger(record Record, tag string, fallback int) (int, error) {
+	value, ok := record.Tags[tag]
+	if !ok {
+		return fallback, nil
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, fmt.Errorf("rules definition record %q has invalid %s", record.ID, tag)
+	}
+	return parsed, nil
 }
 
 func optionalBool(record Record, tag string, fallback bool) (bool, error) {

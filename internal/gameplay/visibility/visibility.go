@@ -22,13 +22,14 @@ const (
 )
 
 type TileProjection struct {
-	ID       string        `json:"id"`
-	X        int           `json:"x"`
-	Y        int           `json:"y"`
-	Terrain  string        `json:"terrain"`
-	Stale    bool          `json:"stale"`
-	Observed int           `json:"observed_turn"`
-	Planning *TilePlanning `json:"planning,omitempty"`
+	ID        string        `json:"id"`
+	X         int           `json:"x"`
+	Y         int           `json:"y"`
+	Terrain   string        `json:"terrain"`
+	Pollution int           `json:"pollution,omitempty"`
+	Stale     bool          `json:"stale"`
+	Observed  int           `json:"observed_turn"`
+	Planning  *TilePlanning `json:"planning,omitempty"`
 }
 
 type TilePlanning struct {
@@ -164,7 +165,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	}
 	for _, tile := range state.Tiles {
 		if visible[tile.ID] {
-			result.Tiles = append(result.Tiles, TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: tile.Terrain, Observed: state.Phase.Turn, Planning: planning[tile.ID]})
+			result.Tiles = append(result.Tiles, TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: tile.Terrain, Pollution: tile.Pollution, Observed: state.Phase.Turn, Planning: planning[tile.ID]})
 			continue
 		}
 		if observation, ok := memory[tile.ID]; ok {
@@ -313,7 +314,7 @@ func planningTiles(state engine.State, playerID string, visible map[string]bool)
 			return nil, errors.New("visible tile terrain is unavailable to the runtime movement model")
 		}
 		result[tile.ID] = &TilePlanning{
-			Cost:       terrain.Cost,
+			Cost:       projectedTerrainCost(state, tile.ID, terrain.Cost),
 			Domains:    append([]string(nil), terrain.Domains...),
 			Accessible: tile.OwnerID == "" || tile.OwnerID == playerID || (runtime.Movement.OpenAccess && tile.Open),
 		}
@@ -334,6 +335,19 @@ func planningTiles(state engine.State, playerID string, visible map[string]bool)
 		}
 	}
 	return result, nil
+}
+
+func projectedTerrainCost(state engine.State, tileID string, base int) int {
+	cost := base
+	for _, overlay := range state.Overlays {
+		if overlay.TileID == tileID && overlay.Kind == "improvement" && overlay.Remaining == 0 {
+			cost += overlay.MovementCostDelta
+		}
+	}
+	if cost < 1 {
+		return 1
+	}
+	return cost
 }
 
 func Plan(projection Projection, unitID, targetTileID string) ([]string, error) {

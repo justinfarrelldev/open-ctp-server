@@ -1,0 +1,12 @@
+# Task 8 terrain public works evidence
+# 2026-09-22T18:01:08-04:00
+
+## Source alignment
+See .sisyphus/evidence/ctp2-systems-task-8-source-inventory.md
+
+## Happy path tests
+Command: GOMAXPROCS=4 go test ./internal/gameplay/rules ./internal/gameplay/engine ./internal/gameplay/visibility ./internal/gameplay/http -run "TestTask8PublicWorksImprovementChangesMovementYieldAndPollution|TestTask8ProjectionShowsOnlyVisiblePollution|TestCompileRuntimeBuildsClosedDeterministicModel|TestHTTPRequestValidation" -count=1
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules	0.004s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.036s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.003s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/http	0.002s [no tests to run]
