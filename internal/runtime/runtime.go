@@ -119,5 +119,5 @@ func New(db *sqlx.DB, config Config) *Runtime {
 	deadlines.AfterCommit = dispatcher.DispatchOnce
 	pendingTakeovers := gameplayservice.NewPendingTakeoverWorker(service)
 	pendingTakeovers.AfterCommit = dispatcher.DispatchOnce
-	return &Runtime{Handler: mux, Dispatcher: dispatcher, Deadlines: deadlines, PendingTakeovers: pendingTakeovers, AIDriver: ai.NewDriver(gateway, gateway, ai.Config{ActionBudget: 1, History: gateway, Observe: config.ObserveAICommand})}
+	return &Runtime{Handler: mux, Dispatcher: dispatcher, Deadlines: deadlines, PendingTakeovers: pendingTakeovers, AIDriver: ai.NewDriver(gateway, gateway, ai.Config{ActionBudget: 1, History: gateway, Observe: config.ObserveAICommand, CloseoutAfterAction: true})}
 }

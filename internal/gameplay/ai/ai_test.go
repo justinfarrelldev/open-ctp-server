@@ -514,6 +514,7 @@ func TestDriverIsDeterministicIdempotentAndBounded(t *testing.T) {
 
 func TestDriverRebuildsIdenticalHistoryAwareTranscriptAfterRestart(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
+		PlanningStatus: visibility.PlanningStatusOpen,
 		Tiles: []visibility.TileProjection{
 			{ID: "origin", X: 0, Y: 0, Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{"land"}, Accessible: true}},
 			{ID: "visited", X: -1, Y: 0, Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{"land"}, Accessible: true}},

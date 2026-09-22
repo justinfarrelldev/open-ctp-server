@@ -12,14 +12,16 @@ type diplomaticActionKind string
 const (
 	diplomaticMove    diplomaticActionKind = "move"
 	diplomaticEmbassy diplomaticActionKind = "establish-embassy"
+	diplomaticRespond diplomaticActionKind = "respond-agreement"
 )
 
 type diplomaticAction struct {
-	kind   diplomaticActionKind
-	unitID string
-	cityID string
-	fromID string
-	path   []string
+	kind       diplomaticActionKind
+	unitID     string
+	cityID     string
+	proposalID string
+	fromID     string
+	path       []string
 }
 
 type humanDiplomacyScheduler struct {
@@ -59,6 +61,15 @@ func (s *humanDiplomacyScheduler) recordSuccess(action diplomaticAction) {
 func (s *humanDiplomacyScheduler) nextAction(projection visibility.Projection, humanPlayer string) (diplomaticAction, bool) {
 	if !s.remaining() || humanPlayer == "" {
 		return diplomaticAction{}, false
+	}
+	if projection.Diplomacy != nil {
+		proposals := append([]visibility.DiplomacyProposalProjection(nil), projection.Diplomacy.Proposals...)
+		sort.Slice(proposals, func(i, j int) bool { return proposals[i].ID < proposals[j].ID })
+		for _, proposal := range proposals {
+			if proposal.ToPlayerID == humanPlayer {
+				return diplomaticAction{kind: diplomaticRespond, proposalID: proposal.ID}, true
+			}
+		}
 	}
 	units := eligibleDiplomacyUnits(projection.Units, humanPlayer)
 	knownEmbassies := make(map[string]bool, len(projection.EmbassyPlayerIDs))

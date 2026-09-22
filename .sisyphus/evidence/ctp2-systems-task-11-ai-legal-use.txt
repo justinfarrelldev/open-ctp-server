@@ -1,0 +1,33 @@
+# Task 11 AI legal-use evidence
+# 2026-09-22T18:49:00-04:00
+
+## Source alignment
+See .sisyphus/evidence/ctp2-systems-task-11-source-inventory.md. Original CTP2 source was rechecked before/after implementation at:
+- ctp2_code/ai/ctpai.cpp:1367, :2588
+- ctp2_code/gs/gameobj/Player.cpp:3821, :4164, :5630+
+- ctp2_code/gs/gameobj/UnitData.cpp:819, :839
+
+## Task 11 targeted validation
+Command: GOMAXPROCS=4 go test ./internal/gameplay/ai ./internal/gameplay/visibility ./internal/gameplay/service ./internal/e2e/boundary -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai
+ok   github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility
+ok   github.com/justinfarrelldev/open-ctp-server/internal/gameplay/service
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/boundary
+
+Command: GOMAXPROCS=4 go test ./internal/e2e/puppet -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/puppet
+
+Command: GOMAXPROCS=4 go test ./internal/e2e/freeze -run '^TestEngineLock$' -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze
+
+Command: GOMAXPROCS=4 go test ./internal/e2e/freeze -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze
+
+Command: GOMAXPROCS=4 go test ./internal/e2e/fullgame -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame
+
+Command: GOMAXPROCS=4 go test ./internal/gameplay/... -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/gameplay/...
+
+Command: git diff --check
+(no output)

@@ -450,6 +450,13 @@ func advanceHumanDiplomacy(ctx context.Context, transport *HTTPExplorationTransp
 			}); err != nil {
 				return err
 			}
+		case diplomaticRespond:
+			if _, err := transport.Command(ctx, "respond-agreement", map[string]json.RawMessage{
+				"proposal_id": json.RawMessage(fmt.Sprintf("%q", action.proposalID)),
+				"accept":      json.RawMessage(`true`),
+			}); err != nil {
+				return err
+			}
 		default:
 			return errors.New("diplomatic scheduler selected an unknown action")
 		}
@@ -1463,7 +1470,7 @@ func driveScriptedHuman(ctx context.Context, client onboarding.HTTPClient, scena
 	return accepted + 1, nil
 }
 
-func driveAIPlayers(ctx context.Context, runtime *onboarding.PublicRuntime, transport *HTTPExplorationTransport, gameID int64, aiPlayers []string, transcript *[]aiTranscriptEntry) (int, string, error) {
+func driveAIPlayers(ctx context.Context, runtime *onboarding.PublicRuntime, transport *HTTPExplorationTransport, gameID int64, aiPlayers []string, transcript *[]aiTranscriptEntry, maxCommands int) (int, string, error) {
 	commands := 0
 	progressed := false
 	expectedRevision := transport.Revision
@@ -1471,6 +1478,9 @@ func driveAIPlayers(ctx context.Context, runtime *onboarding.PublicRuntime, tran
 	zeroCommandPlayers := make([]string, 0, len(aiPlayers))
 	ignoredErrors := make([]string, 0, len(aiPlayers))
 	for _, player := range aiPlayers {
+		if maxCommands > 0 && commands >= maxCommands {
+			break
+		}
 		transcriptStart := len(*transcript)
 		result, err := runtime.Driver.Drive(ctx, gameID, player, expectedRevision)
 		if errors.Is(err, ai.ErrTerminal) {
@@ -1656,7 +1666,7 @@ func runMixedControllerCampaign(ctx context.Context, scheduler *mixedControllerS
 			continue
 		}
 		if len(aiPlayers) > 0 && (planningMode || !progressed) {
-			commands, actor, err := driveAIPlayers(ctx, *scheduler.runtime, scheduler.transport, scheduler.setup.GameID, aiPlayers, scheduler.transcript)
+			commands, actor, err := driveAIPlayers(ctx, *scheduler.runtime, scheduler.transport, scheduler.setup.GameID, aiPlayers, scheduler.transcript, scheduler.scenario.Budgets.Commands-totalAccepted)
 			aiCommands += commands
 			totalAccepted += commands
 			if actor != "" {

@@ -1,0 +1,8 @@
+# Task 11 AI failure/guard evidence
+# 2026-09-22T18:28:24-04:00
+
+## Projection-only and gateway guard tests
+Command: GOMAXPROCS=4 go test ./internal/gameplay/ai ./internal/gameplay/service ./internal/e2e/boundary -run "TestPlannerUsesOnlyProjection|TestDriverCancelsTerminalAndConcurrentDuplicateJobs|TestAIGatewayProjectionExcludesHiddenCanonicalCanaryBeforePlanning|TestProductionAIGatewayRemainsSeparateFromHumanCommandExecution" -count=1
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai	0.004s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/service	0.006s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/boundary	0.002s

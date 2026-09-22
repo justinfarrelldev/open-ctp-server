@@ -57,9 +57,10 @@ type Gateway interface {
 }
 
 type Config struct {
-	ActionBudget int
-	History      ExplorationHistorySource
-	Observe      func(Submission)
+	ActionBudget        int
+	History             ExplorationHistorySource
+	Observe             func(Submission)
+	CloseoutAfterAction bool
 }
 
 type Candidate struct {
@@ -77,13 +78,14 @@ type Result struct {
 }
 
 type Driver struct {
-	projections ProjectionSource
-	gateway     Gateway
-	history     ExplorationHistorySource
-	budget      int
-	observe     func(Submission)
-	mu          sync.Mutex
-	active      map[int64]bool
+	projections         ProjectionSource
+	gateway             Gateway
+	history             ExplorationHistorySource
+	budget              int
+	observe             func(Submission)
+	closeoutAfterAction bool
+	mu                  sync.Mutex
+	active              map[int64]bool
 }
 
 type closeoutProjection struct {
@@ -96,7 +98,7 @@ func NewDriver(projections ProjectionSource, gateway Gateway, config Config) *Dr
 	if budget < 1 {
 		budget = 1
 	}
-	return &Driver{projections: projections, gateway: gateway, history: config.History, budget: budget, observe: config.Observe, active: make(map[int64]bool)}
+	return &Driver{projections: projections, gateway: gateway, history: config.History, budget: budget, observe: config.Observe, closeoutAfterAction: config.CloseoutAfterAction, active: make(map[int64]bool)}
 }
 
 func (d *Driver) observeSubmission(submission Submission) {
@@ -184,6 +186,12 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 		fallbackType = engine.CommandRoundComplete
 	}
 	candidates := []Candidate{{Type: fallbackType, EntityID: playerID, Score: 100, Payload: json.RawMessage(`{}`)}}
+	candidates = append(candidates, researchCandidates(projection, playerID)...)
+	candidates = append(candidates, governmentCandidates(projection, playerID)...)
+	candidates = append(candidates, diplomacyCandidates(projection, playerID)...)
+	candidates = append(candidates, combatCandidates(projection, playerID)...)
+	candidates = append(candidates, transportCandidates(projection, playerID)...)
+	candidates = append(candidates, terrainImprovementCandidates(projection, playerID)...)
 	embassy := embassyCandidates(projection, playerID, visited)
 	candidates = append(candidates, embassy...)
 	if len(embassy) == 0 {
@@ -197,22 +205,196 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 		if unit.OwnerID != playerID {
 			continue
 		}
-		if !hasCity && unit.ArmyID == "" && hasEffect(unit.Effects, engine.EffectSettler) {
-			candidates = append(candidates, candidate(engine.CommandFoundCity, unit.ID, unit.TileID, 300, map[string]string{"unit_id": unit.ID, "city_id": "ai-city-" + unit.ID, "name": "AI-" + playerID}))
+		if !hasCity && unit.ArmyID == "" && unit.TransportID == "" && unit.TileID != "" && hasEffect(unit.Effects, engine.EffectSettler) {
+			candidates = append(candidates, candidate(engine.CommandFoundCity, unit.ID, unit.TileID, 900, map[string]string{"unit_id": unit.ID, "city_id": "ai-city-" + unit.ID, "name": "AI-" + playerID}))
 		}
-		if unit.ArmyID == "" {
-			candidates = append(candidates, candidate(engine.CommandArmyCreate, unit.ID, "", 200, map[string]any{"army_id": "ai-army-" + unit.ID, "unit_ids": []string{unit.ID}}))
+		if unit.ArmyID == "" && unit.TransportID == "" && unit.TileID != "" {
+			candidates = append(candidates, candidate(engine.CommandArmyCreate, unit.ID, "", 180, map[string]any{"army_id": "ai-army-" + unit.ID, "unit_ids": []string{unit.ID}}))
 		}
-		candidates = append(candidates, candidate(engine.CommandFortify, unit.ID, unit.TileID, 20, map[string]string{"unit_id": unit.ID}))
-		for _, tile := range projection.Tiles {
-			if tile.ID == unit.TileID {
-				continue
-			}
-			candidates = append(candidates, candidate(engine.CommandMoveUnit, unit.ID, tile.ID, 10, map[string]any{"unit_id": unit.ID, "path": []string{tile.ID}}))
+		if unit.TransportID == "" && unit.TileID != "" {
+			candidates = append(candidates, candidate(engine.CommandFortify, unit.ID, unit.TileID, 20, map[string]string{"unit_id": unit.ID}))
 		}
 	}
+	candidates = append(candidates, productionCandidates(projection, playerID)...)
 	sort.Slice(candidates, func(i, j int) bool { return Compare(candidates[i], candidates[j]) < 0 })
 	return candidates, nil
+}
+
+func researchCandidates(projection visibility.Projection, playerID string) []Candidate {
+	if projection.Research == nil || projection.Research.TargetID != "" || len(projection.Research.Available) == 0 {
+		return nil
+	}
+	available := append([]string(nil), projection.Research.Available...)
+	sort.Strings(available)
+	advanceID := available[0]
+	return []Candidate{candidate(engine.CommandSetResearch, playerID, advanceID, 800, map[string]string{"advance_id": advanceID})}
+}
+
+func governmentCandidates(projection visibility.Projection, playerID string) []Candidate {
+	if projection.Diplomacy == nil || projection.Diplomacy.GovernmentID != "" || projection.Research == nil || !containsString(projection.Research.Advances, "ADVANCE_SYNTHETIC_ROOT") {
+		return nil
+	}
+	return []Candidate{candidate(engine.CommandSetGovernment, playerID, "GOVERNMENT_SYNTHETIC_REPUBLIC", 760, map[string]string{"government_id": "GOVERNMENT_SYNTHETIC_REPUBLIC"})}
+}
+
+func diplomacyCandidates(projection visibility.Projection, playerID string) []Candidate {
+	if projection.Diplomacy == nil {
+		return nil
+	}
+	candidates := make([]Candidate, 0)
+	pending := make(map[string]bool, len(projection.Diplomacy.Proposals))
+	for _, proposal := range projection.Diplomacy.Proposals {
+		if proposal.Kind != "" && proposal.FromPlayerID != "" && proposal.ToPlayerID != "" {
+			pending[proposal.Kind+"\x00"+proposal.FromPlayerID+"\x00"+proposal.ToPlayerID] = true
+			pending[proposal.Kind+"\x00"+proposal.ToPlayerID+"\x00"+proposal.FromPlayerID] = true
+		}
+		if proposal.ToPlayerID == playerID {
+			candidates = append(candidates, candidate(engine.CommandRespondAgreement, proposal.ID, proposal.Kind, 740, map[string]any{"proposal_id": proposal.ID, "accept": true}))
+		}
+	}
+	for _, relation := range projection.Diplomacy.Relations {
+		if relation.TargetPlayerID == "" || relation.Treaty == "union" || pending["union\x00"+playerID+"\x00"+relation.TargetPlayerID] {
+			continue
+		}
+		proposalID := "ai-union-" + playerID + "-" + relation.TargetPlayerID
+		candidates = append(candidates, candidate(engine.CommandProposeAgreement, relation.TargetPlayerID, "union", 430, map[string]string{"proposal_id": proposalID, "target_player_id": relation.TargetPlayerID, "kind": "union"}))
+	}
+	return candidates
+}
+
+func combatCandidates(projection visibility.Projection, playerID string) []Candidate {
+	tiles := projectionTiles(projection)
+	seen := map[string]bool{}
+	candidates := make([]Candidate, 0)
+	for _, attacker := range projection.Units {
+		if attacker.OwnerID != playerID || attacker.ArmyID == "" || attacker.TransportID != "" || attacker.TileID == "" || attacker.Attack <= 0 {
+			continue
+		}
+		attackerTile, ok := tiles[attacker.TileID]
+		if !ok {
+			continue
+		}
+		for _, defender := range projection.Units {
+			if defender.OwnerID == playerID || defender.ArmyID == "" || defender.TileID == "" || defender.TransportID != "" {
+				continue
+			}
+			defenderTile, ok := tiles[defender.TileID]
+			if !ok || !adjacent(attackerTile, defenderTile) || !combatDomainsCompatible(attacker, defender) {
+				continue
+			}
+			key := attacker.ArmyID + "\x00" + defender.ArmyID
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			candidates = append(candidates, candidate(engine.CommandCombat, attacker.ArmyID, defender.ArmyID, 700, map[string]string{"attacker_army_id": attacker.ArmyID, "defender_army_id": defender.ArmyID}))
+		}
+	}
+	return candidates
+}
+
+func transportCandidates(projection visibility.Projection, playerID string) []Candidate {
+	tiles := projectionTiles(projection)
+	units := projectionUnits(projection)
+	candidates := make([]Candidate, 0)
+	for _, unit := range projection.Units {
+		if unit.OwnerID != playerID {
+			continue
+		}
+		if unit.TransportID != "" {
+			transport, ok := units[unit.TransportID]
+			transportTile, tileOK := tiles[transport.TileID]
+			if !ok || !tileOK || unit.Movement < 1 {
+				continue
+			}
+			for _, tile := range projection.Tiles {
+				if tile.Stale || !adjacent(transportTile, tile) || tile.Planning == nil || !tile.Planning.Accessible || !containsString(tile.Planning.Domains, unit.Domain) || tile.Planning.EnemyZOC {
+					continue
+				}
+				candidates = append(candidates, candidate(engine.CommandDisembark, unit.ID, tile.ID, 600, map[string]string{"unit_id": unit.ID, "tile_id": tile.ID}))
+			}
+			continue
+		}
+		if unit.TileID == "" || unit.ArmyID != "" {
+			continue
+		}
+		for _, transport := range projection.Units {
+			if transport.OwnerID != playerID || transport.ID == unit.ID || transport.TileID != unit.TileID || transport.TransportID != "" || transport.CargoCapacity <= cargoCount(projection, transport.ID) || !containsString(transport.CargoDomains, unit.Domain) {
+				continue
+			}
+			candidates = append(candidates, candidate(engine.CommandEmbark, unit.ID, transport.ID, 600, map[string]string{"unit_id": unit.ID, "transport_id": transport.ID}))
+		}
+	}
+	return candidates
+}
+
+func terrainImprovementCandidates(projection visibility.Projection, playerID string) []Candidate {
+	if projection.Diplomacy == nil || projection.Diplomacy.PublicWorks < 1 {
+		return nil
+	}
+	tiles := projectionTiles(projection)
+	candidates := make([]Candidate, 0)
+	for _, unit := range projection.Units {
+		if unit.OwnerID != playerID || unit.TransportID != "" || unit.TileID == "" || unit.Movement < 1 || !hasEffect(unit.Effects, engine.EffectSpecialTerraform) {
+			continue
+		}
+		origin, ok := tiles[unit.TileID]
+		if !ok {
+			continue
+		}
+		for _, tile := range projection.Tiles {
+			if tile.Stale || !adjacent(origin, tile) {
+				continue
+			}
+			if tile.Pollution <= 0 {
+				continue
+			}
+			candidates = append(candidates, candidate(engine.CommandBuildImprovement, unit.ID, tile.ID, 620, map[string]string{"unit_id": unit.ID, "tile_id": tile.ID, "improvement_id": "TERRAIN_IMPROVEMENT_SYNTHETIC_CLEANUP"}))
+		}
+	}
+	return candidates
+}
+
+func productionCandidates(projection visibility.Projection, playerID string) []Candidate {
+	candidates := make([]Candidate, 0)
+	for _, city := range projection.Cities {
+		if city.OwnerID != playerID || city.Stale || len(city.Queue) != 0 {
+			continue
+		}
+		item := engine.ProductionItem{ID: "ai-unit-" + city.ID, Kind: engine.ProductionUnit, Cost: 1}
+		candidates = append(candidates, candidate(engine.CommandQueueProduction, city.ID, item.ID, 90, map[string]any{"city_id": city.ID, "item": item}))
+	}
+	return candidates
+}
+
+func projectionTiles(projection visibility.Projection) map[string]visibility.TileProjection {
+	tiles := make(map[string]visibility.TileProjection, len(projection.Tiles))
+	for _, tile := range projection.Tiles {
+		tiles[tile.ID] = tile
+	}
+	return tiles
+}
+
+func projectionUnits(projection visibility.Projection) map[string]visibility.UnitProjection {
+	units := make(map[string]visibility.UnitProjection, len(projection.Units))
+	for _, unit := range projection.Units {
+		units[unit.ID] = unit
+	}
+	return units
+}
+
+func cargoCount(projection visibility.Projection, transportID string) int {
+	count := 0
+	for _, unit := range projection.Units {
+		if unit.TransportID == transportID {
+			count++
+		}
+	}
+	return count
+}
+
+func combatDomainsCompatible(attacker, defender visibility.UnitProjection) bool {
+	return attacker.Domain == "" || defender.Domain == "" || attacker.Domain == defender.Domain || attacker.Domain == engine.DomainAmphibious || defender.Domain == engine.DomainAmphibious
 }
 
 func embassyCandidates(projection visibility.Projection, playerID string, visited map[string]bool) []Candidate {
@@ -482,6 +664,15 @@ func explorationLane(playerID string) int {
 	return -1
 }
 
+func containsString(values []string, value string) bool {
+	for _, candidate := range values {
+		if candidate == value {
+			return true
+		}
+	}
+	return false
+}
+
 func hasEffect(effects []engine.Effect, kind string) bool {
 	for _, effect := range effects {
 		if effect.Kind == kind {
@@ -633,8 +824,34 @@ func (d *Driver) Drive(ctx context.Context, gameID int64, playerID string, revis
 		if selected.Type == engine.CommandPass || selected.Type == engine.CommandRoundComplete {
 			break
 		}
+		if d.closeoutAfterAction {
+			closeout, ok := closeoutCandidate(candidates)
+			if !ok {
+				return Result{}, errors.New("AI planner returned no closeout candidate")
+			}
+			submitted, err := d.submitCandidate(ctx, gameID, playerID, result.Revision, closeout)
+			if err != nil {
+				return Result{}, err
+			}
+			result.Commands++
+			result.Revision = submitted.Revision
+			result.Replayed = result.Replayed || submitted.Replayed
+			if submitted.Terminal {
+				return result, ErrTerminal
+			}
+			break
+		}
 	}
 	return result, nil
+}
+
+func closeoutCandidate(candidates []Candidate) (Candidate, bool) {
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandPass || candidate.Type == engine.CommandRoundComplete {
+			return candidate, true
+		}
+	}
+	return Candidate{}, false
 }
 
 // Pass submits the AI controller's ordinary round-complete command through the same gateway.

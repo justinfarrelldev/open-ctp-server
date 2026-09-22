@@ -297,7 +297,9 @@ func scopedRequestContext(parent context.Context) (context.Context, context.Canc
 
 func publicCommand(name string) bool {
 	switch name {
-	case "army-create", "pass", "found-city", "queue-production", "establish-embassy", "steal-technology":
+	case "army-create", "pass", "found-city", "queue-production", "establish-embassy", "steal-technology",
+		"set-research", "set-government", "propose-agreement", "respond-agreement", "embark", "disembark",
+		"combat", "terraform", "build-improvement", "cancel-terraform", "cancel-production":
 		return true
 	default:
 		return false

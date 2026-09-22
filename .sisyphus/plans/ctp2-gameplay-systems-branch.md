@@ -569,7 +569,7 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
 
   **Commit**: YES | Message: `feat(gameplay): complete movement combat and transports` | Files: rules/engine/visibility/http/e2e tests and implementation
 
-- [ ] 11. Teach production AI basic legal use of each included gameplay family
+- [x] 11. Teach production AI basic legal use of each included gameplay family
 
   **What to do**: Expand `ai.PlanWithHistory` and `Driver.Drive` so production AI can choose legal public-projection-based actions for included mechanics: research selection/closeout, production queue, city founding/management, movement/exploration, embassy/diplomacy/trade, terrain improvements/public works, transport/combat when visible, and graceful policy closeout. Score candidates deterministically with stable tie-breakers and bounded history.
   **Must NOT do**: give AI hidden canonical state, row-specific scripts/objectives, direct service submissions outside `ExecuteAICommand`, or competence claims beyond basic legal use.
@@ -588,11 +588,11 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
   - Visibility AI input: `internal/gameplay/visibility/visibility.go` `AIInput`.
 
   **Acceptance Criteria**:
-  - [ ] AI has at least one deterministic legal candidate for every included mechanic when public prerequisites are visible.
-  - [ ] AI chooses policy closeout instead of illegal repeated actions in simultaneous/hybrid planning.
-  - [ ] AI candidate ordering is stable and covered by table tests.
-  - [ ] AI submissions are observed only through production gateway provenance.
-  - [ ] Hidden-state canary is absent from raw AI input bytes for every tested family.
+  - [x] AI has at least one deterministic legal candidate for every included mechanic when public prerequisites are visible.
+  - [x] AI chooses policy closeout instead of illegal repeated actions in simultaneous/hybrid planning.
+  - [x] AI candidate ordering is stable and covered by table tests.
+  - [x] AI submissions are observed only through production gateway provenance.
+  - [x] Hidden-state canary is absent from raw AI input bytes for every tested family.
 
   **QA Scenarios**:
   ```
