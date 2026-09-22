@@ -1,0 +1,7 @@
+# Task 7 city economy failure evidence
+# 2026-09-22T17:49:59-04:00
+
+## Failure/edge tests
+Command: GOMAXPROCS=4 go test ./internal/gameplay/engine ./internal/gameplay/visibility -run "TestTask10ProductionAndEffectFailureVectors|TestTask10CityCommandAuthorizationAndQueueRejections|TestTask7ProjectionExposesOwnedCityEconomyOnly" -count=1
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.004s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.003s

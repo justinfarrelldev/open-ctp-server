@@ -60,12 +60,16 @@ type UnitProjection struct {
 }
 
 type CityProjection struct {
-	ID       string          `json:"id"`
-	OwnerID  string          `json:"owner_id"`
-	TileID   string          `json:"tile_id"`
-	Effects  []engine.Effect `json:"effects,omitempty"`
-	Stale    bool            `json:"stale"`
-	Observed int             `json:"observed_turn"`
+	ID               string                  `json:"id"`
+	OwnerID          string                  `json:"owner_id"`
+	TileID           string                  `json:"tile_id"`
+	Effects          []engine.Effect         `json:"effects,omitempty"`
+	StoredProduction int                     `json:"stored_production,omitempty"`
+	Queue            []engine.ProductionItem `json:"queue,omitempty"`
+	Buildings        []engine.Building       `json:"buildings,omitempty"`
+	Yields           *engine.Yield           `json:"yields,omitempty"`
+	Stale            bool                    `json:"stale"`
+	Observed         int                     `json:"observed_turn"`
 }
 
 type ResearchProjection struct {
@@ -188,7 +192,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	}
 	for _, city := range state.Cities {
 		if visible[city.TileID] {
-			result.Cities = append(result.Cities, CityProjection{ID: city.ID, OwnerID: city.OwnerID, TileID: city.TileID, Effects: append([]engine.Effect(nil), city.Effects...), Observed: state.Phase.Turn})
+			result.Cities = append(result.Cities, projectCity(city, playerID, state.Phase.Turn))
 		}
 	}
 	sort.Slice(result.Tiles, func(i, j int) bool { return result.Tiles[i].ID < result.Tiles[j].ID })
@@ -196,6 +200,18 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	sort.Slice(result.Cities, func(i, j int) bool { return result.Cities[i].ID < result.Cities[j].ID })
 	sort.Strings(result.EmbassyPlayerIDs)
 	return result, nil
+}
+
+func projectCity(city engine.City, playerID string, observed int) CityProjection {
+	projection := CityProjection{ID: city.ID, OwnerID: city.OwnerID, TileID: city.TileID, Effects: append([]engine.Effect(nil), city.Effects...), Observed: observed}
+	if city.OwnerID == playerID {
+		projection.StoredProduction = city.StoredProduction
+		projection.Queue = append([]engine.ProductionItem(nil), city.Queue...)
+		projection.Buildings = append([]engine.Building(nil), city.Buildings...)
+		yields := city.Yields
+		projection.Yields = &yields
+	}
+	return projection
 }
 
 func researchProjection(state engine.State, nation engine.Nation) *ResearchProjection {

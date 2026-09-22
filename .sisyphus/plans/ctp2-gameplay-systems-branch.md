@@ -399,7 +399,7 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
 
   **Commit**: YES | Message: `feat(gameplay): model advances and unlock prerequisites` | Files: rules/runtime/engine/visibility/service/http tests and implementation
 
-- [ ] 7. Complete city economy, production, upkeep, buildings, wonders, and public works
+- [x] 7. Complete city economy, production, upkeep, buildings, wonders, and public works
 
   **What to do**: Extend city/nation economy from generic synthetic effects to a deterministic model for food, production, gold, science, public works, upkeep, building effects, wonder uniqueness/scope, queue validation, queue cancellation/refund policy, and starvation/maintenance failure behavior if included by the mechanic matrix.
   **Must NOT do**: mutate resources directly in tests, use wall-clock time, or copy retail costs/names.
@@ -418,11 +418,11 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
   - Public API: `internal/gameplay/http/http.go`, `internal/gameplay/service/service.go`.
 
   **Acceptance Criteria**:
-  - [ ] Economy calculations are deterministic, sorted, and covered by canonical state hashes.
-  - [ ] Buildings/wonders apply scoped effects and enforce global/national/city uniqueness as specified by synthetic records.
-  - [ ] Queue/cancel/upkeep failure cases are stable and idempotent.
-  - [ ] Public projection shows enough city/economy data for clients to render legal choices without hidden fields.
-  - [ ] Restart equality covers city queues, resources, buildings, wonders, and public works.
+  - [x] Economy calculations are deterministic, sorted, and covered by canonical state hashes.
+  - [x] Buildings/wonders apply scoped effects and enforce global/national/city uniqueness as specified by synthetic records.
+  - [x] Queue/cancel/upkeep failure cases are stable and idempotent.
+  - [x] Public projection shows enough city/economy data for clients to render legal choices without hidden fields.
+  - [x] Restart equality covers city queues, resources, buildings, wonders, and public works.
 
   **QA Scenarios**:
   ```
