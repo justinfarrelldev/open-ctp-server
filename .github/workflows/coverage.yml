@@ -19,6 +19,8 @@ jobs:
         run: go install
       - name: Check gameplay freeze
         run: GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 10m go test -timeout=8m -p=2 ./internal/e2e/freeze -count=1
+      - name: Check gameplay systems slice
+        run: GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/gameplay/... ./internal/e2e/onboarding ./internal/e2e/boundary ./internal/e2e/puppet -count=1
       - name: Check code coverage
         run: GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m sh -c 'coverage_file=$(mktemp); trap "rm -f \"$coverage_file\"" EXIT; go test -timeout=16m -p=2 ./internal/... -coverprofile="$coverage_file"; total_coverage=$(go tool cover -func="$coverage_file" | awk '\''/^total:/ {sub(/%/, "", $3); print $3}'\''); awk "BEGIN { exit !( $total_coverage > 80.0 ) }"'
       - name: Check gameplay engine coverage

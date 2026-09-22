@@ -1,0 +1,53 @@
+# Task 14 readiness report: bounded CTP2 gameplay systems slice
+# 2026-09-22T19:25:00-04:00
+
+## Scope statement
+This branch supports a bounded, server-owned gameplay systems slice suitable for public HTTP/SSE clients and deterministic tests. It does **not** claim full retail Call to Power II mechanic parity. Original CTP2 source was used to align ambiguous behavior where inspected, but runtime data is synthetic and intentionally limited.
+
+## Included systems
+- Runtime rules import/compile for synthetic CTP2 units, advances, governments, terrain improvements, movement metadata, and bounded effects.
+- Public projection/SSE contracts for visible tiles, owned/visible units, cities, research, diplomacy/government/public works, bounded rules metadata, legal-action metadata, and stable event envelopes.
+- Deterministic city economy, production queues/building completion, city yields, public works, terrain cleanup/terraform/improvement overlays, pollution clamping, and movement-cost effects.
+- Advances, prerequisites, research progress, government unlocks/effects, diplomacy contact/proposals/responses/treaties, embassies, special actions, movement, armies, combat, transports, and lifecycle/restart persistence.
+- Production AI that reads public projections and submits ordinary public commands through the gameplay gateway.
+- Cross-system product gates that run three public-client scenarios twice clean and once through restart.
+
+## Deferred/excluded systems
+- Full retail CTP2 rules database parity, complete unit/advance/government catalogs, and complete AI strategy parity.
+- 60-row campaign acceptance as a readiness signal. Row 09 was intentionally demoted; campaign-row expansion remains a later track.
+- Row 08 and other provisional rows remain fail-closed unless they receive immutable observed artifacts in a later acceptance track.
+- UI/browser automation; public API/SSE tests are direct HTTP/SSE tests.
+
+## Evidence index
+- Task 5/6 source/runtime: `.sisyphus/evidence/ctp2-systems-task-5-source-inventory.md`, `.sisyphus/evidence/ctp2-systems-task-6-source-inventory.md`
+- Task 7/8/9/10 source/runtime: `.sisyphus/evidence/ctp2-systems-task-7-source-inventory.md`, `...task-8...`, `...task-9...`, `...task-10...`
+- Task 11 AI legality: `.sisyphus/evidence/ctp2-systems-task-11-ai-legal-use.txt`
+- Task 12 public API/projection/SSE: `.sisyphus/evidence/ctp2-systems-task-12-public-api.txt`
+- Task 13 cross-system gates: `.sisyphus/evidence/ctp2-systems-task-13-cross-system.txt`
+
+## CI/readiness commands added
+- `.github/workflows/coverage.yml`: added bounded `Check gameplay systems slice` without replacing existing freeze/full coverage steps.
+- `Taskfile.yml`: added `task test-gameplay-systems` for local bounded systems-slice validation.
+
+## Validation command output
+Command: task test-gameplay-systems
+ok   github.com/justinfarrelldev/open-ctp-server/internal/gameplay/...
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/onboarding
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/boundary
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/puppet
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze
+
+Command: GOMAXPROCS=4 go test ./... -count=1
+ok   all packages (including internal/e2e/fullgame, internal/e2e/setup, internal/gameplay/...)
+
+Command: task docs && git diff --exit-code -- docs/docs.go docs/swagger.json docs/swagger.yaml
+(no diff)
+
+Command: ! rg -n "PayloadJSON|canonical_state_json|HIDDEN_UNIT_TOKEN|SECRET_TERRAIN_TOKEN" internal/gameplay/visibility/visibility.go internal/gameplay/events/http.go internal/gameplay/http/http.go docs
+(no output)
+
+Command: GOMAXPROCS=4 go test ./internal/e2e/fullgame -run 'TestValidateCatalogSchema|TestAcceptedScenarioRegistryTracksRows01Through07Only|TestValidateAcceptedRowsPassForCurrentCatalog|TestValidateFinalAllRequiresAcceptedRowsToStayObserved' -count=1
+ok   github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame
+
+Command: git diff --check
+(no output)

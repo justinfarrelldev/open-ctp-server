@@ -1,0 +1,17 @@
+# Task 14 readiness/freeze/claim drift guard evidence
+# 2026-09-22T19:25:00-04:00
+
+## Guards
+- Freeze guard: `go test ./internal/e2e/freeze -count=1` verifies production-path hashes. The Task 13 production fix changed only `internal/gameplay/engine/engine.go`; `internal/e2e/freeze/engine-lock.json` was regenerated and remained at 47 entries.
+- Catalog guard: fullgame catalog tests verify `ValidateCatalogSchema`, accepted rows 01-07, and `ValidateFinalAll` fail-closed while Row 08+ remain provisional. Row 09 remains intentionally demoted and is not used by Task 13.
+- Protected-data scan: public projection/event/docs paths were scanned for canonical payload exposure markers; canonical state queries remain confined to stores and test hash/audit helpers, not public projection/SSE contracts.
+- CI/task guard: bounded gameplay systems commands were added without replacing existing freeze/full coverage safeguards.
+
+## Failures caught while running Task 14 gates
+- `GOMAXPROCS=4 go test ./... -count=1` initially failed `internal/e2e/setup/TestTask4ImportedRulesetCarriesMechanicMatrix` because the imported mechanic matrix now carries 11 rows while the setup guard still expected 10. The guard was updated to the reviewed imported manifest size, and the full repository test then passed.
+
+## Negative behavior caught in prior tasks
+- Task 12 prevented canonical `PayloadJSON` from passing through projected SSE events.
+- Task 13 caught missing policy-mode research advancement and required public-command-only deterministic cross-system scenarios before catalog-row work can resume.
+
+See `.sisyphus/evidence/ctp2-systems-task-14-readiness.txt` for passing command output.

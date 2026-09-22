@@ -166,10 +166,10 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
   - Plan artifact: `.sisyphus/plans/ctp2-gameplay-systems-branch.md`.
 
   **Acceptance Criteria**:
-  - [ ] `.sisyphus/evidence/ctp2-systems-task-1-branch-preservation.txt` records source HEAD, source branch, destination branch, tracked diff SHA-256, untracked file list SHA-256, and destination verification.
-  - [ ] `git -C ../open-ctp-server-gameplay-systems branch --show-current` prints `gameplay-systems-completion` or the evidence records an equivalent branch path.
-  - [ ] Destination `git diff --stat` matches source tracked diff stat before rollback.
-  - [ ] Destination untracked non-ignored file inventory matches the source inventory, excluding explicitly recorded generated binaries such as `fullgame.test` only if they are reproducible.
+  - [x] `.sisyphus/evidence/ctp2-systems-task-1-branch-preservation.txt` records source HEAD, source branch, destination branch, tracked diff SHA-256, untracked file list SHA-256, and destination verification.
+  - [x] `git -C ../open-ctp-server-gameplay-systems branch --show-current` prints `gameplay-systems-completion` or the evidence records an equivalent branch path.
+  - [x] Destination `git diff --stat` matches source tracked diff stat before rollback.
+  - [x] Destination untracked non-ignored file inventory matches the source inventory, excluding explicitly recorded generated binaries such as `fullgame.test` only if they are reproducible.
 
   **QA Scenarios**:
   ```
@@ -207,10 +207,10 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
   - Current Row 09 hashes to remove: state `13f89849c047ab5ea09180597a3efe6e57f52cb1be674763182974585aa7dea3`, events `8504b909dc83ca8c63fded829e7e6a9532d87e86063fe5938619dc5e38bf9550`.
 
   **Acceptance Criteria**:
-  - [ ] `grep -R '13f89849c047ab5ea09180597a3efe6e57f52cb1be674763182974585aa7dea3\|8504b909dc83ca8c63fded829e7e6a9532d87e86063fe5938619dc5e38bf9550\|TestRowNineObservedSequentialScoreRestartsAtCompletedTurnTwelve' internal/e2e/fullgame` returns no matches.
-  - [ ] Row 09 still has ID `fullgame-09-sequential-score_2300`, sequential mode, small/cold/wetness-50 world, one human plus two AI slots, `score_2300`, `scripts/city-economy-wonder.json`, default budgets, and completed-turn-12 restart.
-  - [ ] Rows 01–07 observed artifact literals are unchanged.
-  - [ ] `go test ./internal/e2e/fullgame -run 'TestCatalogRow.*|TestCatalogRows01_12Cover|TestCatalogRejectsProvisionalScenarios' -count=1` exits 0 with Row 08 or Row 09 provisional behavior explicitly expected.
+  - [x] `grep -R '13f89849c047ab5ea09180597a3efe6e57f52cb1be674763182974585aa7dea3\|8504b909dc83ca8c63fded829e7e6a9532d87e86063fe5938619dc5e38bf9550\|TestRowNineObservedSequentialScoreRestartsAtCompletedTurnTwelve' internal/e2e/fullgame` returns no matches.
+  - [x] Row 09 still has ID `fullgame-09-sequential-score_2300`, sequential mode, small/cold/wetness-50 world, one human plus two AI slots, `score_2300`, `scripts/city-economy-wonder.json`, default budgets, and completed-turn-12 restart.
+  - [x] Rows 01–07 observed artifact literals are unchanged.
+  - [x] `go test ./internal/e2e/fullgame -run 'TestCatalogRow.*|TestCatalogRows01_12Cover|TestCatalogRejectsProvisionalScenarios' -count=1` exits 0 with Row 08 or Row 09 provisional behavior explicitly expected.
 
   **QA Scenarios**:
   ```
@@ -247,11 +247,11 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
   - Row declarations: `internal/e2e/fullgame/catalog_rows_01_12.go`.
 
   **Acceptance Criteria**:
-  - [ ] New validation API has separate gates: schema validation, accepted-row validation, and final-all validation.
-  - [ ] Accepted-row validation passes for Rows 01–07 and ignores provisional Row 08/09/10–60 only by explicit ID policy.
-  - [ ] Final-all validation still fails with a precise provisional-row diagnostic.
-  - [ ] Tests prove removing an accepted Row 01–07 artifact fails accepted-row validation.
-  - [ ] Tests prove adding Row 09 back to accepted registry without artifacts fails.
+  - [x] New validation API has separate gates: schema validation, accepted-row validation, and final-all validation.
+  - [x] Accepted-row validation passes for Rows 01–07 and ignores provisional Row 08/09/10–60 only by explicit ID policy.
+  - [x] Final-all validation still fails with a precise provisional-row diagnostic.
+  - [x] Tests prove removing an accepted Row 01–07 artifact fails accepted-row validation.
+  - [x] Tests prove adding Row 09 back to accepted registry without artifacts fails.
 
   **QA Scenarios**:
   ```
@@ -270,7 +270,7 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
 
   **Commit**: YES | Message: `test(e2e): track accepted full-game rows explicitly` | Files: `internal/e2e/fullgame/validate.go`, `internal/e2e/fullgame/*_test.go`, evidence
 
-- [ ] 4. Build the CTP2 mechanic inventory and source-cited synthetic content contract
+- [x] 4. Build the CTP2 mechanic inventory and source-cited synthetic content contract
 
   **What to do**: Inventory CTP2 mechanics required for the bounded client-ready slice and map each to importer/runtime/engine/API/AI status. Inspect pinned CTP2 source before making behavior decisions. Define synthetic record formats for units, advances, buildings, wonders, terrain, terrain improvements, governments, trade routes/agreements, pollution sources, and special actions. Produce a machine-readable mechanic matrix used by tests.
   **Must NOT do**: copy retail data, translate protected names/text into fixtures, or claim unsupported systems are complete.
@@ -290,11 +290,11 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
   - Pinned upstream: `civctp2/civctp2@0668dd199c2519ff8ab7d2871e7c7a89e21c8e52`.
 
   **Acceptance Criteria**:
-  - [ ] `.sisyphus/evidence/ctp2-systems-task-4-source-inventory.md` cites exact upstream files/symbols inspected and implementation consequences.
-  - [ ] Mechanic matrix distinguishes `included-now`, `deferred`, and `explicitly-excluded` systems.
-  - [ ] Synthetic content contract covers all included systems without retail literals.
-  - [ ] Protected-data scans pass against all new fixtures.
-  - [ ] Tests fail closed if a mechanic is marked included without importer/runtime/engine/API/AI status.
+  - [x] `.sisyphus/evidence/ctp2-systems-task-4-source-inventory.md` cites exact upstream files/symbols inspected and implementation consequences.
+  - [x] Mechanic matrix distinguishes `included-now`, `deferred`, and `explicitly-excluded` systems.
+  - [x] Synthetic content contract covers all included systems without retail literals.
+  - [x] Protected-data scans pass against all new fixtures.
+  - [x] Tests fail closed if a mechanic is marked included without importer/runtime/engine/API/AI status.
 
   **QA Scenarios**:
   ```
@@ -333,11 +333,11 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
   - Visibility: `internal/gameplay/visibility/visibility.go` unit projections.
 
   **Acceptance Criteria**:
-  - [ ] RED tests prove current runtime drops at least domain/combat/transport/prerequisite metadata from synthetic unit records.
-  - [ ] Runtime unit definitions preserve deterministic sorted IDs and reject malformed/unsupported capability tags.
-  - [ ] Start-game creates units from runtime definitions and preserves restart equality.
-  - [ ] Unit projections expose only client-safe capability fields needed to render legal actions.
-  - [ ] Existing focused gameplay tests and Row 01–07 accepted-row validation remain green.
+  - [x] RED tests prove current runtime drops at least domain/combat/transport/prerequisite metadata from synthetic unit records.
+  - [x] Runtime unit definitions preserve deterministic sorted IDs and reject malformed/unsupported capability tags.
+  - [x] Start-game creates units from runtime definitions and preserves restart equality.
+  - [x] Unit projections expose only client-safe capability fields needed to render legal actions.
+  - [x] Existing focused gameplay tests and Row 01–07 accepted-row validation remain green.
 
   **QA Scenarios**:
   ```
@@ -696,7 +696,7 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
 
   **Commit**: YES | Message: `test(e2e): prove client-ready gameplay systems slice` | Files: e2e fullgame/onboarding scripts/tests/evidence only unless API gaps require paired implementation
 
-- [ ] 14. Reconcile freeze, CI, evidence, and readiness documentation
+- [x] 14. Reconcile freeze, CI, evidence, and readiness documentation
 
   **What to do**: After all mechanic-family and cross-system gates pass, update freeze manifest only for reviewed production-path changes, wire bounded CI commands for the systems slice, regenerate API docs if public schemas changed, and write a readiness report stating exactly what is supported, deferred, and excluded. The report must say that Row 09 was intentionally demoted and that campaign-row acceptance is a later track.
   **Must NOT do**: imply full retail CTP2 parity, hide provisional catalog rows, or update freeze hashes without review evidence.
@@ -715,11 +715,11 @@ Wave 4: Task 14 — final evidence, CI, documentation, and readiness report
   - Plan/evidence: `.sisyphus/plans/ctp2-gameplay-systems-branch.md`, `.sisyphus/evidence/`.
 
   **Acceptance Criteria**:
-  - [ ] Focused gameplay stack, full build, freeze guard, docs generation check if applicable, protected-data scan, and `git diff --check` exit 0.
-  - [ ] Freeze manifest changes, if any, correspond exactly to reviewed production changes from Tasks 5–12.
-  - [ ] Readiness report lists included, deferred, and excluded CTP2 systems with test/evidence links.
-  - [ ] CI includes bounded systems-slice commands and does not replace existing freeze/fullgame safeguards.
-  - [ ] `ValidateCatalogSchema` and accepted-row validation pass; final-all catalog validation remains either passing only if all artifacts were later accepted or fail-closed with provisional rows documented.
+  - [x] Focused gameplay stack, full build, freeze guard, docs generation check if applicable, protected-data scan, and `git diff --check` exit 0.
+  - [x] Freeze manifest changes, if any, correspond exactly to reviewed production changes from Tasks 5–12.
+  - [x] Readiness report lists included, deferred, and excluded CTP2 systems with test/evidence links.
+  - [x] CI includes bounded systems-slice commands and does not replace existing freeze/fullgame safeguards.
+  - [x] `ValidateCatalogSchema` and accepted-row validation pass; final-all catalog validation remains either passing only if all artifacts were later accepted or fail-closed with provisional rows documented.
 
   **QA Scenarios**:
   ```

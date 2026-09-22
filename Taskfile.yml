@@ -21,6 +21,11 @@ tasks:
       - GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m sh -c 'coverage_file=$(mktemp); trap "rm -f \"$coverage_file\"" EXIT; go test -timeout=16m -p=2 ./internal/... -coverprofile="$coverage_file"; total_coverage=$(go tool cover -func="$coverage_file" | awk '\''/^total:/ {sub(/%/, "", $3); print $3}'\''); awk "BEGIN { exit !($total_coverage > 80.0) }"'
       - if [ -d internal/gameplay/engine ]; then GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 18m sh -c 'coverage_file=$(mktemp); trap "rm -f \"$coverage_file\"" EXIT; go test -timeout=16m -p=2 ./internal/gameplay/engine -coverprofile="$coverage_file"; engine_coverage=$(go tool cover -func="$coverage_file" | awk '\''/^total:/ {sub(/%/, "", $3); print $3}'\''); awk "BEGIN { exit !($engine_coverage >= 90.0) }"'; fi
 
+  test-gameplay-systems:
+    desc: Run the bounded client-ready gameplay systems slice.
+    cmds:
+      - GOMAXPROCS=4 timeout --signal=TERM --kill-after=30s 12m go test -timeout=10m -p=2 ./internal/gameplay/... ./internal/e2e/onboarding ./internal/e2e/boundary ./internal/e2e/puppet ./internal/e2e/freeze -count=1
+
   test-gameplay-migrations:
     desc: Run isolated local Supabase pgTAP coverage for Task 2 migration and legacy upgrade.
     cmds:
