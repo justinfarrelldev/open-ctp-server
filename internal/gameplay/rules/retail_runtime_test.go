@@ -69,7 +69,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	}
 
 	plains, ok := runtime.Movement.Terrain("TERRAIN_PLAINS")
-	if !ok || plains.Cost != 100 || !sameStringSlices(plains.Domains, []string{"air", "land"}) {
+	if !ok || plains.Cost != 100 || plains.Food != 10 || plains.Production != 10 || plains.Gold != 5 || !sameStringSlices(plains.Domains, []string{"air", "land"}) {
 		t.Fatalf("plains runtime terrain = %+v ok=%v", plains, ok)
 	}
 

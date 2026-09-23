@@ -251,7 +251,7 @@ func RecalculateRound(state State) (State, error) {
 		if err := completeProduction(&next, city, runtime); err != nil {
 			return State{}, err
 		}
-		city.Yields, err = cityYield(next, *city)
+		city.Yields, err = cityYieldWithRuntime(next, *city, runtime)
 		if err != nil {
 			return State{}, err
 		}
@@ -376,7 +376,11 @@ func runtimeUnitEffects(definition rules.RuntimeUnitDefinition) []Effect {
 }
 
 func cityYield(state State, city City) (Yield, error) {
-	yield, err := terrainYield(state, city.TileID)
+	return cityYieldWithRuntime(state, city, nil)
+}
+
+func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (Yield, error) {
+	yield, err := terrainYieldWithRuntime(state, city.TileID, runtime)
 	if err != nil {
 		return Yield{}, err
 	}
@@ -385,7 +389,7 @@ func cityYield(state State, city City) (Yield, error) {
 		if seen[tileID] {
 			return Yield{}, errors.New("worked tile is duplicated")
 		}
-		worked, err := terrainYield(state, tileID)
+		worked, err := terrainYieldWithRuntime(state, tileID, runtime)
 		if err != nil {
 			return Yield{}, err
 		}
@@ -455,12 +459,22 @@ func cityEffects(state State, city City) []Effect {
 }
 
 func terrainYield(state State, tileID string) (Yield, error) {
+	return terrainYieldWithRuntime(state, tileID, nil)
+}
+
+func terrainYieldWithRuntime(state State, tileID string, runtime *rules.RuntimeRules) (Yield, error) {
 	tile, ok := tileByID(state, tileID)
 	if !ok {
 		return Yield{}, errors.New("worked tile does not exist")
 	}
+	terrainID := EffectiveTerrain(state, tile.ID)
+	if runtime != nil {
+		if terrain, ok := runtime.Movement.Terrain(terrainID); ok && (terrain.Food != 0 || terrain.Production != 0 || terrain.Gold != 0) {
+			return tileYieldWithOverlays(state, tile.ID, Yield{Food: terrain.Food, Production: terrain.Production, Gold: terrain.Gold}), nil
+		}
+	}
 	var yield Yield
-	switch EffectiveTerrain(state, tile.ID) {
+	switch terrainID {
 	case TerrainPlains, "TERRAIN_PLAINS", "TERRAIN_GRASSLAND", "TERRAIN_TUNDRA", "TERRAIN_DESERT", "TERRAIN_SWAMP":
 		yield = Yield{Food: 2, Production: 3, Gold: 1}
 	case TerrainForest, "TERRAIN_FOREST", "TERRAIN_JUNGLE":
@@ -470,14 +484,18 @@ func terrainYield(state State, tileID string) (Yield, error) {
 	default:
 		return Yield{}, errors.New("unsupported terrain yield")
 	}
+	return tileYieldWithOverlays(state, tile.ID, yield), nil
+}
+
+func tileYieldWithOverlays(state State, tileID string, yield Yield) Yield {
 	for _, overlay := range state.Overlays {
-		if overlay.TileID == tile.ID && overlay.Kind == "improvement" && overlay.Remaining == 0 {
+		if overlay.TileID == tileID && overlay.Kind == "improvement" && overlay.Remaining == 0 {
 			yield.Food += overlay.YieldFood
 			yield.Production += overlay.YieldProduction
 			yield.Gold += overlay.YieldGold
 		}
 	}
-	return yield, nil
+	return yield
 }
 
 func addYield(a, b Yield) Yield {
