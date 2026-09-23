@@ -98,6 +98,10 @@
       "sha256": "844a6564a41af0365895bbe133eda3bc2b61dd93f796a19f687c0c2ed90f6675"
     },
     {
+      "path": "internal/gameplay/rules/retail_raw.go",
+      "sha256": "308f7541570cbee01c0ec4c3c91ed2bb524b75bdda57a759c538db1b3afc0ee0"
+    },
+    {
       "path": "internal/gameplay/rules/rules.go",
       "sha256": "cc291de5a3b9adf37d77c64620af9870d76cd956b58061f648dfbf45f0417037"
     },
