@@ -151,6 +151,7 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if err := requireProductionUnlock(*state, *city, payload.Item, runtime); err != nil {
 		return err
 	}
+	payload.Item = applyRuntimeProductionDefaults(payload.Item, runtime)
 	if payload.Item.Kind == ProductionWonder && wonderExists(*state, payload.Item.ID) {
 		return errors.New("wonder already exists")
 	}
@@ -161,6 +162,29 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	}
 	city.Queue = append(city.Queue, payload.Item)
 	return nil
+}
+
+func applyRuntimeProductionDefaults(item ProductionItem, runtime *rules.RuntimeRules) ProductionItem {
+	if runtime == nil || item.Kind != ProductionUnit {
+		return item
+	}
+	unit, ok := runtime.Unit(item.ID)
+	if !ok {
+		return item
+	}
+	if unit.ProductionCost > 0 {
+		item.Cost = unit.ProductionCost
+	}
+	if unit.Upkeep > 0 {
+		item.Upkeep = unit.Upkeep
+	}
+	if item.Prerequisite == "" && len(unit.Prerequisites) > 0 {
+		item.Prerequisite = unit.Prerequisites[0]
+	}
+	if item.ObsoletedBy == "" && len(unit.ObsoleteBy) > 0 {
+		item.ObsoletedBy = unit.ObsoleteBy[0]
+	}
+	return item
 }
 
 func cancelProduction(state *State, actor string, payload CancelProductionPayload) error {
