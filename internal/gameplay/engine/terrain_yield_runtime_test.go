@@ -30,3 +30,16 @@ func TestRetailRuntimeTerrainYieldsDriveCityYield(t *testing.T) {
 		t.Fatalf("retail terrain yield = %+v, want 10/10/5", yield)
 	}
 }
+
+func TestRetailRuntimeBuildingFoodPercentDrivesCityYield(t *testing.T) {
+	state := State{Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS"}}}
+	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Buildings: []Building{{ID: "IMPROVE_GRANARY", Effects: []Effect{{ID: "granary-food", Kind: EffectYieldFoodPercent, Value: 10}}}}}
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_PLAINS", Cost: 100, Domains: []string{DomainLand}, Food: 10}}}}
+	yield, err := cityYieldWithRuntime(state, city, runtime)
+	if err != nil {
+		t.Fatalf("cityYieldWithRuntime() error = %v", err)
+	}
+	if yield.Food != 11 {
+		t.Fatalf("food yield = %d, want base 10 + 10%% bonus rounded up", yield.Food)
+	}
+}

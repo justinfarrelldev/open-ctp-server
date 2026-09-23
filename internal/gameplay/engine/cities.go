@@ -18,6 +18,7 @@ const (
 	EffectYieldFood              = "yield_food"
 	EffectYieldProduction        = "yield_production"
 	EffectYieldGold              = "yield_gold"
+	EffectYieldFoodPercent       = "yield_food_percent"
 	EffectYieldProductionPercent = "yield_production_percent"
 	EffectYieldGoldPercent       = "yield_gold_percent"
 	EffectCombat                 = "combat"
@@ -405,6 +406,8 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 			yield.Production += effect.Value
 		case EffectYieldGold:
 			yield.Gold += effect.Value
+		case EffectYieldFoodPercent:
+			yield.Food += percentBonus(yield.Food, effect.Value)
 		case EffectYieldProductionPercent:
 			yield.Production += percentBonus(yield.Production, effect.Value)
 		case EffectYieldGoldPercent:
@@ -567,7 +570,7 @@ func validateEffects(effects []Effect) error {
 			return errors.New("effect id is required")
 		}
 		switch effect.Kind {
-		case EffectSettler, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectBonus, EffectCombatAttack, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
+		case EffectSettler, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectBonus, EffectCombatAttack, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
 		default:
 			return fmt.Errorf("unsupported effect kind %q", effect.Kind)
 		}

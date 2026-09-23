@@ -60,6 +60,9 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 	if value := percentPoints(building.FloatValues["CommercePercent"]); value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":commerce-percent", Kind: "yield_gold_percent", Value: value})
 	}
+	if value := percentPoints(building.FloatValues["FoodPercent"]); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":food-percent", Kind: "yield_food_percent", Value: value})
+	}
 	if value := percentPoints(building.FloatValues["SciencePercent"]); value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":science-percent", Kind: "research", Value: value})
 	}
