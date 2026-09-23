@@ -26,11 +26,11 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		}
 	}
 	for _, building := range db.Buildings {
-		runtime.Production = append(runtime.Production, RuntimeProduction{ID: building.ID, Kind: "building"})
+		runtime.Production = append(runtime.Production, RuntimeProduction{ID: building.ID, Kind: "building", Cost: building.ProductionCost, Upkeep: building.Upkeep, Prerequisites: singleOrEmpty(building.EnableAdvance), ObsoleteBy: append([]string(nil), building.ObsoleteAdvance...)})
 		runtime.Effects = append(runtime.Effects, RuntimeEffect{ID: building.ID, Kind: "building"})
 	}
 	for _, wonder := range db.Wonders {
-		runtime.Production = append(runtime.Production, RuntimeProduction{ID: wonder.ID, Kind: "wonder"})
+		runtime.Production = append(runtime.Production, RuntimeProduction{ID: wonder.ID, Kind: "wonder", Cost: wonder.ProductionCost, Prerequisites: singleOrEmpty(wonder.EnableAdvance), ObsoleteBy: append([]string(nil), wonder.ObsoleteAdvance...)})
 		runtime.Effects = append(runtime.Effects, RuntimeEffect{ID: wonder.ID, Kind: "wonder"})
 	}
 	for _, terrain := range db.Terrains {

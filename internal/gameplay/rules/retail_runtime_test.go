@@ -73,6 +73,15 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || farms.BuildTurns != 2 || farms.PublicWorksCost != 200 || farms.YieldFood != 10 {
 		t.Fatalf("farms runtime = %+v ok=%v", farms, ok)
 	}
+
+	granary, ok := runtime.ProductionDefinition("IMPROVE_GRANARY")
+	if !ok || granary.Kind != "building" || granary.Cost != 300 || granary.Upkeep != 1 || !sameStringSlices(granary.Prerequisites, []string{"ADVANCE_AGRICULTURE"}) {
+		t.Fatalf("granary production = %+v ok=%v", granary, ok)
+	}
+	hagia, ok := runtime.ProductionDefinition("WONDER_HAGIA_SOPHIA")
+	if !ok || hagia.Kind != "wonder" || hagia.Cost != 3240 || !sameStringSlices(hagia.Prerequisites, []string{"ADVANCE_THEOLOGY"}) {
+		t.Fatalf("hagia production = %+v ok=%v", hagia, ok)
+	}
 }
 
 func runtimeUnitHasEffect(unit RuntimeUnitDefinition, kind string) bool {

@@ -180,8 +180,12 @@ type RuntimeGaia struct {
 }
 
 type RuntimeProduction struct {
-	ID   string `json:"id"`
-	Kind string `json:"kind"`
+	ID            string   `json:"id"`
+	Kind          string   `json:"kind"`
+	Cost          int      `json:"cost,omitempty"`
+	Upkeep        int      `json:"upkeep,omitempty"`
+	Prerequisites []string `json:"prerequisites,omitempty"`
+	ObsoleteBy    []string `json:"obsolete_by,omitempty"`
 }
 
 type RuntimeEffect struct {
@@ -204,6 +208,14 @@ func containsVictoryEvaluator(evaluators []VictoryEvaluator, id string) bool {
 		}
 	}
 	return false
+}
+
+func (runtime RuntimeRules) ProductionDefinition(id string) (RuntimeProduction, bool) {
+	index := sort.Search(len(runtime.Production), func(index int) bool { return runtime.Production[index].ID >= id })
+	if index == len(runtime.Production) || runtime.Production[index].ID != id {
+		return RuntimeProduction{}, false
+	}
+	return runtime.Production[index], true
 }
 
 func (runtime RuntimeRules) ProductionIDs() string {
@@ -513,12 +525,20 @@ func compileRecord(runtime *RuntimeRules, record Record) error {
 			return err
 		}
 		runtime.Units = append(runtime.Units, unit)
-		runtime.Production = append(runtime.Production, RuntimeProduction{ID: record.ID, Kind: "unit"})
+		runtime.Production = append(runtime.Production, RuntimeProduction{ID: record.ID, Kind: "unit", Cost: unit.ProductionCost, Upkeep: unit.Upkeep, Prerequisites: append([]string(nil), unit.Prerequisites...), ObsoleteBy: append([]string(nil), unit.ObsoleteBy...)})
 	case "building":
-		runtime.Production = append(runtime.Production, RuntimeProduction{ID: record.ID, Kind: "building"})
+		production, err := compileProductionDefinition(record, "building")
+		if err != nil {
+			return err
+		}
+		runtime.Production = append(runtime.Production, production)
 		runtime.Effects = append(runtime.Effects, RuntimeEffect{ID: record.ID, Kind: "building"})
 	case "wonder":
-		runtime.Production = append(runtime.Production, RuntimeProduction{ID: record.ID, Kind: "wonder"})
+		production, err := compileProductionDefinition(record, "wonder")
+		if err != nil {
+			return err
+		}
+		runtime.Production = append(runtime.Production, production)
 		runtime.Effects = append(runtime.Effects, RuntimeEffect{ID: record.ID, Kind: "wonder"})
 	case "terrain_improvement":
 		improvement, err := compileTerrainImprovementDefinition(record)
@@ -595,6 +615,32 @@ func containsRuntimeProduction(production []RuntimeProduction, id string) bool {
 		}
 	}
 	return false
+}
+
+func compileProductionDefinition(record Record, kind string) (RuntimeProduction, error) {
+	cost, err := optionalNonNegativeInteger(record, "ProductionCost", 0)
+	if err != nil {
+		return RuntimeProduction{}, err
+	}
+	upkeep, err := optionalNonNegativeInteger(record, "Upkeep", 0)
+	if err != nil {
+		return RuntimeProduction{}, err
+	}
+	prerequisites, err := optionalIDs(record, "EnableAdvanceID")
+	if err != nil {
+		return RuntimeProduction{}, err
+	}
+	if len(prerequisites) == 0 {
+		prerequisites, err = optionalIDs(record, "Prerequisite")
+		if err != nil {
+			return RuntimeProduction{}, err
+		}
+	}
+	obsoleteBy, err := optionalIDs(record, "ObsoleteBy")
+	if err != nil {
+		return RuntimeProduction{}, err
+	}
+	return RuntimeProduction{ID: record.ID, Kind: kind, Cost: cost, Upkeep: upkeep, Prerequisites: prerequisites, ObsoleteBy: obsoleteBy}, nil
 }
 
 func compileAdvanceDefinition(record Record) (RuntimeAdvanceDefinition, error) {
