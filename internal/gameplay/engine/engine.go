@@ -175,6 +175,7 @@ type City struct {
 	TileID           string           `json:"tile_id"`
 	Population       int              `json:"population,omitempty"`
 	WorkedTileIDs    []string         `json:"worked_tile_ids,omitempty"`
+	StoredFood       int              `json:"stored_food,omitempty"`
 	StoredProduction int              `json:"stored_production,omitempty"`
 	Queue            []ProductionItem `json:"queue,omitempty"`
 	Buildings        []Building       `json:"buildings,omitempty"`

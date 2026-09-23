@@ -18,6 +18,28 @@ func TestRetailRuntimeTerrainYieldsAccumulateProduction(t *testing.T) {
 	}
 }
 
+func TestRetailCityFoodSurplusGrowsPopulation(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	state.Cities[0].Population = 1
+	state.Cities[0].StoredFood = 95
+	state.Phase.Turn = state.RecalculatedTurn + 1
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: TerrainPlains, Cost: 100, Domains: []string{DomainLand}, CityFood: 10}}}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "settler", Kind: EffectSettler}}}}}
+	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Rules = RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: contentHash, Definitions: definitions}
+
+	next, err := RecalculateRound(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Cities[0].Population != 2 || next.Cities[0].StoredFood != 3 {
+		t.Fatalf("city population/stored food = %d/%d, want 2/3", next.Cities[0].Population, next.Cities[0].StoredFood)
+	}
+}
+
 func TestRetailRuntimeTerrainYieldsDriveCityYield(t *testing.T) {
 	state := State{Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS"}}}
 	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}

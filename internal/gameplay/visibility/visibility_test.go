@@ -132,8 +132,8 @@ func TestTask7ProjectionExposesOwnedCityEconomyOnly(t *testing.T) {
 	state.Tiles = []engine.Tile{{ID: "0,0", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "1,0", X: 1, Y: 0, Terrain: engine.TerrainPlains, Open: true}}
 	state.Units = []engine.Unit{{ID: "scout", OwnerID: "a", TileID: "0,0", VisibilityRange: 2}}
 	state.Cities = []engine.City{
-		{ID: "city-a", OwnerID: "a", TileID: "0,0", StoredProduction: 2, Queue: []engine.ProductionItem{{ID: "granary", Kind: engine.ProductionBuilding, Cost: 3}}, Buildings: []engine.Building{{ID: "shrine", Effects: []engine.Effect{{ID: "faith", Kind: engine.EffectYieldGold, Value: 1}}}}, Yields: engine.Yield{Food: 4, Production: 3, Gold: 2}},
-		{ID: "city-b", OwnerID: "b", TileID: "1,0", StoredProduction: 99, Queue: []engine.ProductionItem{{ID: "secret", Kind: engine.ProductionWonder, Cost: 9}}, Buildings: []engine.Building{{ID: "secret-building"}}, Yields: engine.Yield{Food: 9, Production: 9, Gold: 9}},
+		{ID: "city-a", OwnerID: "a", TileID: "0,0", Population: 2, StoredFood: 7, StoredProduction: 2, Queue: []engine.ProductionItem{{ID: "granary", Kind: engine.ProductionBuilding, Cost: 3}}, Buildings: []engine.Building{{ID: "shrine", Effects: []engine.Effect{{ID: "faith", Kind: engine.EffectYieldGold, Value: 1}}}}, Yields: engine.Yield{Food: 4, Production: 3, Gold: 2}},
+		{ID: "city-b", OwnerID: "b", TileID: "1,0", Population: 9, StoredFood: 99, StoredProduction: 99, Queue: []engine.ProductionItem{{ID: "secret", Kind: engine.ProductionWonder, Cost: 9}}, Buildings: []engine.Building{{ID: "secret-building"}}, Yields: engine.Yield{Food: 9, Production: 9, Gold: 9}},
 	}
 	state, err := Update(state)
 	if err != nil {
@@ -148,11 +148,11 @@ func TestTask7ProjectionExposesOwnedCityEconomyOnly(t *testing.T) {
 		cities[city.ID] = city
 	}
 	own := cities["city-a"]
-	if own.Yields == nil || own.Yields.Food != 4 || own.StoredProduction != 2 || len(own.Queue) != 1 || len(own.Buildings) != 1 {
+	if own.Yields == nil || own.Yields.Food != 4 || own.Population != 2 || own.StoredFood != 7 || own.StoredProduction != 2 || len(own.Queue) != 1 || len(own.Buildings) != 1 {
 		t.Fatalf("owned city projection = %#v", own)
 	}
 	enemy := cities["city-b"]
-	if enemy.Yields != nil || enemy.StoredProduction != 0 || len(enemy.Queue) != 0 || len(enemy.Buildings) != 0 {
+	if enemy.Yields != nil || enemy.Population != 0 || enemy.StoredFood != 0 || enemy.StoredProduction != 0 || len(enemy.Queue) != 0 || len(enemy.Buildings) != 0 {
 		t.Fatalf("enemy economy leaked: %#v", enemy)
 	}
 }

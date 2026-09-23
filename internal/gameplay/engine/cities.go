@@ -282,9 +282,43 @@ func RecalculateRound(state State) (State, error) {
 		if err != nil {
 			return State{}, err
 		}
+		advanceCityFood(city)
 	}
 	next.RecalculatedTurn = next.Phase.Turn
 	return next, nil
+}
+
+func advanceCityFood(city *City) {
+	if city.Population < 1 {
+		city.Population = 1
+	}
+	surplus := city.Yields.Food - cityFoodConsumption(city.Population)
+	city.StoredFood += surplus
+	if city.StoredFood < 0 {
+		if city.Population > 1 {
+			city.Population--
+		}
+		city.StoredFood = 0
+		return
+	}
+	for city.StoredFood >= cityFoodGrowthThreshold(city.Population) {
+		city.StoredFood -= cityFoodGrowthThreshold(city.Population)
+		city.Population++
+	}
+}
+
+func cityFoodConsumption(population int) int {
+	if population < 1 {
+		population = 1
+	}
+	return population * 2
+}
+
+func cityFoodGrowthThreshold(population int) int {
+	if population < 1 {
+		population = 1
+	}
+	return population * 100
 }
 
 func runtimeRulesForState(state State) (*rules.RuntimeRules, error) {
