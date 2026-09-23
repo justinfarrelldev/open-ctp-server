@@ -110,6 +110,14 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || len(granaryEffects.Effects) != 1 || granaryEffects.Effects[0].Kind != "yield_food_percent" || granaryEffects.Effects[0].Value != 10 {
 		t.Fatalf("granary production effects = %+v ok=%v", granaryEffects, ok)
 	}
+	academyWonder, ok := runtime.ProductionDefinition("WONDER_ARISTOTLES_LYCEUM")
+	if !ok || len(academyWonder.Effects) != 1 || academyWonder.Effects[0].Kind != "research" || academyWonder.Effects[0].Value != 20 {
+		t.Fatalf("Aristotle's Lyceum effects = %+v ok=%v", academyWonder, ok)
+	}
+	pyramids, ok := runtime.ProductionDefinition("WONDER_PYRAMIDS")
+	if !ok || len(pyramids.Effects) != 1 || pyramids.Effects[0].Kind != "yield_gold" || pyramids.Effects[0].Value != 100 {
+		t.Fatalf("Pyramids effects = %+v ok=%v", pyramids, ok)
+	}
 }
 
 func runtimeUnitHasEffect(unit RuntimeUnitDefinition, kind string) bool {

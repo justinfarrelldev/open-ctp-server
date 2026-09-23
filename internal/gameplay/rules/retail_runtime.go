@@ -33,7 +33,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		runtime.Effects = append(runtime.Effects, RuntimeEffect{ID: building.ID, Kind: "building"})
 	}
 	for _, wonder := range db.Wonders {
-		runtime.Production = append(runtime.Production, RuntimeProduction{ID: wonder.ID, Kind: "wonder", Cost: wonder.ProductionCost, Prerequisites: singleOrEmpty(wonder.EnableAdvance), ObsoleteBy: append([]string(nil), wonder.ObsoleteAdvance...)})
+		runtime.Production = append(runtime.Production, RuntimeProduction{ID: wonder.ID, Kind: "wonder", Cost: wonder.ProductionCost, Prerequisites: singleOrEmpty(wonder.EnableAdvance), ObsoleteBy: append([]string(nil), wonder.ObsoleteAdvance...), Effects: retailWonderRuntimeEffects(wonder)})
 		runtime.Effects = append(runtime.Effects, RuntimeEffect{ID: wonder.ID, Kind: "wonder"})
 	}
 	for _, terrain := range db.Terrains {
@@ -65,6 +65,24 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 	}
 	if value := percentPoints(building.FloatValues["SciencePercent"]); value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":science-percent", Kind: "research", Value: value})
+	}
+	sort.Slice(effects, func(i, j int) bool { return effects[i].Kind < effects[j].Kind })
+	return effects
+}
+
+func retailWonderRuntimeEffects(wonder RetailWonder) []RuntimeStarterEffect {
+	effects := make([]RuntimeStarterEffect, 0, 4)
+	if value := wonder.IntValues["BonusGold"]; value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":bonus-gold", Kind: "yield_gold", Value: value})
+	}
+	if value := wonder.IntValues["IncKnowledgePercent"]; value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":knowledge-percent", Kind: "research", Value: value})
+	}
+	if value := wonder.IntValues["IncreaseFoodAllCities"]; value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":food-all-cities", Kind: "yield_food_percent", Value: value})
+	}
+	if value := wonder.IntValues["IncreaseProduction"]; value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":production", Kind: "yield_production_percent", Value: value})
 	}
 	sort.Slice(effects, func(i, j int) bool { return effects[i].Kind < effects[j].Kind })
 	return effects
