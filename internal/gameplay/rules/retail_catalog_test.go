@@ -130,6 +130,9 @@ func TestLoadRetailRulesFromDirectoryPreservesTypedRetailValues(t *testing.T) {
 	if plains.InternalType != "Plains" || plains.EnvBase.Movement != 100 || plains.EnvBase.Food != 10 || plains.EnvBase.Shield != 10 || plains.EnvBase.Gold != 5 {
 		t.Fatalf("TERRAIN_PLAINS values = %+v", plains)
 	}
+	if plains.EnvCity.Movement != 50 || plains.EnvCity.Food != 10 || plains.EnvCity.Shield != 15 || plains.EnvCity.Gold != 15 {
+		t.Fatalf("TERRAIN_PLAINS EnvCity = %+v", plains.EnvCity)
+	}
 	if got, want := plains.MovementTypes, []string{"Air", "Land"}; !sameStringSlices(got, want) {
 		t.Fatalf("TERRAIN_PLAINS movement types = %#v, want %#v", got, want)
 	}

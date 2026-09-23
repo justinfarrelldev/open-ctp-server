@@ -112,12 +112,15 @@ type RuntimeMovement struct {
 }
 
 type RuntimeTerrain struct {
-	ID         string   `json:"id"`
-	Cost       int      `json:"cost"`
-	Domains    []string `json:"domains"`
-	Food       int      `json:"food,omitempty"`
-	Production int      `json:"production,omitempty"`
-	Gold       int      `json:"gold,omitempty"`
+	ID             string   `json:"id"`
+	Cost           int      `json:"cost"`
+	Domains        []string `json:"domains"`
+	Food           int      `json:"food,omitempty"`
+	Production     int      `json:"production,omitempty"`
+	Gold           int      `json:"gold,omitempty"`
+	CityFood       int      `json:"city_food,omitempty"`
+	CityProduction int      `json:"city_production,omitempty"`
+	CityGold       int      `json:"city_gold,omitempty"`
 }
 
 func (movement RuntimeMovement) Terrain(id string) (RuntimeTerrain, bool) {

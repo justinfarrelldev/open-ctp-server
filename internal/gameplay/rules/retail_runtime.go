@@ -40,7 +40,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		}
 	}
 	for _, terrain := range db.Terrains {
-		runtime.Movement.Terrains = append(runtime.Movement.Terrains, RuntimeTerrain{ID: terrain.ID, Cost: positiveOrOne(terrain.EnvBase.Movement), Domains: retailDomains(terrain.MovementTypes), Food: terrain.EnvBase.Food, Production: terrain.EnvBase.Shield, Gold: terrain.EnvBase.Gold})
+		runtime.Movement.Terrains = append(runtime.Movement.Terrains, RuntimeTerrain{ID: terrain.ID, Cost: positiveOrOne(terrain.EnvBase.Movement), Domains: retailDomains(terrain.MovementTypes), Food: terrain.EnvBase.Food, Production: terrain.EnvBase.Shield, Gold: terrain.EnvBase.Gold, CityFood: terrain.EnvCity.Food, CityProduction: terrain.EnvCity.Shield, CityGold: terrain.EnvCity.Gold})
 	}
 	for _, improvement := range db.TerrainImprovements {
 		runtime.TerrainImprovements = append(runtime.TerrainImprovements, projectRetailTerrainImprovement(improvement))

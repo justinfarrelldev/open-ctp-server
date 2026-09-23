@@ -21,13 +21,13 @@ func TestRetailRuntimeTerrainYieldsAccumulateProduction(t *testing.T) {
 func TestRetailRuntimeTerrainYieldsDriveCityYield(t *testing.T) {
 	state := State{Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS"}}}
 	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}
-	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_PLAINS", Cost: 100, Domains: []string{DomainLand}, Food: 10, Production: 10, Gold: 5}}}}
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_PLAINS", Cost: 100, Domains: []string{DomainLand}, Food: 10, Production: 10, Gold: 5, CityFood: 10, CityProduction: 15, CityGold: 15}}}}
 	yield, err := cityYieldWithRuntime(state, city, runtime)
 	if err != nil {
 		t.Fatalf("cityYieldWithRuntime() error = %v", err)
 	}
-	if yield.Food != 10 || yield.Production != 10 || yield.Gold != 5 {
-		t.Fatalf("retail terrain yield = %+v, want 10/10/5", yield)
+	if yield.Food != 10 || yield.Production != 15 || yield.Gold != 15 {
+		t.Fatalf("retail city terrain yield = %+v, want EnvCity 10/15/15", yield)
 	}
 }
 

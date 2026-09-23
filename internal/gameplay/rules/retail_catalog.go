@@ -122,6 +122,7 @@ type RetailTerrain struct {
 	InternalType  string                 `json:"internal_type,omitempty"`
 	MovementTypes []string               `json:"movement_types,omitempty"`
 	EnvBase       RetailTerrainModifiers `json:"env_base"`
+	EnvCity       RetailTerrainModifiers `json:"env_city"`
 	RawFields     []RetailRawField       `json:"raw_fields"`
 }
 
@@ -329,6 +330,13 @@ func compileRetailTerrain(record RetailRawRecord) (RetailTerrain, error) {
 			return RetailTerrain{}, err
 		}
 		terrain.EnvBase = modifiers
+	}
+	if envCity, ok := record.FirstBlock("EnvCity"); ok {
+		modifiers, err := retailTerrainModifiers(record.ID, envCity)
+		if err != nil {
+			return RetailTerrain{}, err
+		}
+		terrain.EnvCity = modifiers
 	}
 	return terrain, nil
 }

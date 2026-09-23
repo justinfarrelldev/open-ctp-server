@@ -276,7 +276,7 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 	if len(city.Queue) == 0 {
 		return nil
 	}
-	base, err := terrainYieldWithRuntime(*state, city.TileID, runtime)
+	base, err := cityTileYieldWithRuntime(*state, city.TileID, runtime)
 	if err != nil {
 		return err
 	}
@@ -381,7 +381,7 @@ func cityYield(state State, city City) (Yield, error) {
 }
 
 func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (Yield, error) {
-	yield, err := terrainYieldWithRuntime(state, city.TileID, runtime)
+	yield, err := cityTileYieldWithRuntime(state, city.TileID, runtime)
 	if err != nil {
 		return Yield{}, err
 	}
@@ -463,6 +463,21 @@ func cityEffects(state State, city City) []Effect {
 
 func terrainYield(state State, tileID string) (Yield, error) {
 	return terrainYieldWithRuntime(state, tileID, nil)
+}
+
+func cityTileYieldWithRuntime(state State, tileID string, runtime *rules.RuntimeRules) (Yield, error) {
+	if runtime == nil {
+		return terrainYieldWithRuntime(state, tileID, nil)
+	}
+	tile, ok := tileByID(state, tileID)
+	if !ok {
+		return Yield{}, errors.New("worked tile does not exist")
+	}
+	terrainID := EffectiveTerrain(state, tile.ID)
+	if terrain, ok := runtime.Movement.Terrain(terrainID); ok && (terrain.CityFood != 0 || terrain.CityProduction != 0 || terrain.CityGold != 0) {
+		return tileYieldWithOverlays(state, tile.ID, Yield{Food: terrain.CityFood, Production: terrain.CityProduction, Gold: terrain.CityGold}), nil
+	}
+	return terrainYieldWithRuntime(state, tileID, runtime)
 }
 
 func terrainYieldWithRuntime(state State, tileID string, runtime *rules.RuntimeRules) (Yield, error) {
