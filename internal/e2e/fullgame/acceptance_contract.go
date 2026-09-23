@@ -280,7 +280,7 @@ func RowOneConquestAcceptance() AcceptanceConfig {
 		ExpectedWinner:     "account-1",
 		ExpectedReason:     "bloodlust_conquest",
 		ExpectedStateHash:  "f810a5418b1f47f8137918b948eb5b874b699056b7f4b7365902b3108b3345cc",
-		ExpectedEventHash:  "36760abd252924dfd956f39105e3b66b9bbbe3aade9e8c10d54a0f93e57137cd",
+		ExpectedEventHash:  "7aca9ed521f77eea12ea2683aa9d0725ca39296a82faf61be0a18ecaf2248544",
 	}
 }
 

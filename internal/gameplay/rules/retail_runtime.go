@@ -45,6 +45,9 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 	for _, government := range db.Governments {
 		runtime.Governments = append(runtime.Governments, RuntimeGovernmentDefinition{ID: government.ID, EnableAdvanceID: government.EnableAdvance, ResearchBonus: coefficientFlatBonus(government.FloatValues["KnowledgeCoef"]), ProductionPercent: coefficientBonusPoints(government.FloatValues["ProductionCoef"]), GoldPercent: coefficientBonusPoints(government.FloatValues["GoldCoef"])})
 	}
+	for _, trigger := range db.PollutionTriggerLists {
+		runtime.PollutionTriggers = append(runtime.PollutionTriggers, RuntimePollutionTriggerDefinition{ID: trigger.ID, TriggerLevels: append([]int64(nil), trigger.TriggerLevels...), DisasterTypes: append([]string(nil), trigger.DisasterTypes...)})
+	}
 	sortRuntimeProjection(&runtime)
 	return runtime
 }
@@ -219,4 +222,5 @@ func sortRuntimeProjection(runtime *RuntimeRules) {
 	sort.Slice(runtime.Movement.Terrains, func(i, j int) bool { return runtime.Movement.Terrains[i].ID < runtime.Movement.Terrains[j].ID })
 	sort.Slice(runtime.TerrainImprovements, func(i, j int) bool { return runtime.TerrainImprovements[i].ID < runtime.TerrainImprovements[j].ID })
 	sort.Slice(runtime.Governments, func(i, j int) bool { return runtime.Governments[i].ID < runtime.Governments[j].ID })
+	sort.Slice(runtime.PollutionTriggers, func(i, j int) bool { return runtime.PollutionTriggers[i].ID < runtime.PollutionTriggers[j].ID })
 }

@@ -24,6 +24,9 @@ func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 	if got, want := len(runtime.TerrainImprovements), 40; got != want {
 		t.Fatalf("runtime terrain improvements = %d, want %d", got, want)
 	}
+	if got, want := len(runtime.PollutionTriggers), 4; got != want {
+		t.Fatalf("runtime pollution triggers = %d, want %d", got, want)
+	}
 }
 
 func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {

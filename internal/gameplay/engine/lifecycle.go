@@ -108,6 +108,9 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 	if len(state.Phase.ActivePlayerOrder) > 0 {
 		state.Phase.ActivePlayerIndex = (state.Phase.ActivePlayerIndex + 1) % len(state.Phase.ActivePlayerOrder)
 	}
+	if runtime != nil {
+		advancePollution(state, runtime)
+	}
 	if runtime == nil || runtime.Starter.Movement < 1 {
 		return
 	}
@@ -117,6 +120,56 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 		}
 	}
 	advanceResearch(state, runtime)
+}
+
+func advancePollution(state *State, runtime *rules.RuntimeRules) {
+	if runtime == nil || len(runtime.PollutionTriggers) == 0 {
+		return
+	}
+	pollutionByNation := playerPollutionTotals(*state)
+	if state.Pollution == nil && len(pollutionByNation) == 0 {
+		return
+	}
+	if state.Pollution == nil {
+		state.Pollution = &PollutionState{}
+	}
+	trigger := runtimePollutionTrigger(runtime.PollutionTriggers)
+	retailState := rules.RetailPollutionState{Phase: state.Pollution.Phase, GWPhase: state.Pollution.GWPhase, History: append([]int64(nil), state.Pollution.History...), Trend: state.Pollution.Trend}
+	retailTrigger := rules.RetailPollutionTriggerList{ID: trigger.ID, TriggerLevels: append([]int64(nil), trigger.TriggerLevels...), DisasterTypes: append([]string(nil), trigger.DisasterTypes...)}
+	next, event := rules.RetailPollutionBeginTurn(retailState, retailTrigger, pollutionByNation, false)
+	next = rules.RetailPollutionEndRound(next, pollutionByNation)
+	state.Pollution.Phase = next.Phase
+	state.Pollution.GWPhase = next.GWPhase
+	state.Pollution.History = append([]int64(nil), next.History...)
+	state.Pollution.Trend = next.Trend
+	state.Pollution.LastPollutionLevel = event.PollutionLevel
+	if event.Triggered {
+		state.Pollution.LastDisaster = event.DisasterType
+		state.Pollution.LastTriggerLevel = event.TriggerLevel
+		if event.DisasterType == "POLLUTION_FLOOD_DISASTER" {
+			state.Pollution.GWPhase++
+		}
+	}
+}
+
+func runtimePollutionTrigger(triggers []rules.RuntimePollutionTriggerDefinition) rules.RuntimePollutionTriggerDefinition {
+	for _, trigger := range triggers {
+		if trigger.ID == "POLLUTION_TRIGGER_LIST_SMALL_MAP" {
+			return trigger
+		}
+	}
+	return triggers[0]
+}
+
+func playerPollutionTotals(state State) []int64 {
+	var total int64
+	for _, tile := range state.Tiles {
+		total += int64(tile.Pollution)
+	}
+	if total == 0 {
+		return nil
+	}
+	return []int64{total}
 }
 
 func advanceResearch(state *State, runtime *rules.RuntimeRules) {

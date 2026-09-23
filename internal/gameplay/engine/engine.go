@@ -299,6 +299,16 @@ type Deadline struct {
 	AtUnix   int64  `json:"at_unix"`
 }
 
+type PollutionState struct {
+	Phase              int     `json:"phase,omitempty"`
+	GWPhase            int     `json:"gw_phase,omitempty"`
+	History            []int64 `json:"history,omitempty"`
+	Trend              string  `json:"trend,omitempty"`
+	LastDisaster       string  `json:"last_disaster,omitempty"`
+	LastTriggerLevel   int64   `json:"last_trigger_level,omitempty"`
+	LastPollutionLevel int64   `json:"last_pollution_level,omitempty"`
+}
+
 type VictoryState struct {
 	WinnerNationID string `json:"winner_nation_id,omitempty"`
 	Reason         string `json:"reason,omitempty"`
@@ -328,6 +338,7 @@ type State struct {
 	Armies           []Army               `json:"armies"`
 	Nations          []Nation             `json:"nations"`
 	Wonders          []Wonder             `json:"wonders,omitempty"`
+	Pollution        *PollutionState      `json:"pollution,omitempty"`
 	Diplomacy        []DiplomaticRelation `json:"diplomacy,omitempty"`
 	Proposals        []DiplomaticProposal `json:"diplomatic_proposals,omitempty"`
 	Players          []Player             `json:"players"`
@@ -720,6 +731,13 @@ func ValidateState(state State) error {
 	for _, tile := range state.Tiles {
 		if tile.Pollution < 0 {
 			return errors.New("tile pollution must be nonnegative")
+		}
+	}
+	if state.Pollution != nil {
+		for _, value := range state.Pollution.History {
+			if value < 0 {
+				return errors.New("pollution history must be nonnegative")
+			}
 		}
 	}
 	players := makeIDSet(playerIDs(state.Players))

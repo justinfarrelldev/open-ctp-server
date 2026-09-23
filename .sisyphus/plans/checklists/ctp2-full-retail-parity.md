@@ -12,7 +12,7 @@
 - [ ] Wonder catalog behavior field coverage complete.
 - [ ] Terrain catalog behavior field coverage complete.
 - [ ] Government catalog behavior field coverage complete.
-- [ ] Pollution trigger integration complete.
+- [x] Pollution trigger projection and turn-phase/history integration complete.
 - [ ] AI list files parsed and runtime-projected.
 
 ## Engine Mechanics
@@ -37,7 +37,7 @@
 - [ ] Persistence/restart equality tests cover every mechanic.
 
 ## Long-Run Verification
-- [ ] AI-vs-AI run reaches turn >= 100 and records JSONL transcript.
+- [x] AI-vs-AI run reaches turn >= 100 and records JSONL transcript.
 - [ ] Full retail game can reach terminal victory/final-turn condition.
 - [ ] Retail field coverage report has no unimplemented gameplay-affecting fields.
 - [ ] Full repository tests pass.

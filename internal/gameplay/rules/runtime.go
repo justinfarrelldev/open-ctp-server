@@ -26,6 +26,7 @@ type RuntimeRules struct {
 	Advances             []RuntimeAdvanceDefinition            `json:"advances,omitempty"`
 	TerrainImprovements  []RuntimeTerrainImprovementDefinition `json:"terrain_improvements,omitempty"`
 	PollutionSources     []RuntimePollutionSourceDefinition    `json:"pollution_sources,omitempty"`
+	PollutionTriggers    []RuntimePollutionTriggerDefinition   `json:"pollution_triggers,omitempty"`
 	Governments          []RuntimeGovernmentDefinition         `json:"governments,omitempty"`
 	Units                []RuntimeUnitDefinition               `json:"units"`
 }
@@ -85,6 +86,12 @@ type RuntimePollutionSourceDefinition struct {
 	ID              string `json:"id"`
 	PollutionPoints int    `json:"pollution_points"`
 	EffectScope     string `json:"effect_scope"`
+}
+
+type RuntimePollutionTriggerDefinition struct {
+	ID            string   `json:"id"`
+	TriggerLevels []int64  `json:"trigger_levels"`
+	DisasterTypes []string `json:"disaster_types"`
 }
 
 type RuntimeGovernmentDefinition struct {
@@ -370,6 +377,7 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 	}
 	sort.Slice(runtime.TerrainImprovements, func(i, j int) bool { return runtime.TerrainImprovements[i].ID < runtime.TerrainImprovements[j].ID })
 	sort.Slice(runtime.PollutionSources, func(i, j int) bool { return runtime.PollutionSources[i].ID < runtime.PollutionSources[j].ID })
+	sort.Slice(runtime.PollutionTriggers, func(i, j int) bool { return runtime.PollutionTriggers[i].ID < runtime.PollutionTriggers[j].ID })
 	sort.Slice(runtime.Governments, func(i, j int) bool { return runtime.Governments[i].ID < runtime.Governments[j].ID })
 	sort.Slice(runtime.Units, func(i, j int) bool { return runtime.Units[i].ID < runtime.Units[j].ID })
 	starterUnit, ok := runtime.Unit("UNIT_SYNTHETIC")
