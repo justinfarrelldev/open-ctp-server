@@ -458,11 +458,11 @@ func terrainYield(state State, tileID string) (Yield, error) {
 	}
 	var yield Yield
 	switch EffectiveTerrain(state, tile.ID) {
-	case TerrainPlains:
+	case TerrainPlains, "TERRAIN_PLAINS", "TERRAIN_GRASSLAND", "TERRAIN_TUNDRA", "TERRAIN_DESERT", "TERRAIN_SWAMP":
 		yield = Yield{Food: 2, Production: 3, Gold: 1}
-	case TerrainForest:
+	case TerrainForest, "TERRAIN_FOREST", "TERRAIN_JUNGLE":
 		yield = Yield{Food: 1, Production: 2}
-	case TerrainOcean:
+	case TerrainOcean, "TERRAIN_WATER_SHALLOW", "TERRAIN_WATER_DEEP", "TERRAIN_WATER_SHELF", "TERRAIN_WATER_BEACH", "TERRAIN_WATER_KELP", "TERRAIN_WATER_REEF":
 		yield = Yield{Food: 1, Gold: 2}
 	default:
 		return Yield{}, errors.New("unsupported terrain yield")

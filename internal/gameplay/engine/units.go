@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
@@ -446,6 +447,9 @@ func supportedDomain(domain string) bool {
 	return domain == DomainLand || domain == DomainSea || domain == DomainAmphibious
 }
 func supportedTerrain(terrain string) bool {
+	if strings.HasPrefix(terrain, "TERRAIN_") {
+		return true
+	}
 	switch terrain {
 	case TerrainPlains, TerrainForest, TerrainOcean, "shelf", "mountain", "tundra", "desert", "swamp", "grassland":
 		return true

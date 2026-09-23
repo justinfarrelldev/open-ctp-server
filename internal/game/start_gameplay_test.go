@@ -148,13 +148,16 @@ func TestServerRuntimePinCanUseRetailProjectionFromEnvironment(t *testing.T) {
 	if !ok || len(runtime.Units) != 74 || runtime.Starter.Movement != settler.Movement {
 		t.Fatalf("retail runtime = %+v settler=%+v ok=%v", runtime, settler, ok)
 	}
-	snapshot := world.WorldSnapshot{Config: world.WorldConfig{StartingSettlers: 1}, Tiles: []world.WorldTile{{X: 0, Y: 0, Terrain: "plains"}}, Spawns: []world.PlayerSpawn{{AccountID: 7, X: 0, Y: 0}}}
+	snapshot := world.WorldSnapshot{Config: world.WorldConfig{StartingSettlers: 1}, Tiles: []world.WorldTile{{X: 0, Y: 0, Terrain: "plains"}, {X: 1, Y: 0, Terrain: "shelf"}, {X: 2, Y: 0, Terrain: "forest"}}, Spawns: []world.PlayerSpawn{{AccountID: 7, X: 0, Y: 0}}}
 	state, err := initialGameplayState(snapshot, "sequential", pin, []GamePlayer{{AccountID: 7}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(state.Units) != 1 || state.Units[0].Movement != runtime.Starter.Movement || state.Units[0].Health != runtime.Starter.Health {
 		t.Fatalf("starter from retail runtime = %#v want %+v", state.Units, runtime.Starter)
+	}
+	if got := []string{state.Tiles[0].Terrain, state.Tiles[1].Terrain, state.Tiles[2].Terrain}; got[0] != "TERRAIN_PLAINS" || got[1] != "TERRAIN_WATER_SHELF" || got[2] != "TERRAIN_FOREST" {
+		t.Fatalf("retail startup terrains = %#v", got)
 	}
 }
 

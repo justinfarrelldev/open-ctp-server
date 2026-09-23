@@ -27,7 +27,7 @@
     },
     {
       "path": "internal/game/start_gameplay.go",
-      "sha256": "760d4617afd4a3f000ea34c44a2ae19a721d7e97c14135f9377a29d4f887f352"
+      "sha256": "1bdad3791dbfae443984ec199eddc0a86eb9c77fde1189034d035756843eab43"
     },
     {
       "path": "internal/game/world_contract_stubs.go",
@@ -43,7 +43,7 @@
     },
     {
       "path": "internal/gameplay/engine/cities.go",
-      "sha256": "58781cf1e9f935e2690448ce0b8153a61488bc52bb5e1fe6908f3ba767dd2e4c"
+      "sha256": "a6250c03a7691b7b290ac11b4963df1d4dfbd22937cb57f961dd17b2e076c65e"
     },
     {
       "path": "internal/gameplay/engine/combat.go",
@@ -79,7 +79,7 @@
     },
     {
       "path": "internal/gameplay/engine/units.go",
-      "sha256": "fc55cfce2f7176b3d08227162fbd0258be81327fe7213abf80d378c628d419da"
+      "sha256": "e6bba2edfa22bdcc68fef000c7160f04455eabc042d5803c7757bc6baab1b71c"
     },
     {
       "path": "internal/gameplay/engine/war.go",

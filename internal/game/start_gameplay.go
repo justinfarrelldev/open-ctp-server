@@ -139,7 +139,7 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 		RNG:           []engine.RNGDomainState{{Domain: engine.RNGDomainCombat, State: 1}, {Domain: engine.RNGDomainSpecialAction, State: 2}, {Domain: engine.RNGDomainAI, State: 3}},
 	}
 	for _, tile := range snapshot.Tiles {
-		state.Tiles = append(state.Tiles, engine.Tile{ID: tileID(tile.X, tile.Y), X: tile.X, Y: tile.Y, Terrain: engineTerrain(tile.Terrain), Open: true})
+		state.Tiles = append(state.Tiles, engine.Tile{ID: tileID(tile.X, tile.Y), X: tile.X, Y: tile.Y, Terrain: engineTerrainForRuntime(tile.Terrain, runtime), Open: true})
 	}
 	for _, player := range players {
 		playerID := fmt.Sprintf("account-%d", player.AccountID)
@@ -181,6 +181,31 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 }
 
 func tileID(x, y int) string { return fmt.Sprintf("tile-%d-%d", x, y) }
+
+func engineTerrainForRuntime(terrain string, runtime rules.RuntimeRules) string {
+	if _, ok := runtime.Movement.Terrain("TERRAIN_PLAINS"); ok {
+		return retailEngineTerrain(terrain, runtime)
+	}
+	return engineTerrain(terrain)
+}
+
+func retailEngineTerrain(terrain string, runtime rules.RuntimeRules) string {
+	candidates := map[string]string{
+		"plains":    "TERRAIN_PLAINS",
+		"grassland": "TERRAIN_GRASSLAND",
+		"forest":    "TERRAIN_FOREST",
+		"swamp":     "TERRAIN_SWAMP",
+		"tundra":    "TERRAIN_TUNDRA",
+		"shelf":     "TERRAIN_WATER_SHELF",
+		"ocean":     "TERRAIN_WATER_DEEP",
+	}
+	if candidate, ok := candidates[terrain]; ok {
+		if _, exists := runtime.Movement.Terrain(candidate); exists {
+			return candidate
+		}
+	}
+	return "TERRAIN_PLAINS"
+}
 
 func engineTerrain(terrain string) string {
 	switch terrain {
