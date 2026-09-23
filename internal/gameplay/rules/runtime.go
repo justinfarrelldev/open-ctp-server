@@ -180,12 +180,13 @@ type RuntimeGaia struct {
 }
 
 type RuntimeProduction struct {
-	ID            string   `json:"id"`
-	Kind          string   `json:"kind"`
-	Cost          int      `json:"cost,omitempty"`
-	Upkeep        int      `json:"upkeep,omitempty"`
-	Prerequisites []string `json:"prerequisites,omitempty"`
-	ObsoleteBy    []string `json:"obsolete_by,omitempty"`
+	ID            string                 `json:"id"`
+	Kind          string                 `json:"kind"`
+	Cost          int                    `json:"cost,omitempty"`
+	Upkeep        int                    `json:"upkeep,omitempty"`
+	Prerequisites []string               `json:"prerequisites,omitempty"`
+	ObsoleteBy    []string               `json:"obsolete_by,omitempty"`
+	Effects       []RuntimeStarterEffect `json:"effects,omitempty"`
 }
 
 type RuntimeEffect struct {

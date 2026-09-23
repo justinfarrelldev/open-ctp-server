@@ -14,18 +14,20 @@ const (
 	ProductionBuilding = "building"
 	ProductionWonder   = "wonder"
 
-	EffectSettler         = "settler"
-	EffectYieldFood       = "yield_food"
-	EffectYieldProduction = "yield_production"
-	EffectYieldGold       = "yield_gold"
-	EffectCombat          = "combat"
-	EffectVision          = "vision"
-	EffectProduction      = "production"
-	EffectVictory         = "victory"
-	EffectResearch        = "research"
-	EffectBonus           = "bonus"
-	EffectCombatAttack    = "combat_attack"
-	EffectCombatDefense   = "combat_defense"
+	EffectSettler                = "settler"
+	EffectYieldFood              = "yield_food"
+	EffectYieldProduction        = "yield_production"
+	EffectYieldGold              = "yield_gold"
+	EffectYieldProductionPercent = "yield_production_percent"
+	EffectYieldGoldPercent       = "yield_gold_percent"
+	EffectCombat                 = "combat"
+	EffectVision                 = "vision"
+	EffectProduction             = "production"
+	EffectVictory                = "victory"
+	EffectResearch               = "research"
+	EffectBonus                  = "bonus"
+	EffectCombatAttack           = "combat_attack"
+	EffectCombatDefense          = "combat_defense"
 )
 
 type Yield struct {
@@ -149,6 +151,9 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 		return err
 	}
 	payload.Item = applyRuntimeProductionDefaults(payload.Item, runtime)
+	if err := validateProductionItem(payload.Item); err != nil {
+		return err
+	}
 	if err := requireProductionUnlock(*state, *city, payload.Item, runtime); err != nil {
 		return err
 	}
@@ -180,6 +185,9 @@ func applyRuntimeProductionDefaults(item ProductionItem, runtime *rules.RuntimeR
 		}
 		if item.ObsoletedBy == "" && len(production.ObsoleteBy) > 0 {
 			item.ObsoletedBy = production.ObsoleteBy[0]
+		}
+		if len(production.Effects) > 0 {
+			item.Effects = runtimeProductionEffects(production)
 		}
 	}
 	if item.Kind != ProductionUnit {
@@ -348,6 +356,14 @@ func unitIDExists(state State, id string) bool {
 	return false
 }
 
+func runtimeProductionEffects(definition rules.RuntimeProduction) []Effect {
+	effects := make([]Effect, 0, len(definition.Effects))
+	for _, effect := range definition.Effects {
+		effects = append(effects, Effect{ID: effect.ID, Kind: effect.Kind, Value: effect.Value})
+	}
+	return effects
+}
+
 func runtimeUnitEffects(definition rules.RuntimeUnitDefinition) []Effect {
 	effects := make([]Effect, 0, len(definition.Effects))
 	for _, effect := range definition.Effects {
@@ -382,6 +398,10 @@ func cityYield(state State, city City) (Yield, error) {
 			yield.Production += effect.Value
 		case EffectYieldGold:
 			yield.Gold += effect.Value
+		case EffectYieldProductionPercent:
+			yield.Production += percentBonus(yield.Production, effect.Value)
+		case EffectYieldGoldPercent:
+			yield.Gold += percentBonus(yield.Gold, effect.Value)
 		case EffectCombat:
 			yield.Combat += effect.Value
 		case EffectVision:
@@ -399,6 +419,13 @@ func cityYield(state State, city City) (Yield, error) {
 		yield.Production = 0
 	}
 	return yield, nil
+}
+
+func percentBonus(value, percent int) int {
+	if value <= 0 || percent <= 0 {
+		return 0
+	}
+	return (value*percent + 99) / 100
 }
 
 func cityEffects(state State, city City) []Effect {
@@ -519,7 +546,7 @@ func validateEffects(effects []Effect) error {
 			return errors.New("effect id is required")
 		}
 		switch effect.Kind {
-		case EffectSettler, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectBonus, EffectCombatAttack, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
+		case EffectSettler, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectBonus, EffectCombatAttack, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
 		default:
 			return fmt.Errorf("unsupported effect kind %q", effect.Kind)
 		}

@@ -36,6 +36,27 @@ func TestRuntimeBuildingAndWonderProductionUsesPinnedCostAndPrerequisite(t *test
 	}
 }
 
+func TestRuntimeProductionEffectsApplyToCompletedBuildingYields(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	state.Nations = []Nation{{ID: "nation-a", Advances: []string{"ADVANCE_FACTORY"}}}
+	runtime := &rules.RuntimeRules{Production: []rules.RuntimeProduction{{ID: "IMPROVE_FACTORY", Kind: "building", Cost: 1, Prerequisites: []string{"ADVANCE_FACTORY"}, Effects: []rules.RuntimeStarterEffect{{ID: "factory-production", Kind: EffectYieldProductionPercent, Value: 50}}}}}
+
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "IMPROVE_FACTORY", Kind: ProductionBuilding, Cost: 1}}, runtime); err != nil {
+		t.Fatalf("queueProduction() error = %v", err)
+	}
+	next, err := RecalculateRound(state)
+	if err != nil {
+		t.Fatalf("RecalculateRound() error = %v", err)
+	}
+	if len(next.Cities[0].Buildings) != 1 || len(next.Cities[0].Buildings[0].Effects) != 1 {
+		t.Fatalf("completed building = %#v", next.Cities[0].Buildings)
+	}
+	if got, want := next.Cities[0].Yields.Production, 5; got != want { // plains production 3 plus ceil(50%) 2, no upkeep.
+		t.Fatalf("production yield = %d, want %d", got, want)
+	}
+}
+
 func TestRuntimeUnitProductionUsesPinnedShieldCost(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})

@@ -82,6 +82,14 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || hagia.Kind != "wonder" || hagia.Cost != 3240 || !sameStringSlices(hagia.Prerequisites, []string{"ADVANCE_THEOLOGY"}) {
 		t.Fatalf("hagia production = %+v ok=%v", hagia, ok)
 	}
+	factory, ok := runtime.ProductionDefinition("IMPROVE_FACTORY")
+	if !ok || len(factory.Effects) != 1 || factory.Effects[0].Kind != "yield_production_percent" || factory.Effects[0].Value != 15 {
+		t.Fatalf("factory production effects = %+v ok=%v", factory, ok)
+	}
+	bazaar, ok := runtime.ProductionDefinition("IMPROVE_BAZAAR")
+	if !ok || len(bazaar.Effects) != 1 || bazaar.Effects[0].Kind != "yield_gold_percent" || bazaar.Effects[0].Value != 10 {
+		t.Fatalf("bazaar production effects = %+v ok=%v", bazaar, ok)
+	}
 }
 
 func runtimeUnitHasEffect(unit RuntimeUnitDefinition, kind string) bool {

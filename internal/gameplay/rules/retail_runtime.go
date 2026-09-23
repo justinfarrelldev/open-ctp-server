@@ -1,6 +1,9 @@
 package rules
 
-import "sort"
+import (
+	"math"
+	"sort"
+)
 
 // ProjectRetailRuntime maps the source-preserving retail catalog into the
 // server's client-safe runtime-definition shape. It does not claim the engine can
@@ -26,7 +29,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		}
 	}
 	for _, building := range db.Buildings {
-		runtime.Production = append(runtime.Production, RuntimeProduction{ID: building.ID, Kind: "building", Cost: building.ProductionCost, Upkeep: building.Upkeep, Prerequisites: singleOrEmpty(building.EnableAdvance), ObsoleteBy: append([]string(nil), building.ObsoleteAdvance...)})
+		runtime.Production = append(runtime.Production, RuntimeProduction{ID: building.ID, Kind: "building", Cost: building.ProductionCost, Upkeep: building.Upkeep, Prerequisites: singleOrEmpty(building.EnableAdvance), ObsoleteBy: append([]string(nil), building.ObsoleteAdvance...), Effects: retailBuildingRuntimeEffects(building)})
 		runtime.Effects = append(runtime.Effects, RuntimeEffect{ID: building.ID, Kind: "building"})
 	}
 	for _, wonder := range db.Wonders {
@@ -44,6 +47,25 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 	}
 	sortRuntimeProjection(&runtime)
 	return runtime
+}
+
+func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffect {
+	effects := make([]RuntimeStarterEffect, 0, 2)
+	if value := percentPoints(building.FloatValues["ProductionPercent"]); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":production-percent", Kind: "yield_production_percent", Value: value})
+	}
+	if value := percentPoints(building.FloatValues["CommercePercent"]); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":commerce-percent", Kind: "yield_gold_percent", Value: value})
+	}
+	sort.Slice(effects, func(i, j int) bool { return effects[i].Kind < effects[j].Kind })
+	return effects
+}
+
+func percentPoints(value float64) int {
+	if value <= 0 {
+		return 0
+	}
+	return int(math.Round(value * 100))
 }
 
 func projectRetailUnit(unit RetailUnit) RuntimeUnitDefinition {
