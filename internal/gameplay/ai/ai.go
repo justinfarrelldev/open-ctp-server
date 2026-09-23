@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility"
 )
 
@@ -225,13 +226,41 @@ func researchCandidates(projection visibility.Projection, playerID string) []Can
 		return nil
 	}
 	available := append([]string(nil), projection.Research.Available...)
-	sort.Strings(available)
+	costs := map[string]int{}
+	if projection.Rules != nil {
+		for _, advance := range projection.Rules.Advances {
+			if advance.ID != "" && advance.Cost > 0 {
+				costs[advance.ID] = advance.Cost
+			}
+		}
+	}
+	sort.Slice(available, func(i, j int) bool {
+		leftCost, leftOK := costs[available[i]]
+		rightCost, rightOK := costs[available[j]]
+		if leftOK != rightOK {
+			return leftOK
+		}
+		if leftOK && rightOK && leftCost != rightCost {
+			return leftCost < rightCost
+		}
+		return available[i] < available[j]
+	})
 	advanceID := available[0]
 	return []Candidate{candidate(engine.CommandSetResearch, playerID, advanceID, 800, map[string]string{"advance_id": advanceID})}
 }
 
 func governmentCandidates(projection visibility.Projection, playerID string) []Candidate {
-	if projection.Diplomacy == nil || projection.Diplomacy.GovernmentID != "" || projection.Research == nil || !containsString(projection.Research.Advances, "ADVANCE_SYNTHETIC_ROOT") {
+	if projection.Diplomacy == nil || projection.Diplomacy.GovernmentID != "" || projection.Research == nil {
+		return nil
+	}
+	owned := ownedAdvances(projection)
+	if projection.Rules != nil && len(projection.Rules.Governments) > 0 {
+		best, ok := bestProjectedGovernment(projection.Rules.Governments, owned)
+		if ok {
+			return []Candidate{candidate(engine.CommandSetGovernment, playerID, best.ID, 760, map[string]string{"government_id": best.ID})}
+		}
+	}
+	if !owned["ADVANCE_SYNTHETIC_ROOT"] {
 		return nil
 	}
 	return []Candidate{candidate(engine.CommandSetGovernment, playerID, "GOVERNMENT_SYNTHETIC_REPUBLIC", 760, map[string]string{"government_id": "GOVERNMENT_SYNTHETIC_REPUBLIC"})}
@@ -361,10 +390,100 @@ func productionCandidates(projection visibility.Projection, playerID string) []C
 		if city.OwnerID != playerID || city.Stale || len(city.Queue) != 0 {
 			continue
 		}
-		item := engine.ProductionItem{ID: "ai-unit-" + city.ID, Kind: engine.ProductionUnit, Cost: 1}
+		item, ok := bestProjectedUnitProduction(projection)
+		if !ok {
+			item = engine.ProductionItem{ID: "ai-unit-" + city.ID, Kind: engine.ProductionUnit, Cost: 1}
+		}
 		candidates = append(candidates, candidate(engine.CommandQueueProduction, city.ID, item.ID, 90, map[string]any{"city_id": city.ID, "item": item}))
 	}
 	return candidates
+}
+
+func ownedAdvances(projection visibility.Projection) map[string]bool {
+	owned := map[string]bool{}
+	if projection.Research == nil {
+		return owned
+	}
+	for _, advance := range projection.Research.Advances {
+		owned[advance] = true
+	}
+	return owned
+}
+
+func bestProjectedGovernment(governments []rules.RuntimeGovernmentDefinition, owned map[string]bool) (rules.RuntimeGovernmentDefinition, bool) {
+	var best rules.RuntimeGovernmentDefinition
+	bestScore := -1
+	for _, government := range governments {
+		if government.ID == "" || (government.EnableAdvanceID != "" && !owned[government.EnableAdvanceID]) {
+			continue
+		}
+		score := government.ResearchBonus + government.PublicWorksBonus
+		if bestScore == -1 || score > bestScore || score == bestScore && government.ID < best.ID {
+			best, bestScore = government, score
+		}
+	}
+	return best, bestScore >= 0
+}
+
+func bestProjectedUnitProduction(projection visibility.Projection) (engine.ProductionItem, bool) {
+	if projection.Rules == nil || len(projection.Rules.Units) == 0 {
+		return engine.ProductionItem{}, false
+	}
+	owned := ownedAdvances(projection)
+	var best rules.RuntimeUnitDefinition
+	bestScore := -1
+	for _, unit := range projection.Rules.Units {
+		if unit.ID == "" || unit.ID == "UNIT_SYNTHETIC" || !runtimeUnitAvailable(unit, owned) {
+			continue
+		}
+		score := projectedUnitProductionScore(unit)
+		if bestScore == -1 || score > bestScore || score == bestScore && productionCost(unit) < productionCost(best) || score == bestScore && productionCost(unit) == productionCost(best) && unit.ID < best.ID {
+			best, bestScore = unit, score
+		}
+	}
+	if bestScore < 0 {
+		return engine.ProductionItem{}, false
+	}
+	return engine.ProductionItem{ID: best.ID, Kind: engine.ProductionUnit, Cost: productionCost(best), Upkeep: best.Upkeep, Effects: productionEffects(best)}, true
+}
+
+func runtimeUnitAvailable(unit rules.RuntimeUnitDefinition, owned map[string]bool) bool {
+	for _, prerequisite := range unit.Prerequisites {
+		if !owned[prerequisite] {
+			return false
+		}
+	}
+	for _, obsolete := range unit.ObsoleteBy {
+		if owned[obsolete] {
+			return false
+		}
+	}
+	return true
+}
+
+func projectedUnitProductionScore(unit rules.RuntimeUnitDefinition) int {
+	score := unit.Attack*4 + unit.Defense*3 + unit.Health + unit.TransportCapacity*2 + unit.VisibilityRange
+	for _, effect := range unit.Effects {
+		if effect.Kind == engine.EffectSettler {
+			score += 50
+		}
+	}
+	return score
+}
+
+func productionCost(unit rules.RuntimeUnitDefinition) int {
+	if unit.ProductionCost > 0 {
+		return unit.ProductionCost
+	}
+	return 1
+}
+
+func productionEffects(unit rules.RuntimeUnitDefinition) []engine.Effect {
+	effects := make([]engine.Effect, 0, len(unit.Effects))
+	for _, effect := range unit.Effects {
+		effects = append(effects, engine.Effect{ID: effect.ID, Kind: effect.Kind, Value: effect.Value})
+	}
+	return effects
 }
 
 func projectionTiles(projection visibility.Projection) map[string]visibility.TileProjection {
