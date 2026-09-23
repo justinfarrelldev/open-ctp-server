@@ -35,6 +35,9 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 	for _, wonder := range db.Wonders {
 		runtime.Production = append(runtime.Production, RuntimeProduction{ID: wonder.ID, Kind: "wonder", Cost: wonder.ProductionCost, Prerequisites: singleOrEmpty(wonder.EnableAdvance), ObsoleteBy: append([]string(nil), wonder.ObsoleteAdvance...), Effects: retailWonderRuntimeEffects(wonder)})
 		runtime.Effects = append(runtime.Effects, RuntimeEffect{ID: wonder.ID, Kind: "wonder"})
+		if containsRetailFlag(wonder.Flags, "StartGaiaController") {
+			runtime.Gaia = RuntimeGaia{ActivationTurns: 10, BuildingID: "IMPROVE_GAIA_COMPUTER", WonderID: wonder.ID}
+		}
 	}
 	for _, terrain := range db.Terrains {
 		runtime.Movement.Terrains = append(runtime.Movement.Terrains, RuntimeTerrain{ID: terrain.ID, Cost: positiveOrOne(terrain.EnvBase.Movement), Domains: retailDomains(terrain.MovementTypes), Food: terrain.EnvBase.Food, Production: terrain.EnvBase.Shield, Gold: terrain.EnvBase.Gold})
@@ -68,6 +71,15 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 	}
 	sort.Slice(effects, func(i, j int) bool { return effects[i].Kind < effects[j].Kind })
 	return effects
+}
+
+func containsRetailFlag(values []string, value string) bool {
+	for _, candidate := range values {
+		if candidate == value {
+			return true
+		}
+	}
+	return false
 }
 
 func retailWonderRuntimeEffects(wonder RetailWonder) []RuntimeStarterEffect {

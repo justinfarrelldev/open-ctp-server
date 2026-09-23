@@ -145,6 +145,21 @@ func TestRuntimeRulesGaiaRequiresCountdownInsteadOfAdvances(t *testing.T) {
 	}
 }
 
+func TestRuntimeRulesGaiaPrerequisitesCanComeFromRetailRuntime(t *testing.T) {
+	runtime := &rules.RuntimeRules{Gaia: rules.RuntimeGaia{ActivationTurns: 10, BuildingID: "IMPROVE_GAIA_COMPUTER", WonderID: "WONDER_THE_SOLARIS_PROJECT"}}
+	buildingID, wonderID, ok := gaiaPrerequisiteIDs(runtime)
+	if !ok || buildingID != "IMPROVE_GAIA_COMPUTER" || wonderID != "WONDER_THE_SOLARIS_PROJECT" {
+		t.Fatalf("Gaia prerequisites = %q/%q/%v", buildingID, wonderID, ok)
+	}
+	state := runtimeStartedState(t)
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Buildings: []Building{{ID: "IMPROVE_GAIA_COMPUTER"}}}}
+	state.Wonders = []Wonder{{ID: "WONDER_THE_SOLARIS_PROJECT", OwnerID: "player-a", CityID: "city-a"}}
+	updateGaiaCountdown(&state, runtime, 5)
+	if got := state.Nations[0].GaiaCompletionTurn; got != 15 {
+		t.Fatalf("retail Gaia completion turn = %d, want 15", got)
+	}
+}
+
 func TestRuntimeRulesGaiaStartsFromSyntheticBuildingAndWonder(t *testing.T) {
 	state := runtimeStartedStateWithGaiaTurns(t, 1, 2)
 	state.Phase.ActivePlayerOrder = []string{"player-a"}

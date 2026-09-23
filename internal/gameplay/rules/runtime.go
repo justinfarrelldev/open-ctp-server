@@ -197,7 +197,9 @@ type RuntimeCalendar struct {
 }
 
 type RuntimeGaia struct {
-	ActivationTurns int `json:"activation_turns"`
+	ActivationTurns int    `json:"activation_turns"`
+	BuildingID      string `json:"building_id,omitempty"`
+	WonderID        string `json:"wonder_id,omitempty"`
 }
 
 type RuntimeProduction struct {

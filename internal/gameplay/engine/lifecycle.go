@@ -428,6 +428,9 @@ func gaiaPrerequisiteIDs(runtime *rules.RuntimeRules) (string, string, bool) {
 	if runtime == nil {
 		return "", "", false
 	}
+	if runtime.Gaia.BuildingID != "" && runtime.Gaia.WonderID != "" {
+		return runtime.Gaia.BuildingID, runtime.Gaia.WonderID, true
+	}
 	buildingID, wonderID := "", ""
 	for _, production := range runtime.Production {
 		switch {
