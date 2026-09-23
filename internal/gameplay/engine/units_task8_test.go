@@ -215,6 +215,24 @@ func TestTask8ArmyJoinRemovalAndInvalidVectors(t *testing.T) {
 	}
 }
 
+func TestUnitMovementSpendsFuelAndRejectsEmptyFuel(t *testing.T) {
+	state := task8State()
+	state.Units = []Unit{{ID: "air", OwnerID: "player-a", TileID: "a", Domain: DomainAir, Movement: 2, Fuel: 1, MaxFuel: 1}}
+	state.Tiles = []Tile{{ID: "a", X: 0, Y: 0, Terrain: TerrainPlains, OwnerID: "player-a", Open: true}, {ID: "b", X: 1, Y: 0, Terrain: TerrainPlains, OwnerID: "player-a", Open: true}, {ID: "d", X: 1, Y: 1, Terrain: TerrainPlains, OwnerID: "player-a", Open: true}}
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, OpenAccess: true, Terrains: []rules.RuntimeTerrain{{ID: TerrainPlains, Cost: 1, Domains: []string{DomainAir}}}}}
+
+	if err := moveUnit(&state, "player-a", moveUnitPayload{UnitID: "air", Path: []string{"b"}}, runtime); err != nil {
+		t.Fatalf("moveUnit() error = %v", err)
+	}
+	unit, ok := unitByID(state, "air")
+	if !ok || unit.Fuel != 0 || unit.Movement != 1 || unit.TileID != "b" {
+		t.Fatalf("unit after fuel move = %+v ok=%v", unit, ok)
+	}
+	if err := moveUnit(&state, "player-a", moveUnitPayload{UnitID: "air", Path: []string{"d"}}, runtime); err == nil {
+		t.Fatal("moveUnit accepted a fueled unit with empty fuel")
+	}
+}
+
 func TestTask8MovementAndCargoFailureVectors(t *testing.T) {
 	state := task8State()
 	for index := range state.Units {

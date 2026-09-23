@@ -318,6 +318,8 @@ func completeUnitProduction(state *State, city City, item ProductionItem, runtim
 		TileID:          city.TileID,
 		Domain:          definition.Domain,
 		Movement:        definition.Movement,
+		Fuel:            definition.MaxFuel,
+		MaxFuel:         definition.MaxFuel,
 		CargoCapacity:   definition.TransportCapacity,
 		CargoDomains:    append([]string(nil), definition.CargoDomains...),
 		ZOC:             definition.ZOC,

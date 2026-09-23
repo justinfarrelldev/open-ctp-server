@@ -58,6 +58,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if got, want := carrier.CargoDomains, []string{"air"}; !sameStringSlices(got, want) {
 		t.Fatalf("carrier cargo domains = %#v, want %#v", got, want)
 	}
+	fighter, ok := runtime.Unit("UNIT_FIGHTER")
+	if !ok || fighter.Domain != "air" || fighter.MaxFuel != 2400 {
+		t.Fatalf("fighter runtime = %+v ok=%v", fighter, ok)
+	}
 
 	railroad, ok := runtime.Advance("ADVANCE_RAILROAD")
 	if !ok || railroad.Cost != 10912 || !sameStringSlices(railroad.Prerequisites, []string{"ADVANCE_BANKING", "ADVANCE_MODERN_METALLURGY"}) {

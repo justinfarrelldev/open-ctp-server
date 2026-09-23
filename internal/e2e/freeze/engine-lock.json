@@ -27,7 +27,7 @@
     },
     {
       "path": "internal/game/start_gameplay.go",
-      "sha256": "1bdad3791dbfae443984ec199eddc0a86eb9c77fde1189034d035756843eab43"
+      "sha256": "1dac2317420b6bd6b5367223f3386a8bae6ffb483c24844028f1650f90b34c09"
     },
     {
       "path": "internal/game/world_contract_stubs.go",
@@ -43,7 +43,7 @@
     },
     {
       "path": "internal/gameplay/engine/cities.go",
-      "sha256": "a6250c03a7691b7b290ac11b4963df1d4dfbd22937cb57f961dd17b2e076c65e"
+      "sha256": "c6ac60cf9d533db60baacdedb89c84b3b6ba3d0f42f8bc25ab965d44039d8248"
     },
     {
       "path": "internal/gameplay/engine/combat.go",
@@ -55,7 +55,7 @@
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "251b901f44945453ae72fd9eb2e0ffeeed07cb36049158f9edbedb2b91005928"
+      "sha256": "f1441cad503131024dc817f39990aaa33750556d04b47abccc7527580689ae6f"
     },
     {
       "path": "internal/gameplay/engine/government.go",
@@ -79,7 +79,7 @@
     },
     {
       "path": "internal/gameplay/engine/units.go",
-      "sha256": "e6bba2edfa22bdcc68fef000c7160f04455eabc042d5803c7757bc6baab1b71c"
+      "sha256": "4449683f5768346b0c28a618cb4aa08a2d1bb72759ab7944943a99c1ee9d9d30"
     },
     {
       "path": "internal/gameplay/engine/war.go",
@@ -111,7 +111,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_runtime.go",
-      "sha256": "a8f1aa01ebc6432d354396ffd28142f3df405cee5fd055e722c25b8dc77ba064"
+      "sha256": "aef99cfc3907d3e4c9d8c9bfa774f1dbf5eb07043f5360ec26a20b12e195c57a"
     },
     {
       "path": "internal/gameplay/rules/rules.go",
@@ -119,7 +119,7 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "f0a374e6b1677b68e836c681c22e6b6146109b5dd2a2bb1b6ab358b8e4106967"
+      "sha256": "49fc04f09ecd725ca90559c8088278e46f3362ce084d62639dc623804aaf345b"
     },
     {
       "path": "internal/gameplay/service/ai.go",

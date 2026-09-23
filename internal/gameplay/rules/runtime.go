@@ -52,6 +52,7 @@ type RuntimeUnitDefinition struct {
 	Strength          int                    `json:"strength"`
 	Armor             int                    `json:"armor"`
 	Health            int                    `json:"health"`
+	MaxFuel           int                    `json:"max_fuel,omitempty"`
 	ZOC               bool                   `json:"zoc"`
 	TransportCapacity int                    `json:"transport_capacity,omitempty"`
 	CargoDomains      []string               `json:"cargo_domains,omitempty"`
@@ -157,6 +158,7 @@ type RuntimeStarter struct {
 	Strength          int                    `json:"strength"`
 	Armor             int                    `json:"armor"`
 	Health            int                    `json:"health"`
+	MaxFuel           int                    `json:"max_fuel,omitempty"`
 	ZOC               bool                   `json:"zoc"`
 	TransportCapacity int                    `json:"transport_capacity,omitempty"`
 	CargoDomains      []string               `json:"cargo_domains,omitempty"`
@@ -366,7 +368,7 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 		return RuntimeRules{}, errors.New("rules definitions require the synthetic starter unit")
 	}
 	runtime.Starter = RuntimeStarter{
-		Domain: starterUnit.Domain, Movement: starterUnit.Movement, Attack: starterUnit.Attack, Defense: starterUnit.Defense, Strength: starterUnit.Strength, Armor: starterUnit.Armor, Health: starterUnit.Health, ZOC: starterUnit.ZOC, TransportCapacity: starterUnit.TransportCapacity, CargoDomains: append([]string(nil), starterUnit.CargoDomains...), VisibilityRange: starterUnit.VisibilityRange,
+		Domain: starterUnit.Domain, Movement: starterUnit.Movement, Attack: starterUnit.Attack, Defense: starterUnit.Defense, Strength: starterUnit.Strength, Armor: starterUnit.Armor, Health: starterUnit.Health, MaxFuel: starterUnit.MaxFuel, ZOC: starterUnit.ZOC, TransportCapacity: starterUnit.TransportCapacity, CargoDomains: append([]string(nil), starterUnit.CargoDomains...), VisibilityRange: starterUnit.VisibilityRange,
 		Effects: append([]RuntimeStarterEffect(nil), starterUnit.Effects...),
 	}
 	sort.Slice(runtime.Victory, func(i, j int) bool { return runtime.Victory[i].ID < runtime.Victory[j].ID })
@@ -403,7 +405,7 @@ func compileRuntimeProjectionDefinitions(definitions []byte, contentHash string)
 		if !ok {
 			return RuntimeRules{}, errors.New("runtime definitions require a starter unit")
 		}
-		runtime.Starter = RuntimeStarter{Domain: starter.Domain, Movement: starter.Movement, Attack: starter.Attack, Defense: starter.Defense, Strength: starter.Strength, Armor: starter.Armor, Health: starter.Health, ZOC: starter.ZOC, TransportCapacity: starter.TransportCapacity, CargoDomains: append([]string(nil), starter.CargoDomains...), VisibilityRange: starter.VisibilityRange, Effects: append([]RuntimeStarterEffect(nil), starter.Effects...)}
+		runtime.Starter = RuntimeStarter{Domain: starter.Domain, Movement: starter.Movement, Attack: starter.Attack, Defense: starter.Defense, Strength: starter.Strength, Armor: starter.Armor, Health: starter.Health, MaxFuel: starter.MaxFuel, ZOC: starter.ZOC, TransportCapacity: starter.TransportCapacity, CargoDomains: append([]string(nil), starter.CargoDomains...), VisibilityRange: starter.VisibilityRange, Effects: append([]RuntimeStarterEffect(nil), starter.Effects...)}
 	}
 	if err := validateRuntimeProjection(runtime); err != nil {
 		return RuntimeRules{}, err
@@ -785,7 +787,7 @@ func compileUnitDefinition(record Record) (RuntimeUnitDefinition, error) {
 		return RuntimeUnitDefinition{}, err
 	}
 	domain := optionalString(record, "Domain", "land")
-	if domain != "land" && domain != "sea" && domain != "amphibious" {
+	if domain != "land" && domain != "sea" && domain != "amphibious" && domain != "air" && domain != "space" {
 		return RuntimeUnitDefinition{}, fmt.Errorf("rules definition record %q has invalid Domain", record.ID)
 	}
 	attack, err := optionalPositiveInteger(record, "Attack", 4)
@@ -805,6 +807,10 @@ func compileUnitDefinition(record Record) (RuntimeUnitDefinition, error) {
 		return RuntimeUnitDefinition{}, err
 	}
 	health, err := optionalPositiveInteger(record, "Health", 10)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	maxFuel, err := optionalNonNegativeInteger(record, "MaxFuel", 0)
 	if err != nil {
 		return RuntimeUnitDefinition{}, err
 	}
@@ -847,7 +853,7 @@ func compileUnitDefinition(record Record) (RuntimeUnitDefinition, error) {
 	if err != nil {
 		return RuntimeUnitDefinition{}, err
 	}
-	return RuntimeUnitDefinition{ID: record.ID, Role: record.Tags["Role"], Domain: domain, Movement: movement, Attack: attack, Defense: defense, Strength: strength, Armor: armor, Health: health, ZOC: zoc, TransportCapacity: transportCapacity, CargoDomains: cargoDomains, ProductionCost: productionCost, Upkeep: upkeep, Prerequisites: prerequisites, ObsoleteBy: obsoleteBy, VisibilityRange: visibilityRange, Effects: effects}, nil
+	return RuntimeUnitDefinition{ID: record.ID, Role: record.Tags["Role"], Domain: domain, Movement: movement, Attack: attack, Defense: defense, Strength: strength, Armor: armor, Health: health, MaxFuel: maxFuel, ZOC: zoc, TransportCapacity: transportCapacity, CargoDomains: cargoDomains, ProductionCost: productionCost, Upkeep: upkeep, Prerequisites: prerequisites, ObsoleteBy: obsoleteBy, VisibilityRange: visibilityRange, Effects: effects}, nil
 }
 
 func unitEffects(record Record) ([]RuntimeStarterEffect, error) {

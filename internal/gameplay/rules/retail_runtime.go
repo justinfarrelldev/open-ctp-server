@@ -25,7 +25,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		runtime.Units = append(runtime.Units, projected)
 		runtime.Production = append(runtime.Production, RuntimeProduction{ID: unit.ID, Kind: "unit"})
 		if unit.ID == "UNIT_SETTLER" {
-			runtime.Starter = RuntimeStarter{Domain: projected.Domain, Movement: projected.Movement, Attack: projected.Attack, Defense: projected.Defense, Strength: projected.Strength, Armor: projected.Armor, Health: projected.Health, ZOC: projected.ZOC, TransportCapacity: projected.TransportCapacity, CargoDomains: append([]string(nil), projected.CargoDomains...), VisibilityRange: projected.VisibilityRange, Effects: append([]RuntimeStarterEffect(nil), projected.Effects...)}
+			runtime.Starter = RuntimeStarter{Domain: projected.Domain, Movement: projected.Movement, Attack: projected.Attack, Defense: projected.Defense, Strength: projected.Strength, Armor: projected.Armor, Health: projected.Health, MaxFuel: projected.MaxFuel, ZOC: projected.ZOC, TransportCapacity: projected.TransportCapacity, CargoDomains: append([]string(nil), projected.CargoDomains...), VisibilityRange: projected.VisibilityRange, Effects: append([]RuntimeStarterEffect(nil), projected.Effects...)}
 		}
 	}
 	for _, building := range db.Buildings {
@@ -71,7 +71,7 @@ func percentPoints(value float64) int {
 func projectRetailUnit(unit RetailUnit) RuntimeUnitDefinition {
 	effects := retailUnitEffects(unit)
 	cargoDomains := retailCargoDomains(unit.CanCarry)
-	return RuntimeUnitDefinition{ID: unit.ID, Role: unit.Category, Domain: retailUnitDomain(unit.MovementTypes), Movement: positiveOrOne(unit.MaxMovePoints), Attack: unit.Attack, Defense: unit.Defense, Strength: unit.Attack, Armor: unit.Armor, Health: positiveOrOne(unit.MaxHP), ZOC: !retailContainsString(unit.Flags, "NoZoc"), TransportCapacity: unit.CargoMax, CargoDomains: cargoDomains, ProductionCost: unit.ShieldCost, Upkeep: unit.GoldHunger, Prerequisites: singleOrEmpty(unit.EnableAdvance), ObsoleteBy: append([]string(nil), unit.ObsoleteAdvance...), VisibilityRange: unit.VisionRange, Effects: effects}
+	return RuntimeUnitDefinition{ID: unit.ID, Role: unit.Category, Domain: retailUnitDomain(unit.MovementTypes), Movement: positiveOrOne(unit.MaxMovePoints), Attack: unit.Attack, Defense: unit.Defense, Strength: unit.Attack, Armor: unit.Armor, Health: positiveOrOne(unit.MaxHP), MaxFuel: unit.MaxFuel, ZOC: !retailContainsString(unit.Flags, "NoZoc"), TransportCapacity: unit.CargoMax, CargoDomains: cargoDomains, ProductionCost: unit.ShieldCost, Upkeep: unit.GoldHunger, Prerequisites: singleOrEmpty(unit.EnableAdvance), ObsoleteBy: append([]string(nil), unit.ObsoleteAdvance...), VisibilityRange: unit.VisionRange, Effects: effects}
 }
 
 func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {

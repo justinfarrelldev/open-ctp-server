@@ -191,12 +191,15 @@ func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *ru
 	}
 	spent := unit.Movement - remaining
 	for _, mover := range movers {
-		if mover.Movement < spent {
+		if mover.Movement < spent || (mover.MaxFuel > 0 && mover.Fuel < spent) {
 			return ErrObstructed
 		}
 	}
 	for _, mover := range movers {
 		mover.TileID, mover.Movement, mover.Fortified = from.ID, mover.Movement-spent, false
+		if mover.MaxFuel > 0 {
+			mover.Fuel -= spent
+		}
 	}
 	captureCityAt(state, actorID, from.ID)
 	state.Fog = append(state.Fog, FogObservation{PlayerID: actorID, TileID: from.ID, Turn: state.Phase.Turn})
@@ -349,7 +352,7 @@ func validateUnitState(state State) error {
 		}
 	}
 	for _, unit := range state.Units {
-		if unit.ID == "" || unit.OwnerID == "" || (unit.Domain != "" && !supportedDomain(unit.Domain)) || unit.Movement < 0 || unit.CargoCapacity < 0 || unit.VisibilityRange < 0 {
+		if unit.ID == "" || unit.OwnerID == "" || (unit.Domain != "" && !supportedDomain(unit.Domain)) || unit.Movement < 0 || unit.Fuel < 0 || unit.MaxFuel < 0 || (unit.MaxFuel == 0 && unit.Fuel != 0) || (unit.MaxFuel > 0 && unit.Fuel > unit.MaxFuel) || unit.CargoCapacity < 0 || unit.VisibilityRange < 0 {
 			return errors.New("unit capability is invalid")
 		}
 		if unit.TransportID != "" {
@@ -444,7 +447,7 @@ func canAccessTile(runtime *rules.RuntimeRules, actorID string, tile Tile) bool 
 	return runtime != nil && runtime.Movement.Configured && (tile.OwnerID == "" || tile.OwnerID == actorID || (runtime.Movement.OpenAccess && tile.Open))
 }
 func supportedDomain(domain string) bool {
-	return domain == DomainLand || domain == DomainSea || domain == DomainAmphibious
+	return domain == DomainLand || domain == DomainSea || domain == DomainAmphibious || domain == DomainAir || domain == DomainSpace
 }
 func supportedTerrain(terrain string) bool {
 	if strings.HasPrefix(terrain, "TERRAIN_") {
