@@ -139,6 +139,15 @@ func TestTask10ProductionAndEffectFailureVectors(t *testing.T) {
 	if yield, err := cityYield(state, *city); err != nil || yield.Food != 3 || yield.Production != 5 {
 		t.Fatalf("worked-tile yield=%#v err=%v", yield, err)
 	}
+	city.WorkedTileIDs = []string{"b", "c"}
+	city.Population = 1
+	if yield, err := cityYield(state, *city); err != nil || yield.Food != 3 || yield.Production != 5 {
+		t.Fatalf("population-limited worked tile yield=%#v err=%v", yield, err)
+	}
+	city.Population = 2
+	if yield, err := cityYield(state, *city); err != nil || yield.Food != 5 || yield.Production != 8 {
+		t.Fatalf("population-2 worked tile yield=%#v err=%v", yield, err)
+	}
 	city.WorkedTileIDs = []string{"a"}
 	if _, err := cityYield(state, *city); err == nil {
 		t.Fatal("duplicate worked tile must fail")

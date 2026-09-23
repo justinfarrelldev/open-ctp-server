@@ -446,15 +446,22 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 		return Yield{}, err
 	}
 	seen := map[string]bool{city.TileID: true}
-	for _, tileID := range city.WorkedTileIDs {
+	workedLimit := len(city.WorkedTileIDs)
+	if city.Population > 0 && city.Population < workedLimit {
+		workedLimit = city.Population
+	}
+	for index, tileID := range city.WorkedTileIDs {
 		if seen[tileID] {
 			return Yield{}, errors.New("worked tile is duplicated")
+		}
+		seen[tileID] = true
+		if index >= workedLimit {
+			continue
 		}
 		worked, err := terrainYieldWithRuntime(state, tileID, runtime)
 		if err != nil {
 			return Yield{}, err
 		}
-		seen[tileID] = true
 		yield = addYield(yield, worked)
 	}
 	effects := cityEffects(state, city)
