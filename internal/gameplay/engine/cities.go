@@ -275,7 +275,7 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 	if len(city.Queue) == 0 {
 		return nil
 	}
-	base, err := terrainYield(*state, city.TileID)
+	base, err := terrainYieldWithRuntime(*state, city.TileID, runtime)
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,18 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
+func TestRetailRuntimeTerrainYieldsAccumulateProduction(t *testing.T) {
+	state := State{Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS"}}}
+	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Queue: []ProductionItem{{ID: "UNIT_SLOW", Kind: ProductionUnit, Cost: 99}}}
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_PLAINS", Cost: 100, Domains: []string{DomainLand}, Food: 10, Production: 10, Gold: 5}}}}
+	if err := completeProduction(&state, &city, runtime); err != nil {
+		t.Fatalf("completeProduction() error = %v", err)
+	}
+	if city.StoredProduction != 10 {
+		t.Fatalf("stored production = %d, want retail terrain production 10", city.StoredProduction)
+	}
+}
+
 func TestRetailRuntimeTerrainYieldsDriveCityYield(t *testing.T) {
 	state := State{Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS"}}}
 	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}
