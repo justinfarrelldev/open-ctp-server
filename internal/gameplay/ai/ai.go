@@ -417,7 +417,7 @@ func bestProjectedGovernment(governments []rules.RuntimeGovernmentDefinition, ow
 		if government.ID == "" || (government.EnableAdvanceID != "" && !owned[government.EnableAdvanceID]) {
 			continue
 		}
-		score := government.ResearchBonus + government.PublicWorksBonus
+		score := government.ResearchBonus + government.PublicWorksBonus + government.ProductionPercent + government.GoldPercent
 		if bestScore == -1 || score > bestScore || score == bestScore && government.ID < best.ID {
 			best, bestScore = government, score
 		}

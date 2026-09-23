@@ -36,6 +36,7 @@ func TestPlannerUsesProjectedGovernmentUnlocksAndBonuses(t *testing.T) {
 		Rules: &visibility.RulesProjection{Governments: []rules.RuntimeGovernmentDefinition{
 			{ID: "GOVERNMENT_LOW", ResearchBonus: 1},
 			{ID: "GOVERNMENT_HIGH", EnableAdvanceID: "ADVANCE_UNLOCK", ResearchBonus: 5, PublicWorksBonus: 2},
+			{ID: "GOVERNMENT_RETAIL_ECONOMY", EnableAdvanceID: "ADVANCE_UNLOCK", ProductionPercent: 15, GoldPercent: 25},
 			{ID: "GOVERNMENT_LOCKED", EnableAdvanceID: "ADVANCE_LOCKED", ResearchBonus: 99},
 		}},
 	})
@@ -46,7 +47,7 @@ func TestPlannerUsesProjectedGovernmentUnlocksAndBonuses(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(candidates) == 0 || candidates[0].Type != engine.CommandSetGovernment || candidates[0].TargetID != "GOVERNMENT_HIGH" {
+	if len(candidates) == 0 || candidates[0].Type != engine.CommandSetGovernment || candidates[0].TargetID != "GOVERNMENT_RETAIL_ECONOMY" {
 		t.Fatalf("government candidates = %#v, want best unlocked projected government first", candidates)
 	}
 }
