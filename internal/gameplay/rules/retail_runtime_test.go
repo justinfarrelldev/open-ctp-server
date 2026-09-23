@@ -102,6 +102,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || len(bazaar.Effects) != 1 || bazaar.Effects[0].Kind != "yield_gold_percent" || bazaar.Effects[0].Value != 10 {
 		t.Fatalf("bazaar production effects = %+v ok=%v", bazaar, ok)
 	}
+	academy, ok := runtime.ProductionDefinition("IMPROVE_ACADEMY")
+	if !ok || len(academy.Effects) != 1 || academy.Effects[0].Kind != "research" || academy.Effects[0].Value != 10 {
+		t.Fatalf("academy production effects = %+v ok=%v", academy, ok)
+	}
 }
 
 func runtimeUnitHasEffect(unit RuntimeUnitDefinition, kind string) bool {

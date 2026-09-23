@@ -12,3 +12,14 @@ func TestRetailResearchRateUsesCityTradeYield(t *testing.T) {
 		t.Fatalf("research rate = %d, want base 1 + city trade 5 + effect 2 = %d", got, want)
 	}
 }
+
+func TestRetailResearchRateUsesCityScienceBuildingEffect(t *testing.T) {
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a"}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", Yields: Yield{Gold: 5}, Buildings: []Building{{ID: "IMPROVE_ACADEMY", Effects: []Effect{{ID: "academy-science", Kind: EffectResearch, Value: 10}}}}}},
+	}
+	if got, want := researchRate(state, state.Nations[0]), 16; got != want {
+		t.Fatalf("research rate = %d, want base 1 + city trade 5 + academy science 10 = %d", got, want)
+	}
+}

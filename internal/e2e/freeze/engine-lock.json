@@ -111,7 +111,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_runtime.go",
-      "sha256": "987893f53418a5de0ca5400ffb298550cb7e946ddc41e6c11c64a9051940b334"
+      "sha256": "cc3272417e4db8a6a82c971d9ecb2d7569c960aa47177b6fc9a30b60bb179c60"
     },
     {
       "path": "internal/gameplay/rules/rules.go",

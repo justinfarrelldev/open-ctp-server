@@ -53,12 +53,15 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 }
 
 func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffect {
-	effects := make([]RuntimeStarterEffect, 0, 2)
+	effects := make([]RuntimeStarterEffect, 0, 3)
 	if value := percentPoints(building.FloatValues["ProductionPercent"]); value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":production-percent", Kind: "yield_production_percent", Value: value})
 	}
 	if value := percentPoints(building.FloatValues["CommercePercent"]); value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":commerce-percent", Kind: "yield_gold_percent", Value: value})
+	}
+	if value := percentPoints(building.FloatValues["SciencePercent"]); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":science-percent", Kind: "research", Value: value})
 	}
 	sort.Slice(effects, func(i, j int) bool { return effects[i].Kind < effects[j].Kind })
 	return effects
