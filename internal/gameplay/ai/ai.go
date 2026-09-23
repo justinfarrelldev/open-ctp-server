@@ -416,6 +416,9 @@ func productionCandidates(projection visibility.Projection, playerID string) []C
 		if shouldProduceExpansionSettler(projection, playerID) {
 			item, ok = bestProjectedSettlerProduction(projection)
 		}
+		if !ok && shouldProduceMilitaryUnit(projection, playerID) {
+			item, ok = bestProjectedCombatUnitProduction(projection)
+		}
 		if !ok {
 			item, ok = bestProjectedCityProduction(projection, city)
 		}
@@ -454,6 +457,28 @@ func bestProjectedGovernment(governments []rules.RuntimeGovernmentDefinition, ow
 		}
 	}
 	return best, bestScore >= 0
+}
+
+func shouldProduceMilitaryUnit(projection visibility.Projection, playerID string) bool {
+	if !aiExpansionEnabled(projection) {
+		return false
+	}
+	ownedCities := 0
+	for _, city := range projection.Cities {
+		if city.OwnerID == playerID && !city.Stale {
+			ownedCities++
+		}
+	}
+	if ownedCities < 3 {
+		return false
+	}
+	ownedUnits := 0
+	for _, unit := range projection.Units {
+		if unit.OwnerID == playerID && !hasEffect(unit.Effects, engine.EffectSettler) {
+			ownedUnits++
+		}
+	}
+	return ownedUnits < ownedCities
 }
 
 func shouldProduceExpansionSettler(projection visibility.Projection, playerID string) bool {
@@ -578,7 +603,17 @@ func runtimeProductionEffects(production rules.RuntimeProduction) []engine.Effec
 	return effects
 }
 
+func bestProjectedCombatUnitProduction(projection visibility.Projection) (engine.ProductionItem, bool) {
+	return bestProjectedUnitProductionMatching(projection, func(unit rules.RuntimeUnitDefinition) bool {
+		return !runtimeUnitHasEffect(unit, engine.EffectSettler) && (unit.Attack > 0 || unit.Defense > 0)
+	})
+}
+
 func bestProjectedUnitProduction(projection visibility.Projection) (engine.ProductionItem, bool) {
+	return bestProjectedUnitProductionMatching(projection, func(rules.RuntimeUnitDefinition) bool { return true })
+}
+
+func bestProjectedUnitProductionMatching(projection visibility.Projection, include func(rules.RuntimeUnitDefinition) bool) (engine.ProductionItem, bool) {
 	if projection.Rules == nil || len(projection.Rules.Units) == 0 {
 		return engine.ProductionItem{}, false
 	}
@@ -586,7 +621,7 @@ func bestProjectedUnitProduction(projection visibility.Projection) (engine.Produ
 	var best rules.RuntimeUnitDefinition
 	bestScore := -1
 	for _, unit := range projection.Rules.Units {
-		if unit.ID == "" || unit.ID == "UNIT_SYNTHETIC" || !runtimeUnitAvailable(unit, owned) {
+		if unit.ID == "" || unit.ID == "UNIT_SYNTHETIC" || !include(unit) || !runtimeUnitAvailable(unit, owned) {
 			continue
 		}
 		score := projectedUnitProductionScore(unit)
