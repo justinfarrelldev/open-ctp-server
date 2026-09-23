@@ -32,6 +32,21 @@ func TestLoadRetailRulesFromDirectoryCompilesTypedCatalogs(t *testing.T) {
 	if got, want := len(db.PollutionTriggerLists), 4; got != want {
 		t.Fatalf("len(PollutionTriggerLists) = %d, want %d", got, want)
 	}
+	if got, want := len(db.AI.UnitBuildLists), 27; got != want {
+		t.Fatalf("len(AI.UnitBuildLists) = %d, want %d", got, want)
+	}
+	if got, want := len(db.AI.BuildingBuildLists), 13; got != want {
+		t.Fatalf("len(AI.BuildingBuildLists) = %d, want %d", got, want)
+	}
+	if got, want := len(db.AI.WonderBuildLists), 7; got != want {
+		t.Fatalf("len(AI.WonderBuildLists) = %d, want %d", got, want)
+	}
+	if got, want := len(db.AI.AdvanceLists), 7; got != want {
+		t.Fatalf("len(AI.AdvanceLists) = %d, want %d", got, want)
+	}
+	if got, want := len(db.AI.ImprovementLists), 4; got != want {
+		t.Fatalf("len(AI.ImprovementLists) = %d, want %d", got, want)
+	}
 }
 
 func TestLoadRetailRulesFromDirectoryPreservesTypedRetailValues(t *testing.T) {

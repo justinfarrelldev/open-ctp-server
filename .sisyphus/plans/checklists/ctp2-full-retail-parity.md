@@ -13,7 +13,7 @@
 - [ ] Terrain catalog behavior field coverage complete.
 - [ ] Government catalog behavior field coverage complete.
 - [x] Pollution trigger projection and turn-phase/history integration complete.
-- [ ] AI list files parsed and runtime-projected.
+- [x] AI list files parsed and runtime-projected.
 
 ## Engine Mechanics
 - [ ] Full advances/research/unlocks/obsolescence executed.

@@ -30,6 +30,9 @@ func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 	if runtime.Gaia.ActivationTurns != 10 || runtime.Gaia.BuildingID != "IMPROVE_GAIA_COMPUTER" || runtime.Gaia.WonderID != "WONDER_THE_SOLARIS_PROJECT" {
 		t.Fatalf("runtime Gaia = %+v", runtime.Gaia)
 	}
+	if runtime.AI == nil || len(runtime.AI.UnitBuildLists) != 27 || len(runtime.AI.BuildingBuildLists) != 13 || len(runtime.AI.WonderBuildLists) != 7 || len(runtime.AI.AdvanceLists) != 7 || len(runtime.AI.ImprovementLists) != 4 {
+		t.Fatalf("runtime AI lists = %+v", runtime.AI)
+	}
 }
 
 func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
@@ -39,6 +42,13 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("LoadRetailRulesFromDirectory() error = %v", err)
 	}
 	runtime := ProjectRetailRuntime(db)
+
+	if runtime.AI == nil || runtime.AI.UnitBuildLists[0].ID != "UNIT_BUILD_LIST_SPECIAL" || !sameStringSlices(runtime.AI.UnitBuildLists[0].Items[:3], []string{"UNIT_DIPLOMAT", "UNIT_SLAVER", "UNIT_ABOLITIONIST"}) {
+		t.Fatalf("runtime AI unit list = %+v", runtime.AI)
+	}
+	if runtime.AI.BuildingBuildLists[1].ID != "BUILDING_BUILD_LIST_GROWTH" || !containsString(runtime.AI.BuildingBuildLists[1].Items, "IMPROVE_GRANARY") {
+		t.Fatalf("runtime AI building lists = %+v", runtime.AI.BuildingBuildLists)
+	}
 
 	settler, ok := runtime.Unit("UNIT_SETTLER")
 	if !ok {

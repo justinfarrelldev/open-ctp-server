@@ -21,6 +21,7 @@ type RetailRules struct {
 	Terrains              []RetailTerrain              `json:"terrains"`
 	Governments           []RetailGovernment           `json:"governments"`
 	PollutionTriggerLists []RetailPollutionTriggerList `json:"pollution_trigger_lists"`
+	AI                    RetailAILists                `json:"ai"`
 }
 
 type RetailUnit struct {
@@ -155,6 +156,19 @@ type RetailPollutionTriggerList struct {
 	RawFields     []RetailRawField `json:"raw_fields"`
 }
 
+type RetailAILists struct {
+	UnitBuildLists     []RetailAIList `json:"unit_build_lists,omitempty"`
+	BuildingBuildLists []RetailAIList `json:"building_build_lists,omitempty"`
+	WonderBuildLists   []RetailAIList `json:"wonder_build_lists,omitempty"`
+	AdvanceLists       []RetailAIList `json:"advance_lists,omitempty"`
+	ImprovementLists   []RetailAIList `json:"improvement_lists,omitempty"`
+}
+
+type RetailAIList struct {
+	ID    string   `json:"id"`
+	Items []string `json:"items,omitempty"`
+}
+
 func RetailGameCatalogs() []RetailCatalog {
 	return []RetailCatalog{
 		{Filename: "Units.txt", Kind: "unit", Prefixes: []string{"UNIT_"}},
@@ -236,7 +250,103 @@ func LoadRetailRulesFromDirectory(directory string) (RetailRules, error) {
 			}
 		}
 	}
+	ai, err := loadRetailAILists(filepath.Join(filepath.Dir(directory), "aidata"))
+	if err != nil {
+		return RetailRules{}, err
+	}
+	result.AI = ai
 	return result, nil
+}
+
+func loadRetailAILists(directory string) (RetailAILists, error) {
+	if _, err := os.Stat(directory); err != nil {
+		if os.IsNotExist(err) {
+			return RetailAILists{}, nil
+		}
+		return RetailAILists{}, importError(ErrorInvalidDirectory, directory, 1, "", err.Error())
+	}
+	var result RetailAILists
+	var err error
+	if result.UnitBuildLists, err = parseRetailAIListFile(filepath.Join(directory, "UnitBuildLists.txt"), "Unit"); err != nil {
+		return RetailAILists{}, err
+	}
+	if result.BuildingBuildLists, err = parseRetailAIListFile(filepath.Join(directory, "BuildingBuildLists.txt"), "Building"); err != nil {
+		return RetailAILists{}, err
+	}
+	if result.WonderBuildLists, err = parseRetailAIListFile(filepath.Join(directory, "WonderBuildLists.txt"), "Wonder"); err != nil {
+		return RetailAILists{}, err
+	}
+	if result.AdvanceLists, err = parseRetailAIListFile(filepath.Join(directory, "AdvanceLists.txt"), "Advance"); err != nil {
+		return RetailAILists{}, err
+	}
+	if result.ImprovementLists, err = parseRetailAIListFile(filepath.Join(directory, "ImprovementLists.txt"), "Improvement"); err != nil {
+		return RetailAILists{}, err
+	}
+	return result, nil
+}
+
+func parseRetailAIListFile(path string, itemKey string) ([]RetailAIList, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, importError(ErrorInvalidDirectory, path, 1, "", err.Error())
+	}
+	lines := strings.Split(string(data), "\n")
+	var lists []RetailAIList
+	var current *RetailAIList
+	var pendingID string
+	for index, line := range lines {
+		lineNumber := index + 1
+		if comment := strings.Index(line, "#"); comment >= 0 {
+			line = line[:comment]
+		}
+		if comment := strings.Index(line, "//"); comment >= 0 {
+			line = line[:comment]
+		}
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		fields := strings.Fields(trimmed)
+		if current == nil {
+			if pendingID != "" {
+				if len(fields) == 1 && fields[0] == "{" {
+					current = &RetailAIList{ID: pendingID}
+					pendingID = ""
+					continue
+				}
+				return nil, importError(ErrorMalformedValue, path, lineNumber, trimmed, "expected AI list opening brace")
+			}
+			if len(fields) == 1 {
+				pendingID = fields[0]
+				continue
+			}
+			if len(fields) >= 2 && fields[1] == "{" {
+				current = &RetailAIList{ID: fields[0]}
+				continue
+			}
+			return nil, importError(ErrorMalformedValue, path, lineNumber, trimmed, "expected AI list header")
+		}
+		if fields[0] == "}" {
+			lists = append(lists, *current)
+			current = nil
+			continue
+		}
+		if fields[0] == itemKey && len(fields) >= 2 {
+			current.Items = append(current.Items, fields[1])
+			continue
+		}
+		return nil, importError(ErrorMalformedValue, path, lineNumber, trimmed, "expected AI list item")
+	}
+	if pendingID != "" {
+		return nil, importError(ErrorMalformedValue, path, len(lines), pendingID, "unterminated AI list header")
+	}
+	if current != nil {
+		return nil, importError(ErrorMalformedValue, path, len(lines), current.ID, "unterminated AI list")
+	}
+	return lists, nil
 }
 
 func compileRetailUnit(record RetailRawRecord) (RetailUnit, error) {

@@ -29,6 +29,7 @@ type RuntimeRules struct {
 	PollutionTriggers    []RuntimePollutionTriggerDefinition   `json:"pollution_triggers,omitempty"`
 	Governments          []RuntimeGovernmentDefinition         `json:"governments,omitempty"`
 	Units                []RuntimeUnitDefinition               `json:"units"`
+	AI                   *RuntimeAI                            `json:"ai,omitempty"`
 }
 
 // RuntimeAdvanceDefinition is the bounded synthetic technology model. It keeps
@@ -213,6 +214,19 @@ type RuntimeProduction struct {
 	Prerequisites []string               `json:"prerequisites,omitempty"`
 	ObsoleteBy    []string               `json:"obsolete_by,omitempty"`
 	Effects       []RuntimeStarterEffect `json:"effects,omitempty"`
+}
+
+type RuntimeAI struct {
+	UnitBuildLists     []RuntimeAIList `json:"unit_build_lists,omitempty"`
+	BuildingBuildLists []RuntimeAIList `json:"building_build_lists,omitempty"`
+	WonderBuildLists   []RuntimeAIList `json:"wonder_build_lists,omitempty"`
+	AdvanceLists       []RuntimeAIList `json:"advance_lists,omitempty"`
+	ImprovementLists   []RuntimeAIList `json:"improvement_lists,omitempty"`
+}
+
+type RuntimeAIList struct {
+	ID    string   `json:"id"`
+	Items []string `json:"items,omitempty"`
 }
 
 type RuntimeEffect struct {

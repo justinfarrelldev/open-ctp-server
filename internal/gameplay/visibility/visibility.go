@@ -111,6 +111,7 @@ type RulesProjection struct {
 	Governments         []rules.RuntimeGovernmentDefinition         `json:"governments,omitempty"`
 	TerrainImprovements []rules.RuntimeTerrainImprovementDefinition `json:"terrain_improvements,omitempty"`
 	Movement            *rules.RuntimeMovement                      `json:"movement,omitempty"`
+	AI                  *rules.RuntimeAI                            `json:"ai,omitempty"`
 }
 
 type ActionProjection struct {
@@ -314,6 +315,7 @@ func rulesProjection(state engine.State) *RulesProjection {
 		return nil
 	}
 	movement := runtime.Movement
+	ai := cloneRuntimeAI(runtime.AI)
 	return &RulesProjection{
 		ContentHash:         runtime.ContentHash,
 		Units:               append([]rules.RuntimeUnitDefinition(nil), runtime.Units...),
@@ -322,7 +324,29 @@ func rulesProjection(state engine.State) *RulesProjection {
 		Governments:         append([]rules.RuntimeGovernmentDefinition(nil), runtime.Governments...),
 		TerrainImprovements: append([]rules.RuntimeTerrainImprovementDefinition(nil), runtime.TerrainImprovements...),
 		Movement:            &movement,
+		AI:                  ai,
 	}
+}
+
+func cloneRuntimeAI(ai *rules.RuntimeAI) *rules.RuntimeAI {
+	if ai == nil {
+		return nil
+	}
+	return &rules.RuntimeAI{
+		UnitBuildLists:     cloneRuntimeAILists(ai.UnitBuildLists),
+		BuildingBuildLists: cloneRuntimeAILists(ai.BuildingBuildLists),
+		WonderBuildLists:   cloneRuntimeAILists(ai.WonderBuildLists),
+		AdvanceLists:       cloneRuntimeAILists(ai.AdvanceLists),
+		ImprovementLists:   cloneRuntimeAILists(ai.ImprovementLists),
+	}
+}
+
+func cloneRuntimeAILists(lists []rules.RuntimeAIList) []rules.RuntimeAIList {
+	cloned := make([]rules.RuntimeAIList, 0, len(lists))
+	for _, list := range lists {
+		cloned = append(cloned, rules.RuntimeAIList{ID: list.ID, Items: append([]string(nil), list.Items...)})
+	}
+	return cloned
 }
 
 func runtimeRules(state engine.State) (rules.RuntimeRules, bool) {

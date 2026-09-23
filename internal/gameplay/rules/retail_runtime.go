@@ -52,8 +52,36 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 	for _, trigger := range db.PollutionTriggerLists {
 		runtime.PollutionTriggers = append(runtime.PollutionTriggers, RuntimePollutionTriggerDefinition{ID: trigger.ID, TriggerLevels: append([]int64(nil), trigger.TriggerLevels...), DisasterTypes: append([]string(nil), trigger.DisasterTypes...)})
 	}
+	if ai := projectRetailAI(db.AI); ai != nil {
+		runtime.AI = ai
+	}
 	sortRuntimeProjection(&runtime)
 	return runtime
+}
+
+func projectRetailAI(ai RetailAILists) *RuntimeAI {
+	projected := &RuntimeAI{
+		UnitBuildLists:     projectRetailAILists(ai.UnitBuildLists),
+		BuildingBuildLists: projectRetailAILists(ai.BuildingBuildLists),
+		WonderBuildLists:   projectRetailAILists(ai.WonderBuildLists),
+		AdvanceLists:       projectRetailAILists(ai.AdvanceLists),
+		ImprovementLists:   projectRetailAILists(ai.ImprovementLists),
+	}
+	if len(projected.UnitBuildLists) == 0 && len(projected.BuildingBuildLists) == 0 && len(projected.WonderBuildLists) == 0 && len(projected.AdvanceLists) == 0 && len(projected.ImprovementLists) == 0 {
+		return nil
+	}
+	return projected
+}
+
+func projectRetailAILists(lists []RetailAIList) []RuntimeAIList {
+	projected := make([]RuntimeAIList, 0, len(lists))
+	for _, list := range lists {
+		if list.ID == "" {
+			continue
+		}
+		projected = append(projected, RuntimeAIList{ID: list.ID, Items: append([]string(nil), list.Items...)})
+	}
+	return projected
 }
 
 func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffect {

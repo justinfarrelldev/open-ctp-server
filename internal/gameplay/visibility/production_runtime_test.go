@@ -8,6 +8,24 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
+func TestRulesProjectionIncludesRetailAILists(t *testing.T) {
+	runtime := rules.RuntimeRules{
+		CompatibilityVersion: rules.CTP2CompatibilityVersion,
+		Production:           []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: engine.ProductionUnit}},
+		Units:                []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: engine.DomainLand, Movement: 1, Health: 1}},
+		Starter:              rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1},
+		AI:                   &rules.RuntimeAI{UnitBuildLists: []rules.RuntimeAIList{{ID: "UNIT_BUILD_LIST_LAND_SETTLER", Items: []string{"UNIT_SETTLER"}}}},
+	}
+	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projection := rulesProjection(engine.State{Rules: engine.RulesPin{Definitions: definitions, ContentHash: contentHash}})
+	if projection == nil || projection.AI == nil || len(projection.AI.UnitBuildLists) != 1 || projection.AI.UnitBuildLists[0].Items[0] != "UNIT_SETTLER" {
+		t.Fatalf("rules projection AI = %+v", projection)
+	}
+}
+
 func TestProductionActionsIncludeUnlockedRuntimeBuildings(t *testing.T) {
 	projection := Projection{
 		Cities:   []CityProjection{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}},

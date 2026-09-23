@@ -542,6 +542,9 @@ func bestProjectedCityProduction(projection visibility.Projection, city visibili
 	for _, building := range city.Buildings {
 		built[building.ID] = true
 	}
+	if item, ok := bestAIListedBuildingProduction(projection, owned, built); ok {
+		return item, true
+	}
 	var best rules.RuntimeProduction
 	bestScore := -1
 	for _, production := range projection.Rules.Production {
@@ -557,6 +560,28 @@ func bestProjectedCityProduction(projection visibility.Projection, city visibili
 		return engine.ProductionItem{}, false
 	}
 	return productionItemFromRuntime(best), true
+}
+
+func bestAIListedBuildingProduction(projection visibility.Projection, owned map[string]bool, built map[string]bool) (engine.ProductionItem, bool) {
+	if projection.Rules == nil || projection.Rules.AI == nil || len(projection.Rules.AI.BuildingBuildLists) == 0 {
+		return engine.ProductionItem{}, false
+	}
+	productionByID := make(map[string]rules.RuntimeProduction, len(projection.Rules.Production))
+	for _, production := range projection.Rules.Production {
+		if production.ID != "" && production.Kind == engine.ProductionBuilding {
+			productionByID[production.ID] = production
+		}
+	}
+	for _, list := range projection.Rules.AI.BuildingBuildLists {
+		for _, id := range list.Items {
+			production, ok := productionByID[id]
+			if !ok || built[id] || !runtimeProductionAvailable(production, owned) {
+				continue
+			}
+			return productionItemFromRuntime(production), true
+		}
+	}
+	return engine.ProductionItem{}, false
 }
 
 func runtimeProductionAvailable(production rules.RuntimeProduction, owned map[string]bool) bool {
