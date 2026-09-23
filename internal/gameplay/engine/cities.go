@@ -14,24 +14,27 @@ const (
 	ProductionBuilding = "building"
 	ProductionWonder   = "wonder"
 
-	EffectSettler                = "settler"
-	EffectSettleSize             = "settle_size"
-	EffectSettleBuilding         = "settle_building"
-	EffectYieldFood              = "yield_food"
-	EffectYieldProduction        = "yield_production"
-	EffectYieldGold              = "yield_gold"
-	EffectYieldGoldPerPopulation = "yield_gold_per_population"
-	EffectYieldFoodPercent       = "yield_food_percent"
-	EffectYieldProductionPercent = "yield_production_percent"
-	EffectYieldGoldPercent       = "yield_gold_percent"
-	EffectCombat                 = "combat"
-	EffectVision                 = "vision"
-	EffectProduction             = "production"
-	EffectVictory                = "victory"
-	EffectResearch               = "research"
-	EffectBonus                  = "bonus"
-	EffectCombatAttack           = "combat_attack"
-	EffectCombatDefense          = "combat_defense"
+	EffectSettler                    = "settler"
+	EffectSettleSize                 = "settle_size"
+	EffectSettleBuilding             = "settle_building"
+	EffectYieldFood                  = "yield_food"
+	EffectYieldProduction            = "yield_production"
+	EffectYieldGold                  = "yield_gold"
+	EffectYieldGoldPerPopulation     = "yield_gold_per_population"
+	EffectPollutionPopulationPercent = "pollution_population_percent"
+	EffectPollutionProductionPercent = "pollution_production_percent"
+	EffectPollution                  = "pollution"
+	EffectYieldFoodPercent           = "yield_food_percent"
+	EffectYieldProductionPercent     = "yield_production_percent"
+	EffectYieldGoldPercent           = "yield_gold_percent"
+	EffectCombat                     = "combat"
+	EffectVision                     = "vision"
+	EffectProduction                 = "production"
+	EffectVictory                    = "victory"
+	EffectResearch                   = "research"
+	EffectBonus                      = "bonus"
+	EffectCombatAttack               = "combat_attack"
+	EffectCombatDefense              = "combat_defense"
 )
 
 type Yield struct {
@@ -284,9 +287,64 @@ func RecalculateRound(state State) (State, error) {
 			return State{}, err
 		}
 		advanceCityFood(city)
+		if cityPollutionEnabled(runtime) {
+			applyCityPollution(&next, *city)
+		}
 	}
 	next.RecalculatedTurn = next.Phase.Turn
 	return next, nil
+}
+
+func cityPollutionEnabled(runtime *rules.RuntimeRules) bool {
+	return runtime != nil && len(runtime.PollutionTriggers) > 0
+}
+
+func applyCityPollution(state *State, city City) {
+	pollution := cityPollution(*state, city)
+	for index := range state.Tiles {
+		if state.Tiles[index].ID == city.TileID {
+			state.Tiles[index].Pollution = pollution
+			return
+		}
+	}
+}
+
+func cityPollution(state State, city City) int {
+	basePopulationPollution := positivePopulation(city.Population)
+	baseProductionPollution := city.Yields.Production
+	populationPercent := 0
+	productionPercent := 0
+	flatPollution := 0
+	for _, effect := range cityEffects(state, city) {
+		switch effect.Kind {
+		case EffectPollutionPopulationPercent:
+			populationPercent += effect.Value
+		case EffectPollutionProductionPercent:
+			productionPercent += effect.Value
+		case EffectPollution:
+			flatPollution += effect.Value
+		}
+	}
+	populationPollution := basePopulationPollution + signedPercentDelta(basePopulationPollution, populationPercent)
+	productionPollution := baseProductionPollution + signedPercentDelta(baseProductionPollution, productionPercent)
+	if populationPollution < 0 {
+		populationPollution = 0
+	}
+	if productionPollution < 0 {
+		productionPollution = 0
+	}
+	total := populationPollution + productionPollution + flatPollution
+	if total < 0 {
+		return 0
+	}
+	return total
+}
+
+func signedPercentDelta(value, percent int) int {
+	if value == 0 || percent == 0 {
+		return 0
+	}
+	return value * percent / 100
 }
 
 func advanceCityFood(city *City) {
@@ -662,7 +720,7 @@ func validateEffects(effects []Effect) error {
 			return errors.New("effect id is required")
 		}
 		switch effect.Kind {
-		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldGoldPerPopulation, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectBonus, EffectCombatAttack, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
+		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldGoldPerPopulation, EffectPollutionPopulationPercent, EffectPollutionProductionPercent, EffectPollution, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectBonus, EffectCombatAttack, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
 		default:
 			return fmt.Errorf("unsupported effect kind %q", effect.Kind)
 		}

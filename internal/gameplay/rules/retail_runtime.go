@@ -101,6 +101,12 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 	if value := building.IntValues["GoldPerCitizen"]; value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":gold-per-citizen", Kind: "yield_gold_per_population", Value: value})
 	}
+	if value, ok := signedPercentPoints(building.FloatValues["PopulationPollutionPercent"]); ok {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":population-pollution-percent", Kind: "pollution_population_percent", Value: value})
+	}
+	if value, ok := signedPercentPoints(building.FloatValues["ProductionPollutionPercent"]); ok {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":production-pollution-percent", Kind: "pollution_production_percent", Value: value})
+	}
 	sort.Slice(effects, func(i, j int) bool { return effects[i].Kind < effects[j].Kind })
 	return effects
 }
@@ -130,6 +136,13 @@ func retailWonderRuntimeEffects(wonder RetailWonder) []RuntimeStarterEffect {
 	}
 	sort.Slice(effects, func(i, j int) bool { return effects[i].Kind < effects[j].Kind })
 	return effects
+}
+
+func signedPercentPoints(value float64) (int, bool) {
+	if value == 0 {
+		return 0, false
+	}
+	return int(math.Round(value * 100)), true
 }
 
 func percentPoints(value float64) int {

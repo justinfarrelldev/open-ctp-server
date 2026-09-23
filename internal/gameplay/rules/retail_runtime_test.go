@@ -119,6 +119,15 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || len(bazaar.Effects) != 1 || bazaar.Effects[0].Kind != "yield_gold_percent" || bazaar.Effects[0].Value != 10 {
 		t.Fatalf("bazaar production effects = %+v ok=%v", bazaar, ok)
 	}
+	ecoTransit, ok := runtime.ProductionDefinition("IMPROVE_ECO_TRANSIT")
+	if !ok || !runtimeProductionHasEffectValue(ecoTransit, "pollution_population_percent", -50) {
+		t.Fatalf("eco transit production effects = %+v ok=%v", ecoTransit, ok)
+	}
+	matter, ok := runtime.ProductionDefinition("IMPROVE_MATTER_DECOMPILER")
+	if !ok || !runtimeProductionHasEffectValue(matter, "pollution_production_percent", -50) {
+		t.Fatalf("matter decomposer production effects = %+v ok=%v", matter, ok)
+	}
+
 	television, ok := runtime.ProductionDefinition("IMPROVE_TELEVISION")
 	if !ok || !runtimeProductionHasEffectValue(television, "yield_gold_per_population", 5) {
 		t.Fatalf("television production effects = %+v ok=%v", television, ok)
