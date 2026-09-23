@@ -119,6 +119,11 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || len(bazaar.Effects) != 1 || bazaar.Effects[0].Kind != "yield_gold_percent" || bazaar.Effects[0].Value != 10 {
 		t.Fatalf("bazaar production effects = %+v ok=%v", bazaar, ok)
 	}
+	television, ok := runtime.ProductionDefinition("IMPROVE_TELEVISION")
+	if !ok || !runtimeProductionHasEffectValue(television, "yield_gold_per_population", 5) {
+		t.Fatalf("television production effects = %+v ok=%v", television, ok)
+	}
+
 	academy, ok := runtime.ProductionDefinition("IMPROVE_ACADEMY")
 	if !ok || len(academy.Effects) != 1 || academy.Effects[0].Kind != "research" || academy.Effects[0].Value != 10 {
 		t.Fatalf("academy production effects = %+v ok=%v", academy, ok)
@@ -135,6 +140,15 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || len(pyramids.Effects) != 1 || pyramids.Effects[0].Kind != "yield_gold" || pyramids.Effects[0].Value != 100 {
 		t.Fatalf("Pyramids effects = %+v ok=%v", pyramids, ok)
 	}
+}
+
+func runtimeProductionHasEffectValue(production RuntimeProduction, kind string, value int) bool {
+	for _, effect := range production.Effects {
+		if effect.Kind == kind && effect.Value == value {
+			return true
+		}
+	}
+	return false
 }
 
 func runtimeUnitHasEffect(unit RuntimeUnitDefinition, kind string) bool {

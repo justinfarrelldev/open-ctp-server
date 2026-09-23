@@ -20,6 +20,7 @@ const (
 	EffectYieldFood              = "yield_food"
 	EffectYieldProduction        = "yield_production"
 	EffectYieldGold              = "yield_gold"
+	EffectYieldGoldPerPopulation = "yield_gold_per_population"
 	EffectYieldFoodPercent       = "yield_food_percent"
 	EffectYieldProductionPercent = "yield_production_percent"
 	EffectYieldGoldPercent       = "yield_gold_percent"
@@ -473,6 +474,8 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 			yield.Production += effect.Value
 		case EffectYieldGold:
 			yield.Gold += effect.Value
+		case EffectYieldGoldPerPopulation:
+			yield.Gold += effect.Value * positivePopulation(city.Population)
 		case EffectYieldFoodPercent:
 			yield.Food += percentBonus(yield.Food, effect.Value)
 		case EffectYieldProductionPercent:
@@ -496,6 +499,13 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 		yield.Production = 0
 	}
 	return yield, nil
+}
+
+func positivePopulation(population int) int {
+	if population < 1 {
+		return 1
+	}
+	return population
 }
 
 func percentBonus(value, percent int) int {
@@ -652,7 +662,7 @@ func validateEffects(effects []Effect) error {
 			return errors.New("effect id is required")
 		}
 		switch effect.Kind {
-		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectBonus, EffectCombatAttack, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
+		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldGoldPerPopulation, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectBonus, EffectCombatAttack, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
 		default:
 			return fmt.Errorf("unsupported effect kind %q", effect.Kind)
 		}

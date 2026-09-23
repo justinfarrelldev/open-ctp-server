@@ -78,6 +78,19 @@ func TestRetailRuntimeBuildingFoodPercentDrivesCityYield(t *testing.T) {
 	}
 }
 
+func TestRuntimeGoldPerCitizenEffectUsesPopulation(t *testing.T) {
+	state := State{Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS"}}}
+	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Population: 3, Buildings: []Building{{ID: "IMPROVE_TELEVISION", Effects: []Effect{{ID: "tv-gold", Kind: EffectYieldGoldPerPopulation, Value: 5}}}}}
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_PLAINS", Cost: 100, Domains: []string{DomainLand}, Gold: 10}}}}
+	yield, err := cityYieldWithRuntime(state, city, runtime)
+	if err != nil {
+		t.Fatalf("cityYieldWithRuntime() error = %v", err)
+	}
+	if yield.Gold != 25 {
+		t.Fatalf("gold yield = %d, want base 10 + 5*population 3", yield.Gold)
+	}
+}
+
 func TestRuntimeBuildingEffectsObsoleteWhenNationHasObsoleteAdvance(t *testing.T) {
 	state := State{
 		Tiles:   []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS"}},

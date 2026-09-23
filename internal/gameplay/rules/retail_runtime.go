@@ -98,6 +98,9 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 	if value := percentPoints(building.FloatValues["SciencePercent"]); value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":science-percent", Kind: "research", Value: value})
 	}
+	if value := building.IntValues["GoldPerCitizen"]; value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":gold-per-citizen", Kind: "yield_gold_per_population", Value: value})
+	}
 	sort.Slice(effects, func(i, j int) bool { return effects[i].Kind < effects[j].Kind })
 	return effects
 }
