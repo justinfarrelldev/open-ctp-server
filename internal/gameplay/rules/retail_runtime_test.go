@@ -152,6 +152,14 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || len(academyWonder.Effects) != 1 || academyWonder.Effects[0].Kind != "research_percent" || academyWonder.Effects[0].Value != 20 {
 		t.Fatalf("Aristotle's Lyceum effects = %+v ok=%v", academyWonder, ok)
 	}
+	internet, ok := runtime.ProductionDefinition("WONDER_INTERNET")
+	if !ok || !runtimeProductionHasEffectValue(internet, "research_percent", 20) {
+		t.Fatalf("Internet actual-building effects = %+v ok=%v", internet, ok)
+	}
+	matterDecomp, ok := runtime.ProductionDefinition("WONDER_CENTRAL_MATTER_DECOMPILER")
+	if !ok || !runtimeProductionHasEffectValue(matterDecomp, "pollution_production_percent", -50) {
+		t.Fatalf("Central Matter Decompiler building-everywhere effects = %+v ok=%v", matterDecomp, ok)
+	}
 	pyramids, ok := runtime.ProductionDefinition("WONDER_PYRAMIDS")
 	if !ok || len(pyramids.Effects) != 1 || pyramids.Effects[0].Kind != "yield_gold" || pyramids.Effects[0].Value != 100 {
 		t.Fatalf("Pyramids effects = %+v ok=%v", pyramids, ok)

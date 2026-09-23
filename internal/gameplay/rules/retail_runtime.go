@@ -30,12 +30,15 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 			runtime.Starter = RuntimeStarter{Domain: projected.Domain, Movement: projected.Movement, Attack: projected.Attack, Defense: projected.Defense, Ranged: projected.Ranged, Strength: projected.Strength, Armor: projected.Armor, Health: projected.Health, MaxFuel: projected.MaxFuel, ZOC: projected.ZOC, TransportCapacity: projected.TransportCapacity, CargoDomains: append([]string(nil), projected.CargoDomains...), VisibilityRange: projected.VisibilityRange, Effects: append([]RuntimeStarterEffect(nil), projected.Effects...)}
 		}
 	}
+	buildingEffects := make(map[string][]RuntimeStarterEffect, len(db.Buildings))
 	for _, building := range db.Buildings {
-		runtime.Production = append(runtime.Production, RuntimeProduction{ID: building.ID, Kind: "building", Cost: building.ProductionCost, Upkeep: building.Upkeep, Prerequisites: singleOrEmpty(building.EnableAdvance), ObsoleteBy: append([]string(nil), building.ObsoleteAdvance...), Effects: retailBuildingRuntimeEffects(building)})
+		effects := retailBuildingRuntimeEffects(building)
+		buildingEffects[building.ID] = effects
+		runtime.Production = append(runtime.Production, RuntimeProduction{ID: building.ID, Kind: "building", Cost: building.ProductionCost, Upkeep: building.Upkeep, Prerequisites: singleOrEmpty(building.EnableAdvance), ObsoleteBy: append([]string(nil), building.ObsoleteAdvance...), Effects: effects})
 		runtime.Effects = append(runtime.Effects, RuntimeEffect{ID: building.ID, Kind: "building"})
 	}
 	for _, wonder := range db.Wonders {
-		runtime.Production = append(runtime.Production, RuntimeProduction{ID: wonder.ID, Kind: "wonder", Cost: wonder.ProductionCost, Prerequisites: singleOrEmpty(wonder.EnableAdvance), ObsoleteBy: append([]string(nil), wonder.ObsoleteAdvance...), Effects: retailWonderRuntimeEffects(wonder)})
+		runtime.Production = append(runtime.Production, RuntimeProduction{ID: wonder.ID, Kind: "wonder", Cost: wonder.ProductionCost, Prerequisites: singleOrEmpty(wonder.EnableAdvance), ObsoleteBy: append([]string(nil), wonder.ObsoleteAdvance...), Effects: retailWonderRuntimeEffects(wonder, buildingEffects)})
 		runtime.Effects = append(runtime.Effects, RuntimeEffect{ID: wonder.ID, Kind: "wonder"})
 		if containsRetailFlag(wonder.Flags, "StartGaiaController") {
 			runtime.Gaia = RuntimeGaia{ActivationTurns: 10, BuildingID: "IMPROVE_GAIA_COMPUTER", WonderID: wonder.ID}
@@ -128,7 +131,7 @@ func containsRetailFlag(values []string, value string) bool {
 	return false
 }
 
-func retailWonderRuntimeEffects(wonder RetailWonder) []RuntimeStarterEffect {
+func retailWonderRuntimeEffects(wonder RetailWonder, buildingEffects map[string][]RuntimeStarterEffect) []RuntimeStarterEffect {
 	effects := make([]RuntimeStarterEffect, 0, 4)
 	if value := wonder.IntValues["BonusGold"]; value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":bonus-gold", Kind: "yield_gold", Value: value})
@@ -142,7 +145,17 @@ func retailWonderRuntimeEffects(wonder RetailWonder) []RuntimeStarterEffect {
 	if value := wonder.IntValues["IncreaseProduction"]; value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":production", Kind: "yield_production_percent", Value: value})
 	}
-	sort.Slice(effects, func(i, j int) bool { return effects[i].Kind < effects[j].Kind })
+	for _, buildingID := range append(retailFieldValues(wonder.RawFields, "BuildingEverywhere"), retailFieldValues(wonder.RawFields, "ActualBuildingEverywhere")...) {
+		for _, effect := range buildingEffects[buildingID] {
+			effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":" + effect.ID, Kind: effect.Kind, Value: effect.Value})
+		}
+	}
+	sort.Slice(effects, func(i, j int) bool {
+		if effects[i].Kind != effects[j].Kind {
+			return effects[i].Kind < effects[j].Kind
+		}
+		return effects[i].ID < effects[j].ID
+	})
 	return effects
 }
 
