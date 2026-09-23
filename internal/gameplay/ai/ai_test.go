@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility"
 )
 
@@ -153,6 +154,46 @@ func TestPlannerSkipsArmyBoundSettlerWhenChoosingFoundCity(t *testing.T) {
 		if candidate.Type == engine.CommandFoundCity && candidate.EntityID == "settler-army" {
 			t.Fatalf("army-bound settler leaked into found-city candidates: %#v", candidate)
 		}
+	}
+}
+
+func TestPlannerSettlesExpansionSettlerAwayFromExistingCities(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		PlanningStatus: visibility.PlanningStatusOpen,
+		Cities:         []visibility.CityProjection{{ID: "capital", OwnerID: "ai", TileID: "capital-tile"}},
+		Units:          []visibility.UnitProjection{{ID: "settler", OwnerID: "ai", TileID: "frontier", Domain: engine.DomainLand, Effects: []engine.Effect{{ID: "settle", Kind: engine.EffectSettler}}}},
+		Tiles:          []visibility.TileProjection{{ID: "frontier", X: 1, Y: 0, Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{engine.DomainLand}, Accessible: true}}},
+		Rules:          &visibility.RulesProjection{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER"}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(candidates) == 0 || candidates[0].Type != engine.CommandFoundCity || candidates[0].EntityID != "settler" {
+		t.Fatalf("top candidate = %#v, want settler found-city", candidates)
+	}
+}
+
+func TestPlannerMovesUnescortedSettlerOutOfCityBeforeArmyCreation(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		PlanningStatus: visibility.PlanningStatusOpen,
+		Cities:         []visibility.CityProjection{{ID: "capital", OwnerID: "ai", TileID: "capital-tile"}},
+		Units:          []visibility.UnitProjection{{ID: "settler", OwnerID: "ai", TileID: "capital-tile", Domain: engine.DomainLand, Movement: 1, Effects: []engine.Effect{{ID: "settle", Kind: engine.EffectSettler}}}},
+		Tiles:          []visibility.TileProjection{{ID: "capital-tile", X: 0, Y: 0, Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{engine.DomainLand}, Accessible: true}}, {ID: "frontier", X: 1, Y: 0, Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{engine.DomainLand}, Accessible: true}}},
+		Rules:          &visibility.RulesProjection{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER"}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(candidates) == 0 || candidates[0].Type != engine.CommandMoveUnit || candidates[0].EntityID != "settler" {
+		t.Fatalf("top candidate = %#v, want settler move before army creation", candidates)
 	}
 }
 

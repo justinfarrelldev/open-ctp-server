@@ -198,18 +198,18 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 	if len(embassy) == 0 {
 		candidates = append(candidates, explorationCandidates(projection, playerID, visited)...)
 	}
-	hasCity := false
-	for _, city := range projection.Cities {
-		hasCity = hasCity || city.OwnerID == playerID
-	}
+	cityTiles := ownedCityTiles(projection, playerID)
+	ownedCityCount := len(cityTiles)
+	expansionEnabled := aiExpansionEnabled(projection)
 	for _, unit := range projection.Units {
 		if unit.OwnerID != playerID {
 			continue
 		}
-		if !hasCity && unit.ArmyID == "" && unit.TransportID == "" && unit.TileID != "" && hasEffect(unit.Effects, engine.EffectSettler) {
-			candidates = append(candidates, candidate(engine.CommandFoundCity, unit.ID, unit.TileID, 900, map[string]string{"unit_id": unit.ID, "city_id": "ai-city-" + unit.ID, "name": "AI-" + playerID}))
+		isSettler := hasEffect(unit.Effects, engine.EffectSettler)
+		if unit.ArmyID == "" && unit.TransportID == "" && unit.TileID != "" && isSettler && !cityTiles[unit.TileID] && (ownedCityCount == 0 || expansionEnabled && ownedCityCount < 3) {
+			candidates = append(candidates, candidate(engine.CommandFoundCity, unit.ID, unit.TileID, 900, map[string]string{"unit_id": unit.ID, "city_id": "ai-city-" + unit.ID, "name": "AI-" + playerID + "-" + unit.ID}))
 		}
-		if unit.ArmyID == "" && unit.TransportID == "" && unit.TileID != "" {
+		if unit.ArmyID == "" && unit.TransportID == "" && unit.TileID != "" && (!isSettler || !expansionEnabled) {
 			candidates = append(candidates, candidate(engine.CommandArmyCreate, unit.ID, "", 180, map[string]any{"army_id": "ai-army-" + unit.ID, "unit_ids": []string{unit.ID}}))
 		}
 		if unit.TransportID == "" && unit.TileID != "" {
@@ -219,6 +219,28 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 	candidates = append(candidates, productionCandidates(projection, playerID)...)
 	sort.Slice(candidates, func(i, j int) bool { return Compare(candidates[i], candidates[j]) < 0 })
 	return candidates, nil
+}
+
+func aiExpansionEnabled(projection visibility.Projection) bool {
+	if projection.Rules == nil {
+		return false
+	}
+	for _, unit := range projection.Rules.Units {
+		if unit.ID == "UNIT_SETTLER" {
+			return true
+		}
+	}
+	return false
+}
+
+func ownedCityTiles(projection visibility.Projection, playerID string) map[string]bool {
+	cityTiles := make(map[string]bool)
+	for _, city := range projection.Cities {
+		if city.OwnerID == playerID && city.TileID != "" {
+			cityTiles[city.TileID] = true
+		}
+	}
+	return cityTiles
 }
 
 func researchCandidates(projection visibility.Projection, playerID string) []Candidate {
@@ -390,7 +412,13 @@ func productionCandidates(projection visibility.Projection, playerID string) []C
 		if city.OwnerID != playerID || city.Stale || len(city.Queue) != 0 {
 			continue
 		}
-		item, ok := bestProjectedCityProduction(projection, city)
+		item, ok := engine.ProductionItem{}, false
+		if shouldProduceExpansionSettler(projection, playerID) {
+			item, ok = bestProjectedSettlerProduction(projection)
+		}
+		if !ok {
+			item, ok = bestProjectedCityProduction(projection, city)
+		}
 		if !ok {
 			item, ok = bestProjectedUnitProduction(projection)
 		}
@@ -426,6 +454,58 @@ func bestProjectedGovernment(governments []rules.RuntimeGovernmentDefinition, ow
 		}
 	}
 	return best, bestScore >= 0
+}
+
+func shouldProduceExpansionSettler(projection visibility.Projection, playerID string) bool {
+	if !aiExpansionEnabled(projection) {
+		return false
+	}
+	ownedCities := 0
+	for _, city := range projection.Cities {
+		if city.OwnerID == playerID && !city.Stale {
+			ownedCities++
+		}
+	}
+	if ownedCities == 0 || ownedCities >= 3 {
+		return false
+	}
+	for _, unit := range projection.Units {
+		if unit.OwnerID == playerID && hasEffect(unit.Effects, engine.EffectSettler) {
+			return false
+		}
+	}
+	return true
+}
+
+func bestProjectedSettlerProduction(projection visibility.Projection) (engine.ProductionItem, bool) {
+	if projection.Rules == nil || len(projection.Rules.Units) == 0 {
+		return engine.ProductionItem{}, false
+	}
+	owned := ownedAdvances(projection)
+	var best rules.RuntimeUnitDefinition
+	bestCost := 0
+	for _, unit := range projection.Rules.Units {
+		if unit.ID == "" || !runtimeUnitAvailable(unit, owned) || !runtimeUnitHasEffect(unit, engine.EffectSettler) {
+			continue
+		}
+		cost := productionCost(unit)
+		if best.ID == "" || cost < bestCost || cost == bestCost && unit.ID < best.ID {
+			best, bestCost = unit, cost
+		}
+	}
+	if best.ID == "" {
+		return engine.ProductionItem{}, false
+	}
+	return engine.ProductionItem{ID: best.ID, Kind: engine.ProductionUnit, Cost: bestCost, Upkeep: best.Upkeep, Effects: productionEffects(best)}, true
+}
+
+func runtimeUnitHasEffect(unit rules.RuntimeUnitDefinition, kind string) bool {
+	for _, effect := range unit.Effects {
+		if effect.Kind == kind {
+			return true
+		}
+	}
+	return false
 }
 
 func bestProjectedCityProduction(projection visibility.Projection, city visibility.CityProjection) (engine.ProductionItem, bool) {
