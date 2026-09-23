@@ -1,6 +1,8 @@
 package game
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
@@ -130,9 +132,59 @@ func TestServerRuntimePinSelectsConfiguredVictoryEvaluators(t *testing.T) {
 	}
 }
 
+func TestServerRuntimePinCanUseRetailProjectionFromEnvironment(t *testing.T) {
+	root := localRetailGameDataRoot(t)
+	t.Setenv(retailRulesModeEnv, "retail")
+	t.Setenv(retailGameDataEnv, root)
+	pin, err := serverRuntimePinForSetupRules(`[]`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtime, err := rules.CompileRuntime(pin.Definitions, pin.ContentHash)
+	if err != nil {
+		t.Fatalf("CompileRuntime(retail pin): %v", err)
+	}
+	settler, ok := runtime.Unit("UNIT_SETTLER")
+	if !ok || len(runtime.Units) != 74 || runtime.Starter.Movement != settler.Movement {
+		t.Fatalf("retail runtime = %+v settler=%+v ok=%v", runtime, settler, ok)
+	}
+	snapshot := world.WorldSnapshot{Config: world.WorldConfig{StartingSettlers: 1}, Tiles: []world.WorldTile{{X: 0, Y: 0, Terrain: "plains"}}, Spawns: []world.PlayerSpawn{{AccountID: 7, X: 0, Y: 0}}}
+	state, err := initialGameplayState(snapshot, "sequential", pin, []GamePlayer{{AccountID: 7}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Units) != 1 || state.Units[0].Movement != runtime.Starter.Movement || state.Units[0].Health != runtime.Starter.Health {
+		t.Fatalf("starter from retail runtime = %#v want %+v", state.Units, runtime.Starter)
+	}
+}
+
+func TestRetailRuntimeModeRequiresDataDirectory(t *testing.T) {
+	t.Setenv(retailRulesModeEnv, "retail")
+	t.Setenv(retailGameDataEnv, "")
+	if _, err := serverRuntimePinForSetupRules(`[]`); err == nil {
+		t.Fatalf("serverRuntimePinForSetupRules accepted missing %s", retailGameDataEnv)
+	}
+}
+
 func TestInitialGameplayStateRejectsMissingSpawn(t *testing.T) {
 	_, err := initialGameplayState(world.WorldSnapshot{Tiles: []world.WorldTile{{X: 0, Y: 0, Terrain: "plains"}}, Spawns: []world.PlayerSpawn{{AccountID: 7, X: 0, Y: 0}}}, "sequential", engine.RulesPin{Version: startRulesVersion, ContentHash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}, []GamePlayer{{AccountID: 8}})
 	if err == nil {
 		t.Fatal("initialGameplayState accepted missing player spawn")
 	}
+}
+
+func localRetailGameDataRoot(t *testing.T) string {
+	t.Helper()
+	candidates := []string{
+		filepath.Join("..", "..", "ctp2", "ctp2_released_game", "ctp2_data", "default", "gamedata"),
+		filepath.Join("..", "..", "open-ctp-server", "ctp2", "ctp2_released_game", "ctp2_data", "default", "gamedata"),
+		"/home/justi/Projects/open-ctp-server/ctp2/ctp2_released_game/ctp2_data/default/gamedata",
+	}
+	for _, candidate := range candidates {
+		if stat, err := os.Stat(filepath.Join(candidate, "Units.txt")); err == nil && !stat.IsDir() {
+			return candidate
+		}
+	}
+	t.Skip("local CTP2 released-game data is not present")
+	return ""
 }

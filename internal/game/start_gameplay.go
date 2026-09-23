@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -17,6 +18,11 @@ import (
 )
 
 const startRulesVersion = "ctp2-supported-v2"
+
+const (
+	retailRulesModeEnv = "OPEN_CTP_RULES_MODE"
+	retailGameDataEnv  = "OPEN_CTP_RETAIL_GAMEDATA"
+)
 
 type startClock struct{}
 
@@ -42,6 +48,9 @@ func serverRuntimePin() (engine.RulesPin, error) {
 }
 
 func serverRuntimePinForSetupRules(setupRules string) (engine.RulesPin, error) {
+	if strings.EqualFold(os.Getenv(retailRulesModeEnv), "retail") {
+		return retailRuntimePin(os.Getenv(retailGameDataEnv))
+	}
 	var options []string
 	if err := json.Unmarshal([]byte(setupRules), &options); err != nil {
 		return engine.RulesPin{}, fmt.Errorf("decode game rules configuration: %w", err)
@@ -62,6 +71,25 @@ func serverRuntimePinForSetupRules(setupRules string) (engine.RulesPin, error) {
 		return engine.RulesPin{}, err
 	}
 	return engine.RulesPin{Version: ruleset.CompatibilityVersion, ContentHash: ruleset.ContentHash, Definitions: json.RawMessage(append([]byte(nil), ruleset.CanonicalJSON...))}, nil
+}
+
+func retailRuntimePin(dataDir string) (engine.RulesPin, error) {
+	if strings.TrimSpace(dataDir) == "" {
+		return engine.RulesPin{}, fmt.Errorf("%s is required when %s=retail", retailGameDataEnv, retailRulesModeEnv)
+	}
+	db, err := rules.LoadRetailRulesFromDirectory(dataDir)
+	if err != nil {
+		return engine.RulesPin{}, err
+	}
+	runtime := rules.ProjectRetailRuntime(db)
+	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		return engine.RulesPin{}, err
+	}
+	if _, err := rules.CompileRuntime(definitions, contentHash); err != nil {
+		return engine.RulesPin{}, err
+	}
+	return engine.RulesPin{Version: runtime.CompatibilityVersion, ContentHash: contentHash, Definitions: json.RawMessage(append([]byte(nil), definitions...))}, nil
 }
 
 func loadStartControllers(tx *sqlx.Tx, players []GamePlayer) error {

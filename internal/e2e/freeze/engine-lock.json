@@ -27,7 +27,7 @@
     },
     {
       "path": "internal/game/start_gameplay.go",
-      "sha256": "2ab70bd7201f092b372209b0250e21b1fd6791e2778a8c591e52370cdb40cdf7"
+      "sha256": "760d4617afd4a3f000ea34c44a2ae19a721d7e97c14135f9377a29d4f887f352"
     },
     {
       "path": "internal/game/world_contract_stubs.go",
