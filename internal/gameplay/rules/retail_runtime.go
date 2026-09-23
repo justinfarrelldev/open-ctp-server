@@ -48,7 +48,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		runtime.TerrainImprovements = append(runtime.TerrainImprovements, projectRetailTerrainImprovement(improvement))
 	}
 	for _, government := range db.Governments {
-		runtime.Governments = append(runtime.Governments, RuntimeGovernmentDefinition{ID: government.ID, EnableAdvanceID: government.EnableAdvance, ResearchBonus: coefficientFlatBonus(government.FloatValues["KnowledgeCoef"]), ProductionPercent: coefficientBonusPoints(government.FloatValues["ProductionCoef"]), GoldPercent: coefficientBonusPoints(government.FloatValues["GoldCoef"]), PollutionPercent: signedCoefficientPercentPoints(government.PollutionCoef)})
+		runtime.Governments = append(runtime.Governments, RuntimeGovernmentDefinition{ID: government.ID, EnableAdvanceID: government.EnableAdvance, ResearchBonus: coefficientFlatBonus(government.FloatValues["KnowledgeCoef"]), FoodPercent: signedCoefficientPercentPoints(government.FloatValues["FoodCoef"]), ProductionPercent: signedCoefficientPercentPoints(government.FloatValues["ProductionCoef"]), GoldPercent: signedCoefficientPercentPoints(government.FloatValues["GoldCoef"]), PollutionPercent: signedCoefficientPercentPoints(government.PollutionCoef)})
 	}
 	for _, trigger := range db.PollutionTriggerLists {
 		runtime.PollutionTriggers = append(runtime.PollutionTriggers, RuntimePollutionTriggerDefinition{ID: trigger.ID, TriggerLevels: append([]int64(nil), trigger.TriggerLevels...), DisasterTypes: append([]string(nil), trigger.DisasterTypes...)})
@@ -158,13 +158,6 @@ func percentPoints(value float64) int {
 		return 0
 	}
 	return int(math.Round(value * 100))
-}
-
-func coefficientBonusPoints(value float64) int {
-	if value <= 1 {
-		return 0
-	}
-	return int(math.Round((value - 1) * 100))
 }
 
 func coefficientFlatBonus(value float64) int {

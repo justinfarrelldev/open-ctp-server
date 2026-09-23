@@ -568,11 +568,11 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 		case EffectYieldGoldPerPopulation:
 			yield.Gold += effect.Value * positivePopulation(city.Population)
 		case EffectYieldFoodPercent:
-			yield.Food += percentBonus(yield.Food, effect.Value)
+			yield.Food += signedYieldPercentDelta(yield.Food, effect.Value)
 		case EffectYieldProductionPercent:
-			yield.Production += percentBonus(yield.Production, effect.Value)
+			yield.Production += signedYieldPercentDelta(yield.Production, effect.Value)
 		case EffectYieldGoldPercent:
-			yield.Gold += percentBonus(yield.Gold, effect.Value)
+			yield.Gold += signedYieldPercentDelta(yield.Gold, effect.Value)
 		case EffectCombat:
 			yield.Combat += effect.Value
 		case EffectVision:
@@ -599,11 +599,19 @@ func positivePopulation(population int) int {
 	return population
 }
 
-func percentBonus(value, percent int) int {
-	if value <= 0 || percent <= 0 {
+func signedYieldPercentDelta(value, percent int) int {
+	if value <= 0 || percent == 0 {
 		return 0
 	}
-	return (value*percent + 99) / 100
+	if percent > 0 {
+		return (value*percent + 99) / 100
+	}
+	adjustedPercent := 100 + percent
+	if adjustedPercent <= 0 {
+		return -value
+	}
+	adjusted := (value*adjustedPercent + 99) / 100
+	return adjusted - value
 }
 
 func cityEffects(state State, city City) []Effect {

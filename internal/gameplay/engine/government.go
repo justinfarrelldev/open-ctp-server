@@ -49,10 +49,13 @@ func upsertGovernmentEffects(nation *Nation, government rules.RuntimeGovernmentD
 	if government.ResearchBonus > 0 {
 		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":research", Kind: EffectResearch, Value: government.ResearchBonus})
 	}
-	if government.ProductionPercent > 0 {
+	if government.FoodPercent != 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":food", Kind: EffectYieldFoodPercent, Value: government.FoodPercent})
+	}
+	if government.ProductionPercent != 0 {
 		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":production", Kind: EffectYieldProductionPercent, Value: government.ProductionPercent})
 	}
-	if government.GoldPercent > 0 {
+	if government.GoldPercent != 0 {
 		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":gold", Kind: EffectYieldGoldPercent, Value: government.GoldPercent})
 	}
 	if government.PollutionPercent != 0 {

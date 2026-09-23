@@ -106,8 +106,12 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("granary production = %+v ok=%v", granary, ok)
 	}
 	democracy, ok := runtime.Government("GOVERNMENT_DEMOCRACY")
-	if !ok || democracy.EnableAdvanceID != "ADVANCE_DEMOCRACY" || democracy.ResearchBonus != 1 || democracy.ProductionPercent != 15 || democracy.GoldPercent != 25 || democracy.PollutionPercent != -20 {
+	if !ok || democracy.EnableAdvanceID != "ADVANCE_DEMOCRACY" || democracy.ResearchBonus != 1 || democracy.FoodPercent != 25 || democracy.ProductionPercent != 15 || democracy.GoldPercent != 25 || democracy.PollutionPercent != -20 {
 		t.Fatalf("democracy government = %+v ok=%v", democracy, ok)
+	}
+	anarchy, ok := runtime.Government("GOVERNMENT_ANARCHY")
+	if !ok || anarchy.FoodPercent != -25 || anarchy.ProductionPercent != -25 || anarchy.GoldPercent != -25 {
+		t.Fatalf("anarchy government = %+v ok=%v", anarchy, ok)
 	}
 
 	hagia, ok := runtime.ProductionDefinition("WONDER_HAGIA_SOPHIA")
