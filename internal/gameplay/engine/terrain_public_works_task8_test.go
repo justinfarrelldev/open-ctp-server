@@ -49,6 +49,29 @@ func TestTask8PublicWorksImprovementChangesMovementYieldAndPollution(t *testing.
 	}
 }
 
+func TestTerrainImprovementRuntimeCantBuildAndExcludes(t *testing.T) {
+	state := runtimeStartedState(t)
+	state.Nations[0].PublicWorks = 10
+	state.Tiles = []Tile{{ID: "tile-a", X: 0, Y: 0, Terrain: TerrainPlains, OwnerID: "player-a", Open: true}, {ID: "tile-b", X: 1, Y: 0, Terrain: "TERRAIN_WATER_SHELF", OwnerID: "player-a", Open: true}, {ID: "tile-c", X: 1, Y: 1, Terrain: "TERRAIN_PLAINS", OwnerID: "player-a", Open: true}}
+	state.Units = []Unit{{ID: "worker", OwnerID: "player-a", TileID: "tile-a", Domain: DomainLand, Movement: 3, Effects: []Effect{{ID: "terraform", Kind: EffectSpecialTerraform}}}}
+	runtime := &rules.RuntimeRules{TerrainImprovements: []rules.RuntimeTerrainImprovementDefinition{
+		{ID: "TILEIMP_FARMS", Class: "Farm", BuildTurns: 1, PublicWorksCost: 1, CantBuildOn: []string{"TERRAIN_WATER_SHELF"}, Excludes: []string{"Mine"}},
+		{ID: "TILEIMP_MINES", Class: "Mine", BuildTurns: 1, PublicWorksCost: 1},
+	}}
+
+	if _, _, err := buildTerrainImprovement(&state, "player-a", BuildImprovementPayload{UnitID: "worker", TileID: "tile-b", ImprovementID: "TILEIMP_FARMS"}, runtime); err == nil {
+		t.Fatal("farm build on cant-build-on terrain was accepted")
+	}
+	state.Overlays = []TileOverlay{{ID: "mine", TileID: "tile-c", Kind: "improvement", OwnerID: "player-a", ImprovementID: "TILEIMP_MINES"}}
+	if _, _, err := buildTerrainImprovement(&state, "player-a", BuildImprovementPayload{UnitID: "worker", TileID: "tile-c", ImprovementID: "TILEIMP_FARMS"}, runtime); err == nil {
+		t.Fatal("farm build over excluded mine class was accepted")
+	}
+	state.Overlays = nil
+	if _, _, err := buildTerrainImprovement(&state, "player-a", BuildImprovementPayload{UnitID: "worker", TileID: "tile-c", ImprovementID: "TILEIMP_FARMS"}, runtime); err != nil {
+		t.Fatalf("eligible farm build error = %v", err)
+	}
+}
+
 func TestTask8InvalidTerrainImprovementCommandsFailClosed(t *testing.T) {
 	state := runtimeStartedState(t)
 	state.Rules = serverOwnedRulesPin(t)

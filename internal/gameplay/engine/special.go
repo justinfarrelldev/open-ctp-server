@@ -150,7 +150,7 @@ func buildTerrainImprovement(state *State, actorID string, payload BuildImprovem
 	}
 	tile, ok := tileByID(*state, payload.TileID)
 	unitTile, unitOK := tileByID(*state, unit.TileID)
-	if !ok || !unitOK || !adjacent(tile, unitTile) || pendingOverlayForTile(*state, tile.ID) != nil {
+	if !ok || !unitOK || !adjacent(tile, unitTile) || pendingOverlayForTile(*state, tile.ID) != nil || !terrainImprovementAllowed(*state, runtime, definition, tile.ID) {
 		return "", nil, errors.New("terrain action is not eligible")
 	}
 	actorNation := nationForID(state, nationForPlayer(*state, actorID))
@@ -163,6 +163,29 @@ func buildTerrainImprovement(state *State, actorID string, payload BuildImprovem
 	actorNation.PublicWorks -= definition.PublicWorksCost
 	state.Overlays = append(state.Overlays, TileOverlay{ID: "improvement:" + tile.ID + ":" + definition.ID, TileID: tile.ID, Kind: "improvement", OwnerID: actorID, Remaining: definition.BuildTurns, ImprovementID: definition.ID, MovementCostDelta: definition.MovementCostDelta, YieldFood: definition.YieldFood, YieldProduction: definition.YieldProduction, YieldGold: definition.YieldGold, PollutionDelta: definition.PollutionDelta})
 	return EventImprovementQueued, json.RawMessage(`{"disclosed":false}`), nil
+}
+
+func terrainImprovementAllowed(state State, runtime *rules.RuntimeRules, definition rules.RuntimeTerrainImprovementDefinition, tileID string) bool {
+	terrain := EffectiveTerrain(state, tileID)
+	if containsString(definition.CantBuildOn, terrain) {
+		return false
+	}
+	for _, overlay := range state.Overlays {
+		if overlay.TileID != tileID || overlay.Kind != "improvement" || overlay.Remaining != 0 {
+			continue
+		}
+		if overlay.ImprovementID == definition.ID || containsString(definition.Excludes, overlay.ImprovementID) {
+			return false
+		}
+		existing, ok := runtime.TerrainImprovement(overlay.ImprovementID)
+		if !ok {
+			continue
+		}
+		if (existing.Class != "" && containsString(definition.Excludes, existing.Class)) || (definition.Class != "" && containsString(existing.Excludes, definition.Class)) || containsString(existing.Excludes, definition.ID) {
+			return false
+		}
+	}
+	return true
 }
 
 func specialTarget(state *State, actorID string, payload SpecialActionPayload) (*Unit, *City, *Nation, *Nation, error) {

@@ -64,14 +64,17 @@ type RuntimeUnitDefinition struct {
 }
 
 type RuntimeTerrainImprovementDefinition struct {
-	ID                string `json:"id"`
-	BuildTurns        int    `json:"build_turns"`
-	PublicWorksCost   int    `json:"public_works_cost"`
-	MovementCostDelta int    `json:"movement_cost_delta,omitempty"`
-	YieldFood         int    `json:"yield_food,omitempty"`
-	YieldProduction   int    `json:"yield_production,omitempty"`
-	YieldGold         int    `json:"yield_gold,omitempty"`
-	PollutionDelta    int    `json:"pollution_delta,omitempty"`
+	ID                string   `json:"id"`
+	Class             string   `json:"class,omitempty"`
+	BuildTurns        int      `json:"build_turns"`
+	PublicWorksCost   int      `json:"public_works_cost"`
+	MovementCostDelta int      `json:"movement_cost_delta,omitempty"`
+	YieldFood         int      `json:"yield_food,omitempty"`
+	YieldProduction   int      `json:"yield_production,omitempty"`
+	YieldGold         int      `json:"yield_gold,omitempty"`
+	PollutionDelta    int      `json:"pollution_delta,omitempty"`
+	CantBuildOn       []string `json:"cant_build_on,omitempty"`
+	Excludes          []string `json:"excludes,omitempty"`
 }
 
 type RuntimePollutionSourceDefinition struct {
@@ -685,10 +688,18 @@ func compileTerrainImprovementDefinition(record Record) (RuntimeTerrainImproveme
 	if err != nil {
 		return RuntimeTerrainImprovementDefinition{}, err
 	}
+	cantBuildOn, err := optionalIDs(record, "CantBuildOn")
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	excludes, err := optionalIDs(record, "Excludes")
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
 	if movementCostDelta == 0 && yieldFood == 0 && yieldProduction == 0 && yieldGold == 0 && pollutionDelta == 0 {
 		return RuntimeTerrainImprovementDefinition{}, fmt.Errorf("rules definition record %q has no terrain improvement effect", record.ID)
 	}
-	return RuntimeTerrainImprovementDefinition{ID: record.ID, BuildTurns: buildTurns, PublicWorksCost: publicWorksCost, MovementCostDelta: movementCostDelta, YieldFood: yieldFood, YieldProduction: yieldProduction, YieldGold: yieldGold, PollutionDelta: pollutionDelta}, nil
+	return RuntimeTerrainImprovementDefinition{ID: record.ID, Class: record.Tags["Class"], BuildTurns: buildTurns, PublicWorksCost: publicWorksCost, MovementCostDelta: movementCostDelta, YieldFood: yieldFood, YieldProduction: yieldProduction, YieldGold: yieldGold, PollutionDelta: pollutionDelta, CantBuildOn: cantBuildOn, Excludes: excludes}, nil
 }
 
 func compilePollutionSourceDefinition(record Record) (RuntimePollutionSourceDefinition, error) {

@@ -94,7 +94,7 @@ func (u RetailUnit) FieldsByKey(key string) []RetailRawField {
 }
 
 func projectRetailTerrainImprovement(improvement RetailTerrainImprovement) RuntimeTerrainImprovementDefinition {
-	definition := RuntimeTerrainImprovementDefinition{ID: improvement.ID, BuildTurns: 1, PublicWorksCost: 1}
+	definition := RuntimeTerrainImprovementDefinition{ID: improvement.ID, Class: improvement.Class, BuildTurns: 1, PublicWorksCost: 1, CantBuildOn: append([]string(nil), improvement.CantBuildOn...), Excludes: append([]string(nil), improvement.Excludes...)}
 	if len(improvement.Effects) == 0 {
 		return definition
 	}
