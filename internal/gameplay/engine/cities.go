@@ -289,7 +289,7 @@ func RecalculateRound(state State) (State, error) {
 		}
 		advanceCityFood(city)
 		if cityPollutionEnabled(runtime) {
-			applyCityPollution(&next, *city)
+			applyCityPollution(&next, *city, runtimePollutionModel(runtime))
 		}
 	}
 	next.RecalculatedTurn = next.Phase.Turn
@@ -300,8 +300,15 @@ func cityPollutionEnabled(runtime *rules.RuntimeRules) bool {
 	return runtime != nil && len(runtime.PollutionTriggers) > 0
 }
 
-func applyCityPollution(state *State, city City) {
-	pollution := cityPollution(*state, city)
+func runtimePollutionModel(runtime *rules.RuntimeRules) rules.RuntimePollutionModel {
+	if runtime == nil || runtime.PollutionModel == nil {
+		return rules.RuntimePollutionModel{}
+	}
+	return *runtime.PollutionModel
+}
+
+func applyCityPollution(state *State, city City, model rules.RuntimePollutionModel) {
+	pollution := cityPollution(*state, city, model)
 	for index := range state.Tiles {
 		if state.Tiles[index].ID == city.TileID {
 			state.Tiles[index].Pollution = pollution
@@ -310,9 +317,9 @@ func applyCityPollution(state *State, city City) {
 	}
 }
 
-func cityPollution(state State, city City) int {
-	basePopulationPollution := positivePopulation(city.Population)
-	baseProductionPollution := city.Yields.Production
+func cityPollution(state State, city City, model rules.RuntimePollutionModel) int {
+	basePopulationPollution := cityPollutionBucket(positivePopulation(city.Population), model.PopulationStart, model.PopulationRatio)
+	baseProductionPollution := cityPollutionBucket(city.Yields.Production, model.ProductionStart, model.ProductionRatio)
 	pollutionPercent := 0
 	populationPercent := 0
 	productionPercent := 0
@@ -350,6 +357,20 @@ func cityPollution(state State, city City) int {
 		return 0
 	}
 	return total
+}
+
+func cityPollutionBucket(value, start, ratio int) int {
+	if start <= 0 && ratio <= 0 {
+		return value
+	}
+	bucket := value - start
+	if bucket < 0 {
+		return 0
+	}
+	if ratio <= 0 {
+		ratio = 1
+	}
+	return bucket * ratio
 }
 
 func signedPercentDelta(value, percent int) int {

@@ -32,6 +32,28 @@ func TestRetailCityPollutionUsesPopulationProductionAndReducers(t *testing.T) {
 	}
 }
 
+func TestRetailCityPollutionUsesDifficultyThresholdsAndRatios(t *testing.T) {
+	state := runtimeStartedState(t)
+	state.Phase.Turn = state.RecalculatedTurn + 1
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Tiles = []Tile{{ID: "tile-a", X: 0, Y: 0, Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Population: 17}}
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: TerrainPlains, Cost: 100, Domains: []string{DomainLand}, CityFood: 34, CityProduction: 301}}}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainLand, Movement: 1, Health: 1}}, PollutionTriggers: []rules.RuntimePollutionTriggerDefinition{{ID: "POLLUTION_TRIGGER_LIST_SMALL_MAP", TriggerLevels: []int64{4000000}, DisasterTypes: []string{"POLLUTION_FLOOD_DISASTER"}}}, PollutionModel: &rules.RuntimePollutionModel{PopulationStart: 16, PopulationRatio: 15, ProductionStart: 300, ProductionRatio: 1}}
+	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Rules = RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: contentHash, Definitions: definitions}
+
+	next, err := RecalculateRound(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := tileByIDForTest(next.Tiles, "tile-a").Pollution; got != 16 {
+		t.Fatalf("city tile pollution = %d, want (17-16)*15 plus (301-300)*1", got)
+	}
+}
+
 func TestRetailCityPollutionAppliesGovernmentCoefficientBeforeBuildingReducers(t *testing.T) {
 	state := runtimeStartedState(t)
 	state.Phase.Turn = state.RecalculatedTurn + 1

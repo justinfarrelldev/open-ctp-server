@@ -27,6 +27,7 @@ type RuntimeRules struct {
 	TerrainImprovements  []RuntimeTerrainImprovementDefinition `json:"terrain_improvements,omitempty"`
 	PollutionSources     []RuntimePollutionSourceDefinition    `json:"pollution_sources,omitempty"`
 	PollutionTriggers    []RuntimePollutionTriggerDefinition   `json:"pollution_triggers,omitempty"`
+	PollutionModel       *RuntimePollutionModel                `json:"pollution_model,omitempty"`
 	Governments          []RuntimeGovernmentDefinition         `json:"governments,omitempty"`
 	Units                []RuntimeUnitDefinition               `json:"units"`
 	AI                   *RuntimeAI                            `json:"ai,omitempty"`
@@ -93,6 +94,13 @@ type RuntimePollutionTriggerDefinition struct {
 	ID            string   `json:"id"`
 	TriggerLevels []int64  `json:"trigger_levels"`
 	DisasterTypes []string `json:"disaster_types"`
+}
+
+type RuntimePollutionModel struct {
+	PopulationStart int `json:"population_start,omitempty"`
+	PopulationRatio int `json:"population_ratio,omitempty"`
+	ProductionStart int `json:"production_start,omitempty"`
+	ProductionRatio int `json:"production_ratio,omitempty"`
 }
 
 type RuntimeGovernmentDefinition struct {

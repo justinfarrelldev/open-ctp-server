@@ -21,6 +21,7 @@ type RetailRules struct {
 	Terrains              []RetailTerrain              `json:"terrains"`
 	Governments           []RetailGovernment           `json:"governments"`
 	PollutionTriggerLists []RetailPollutionTriggerList `json:"pollution_trigger_lists"`
+	PollutionModel        RetailPollutionModel         `json:"pollution_model"`
 	AI                    RetailAILists                `json:"ai"`
 }
 
@@ -156,6 +157,13 @@ type RetailPollutionTriggerList struct {
 	RawFields     []RetailRawField `json:"raw_fields"`
 }
 
+type RetailPollutionModel struct {
+	PopulationStart int `json:"population_start"`
+	PopulationRatio int `json:"population_ratio"`
+	ProductionStart int `json:"production_start"`
+	ProductionRatio int `json:"production_ratio"`
+}
+
 type RetailAILists struct {
 	UnitBuildLists     []RetailAIList `json:"unit_build_lists,omitempty"`
 	BuildingBuildLists []RetailAIList `json:"building_build_lists,omitempty"`
@@ -187,6 +195,11 @@ func LoadRetailRulesFromDirectory(directory string) (RetailRules, error) {
 		return RetailRules{}, importError(ErrorInvalidDirectory, "", 1, "", "directory must be provided")
 	}
 	var result RetailRules
+	pollutionModel, err := loadRetailPollutionModel(filepath.Join(directory, "DiffDB.txt"))
+	if err != nil {
+		return RetailRules{}, err
+	}
+	result.PollutionModel = pollutionModel
 	for _, catalog := range RetailGameCatalogs() {
 		path := filepath.Join(directory, catalog.Filename)
 		data, err := os.ReadFile(path)
@@ -256,6 +269,62 @@ func LoadRetailRulesFromDirectory(directory string) (RetailRules, error) {
 	}
 	result.AI = ai
 	return result, nil
+}
+
+func loadRetailPollutionModel(path string) (RetailPollutionModel, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return RetailPollutionModel{}, importError(ErrorInvalidDirectory, path, 1, "", err.Error())
+	}
+	tokens, err := lexRetailCTP2(string(data), filepath.Base(path))
+	if err != nil {
+		return RetailPollutionModel{}, err
+	}
+	for index := 0; index < len(tokens); index++ {
+		if tokens[index].value != "{" {
+			continue
+		}
+		fields, _, err := parseRetailFields(tokens, index+1, filepath.Base(path), "DIFFICULTY")
+		if err != nil {
+			return RetailPollutionModel{}, err
+		}
+		model, err := compileRetailPollutionModel(fields)
+		if err != nil {
+			return RetailPollutionModel{}, err
+		}
+		if model != (RetailPollutionModel{}) {
+			return model, nil
+		}
+	}
+	return RetailPollutionModel{}, importError(ErrorMalformedValue, path, 1, "DIFFICULTY", "pollution model fields missing")
+}
+
+func compileRetailPollutionModel(fields []RetailRawField) (RetailPollutionModel, error) {
+	value := func(key string) (int, error) {
+		for _, field := range fields {
+			if field.Key == key && len(field.Values) > 0 {
+				return retailParseInt("DIFFICULTY", key, field.Values[0])
+			}
+		}
+		return 0, nil
+	}
+	populationStart, err := value("POLLUTION_START_POPULATION_LEVEL")
+	if err != nil {
+		return RetailPollutionModel{}, err
+	}
+	populationRatio, err := value("POLLUTION_POPULATION_RATIO")
+	if err != nil {
+		return RetailPollutionModel{}, err
+	}
+	productionStart, err := value("POLLUTION_START_PRODUCTION_LEVEL")
+	if err != nil {
+		return RetailPollutionModel{}, err
+	}
+	productionRatio, err := value("POLLUTION_PRODUCTION_RATIO")
+	if err != nil {
+		return RetailPollutionModel{}, err
+	}
+	return RetailPollutionModel{PopulationStart: populationStart, PopulationRatio: populationRatio, ProductionStart: productionStart, ProductionRatio: productionRatio}, nil
 }
 
 func loadRetailAILists(directory string) (RetailAILists, error) {

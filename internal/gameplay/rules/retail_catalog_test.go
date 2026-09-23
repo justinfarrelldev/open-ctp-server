@@ -32,6 +32,9 @@ func TestLoadRetailRulesFromDirectoryCompilesTypedCatalogs(t *testing.T) {
 	if got, want := len(db.PollutionTriggerLists), 4; got != want {
 		t.Fatalf("len(PollutionTriggerLists) = %d, want %d", got, want)
 	}
+	if db.PollutionModel.PopulationStart != 16 || db.PollutionModel.PopulationRatio != 15 || db.PollutionModel.ProductionStart != 300 || db.PollutionModel.ProductionRatio != 1 {
+		t.Fatalf("pollution model = %+v", db.PollutionModel)
+	}
 	if got, want := len(db.AI.UnitBuildLists), 27; got != want {
 		t.Fatalf("len(AI.UnitBuildLists) = %d, want %d", got, want)
 	}

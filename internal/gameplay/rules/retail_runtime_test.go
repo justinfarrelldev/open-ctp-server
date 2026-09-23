@@ -27,6 +27,9 @@ func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 	if got, want := len(runtime.PollutionTriggers), 4; got != want {
 		t.Fatalf("runtime pollution triggers = %d, want %d", got, want)
 	}
+	if runtime.PollutionModel == nil || runtime.PollutionModel.PopulationStart != 16 || runtime.PollutionModel.PopulationRatio != 15 || runtime.PollutionModel.ProductionStart != 300 || runtime.PollutionModel.ProductionRatio != 1 {
+		t.Fatalf("runtime pollution model = %+v", runtime.PollutionModel)
+	}
 	if runtime.Gaia.ActivationTurns != 10 || runtime.Gaia.BuildingID != "IMPROVE_GAIA_COMPUTER" || runtime.Gaia.WonderID != "WONDER_THE_SOLARIS_PROJECT" {
 		t.Fatalf("runtime Gaia = %+v", runtime.Gaia)
 	}

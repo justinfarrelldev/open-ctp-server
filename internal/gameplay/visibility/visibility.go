@@ -110,6 +110,7 @@ type RulesProjection struct {
 	Advances            []rules.RuntimeAdvanceDefinition            `json:"advances,omitempty"`
 	Governments         []rules.RuntimeGovernmentDefinition         `json:"governments,omitempty"`
 	TerrainImprovements []rules.RuntimeTerrainImprovementDefinition `json:"terrain_improvements,omitempty"`
+	PollutionModel      *rules.RuntimePollutionModel                `json:"pollution_model,omitempty"`
 	Movement            *rules.RuntimeMovement                      `json:"movement,omitempty"`
 	AI                  *rules.RuntimeAI                            `json:"ai,omitempty"`
 }
@@ -323,9 +324,18 @@ func rulesProjection(state engine.State) *RulesProjection {
 		Advances:            append([]rules.RuntimeAdvanceDefinition(nil), runtime.Advances...),
 		Governments:         append([]rules.RuntimeGovernmentDefinition(nil), runtime.Governments...),
 		TerrainImprovements: append([]rules.RuntimeTerrainImprovementDefinition(nil), runtime.TerrainImprovements...),
+		PollutionModel:      cloneRuntimePollutionModel(runtime.PollutionModel),
 		Movement:            &movement,
 		AI:                  ai,
 	}
+}
+
+func cloneRuntimePollutionModel(model *rules.RuntimePollutionModel) *rules.RuntimePollutionModel {
+	if model == nil {
+		return nil
+	}
+	copy := *model
+	return &copy
 }
 
 func cloneRuntimeAI(ai *rules.RuntimeAI) *rules.RuntimeAI {

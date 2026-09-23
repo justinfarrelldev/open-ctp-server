@@ -17,6 +17,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		ContentHash:          "retail-catalog-projection",
 		Calendar:             RuntimeCalendar{FinalTurn: calendarFinalTurn},
 		Movement:             RuntimeMovement{Configured: true, PolicyConfigured: true, OpenAccess: false, ZOCStopsPath: true},
+		PollutionModel:       projectRetailPollutionModel(db.PollutionModel),
 	}
 	for _, advance := range db.Advances {
 		runtime.Advances = append(runtime.Advances, RuntimeAdvanceDefinition{ID: advance.ID, Cost: advance.Cost, Prerequisites: append([]string(nil), advance.Prerequisites...)})
@@ -82,6 +83,13 @@ func projectRetailAILists(lists []RetailAIList) []RuntimeAIList {
 		projected = append(projected, RuntimeAIList{ID: list.ID, Items: append([]string(nil), list.Items...)})
 	}
 	return projected
+}
+
+func projectRetailPollutionModel(model RetailPollutionModel) *RuntimePollutionModel {
+	if model == (RetailPollutionModel{}) {
+		return nil
+	}
+	return &RuntimePollutionModel{PopulationStart: model.PopulationStart, PopulationRatio: model.PopulationRatio, ProductionStart: model.ProductionStart, ProductionRatio: model.ProductionRatio}
 }
 
 func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffect {
