@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"sort"
+	"strings"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
@@ -146,10 +147,142 @@ func advancePollution(state *State, runtime *rules.RuntimeRules) {
 	if event.Triggered {
 		state.Pollution.LastDisaster = event.DisasterType
 		state.Pollution.LastTriggerLevel = event.TriggerLevel
+		applyPollutionDisaster(state, runtime, event.DisasterType)
 		if event.DisasterType == "POLLUTION_FLOOD_DISASTER" {
 			state.Pollution.GWPhase++
 		}
 	}
+}
+
+func applyPollutionDisaster(state *State, runtime *rules.RuntimeRules, disasterType string) {
+	switch disasterType {
+	case "POLLUTION_FLOOD_DISASTER":
+		floodPollutionTile(state, runtime)
+	case "POLLUTION_OZONE_DISASTER":
+		ozonePollutionTile(state, runtime)
+	}
+}
+
+func floodPollutionTile(state *State, runtime *rules.RuntimeRules) {
+	index, ok := highestPollutedLandTile(*state, runtime)
+	if !ok {
+		return
+	}
+	tileID := state.Tiles[index].ID
+	state.Tiles[index].Terrain = shallowWaterTerrain(runtime)
+	state.Tiles[index].OwnerID = ""
+	state.Tiles[index].Pollution = 0
+	removeFloodedOccupants(state, tileID)
+	removeOverlaysOnTile(state, tileID)
+}
+
+func ozonePollutionTile(state *State, runtime *rules.RuntimeRules) {
+	index, ok := highestPollutedLandTile(*state, runtime)
+	if !ok {
+		return
+	}
+	tileID := state.Tiles[index].ID
+	state.Tiles[index].Terrain = deadTerrain(runtime)
+	state.Tiles[index].Pollution = 0
+	removeOverlaysOnTile(state, tileID)
+}
+
+func highestPollutedLandTile(state State, runtime *rules.RuntimeRules) (int, bool) {
+	bestIndex := -1
+	bestPollution := 0
+	for index, tile := range state.Tiles {
+		if tile.ID == "" || waterTerrain(runtime, tile.Terrain) {
+			continue
+		}
+		if bestIndex == -1 || tile.Pollution > bestPollution || tile.Pollution == bestPollution && tile.ID < state.Tiles[bestIndex].ID {
+			bestIndex = index
+			bestPollution = tile.Pollution
+		}
+	}
+	return bestIndex, bestIndex >= 0
+}
+
+func waterTerrain(runtime *rules.RuntimeRules, terrainID string) bool {
+	if runtime != nil {
+		if terrain, ok := runtime.Movement.Terrain(terrainID); ok {
+			return terrain.Allows(DomainSea) && !terrain.Allows(DomainLand)
+		}
+	}
+	if terrainID == TerrainOcean || strings.HasPrefix(terrainID, "TERRAIN_WATER_") {
+		return true
+	}
+	return false
+}
+
+func shallowWaterTerrain(runtime *rules.RuntimeRules) string {
+	if runtime != nil {
+		for _, id := range []string{"TERRAIN_WATER_SHALLOW", TerrainOcean} {
+			if _, ok := runtime.Movement.Terrain(id); ok {
+				return id
+			}
+		}
+	}
+	return TerrainOcean
+}
+
+func deadTerrain(runtime *rules.RuntimeRules) string {
+	if runtime != nil {
+		if _, ok := runtime.Movement.Terrain("TERRAIN_DEAD"); ok {
+			return "TERRAIN_DEAD"
+		}
+	}
+	return "TERRAIN_DEAD"
+}
+
+func removeFloodedOccupants(state *State, tileID string) {
+	cities := state.Cities[:0]
+	for _, city := range state.Cities {
+		if city.TileID != tileID {
+			cities = append(cities, city)
+		}
+	}
+	state.Cities = cities
+
+	units := state.Units[:0]
+	for _, unit := range state.Units {
+		if unit.TileID != tileID || unit.Domain == DomainSea || unit.Domain == DomainAmphibious || unit.Domain == DomainAir {
+			units = append(units, unit)
+		}
+	}
+	state.Units = units
+	pruneArmiesToExistingUnits(state)
+}
+
+func pruneArmiesToExistingUnits(state *State) {
+	exists := make(map[string]bool, len(state.Units))
+	for _, unit := range state.Units {
+		exists[unit.ID] = true
+	}
+	armies := state.Armies[:0]
+	for _, army := range state.Armies {
+		members := army.UnitIDs[:0]
+		for _, unitID := range army.UnitIDs {
+			if exists[unitID] {
+				members = append(members, unitID)
+			}
+		}
+		if len(members) == 0 {
+			continue
+		}
+		army.UnitIDs = members
+		armies = append(armies, army)
+	}
+	state.Armies = armies
+}
+
+func removeOverlaysOnTile(state *State, tileID string) {
+	overlays := state.Overlays[:0]
+	for _, overlay := range state.Overlays {
+		if overlay.TileID != tileID {
+			overlays = append(overlays, overlay)
+		}
+	}
+	state.Overlays = overlays
 }
 
 func runtimePollutionTrigger(triggers []rules.RuntimePollutionTriggerDefinition) rules.RuntimePollutionTriggerDefinition {
