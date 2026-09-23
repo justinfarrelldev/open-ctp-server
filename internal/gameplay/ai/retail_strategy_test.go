@@ -29,6 +29,29 @@ func TestPlannerUsesProjectedAdvanceCostsForResearchChoice(t *testing.T) {
 	}
 }
 
+func TestPlannerUsesRetailAIAdvanceListOrder(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		Research: &visibility.ResearchProjection{Available: []string{"ADVANCE_CHEAP", "ADVANCE_GOAL"}},
+		Rules: &visibility.RulesProjection{
+			Advances: []rules.RuntimeAdvanceDefinition{
+				{ID: "ADVANCE_CHEAP", Cost: 100},
+				{ID: "ADVANCE_GOAL", Cost: 900},
+			},
+			AI: &rules.RuntimeAI{AdvanceLists: []rules.RuntimeAIList{{ID: "ADVANCE_LIST_DEFAULT", Items: []string{"ADVANCE_GOAL"}}}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(candidates) == 0 || candidates[0].Type != engine.CommandSetResearch || candidates[0].TargetID != "ADVANCE_GOAL" {
+		t.Fatalf("research candidates = %#v, want AI-listed advance first", candidates)
+	}
+}
+
 func TestPlannerUsesProjectedGovernmentUnlocksAndBonuses(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		Research:  &visibility.ResearchProjection{Advances: []string{"ADVANCE_UNLOCK"}},
@@ -196,6 +219,43 @@ func TestPlannerQueuesProjectedRetailYieldBuildingBeforeUnits(t *testing.T) {
 		}
 		if payload.Item.ID != "IMPROVE_GRANARY" || payload.Item.Cost != 300 || payload.Item.Kind != engine.ProductionBuilding {
 			t.Fatalf("production item = %+v, want unlocked granary", payload.Item)
+		}
+		return
+	}
+	t.Fatalf("missing production candidate: %#v", candidates)
+}
+
+func TestPlannerUsesRetailAIUnitListOrder(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		PlanningStatus: visibility.PlanningStatusOpen,
+		Cities:         []visibility.CityProjection{{ID: "city", OwnerID: "ai", TileID: "tile"}},
+		Rules: &visibility.RulesProjection{
+			Units: []rules.RuntimeUnitDefinition{
+				{ID: "UNIT_STRONG", Domain: engine.DomainLand, Movement: 1, Attack: 20, Defense: 10, Health: 10, ProductionCost: 50},
+				{ID: "UNIT_LISTED", Domain: engine.DomainLand, Movement: 1, Attack: 1, Defense: 1, Health: 10, ProductionCost: 20},
+			},
+			AI: &rules.RuntimeAI{UnitBuildLists: []rules.RuntimeAIList{{ID: "UNIT_BUILD_LIST_SCOUT", Items: []string{"UNIT_LISTED"}}}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type != engine.CommandQueueProduction {
+			continue
+		}
+		var payload struct {
+			Item engine.ProductionItem `json:"item"`
+		}
+		if err := json.Unmarshal(candidate.Payload, &payload); err != nil {
+			t.Fatal(err)
+		}
+		if payload.Item.ID != "UNIT_LISTED" || payload.Item.Kind != engine.ProductionUnit {
+			t.Fatalf("production item = %+v, want AI-listed unit", payload.Item)
 		}
 		return
 	}

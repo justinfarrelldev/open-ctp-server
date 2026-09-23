@@ -243,11 +243,31 @@ func ownedCityTiles(projection visibility.Projection, playerID string) map[strin
 	return cityTiles
 }
 
+func firstAIListItem(lists []rules.RuntimeAIList, available map[string]bool) (string, bool) {
+	for _, list := range lists {
+		for _, id := range list.Items {
+			if available[id] {
+				return id, true
+			}
+		}
+	}
+	return "", false
+}
+
 func researchCandidates(projection visibility.Projection, playerID string) []Candidate {
 	if projection.Research == nil || projection.Research.TargetID != "" || len(projection.Research.Available) == 0 {
 		return nil
 	}
 	available := append([]string(nil), projection.Research.Available...)
+	availableSet := make(map[string]bool, len(available))
+	for _, advanceID := range available {
+		availableSet[advanceID] = true
+	}
+	if projection.Rules != nil && projection.Rules.AI != nil {
+		if advanceID, ok := firstAIListItem(projection.Rules.AI.AdvanceLists, availableSet); ok {
+			return []Candidate{candidate(engine.CommandSetResearch, playerID, advanceID, 800, map[string]string{"advance_id": advanceID})}
+		}
+	}
 	costs := map[string]int{}
 	if projection.Rules != nil {
 		for _, advance := range projection.Rules.Advances {
@@ -507,6 +527,11 @@ func bestProjectedSettlerProduction(projection visibility.Projection) (engine.Pr
 		return engine.ProductionItem{}, false
 	}
 	owned := ownedAdvances(projection)
+	if item, ok := bestAIListedUnitProduction(projection, owned, func(unit rules.RuntimeUnitDefinition) bool {
+		return runtimeUnitHasEffect(unit, engine.EffectSettler)
+	}); ok {
+		return item, true
+	}
 	var best rules.RuntimeUnitDefinition
 	bestCost := 0
 	for _, unit := range projection.Rules.Units {
@@ -560,6 +585,28 @@ func bestProjectedCityProduction(projection visibility.Projection, city visibili
 		return engine.ProductionItem{}, false
 	}
 	return productionItemFromRuntime(best), true
+}
+
+func bestAIListedUnitProduction(projection visibility.Projection, owned map[string]bool, include func(rules.RuntimeUnitDefinition) bool) (engine.ProductionItem, bool) {
+	if projection.Rules == nil || projection.Rules.AI == nil || len(projection.Rules.AI.UnitBuildLists) == 0 {
+		return engine.ProductionItem{}, false
+	}
+	unitsByID := make(map[string]rules.RuntimeUnitDefinition, len(projection.Rules.Units))
+	for _, unit := range projection.Rules.Units {
+		if unit.ID != "" && unit.ID != "UNIT_SYNTHETIC" {
+			unitsByID[unit.ID] = unit
+		}
+	}
+	for _, list := range projection.Rules.AI.UnitBuildLists {
+		for _, id := range list.Items {
+			unit, ok := unitsByID[id]
+			if !ok || !include(unit) || !runtimeUnitAvailable(unit, owned) {
+				continue
+			}
+			return engine.ProductionItem{ID: unit.ID, Kind: engine.ProductionUnit, Cost: productionCost(unit), Upkeep: unit.Upkeep, Effects: productionEffects(unit)}, true
+		}
+	}
+	return engine.ProductionItem{}, false
 }
 
 func bestAIListedBuildingProduction(projection visibility.Projection, owned map[string]bool, built map[string]bool) (engine.ProductionItem, bool) {
@@ -643,6 +690,9 @@ func bestProjectedUnitProductionMatching(projection visibility.Projection, inclu
 		return engine.ProductionItem{}, false
 	}
 	owned := ownedAdvances(projection)
+	if item, ok := bestAIListedUnitProduction(projection, owned, include); ok {
+		return item, true
+	}
 	var best rules.RuntimeUnitDefinition
 	bestScore := -1
 	for _, unit := range projection.Rules.Units {
