@@ -165,13 +165,29 @@ func researchRate(state State, nation Nation) int {
 		if nationForPlayer(state, city.OwnerID) != nation.ID {
 			continue
 		}
-		for _, effect := range cityEffects(state, city) {
+		rate += city.Yields.Gold
+		for _, effect := range cityResearchEffects(state, city) {
 			if effect.Kind == EffectResearch {
 				rate += effect.Value
 			}
 		}
 	}
 	return rate
+}
+
+func cityResearchEffects(state State, city City) []Effect {
+	effects := append([]Effect(nil), city.Effects...)
+	for _, building := range city.Buildings {
+		if !isObsolete(city.Obsolete, building.ObsoletedBy) {
+			effects = append(effects, building.Effects...)
+		}
+	}
+	for _, wonder := range state.Wonders {
+		if !wonder.Destroyed && !isObsolete(city.Obsolete, wonder.ObsoletedBy) && (wonder.Scope == "global" || wonder.OwnerID == city.OwnerID) {
+			effects = append(effects, wonder.Effects...)
+		}
+	}
+	return effects
 }
 
 func nextResearchAdvance(nation Nation, runtime rules.RuntimeRules) string {

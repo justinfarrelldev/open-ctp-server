@@ -63,7 +63,7 @@
     },
     {
       "path": "internal/gameplay/engine/lifecycle.go",
-      "sha256": "669883ebfb77dc072318ea6ca7342ef3fcb24094b76f1251b77c25294bed6e91"
+      "sha256": "f74817c6f8ce690389c85a348b34c69d267aed703d6e04cf3d43d8a1aceb5019"
     },
     {
       "path": "internal/gameplay/engine/policy_state.go",
