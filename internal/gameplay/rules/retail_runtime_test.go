@@ -106,11 +106,11 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("granary production = %+v ok=%v", granary, ok)
 	}
 	democracy, ok := runtime.Government("GOVERNMENT_DEMOCRACY")
-	if !ok || democracy.EnableAdvanceID != "ADVANCE_DEMOCRACY" || democracy.ResearchBonus != 1 || democracy.FoodPercent != 25 || democracy.ProductionPercent != 15 || democracy.GoldPercent != 25 || democracy.PollutionPercent != -20 {
+	if !ok || democracy.EnableAdvanceID != "ADVANCE_DEMOCRACY" || democracy.ResearchPercent != 100 || democracy.FoodPercent != 25 || democracy.ProductionPercent != 15 || democracy.GoldPercent != 25 || democracy.PollutionPercent != -20 {
 		t.Fatalf("democracy government = %+v ok=%v", democracy, ok)
 	}
 	anarchy, ok := runtime.Government("GOVERNMENT_ANARCHY")
-	if !ok || anarchy.FoodPercent != -25 || anarchy.ProductionPercent != -25 || anarchy.GoldPercent != -25 {
+	if !ok || anarchy.ResearchPercent != -90 || anarchy.FoodPercent != -25 || anarchy.ProductionPercent != -25 || anarchy.GoldPercent != -25 {
 		t.Fatalf("anarchy government = %+v ok=%v", anarchy, ok)
 	}
 
@@ -141,7 +141,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	}
 
 	academy, ok := runtime.ProductionDefinition("IMPROVE_ACADEMY")
-	if !ok || len(academy.Effects) != 1 || academy.Effects[0].Kind != "research" || academy.Effects[0].Value != 10 {
+	if !ok || len(academy.Effects) != 1 || academy.Effects[0].Kind != "research_percent" || academy.Effects[0].Value != 10 {
 		t.Fatalf("academy production effects = %+v ok=%v", academy, ok)
 	}
 	granaryEffects, ok := runtime.ProductionDefinition("IMPROVE_GRANARY")
@@ -149,7 +149,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("granary production effects = %+v ok=%v", granaryEffects, ok)
 	}
 	academyWonder, ok := runtime.ProductionDefinition("WONDER_ARISTOTLES_LYCEUM")
-	if !ok || len(academyWonder.Effects) != 1 || academyWonder.Effects[0].Kind != "research" || academyWonder.Effects[0].Value != 20 {
+	if !ok || len(academyWonder.Effects) != 1 || academyWonder.Effects[0].Kind != "research_percent" || academyWonder.Effects[0].Value != 20 {
 		t.Fatalf("Aristotle's Lyceum effects = %+v ok=%v", academyWonder, ok)
 	}
 	pyramids, ok := runtime.ProductionDefinition("WONDER_PYRAMIDS")

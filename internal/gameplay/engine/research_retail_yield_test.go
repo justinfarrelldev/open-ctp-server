@@ -24,13 +24,24 @@ func TestResearchRateSkipsObsoleteRetailBuildingScience(t *testing.T) {
 	}
 }
 
-func TestRetailResearchRateUsesCityScienceBuildingEffect(t *testing.T) {
+func TestRetailResearchRateUsesCitySciencePercentEffect(t *testing.T) {
 	state := State{
 		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
 		Nations: []Nation{{ID: "nation-a"}},
-		Cities:  []City{{ID: "city-a", OwnerID: "player-a", Yields: Yield{Gold: 5}, Buildings: []Building{{ID: "IMPROVE_ACADEMY", Effects: []Effect{{ID: "academy-science", Kind: EffectResearch, Value: 10}}}}}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", Yields: Yield{Gold: 10}, Buildings: []Building{{ID: "IMPROVE_ACADEMY", Effects: []Effect{{ID: "academy-science", Kind: EffectResearchPercent, Value: 10}}}}}},
 	}
-	if got, want := researchRate(state, state.Nations[0]), 16; got != want {
-		t.Fatalf("research rate = %d, want base 1 + city trade 5 + academy science 10 = %d", got, want)
+	if got, want := researchRate(state, state.Nations[0]), 12; got != want {
+		t.Fatalf("research rate = %d, want base 1 + city trade 10 + academy 10%% = %d", got, want)
+	}
+}
+
+func TestRetailResearchRateUsesGovernmentKnowledgeCoefficient(t *testing.T) {
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", Effects: []Effect{{ID: "government:democracy:research", Kind: EffectResearchPercent, Value: 100}}}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", Yields: Yield{Gold: 5}}},
+	}
+	if got, want := researchRate(state, state.Nations[0]), 11; got != want {
+		t.Fatalf("research rate = %d, want base 1 + city trade 5 doubled by government = %d", got, want)
 	}
 }

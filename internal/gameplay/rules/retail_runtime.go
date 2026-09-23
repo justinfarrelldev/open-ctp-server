@@ -48,7 +48,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		runtime.TerrainImprovements = append(runtime.TerrainImprovements, projectRetailTerrainImprovement(improvement))
 	}
 	for _, government := range db.Governments {
-		runtime.Governments = append(runtime.Governments, RuntimeGovernmentDefinition{ID: government.ID, EnableAdvanceID: government.EnableAdvance, ResearchBonus: coefficientFlatBonus(government.FloatValues["KnowledgeCoef"]), FoodPercent: signedCoefficientPercentPoints(government.FloatValues["FoodCoef"]), ProductionPercent: signedCoefficientPercentPoints(government.FloatValues["ProductionCoef"]), GoldPercent: signedCoefficientPercentPoints(government.FloatValues["GoldCoef"]), PollutionPercent: signedCoefficientPercentPoints(government.PollutionCoef)})
+		runtime.Governments = append(runtime.Governments, RuntimeGovernmentDefinition{ID: government.ID, EnableAdvanceID: government.EnableAdvance, ResearchPercent: signedCoefficientPercentPoints(government.FloatValues["KnowledgeCoef"]), FoodPercent: signedCoefficientPercentPoints(government.FloatValues["FoodCoef"]), ProductionPercent: signedCoefficientPercentPoints(government.FloatValues["ProductionCoef"]), GoldPercent: signedCoefficientPercentPoints(government.FloatValues["GoldCoef"]), PollutionPercent: signedCoefficientPercentPoints(government.PollutionCoef)})
 	}
 	for _, trigger := range db.PollutionTriggerLists {
 		runtime.PollutionTriggers = append(runtime.PollutionTriggers, RuntimePollutionTriggerDefinition{ID: trigger.ID, TriggerLevels: append([]int64(nil), trigger.TriggerLevels...), DisasterTypes: append([]string(nil), trigger.DisasterTypes...)})
@@ -104,7 +104,7 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":food-percent", Kind: "yield_food_percent", Value: value})
 	}
 	if value := percentPoints(building.FloatValues["SciencePercent"]); value > 0 {
-		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":science-percent", Kind: "research", Value: value})
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":science-percent", Kind: "research_percent", Value: value})
 	}
 	if value := building.IntValues["GoldPerCitizen"]; value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":gold-per-citizen", Kind: "yield_gold_per_population", Value: value})
@@ -134,7 +134,7 @@ func retailWonderRuntimeEffects(wonder RetailWonder) []RuntimeStarterEffect {
 		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":bonus-gold", Kind: "yield_gold", Value: value})
 	}
 	if value := wonder.IntValues["IncKnowledgePercent"]; value > 0 {
-		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":knowledge-percent", Kind: "research", Value: value})
+		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":knowledge-percent", Kind: "research_percent", Value: value})
 	}
 	if value := wonder.IntValues["IncreaseFoodAllCities"]; value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":food-all-cities", Kind: "yield_food_percent", Value: value})
@@ -158,13 +158,6 @@ func percentPoints(value float64) int {
 		return 0
 	}
 	return int(math.Round(value * 100))
-}
-
-func coefficientFlatBonus(value float64) int {
-	if value <= 1 {
-		return 0
-	}
-	return int(math.Round(value - 1))
 }
 
 func signedCoefficientPercentPoints(value float64) int {

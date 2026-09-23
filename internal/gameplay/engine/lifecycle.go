@@ -342,21 +342,41 @@ func advanceResearch(state *State, runtime *rules.RuntimeRules) {
 
 func researchRate(state State, nation Nation) int {
 	rate := 1
+	nationResearchFlat := 0
+	nationResearchPercent := 0
 	for _, effect := range nation.Effects {
-		if effect.Kind == EffectResearch {
-			rate += effect.Value
+		switch effect.Kind {
+		case EffectResearch:
+			nationResearchFlat += effect.Value
+		case EffectResearchPercent:
+			nationResearchPercent += effect.Value
 		}
 	}
+	cityResearch := 0
 	for _, city := range state.Cities {
 		if nationForPlayer(state, city.OwnerID) != nation.ID {
 			continue
 		}
-		rate += city.Yields.Gold
+		cityRate := city.Yields.Gold
+		cityResearchFlat := 0
+		cityResearchPercent := 0
 		for _, effect := range cityResearchEffects(state, city) {
-			if effect.Kind == EffectResearch {
-				rate += effect.Value
+			switch effect.Kind {
+			case EffectResearch:
+				cityResearchFlat += effect.Value
+			case EffectResearchPercent:
+				cityResearchPercent += effect.Value
 			}
 		}
+		cityRate += signedYieldPercentDelta(cityRate, cityResearchPercent)
+		cityRate += cityResearchFlat
+		if cityRate > 0 {
+			cityResearch += cityRate
+		}
+	}
+	rate += cityResearch + signedYieldPercentDelta(cityResearch, nationResearchPercent) + nationResearchFlat
+	if rate < 0 {
+		return 0
 	}
 	return rate
 }

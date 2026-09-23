@@ -107,6 +107,7 @@ type RuntimeGovernmentDefinition struct {
 	ID                string `json:"id"`
 	EnableAdvanceID   string `json:"enable_advance_id,omitempty"`
 	ResearchBonus     int    `json:"research_bonus,omitempty"`
+	ResearchPercent   int    `json:"research_percent,omitempty"`
 	PublicWorksBonus  int    `json:"public_works_bonus,omitempty"`
 	FoodPercent       int    `json:"food_percent,omitempty"`
 	ProductionPercent int    `json:"production_percent,omitempty"`
@@ -783,6 +784,10 @@ func compileGovernmentDefinition(record Record) (RuntimeGovernmentDefinition, er
 	if err != nil {
 		return RuntimeGovernmentDefinition{}, err
 	}
+	researchPercent, err := optionalInteger(record, "ResearchPercent", 0)
+	if err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
 	foodPercent, err := optionalInteger(record, "FoodPercent", 0)
 	if err != nil {
 		return RuntimeGovernmentDefinition{}, err
@@ -802,7 +807,7 @@ func compileGovernmentDefinition(record Record) (RuntimeGovernmentDefinition, er
 	if researchBonus < 0 || publicWorksBonus < 0 {
 		return RuntimeGovernmentDefinition{}, fmt.Errorf("rules definition record %q has invalid government bonus", record.ID)
 	}
-	return RuntimeGovernmentDefinition{ID: record.ID, EnableAdvanceID: record.Tags["EnableAdvanceID"], ResearchBonus: researchBonus, PublicWorksBonus: publicWorksBonus, FoodPercent: foodPercent, ProductionPercent: productionPercent, GoldPercent: goldPercent, PollutionPercent: pollutionPercent}, nil
+	return RuntimeGovernmentDefinition{ID: record.ID, EnableAdvanceID: record.Tags["EnableAdvanceID"], ResearchBonus: researchBonus, ResearchPercent: researchPercent, PublicWorksBonus: publicWorksBonus, FoodPercent: foodPercent, ProductionPercent: productionPercent, GoldPercent: goldPercent, PollutionPercent: pollutionPercent}, nil
 }
 
 func validateRuntimeAdvances(advances []RuntimeAdvanceDefinition) error {
