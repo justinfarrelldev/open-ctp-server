@@ -187,6 +187,10 @@ func RecalculateRound(state State) (State, error) {
 	if state.RecalculatedTurn == state.Phase.Turn {
 		return state, nil
 	}
+	runtime, err := runtimeRulesForState(state)
+	if err != nil {
+		return State{}, err
+	}
 	next, err := canonicalClone(state)
 	if err != nil {
 		return State{}, err
@@ -195,7 +199,7 @@ func RecalculateRound(state State) (State, error) {
 	sort.Slice(next.Cities, func(i, j int) bool { return next.Cities[i].ID < next.Cities[j].ID })
 	for i := range next.Cities {
 		city := &next.Cities[i]
-		if err := completeProduction(&next, city); err != nil {
+		if err := completeProduction(&next, city, runtime); err != nil {
 			return State{}, err
 		}
 		city.Yields, err = cityYield(next, *city)
@@ -207,7 +211,18 @@ func RecalculateRound(state State) (State, error) {
 	return next, nil
 }
 
-func completeProduction(state *State, city *City) error {
+func runtimeRulesForState(state State) (*rules.RuntimeRules, error) {
+	if !hasRuntimeDefinitions(state.Rules.Definitions) {
+		return nil, nil
+	}
+	runtime, err := rules.CompileRuntime(state.Rules.Definitions, state.Rules.ContentHash)
+	if err != nil {
+		return nil, err
+	}
+	return &runtime, nil
+}
+
+func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) error {
 	if len(city.Queue) == 0 {
 		return nil
 	}
@@ -224,7 +239,7 @@ func completeProduction(state *State, city *City) error {
 	city.Queue = city.Queue[1:]
 	switch item.Kind {
 	case ProductionUnit:
-		return nil
+		return completeUnitProduction(state, *city, item, runtime)
 	case ProductionBuilding:
 		city.Buildings = append(city.Buildings, Building{ID: item.ID, Upkeep: item.Upkeep, ObsoletedBy: item.ObsoletedBy, Effects: item.Effects})
 		return nil
@@ -238,6 +253,66 @@ func completeProduction(state *State, city *City) error {
 	default:
 		return errors.New("unsupported production kind")
 	}
+}
+
+func completeUnitProduction(state *State, city City, item ProductionItem, runtime *rules.RuntimeRules) error {
+	if runtime == nil {
+		return nil
+	}
+	definition, ok := runtime.Unit(item.ID)
+	if !ok {
+		return nil
+	}
+	unit := Unit{
+		ID:              producedUnitID(*state, city.ID, item.ID),
+		OwnerID:         city.OwnerID,
+		TileID:          city.TileID,
+		Domain:          definition.Domain,
+		Movement:        definition.Movement,
+		CargoCapacity:   definition.TransportCapacity,
+		CargoDomains:    append([]string(nil), definition.CargoDomains...),
+		ZOC:             definition.ZOC,
+		Effects:         runtimeUnitEffects(definition),
+		Attack:          definition.Attack,
+		Defense:         definition.Defense,
+		Strength:        definition.Strength,
+		Armor:           definition.Armor,
+		Health:          definition.Health,
+		MaxHealth:       definition.Health,
+		VisibilityRange: definition.VisibilityRange,
+	}
+	state.Units = append(state.Units, unit)
+	return nil
+}
+
+func producedUnitID(state State, cityID, itemID string) string {
+	base := fmt.Sprintf("unit:%s:%s:%d", cityID, itemID, state.Phase.Turn)
+	if !unitIDExists(state, base) {
+		return base
+	}
+	for suffix := 2; ; suffix++ {
+		candidate := fmt.Sprintf("%s:%d", base, suffix)
+		if !unitIDExists(state, candidate) {
+			return candidate
+		}
+	}
+}
+
+func unitIDExists(state State, id string) bool {
+	for _, unit := range state.Units {
+		if unit.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
+func runtimeUnitEffects(definition rules.RuntimeUnitDefinition) []Effect {
+	effects := make([]Effect, 0, len(definition.Effects))
+	for _, effect := range definition.Effects {
+		effects = append(effects, Effect{ID: effect.ID, Kind: effect.Kind, Value: effect.Value})
+	}
+	return effects
 }
 
 func cityYield(state State, city City) (Yield, error) {

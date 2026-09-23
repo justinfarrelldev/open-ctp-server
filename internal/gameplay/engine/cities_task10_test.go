@@ -150,13 +150,13 @@ func TestTask10ProductionAndEffectFailureVectors(t *testing.T) {
 	}
 	city.Queue = []ProductionItem{{ID: "unit", Kind: ProductionUnit, Cost: 1}}
 	city.StoredProduction = 1
-	if err := completeProduction(&state, city); err != nil || len(city.Queue) != 0 {
+	if err := completeProduction(&state, city, nil); err != nil || len(city.Queue) != 0 {
 		t.Fatalf("unit completion=%v city=%#v", err, city)
 	}
 	city.Queue = []ProductionItem{{ID: "duplicate-wonder", Kind: ProductionWonder, Cost: 1}}
 	city.StoredProduction = 1
 	state.Wonders = []Wonder{{ID: "duplicate-wonder", OwnerID: "player-b", CityID: "other"}}
-	if err := completeProduction(&state, city); err != nil || city.StoredProduction != 0 {
+	if err := completeProduction(&state, city, nil); err != nil || city.StoredProduction != 0 {
 		t.Fatalf("wonder loser cancellation=%v city=%#v", err, city)
 	}
 	if err := cancelProduction(&state, "player-a", CancelProductionPayload{CityID: "city-a", ItemID: "missing"}); err == nil {
