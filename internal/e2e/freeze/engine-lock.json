@@ -102,6 +102,10 @@
       "sha256": "9ca85274a3dd6dbd26d288473a0362cf6cae6f47f389e8803a2bf193e145bfd5"
     },
     {
+      "path": "internal/gameplay/rules/retail_pollution.go",
+      "sha256": "ea996e09f0263c36ab43d806921909cb4e79a332a855d4ac04975918d1d60fbc"
+    },
+    {
       "path": "internal/gameplay/rules/retail_raw.go",
       "sha256": "308f7541570cbee01c0ec4c3c91ed2bb524b75bdda57a759c538db1b3afc0ee0"
     },
