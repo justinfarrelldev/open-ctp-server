@@ -82,6 +82,11 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || granary.Kind != "building" || granary.Cost != 300 || granary.Upkeep != 1 || !sameStringSlices(granary.Prerequisites, []string{"ADVANCE_AGRICULTURE"}) {
 		t.Fatalf("granary production = %+v ok=%v", granary, ok)
 	}
+	democracy, ok := runtime.Government("GOVERNMENT_DEMOCRACY")
+	if !ok || democracy.EnableAdvanceID != "ADVANCE_DEMOCRACY" || democracy.ResearchBonus != 1 || democracy.ProductionPercent != 15 || democracy.GoldPercent != 25 {
+		t.Fatalf("democracy government = %+v ok=%v", democracy, ok)
+	}
+
 	hagia, ok := runtime.ProductionDefinition("WONDER_HAGIA_SOPHIA")
 	if !ok || hagia.Kind != "wonder" || hagia.Cost != 3240 || !sameStringSlices(hagia.Prerequisites, []string{"ADVANCE_THEOLOGY"}) {
 		t.Fatalf("hagia production = %+v ok=%v", hagia, ok)

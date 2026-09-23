@@ -59,7 +59,7 @@
     },
     {
       "path": "internal/gameplay/engine/government.go",
-      "sha256": "19b738318f2ddb12effd01e1c16211ff39298392166275df7acf8a864492c4e4"
+      "sha256": "6cbfb1f6d2ef7f5deb224b1d11c7504fc07bb97ddaff7382c3906a883bcdcf7b"
     },
     {
       "path": "internal/gameplay/engine/lifecycle.go",
@@ -111,7 +111,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_runtime.go",
-      "sha256": "94c8ec1cdee37fee67ee644ee1edac4e21098e46514c3417fcd56300e5d8f99e"
+      "sha256": "c55a1d0a160f2d1b177abc70ff6350811f8084478c30c94fc9135cc5984f0e1a"
     },
     {
       "path": "internal/gameplay/rules/rules.go",
@@ -119,7 +119,7 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "31378990adf4a760187fa4a5bb7ee3f394aef1f53e35058e236b3647b9489f98"
+      "sha256": "d3171cf8a811b9260c89881ed6bc42d087b8d996761267458d27feac4d3989be"
     },
     {
       "path": "internal/gameplay/service/ai.go",
