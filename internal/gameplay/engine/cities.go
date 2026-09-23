@@ -326,6 +326,7 @@ func completeUnitProduction(state *State, city City, item ProductionItem, runtim
 		Effects:         runtimeUnitEffects(definition),
 		Attack:          definition.Attack,
 		Defense:         definition.Defense,
+		Ranged:          definition.Ranged,
 		Strength:        definition.Strength,
 		Armor:           definition.Armor,
 		Health:          definition.Health,

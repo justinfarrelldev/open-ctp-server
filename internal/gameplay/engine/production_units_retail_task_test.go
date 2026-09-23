@@ -1,6 +1,21 @@
 package engine
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
+)
+
+func TestProductionCompletionCopiesRuntimeRangedStats(t *testing.T) {
+	state := State{Phase: PhaseState{Turn: 7}}
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_RANGED", Domain: DomainLand, Movement: 1, Attack: 3, Defense: 2, Ranged: 9, BombardRange: 2, BombRounds: 4, Strength: 3, Armor: 1, Health: 10}}}
+	if err := completeUnitProduction(&state, City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}, ProductionItem{ID: "UNIT_RANGED", Kind: ProductionUnit}, runtime); err != nil {
+		t.Fatalf("completeUnitProduction() error = %v", err)
+	}
+	if len(state.Units) != 1 || state.Units[0].Ranged != 9 {
+		t.Fatalf("produced ranged unit = %#v", state.Units)
+	}
+}
 
 func TestProductionCompletionCreatesRuntimeUnitAtCity(t *testing.T) {
 	state := runtimeStartedState(t)
