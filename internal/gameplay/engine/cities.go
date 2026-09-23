@@ -336,11 +336,11 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 	if len(city.Queue) == 0 {
 		return nil
 	}
-	base, err := cityTileYieldWithRuntime(*state, city.TileID, runtime)
+	yield, err := cityYieldWithRuntime(*state, *city, runtime)
 	if err != nil {
 		return err
 	}
-	city.StoredProduction += base.Production
+	city.StoredProduction += yield.Production
 	item := city.Queue[0]
 	if city.StoredProduction < item.Cost {
 		return nil

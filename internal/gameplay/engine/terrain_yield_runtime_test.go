@@ -18,6 +18,18 @@ func TestRetailRuntimeTerrainYieldsAccumulateProduction(t *testing.T) {
 	}
 }
 
+func TestRetailCityProductionUsesExistingCityYieldEffects(t *testing.T) {
+	state := State{Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS"}}}
+	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Buildings: []Building{{ID: "IMPROVE_FACTORY", Effects: []Effect{{ID: "factory-production", Kind: EffectYieldProductionPercent, Value: 50}}}}, Queue: []ProductionItem{{ID: "UNIT_SLOW", Kind: ProductionUnit, Cost: 99}}}
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_PLAINS", Cost: 100, Domains: []string{DomainLand}, Production: 10}}}}
+	if err := completeProduction(&state, &city, runtime); err != nil {
+		t.Fatalf("completeProduction() error = %v", err)
+	}
+	if city.StoredProduction != 15 {
+		t.Fatalf("stored production = %d, want base 10 + factory 50%%", city.StoredProduction)
+	}
+}
+
 func TestRetailCityFoodSurplusGrowsPopulation(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
