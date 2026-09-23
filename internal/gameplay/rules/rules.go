@@ -584,7 +584,7 @@ func validateCTP2Tags(kind string, id token, tags map[string]string, path string
 		allowed = map[string]bool{"Description": true, "PollutionPoints": true, "EffectScope": true}
 		required = []string{"Description", "PollutionPoints", "EffectScope"}
 	case "government":
-		allowed = map[string]bool{"Description": true, "EnableAdvanceID": true, "ResearchBonus": true, "PublicWorksBonus": true}
+		allowed = map[string]bool{"Description": true, "EnableAdvanceID": true, "ResearchBonus": true, "PublicWorksBonus": true, "ProductionPercent": true, "GoldPercent": true, "PollutionPercent": true}
 		required = []string{"Description"}
 	case "building", "wonder", "terrain":
 		allowed = map[string]bool{"Description": true}
@@ -600,7 +600,7 @@ func validateCTP2Tags(kind string, id token, tags map[string]string, path string
 		if !allowed[key] {
 			return importError(ErrorUnsupportedRequiredTag, path, id.line, id.value, "unsupported behavior-bearing field "+key)
 		}
-		if key == "MaxMovePoints" || key == "TurnsToActivate" || key == "Cost" || key == "BuildTurns" || key == "PublicWorksCost" || key == "MovementCostDelta" || key == "YieldFood" || key == "YieldProduction" || key == "YieldGold" || key == "PollutionDelta" || key == "PollutionPoints" || key == "ResearchBonus" || key == "PublicWorksBonus" || key == "Attack" || key == "Defense" || key == "Strength" || key == "Armor" || key == "Health" || key == "TransportCapacity" || key == "ProductionCost" || key == "Upkeep" || key == "VisibilityRange" {
+		if key == "MaxMovePoints" || key == "TurnsToActivate" || key == "Cost" || key == "BuildTurns" || key == "PublicWorksCost" || key == "MovementCostDelta" || key == "YieldFood" || key == "YieldProduction" || key == "YieldGold" || key == "PollutionDelta" || key == "PollutionPoints" || key == "ResearchBonus" || key == "PublicWorksBonus" || key == "ProductionPercent" || key == "GoldPercent" || key == "PollutionPercent" || key == "Attack" || key == "Defense" || key == "Strength" || key == "Armor" || key == "Health" || key == "TransportCapacity" || key == "ProductionCost" || key == "Upkeep" || key == "VisibilityRange" {
 			if _, err := strconv.Atoi(value); err != nil {
 				return importError(ErrorMalformedValue, path, id.line, id.value, key+" must be an integer")
 			}

@@ -103,7 +103,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("granary production = %+v ok=%v", granary, ok)
 	}
 	democracy, ok := runtime.Government("GOVERNMENT_DEMOCRACY")
-	if !ok || democracy.EnableAdvanceID != "ADVANCE_DEMOCRACY" || democracy.ResearchBonus != 1 || democracy.ProductionPercent != 15 || democracy.GoldPercent != 25 {
+	if !ok || democracy.EnableAdvanceID != "ADVANCE_DEMOCRACY" || democracy.ResearchBonus != 1 || democracy.ProductionPercent != 15 || democracy.GoldPercent != 25 || democracy.PollutionPercent != -20 {
 		t.Fatalf("democracy government = %+v ok=%v", democracy, ok)
 	}
 
