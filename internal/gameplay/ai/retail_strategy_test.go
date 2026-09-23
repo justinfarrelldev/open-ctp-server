@@ -52,6 +52,41 @@ func TestPlannerUsesProjectedGovernmentUnlocksAndBonuses(t *testing.T) {
 	}
 }
 
+func TestPlannerQueuesProjectedRetailYieldBuildingBeforeUnits(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		PlanningStatus: visibility.PlanningStatusOpen,
+		Cities:         []visibility.CityProjection{{ID: "city-a", OwnerID: "ai", TileID: "tile-a"}},
+		Research:       &visibility.ResearchProjection{Advances: []string{"ADVANCE_AGRICULTURE"}},
+		Rules: &visibility.RulesProjection{
+			Production: []rules.RuntimeProduction{{ID: "IMPROVE_GRANARY", Kind: engine.ProductionBuilding, Cost: 300, Prerequisites: []string{"ADVANCE_AGRICULTURE"}, Effects: []rules.RuntimeStarterEffect{{ID: "granary-food", Kind: engine.EffectYieldFoodPercent, Value: 10}}}},
+			Units:      []rules.RuntimeUnitDefinition{{ID: "UNIT_SCOUT", Domain: engine.DomainLand, Movement: 2, Attack: 1, Defense: 1, Health: 10, ProductionCost: 20}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type != engine.CommandQueueProduction {
+			continue
+		}
+		var payload struct {
+			Item engine.ProductionItem `json:"item"`
+		}
+		if err := json.Unmarshal(candidate.Payload, &payload); err != nil {
+			t.Fatal(err)
+		}
+		if payload.Item.ID != "IMPROVE_GRANARY" || payload.Item.Cost != 300 || payload.Item.Kind != engine.ProductionBuilding {
+			t.Fatalf("production item = %+v, want unlocked granary", payload.Item)
+		}
+		return
+	}
+	t.Fatalf("missing production candidate: %#v", candidates)
+}
+
 func TestPlannerQueuesProjectedRetailLikeUnitProduction(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		Cities:   []visibility.CityProjection{{ID: "city", OwnerID: "ai", TileID: "tile"}},

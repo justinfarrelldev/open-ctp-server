@@ -36,6 +36,17 @@ func TestRuntimeBuildingAndWonderProductionUsesPinnedCostAndPrerequisite(t *test
 	}
 }
 
+func TestRuntimeBuildingProductionRejectsAlreadyBuiltCityImprovement(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	state.Cities[0].Buildings = []Building{{ID: "IMPROVE_GRANARY"}}
+	runtime := &rules.RuntimeRules{Production: []rules.RuntimeProduction{{ID: "IMPROVE_GRANARY", Kind: "building", Cost: 1}}}
+
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "IMPROVE_GRANARY", Kind: ProductionBuilding, Cost: 1}}, runtime); err == nil {
+		t.Fatal("queueProduction accepted an already-built city improvement")
+	}
+}
+
 func TestRuntimeProductionEffectsApplyToCompletedBuildingYields(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})

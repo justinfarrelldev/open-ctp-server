@@ -158,6 +158,9 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if err := requireProductionUnlock(*state, *city, payload.Item, runtime); err != nil {
 		return err
 	}
+	if payload.Item.Kind == ProductionBuilding && cityHasBuilding(*city, payload.Item.ID) {
+		return errors.New("building already exists")
+	}
 	if payload.Item.Kind == ProductionWonder && wonderExists(*state, payload.Item.ID) {
 		return errors.New("wonder already exists")
 	}
@@ -600,6 +603,15 @@ func cityByID(state State, id string) (*City, bool) {
 		}
 	}
 	return nil, false
+}
+
+func cityHasBuilding(city City, id string) bool {
+	for _, building := range city.Buildings {
+		if building.ID == id && !isObsolete(city.Obsolete, building.ObsoletedBy) {
+			return true
+		}
+	}
+	return false
 }
 
 func wonderExists(state State, id string) bool {

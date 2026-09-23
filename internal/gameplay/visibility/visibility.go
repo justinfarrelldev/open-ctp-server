@@ -104,6 +104,7 @@ type DiplomacyProjection struct {
 type RulesProjection struct {
 	ContentHash         string                                      `json:"content_hash"`
 	Units               []rules.RuntimeUnitDefinition               `json:"units,omitempty"`
+	Production          []rules.RuntimeProduction                   `json:"production,omitempty"`
 	Advances            []rules.RuntimeAdvanceDefinition            `json:"advances,omitempty"`
 	Governments         []rules.RuntimeGovernmentDefinition         `json:"governments,omitempty"`
 	TerrainImprovements []rules.RuntimeTerrainImprovementDefinition `json:"terrain_improvements,omitempty"`
@@ -312,6 +313,7 @@ func rulesProjection(state engine.State) *RulesProjection {
 	return &RulesProjection{
 		ContentHash:         runtime.ContentHash,
 		Units:               append([]rules.RuntimeUnitDefinition(nil), runtime.Units...),
+		Production:          append([]rules.RuntimeProduction(nil), runtime.Production...),
 		Advances:            append([]rules.RuntimeAdvanceDefinition(nil), runtime.Advances...),
 		Governments:         append([]rules.RuntimeGovernmentDefinition(nil), runtime.Governments...),
 		TerrainImprovements: append([]rules.RuntimeTerrainImprovementDefinition(nil), runtime.TerrainImprovements...),
@@ -453,6 +455,17 @@ func productionActions(projection Projection, playerID string) []ActionProjectio
 		if len(city.Queue) != 0 || projection.Rules == nil {
 			continue
 		}
+		built := cityBuildingIDs(city)
+		for _, production := range projection.Rules.Production {
+			if production.ID == "" || production.Kind == engine.ProductionUnit || !allAdvancesSatisfied(known, production.Prerequisites) || anyAdvanceSatisfied(known, production.ObsoleteBy) {
+				continue
+			}
+			if production.Kind == engine.ProductionBuilding && built[production.ID] {
+				continue
+			}
+			item := productionActionItem(production)
+			actions = append(actions, action(engine.CommandQueueProduction, "queue-production", city.ID, production.ID, map[string]any{"city_id": city.ID, "item": item}, []string{"city_id", "item"}))
+		}
 		for _, unit := range projection.Rules.Units {
 			if unit.ID == "" || !allAdvancesSatisfied(known, unit.Prerequisites) || anyAdvanceSatisfied(known, unit.ObsoleteBy) {
 				continue
@@ -473,6 +486,35 @@ func productionActions(projection Projection, playerID string) []ActionProjectio
 		}
 	}
 	return actions
+}
+
+func cityBuildingIDs(city CityProjection) map[string]bool {
+	built := make(map[string]bool, len(city.Buildings))
+	for _, building := range city.Buildings {
+		built[building.ID] = true
+	}
+	return built
+}
+
+func productionActionItem(production rules.RuntimeProduction) engine.ProductionItem {
+	cost := production.Cost
+	if cost < 1 {
+		cost = 1
+	}
+	item := engine.ProductionItem{ID: production.ID, Kind: production.Kind, Cost: cost, Upkeep: production.Upkeep}
+	if len(production.Prerequisites) > 0 {
+		item.Prerequisite = production.Prerequisites[0]
+	}
+	if len(production.ObsoleteBy) > 0 {
+		item.ObsoletedBy = production.ObsoleteBy[0]
+	}
+	if len(production.Effects) > 0 {
+		item.Effects = make([]engine.Effect, 0, len(production.Effects))
+		for _, effect := range production.Effects {
+			item.Effects = append(item.Effects, engine.Effect{ID: effect.ID, Kind: effect.Kind, Value: effect.Value})
+		}
+	}
+	return item
 }
 
 func unitActions(projection Projection, playerID string) []ActionProjection {

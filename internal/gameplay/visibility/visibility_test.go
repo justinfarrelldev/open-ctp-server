@@ -344,7 +344,7 @@ func TestTask12ProjectionIncludesRulesAndLegalActionMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if projection.Rules == nil || len(projection.Rules.Units) == 0 || len(projection.Rules.Advances) == 0 || len(projection.Rules.Governments) == 0 || len(projection.Rules.TerrainImprovements) == 0 || projection.Rules.Movement == nil {
+	if projection.Rules == nil || len(projection.Rules.Units) == 0 || len(projection.Rules.Production) == 0 || len(projection.Rules.Advances) == 0 || len(projection.Rules.Governments) == 0 || len(projection.Rules.TerrainImprovements) == 0 || projection.Rules.Movement == nil {
 		t.Fatalf("rules projection incomplete: %#v", projection.Rules)
 	}
 	for _, command := range []string{engine.CommandPass, engine.CommandSetResearch, engine.CommandSetGovernment, engine.CommandProposeAgreement, engine.CommandQueueProduction, engine.CommandFoundCity, engine.CommandArmyCreate, engine.CommandMoveUnit, engine.CommandEmbark, engine.CommandCombat, engine.CommandEstablishEmbassy, engine.CommandStealTechnology, engine.CommandTerraform, engine.CommandBuildImprovement} {

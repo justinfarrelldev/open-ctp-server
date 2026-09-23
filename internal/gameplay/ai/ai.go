@@ -390,7 +390,10 @@ func productionCandidates(projection visibility.Projection, playerID string) []C
 		if city.OwnerID != playerID || city.Stale || len(city.Queue) != 0 {
 			continue
 		}
-		item, ok := bestProjectedUnitProduction(projection)
+		item, ok := bestProjectedCityProduction(projection, city)
+		if !ok {
+			item, ok = bestProjectedUnitProduction(projection)
+		}
 		if !ok {
 			item = engine.ProductionItem{ID: "ai-unit-" + city.ID, Kind: engine.ProductionUnit, Cost: 1}
 		}
@@ -423,6 +426,76 @@ func bestProjectedGovernment(governments []rules.RuntimeGovernmentDefinition, ow
 		}
 	}
 	return best, bestScore >= 0
+}
+
+func bestProjectedCityProduction(projection visibility.Projection, city visibility.CityProjection) (engine.ProductionItem, bool) {
+	if projection.Rules == nil || len(projection.Rules.Production) == 0 {
+		return engine.ProductionItem{}, false
+	}
+	owned := ownedAdvances(projection)
+	built := make(map[string]bool, len(city.Buildings))
+	for _, building := range city.Buildings {
+		built[building.ID] = true
+	}
+	var best rules.RuntimeProduction
+	bestScore := -1
+	for _, production := range projection.Rules.Production {
+		if production.ID == "" || production.Kind != engine.ProductionBuilding || built[production.ID] || !runtimeProductionAvailable(production, owned) {
+			continue
+		}
+		score := projectedRuntimeProductionScore(production)
+		if bestScore == -1 || score > bestScore || score == bestScore && production.Cost < best.Cost || score == bestScore && production.Cost == best.Cost && production.ID < best.ID {
+			best, bestScore = production, score
+		}
+	}
+	if bestScore < 0 {
+		return engine.ProductionItem{}, false
+	}
+	return productionItemFromRuntime(best), true
+}
+
+func runtimeProductionAvailable(production rules.RuntimeProduction, owned map[string]bool) bool {
+	for _, prerequisite := range production.Prerequisites {
+		if !owned[prerequisite] {
+			return false
+		}
+	}
+	for _, obsolete := range production.ObsoleteBy {
+		if owned[obsolete] {
+			return false
+		}
+	}
+	return true
+}
+
+func projectedRuntimeProductionScore(production rules.RuntimeProduction) int {
+	score := 0
+	for _, effect := range production.Effects {
+		score += effect.Value
+	}
+	if score == 0 {
+		score = 1
+	}
+	return score
+}
+
+func productionItemFromRuntime(production rules.RuntimeProduction) engine.ProductionItem {
+	item := engine.ProductionItem{ID: production.ID, Kind: production.Kind, Cost: production.Cost, Upkeep: production.Upkeep, Effects: runtimeProductionEffects(production)}
+	if len(production.Prerequisites) > 0 {
+		item.Prerequisite = production.Prerequisites[0]
+	}
+	if len(production.ObsoleteBy) > 0 {
+		item.ObsoletedBy = production.ObsoleteBy[0]
+	}
+	return item
+}
+
+func runtimeProductionEffects(production rules.RuntimeProduction) []engine.Effect {
+	effects := make([]engine.Effect, 0, len(production.Effects))
+	for _, effect := range production.Effects {
+		effects = append(effects, engine.Effect{ID: effect.ID, Kind: effect.Kind, Value: effect.Value})
+	}
+	return effects
 }
 
 func bestProjectedUnitProduction(projection visibility.Projection) (engine.ProductionItem, bool) {
