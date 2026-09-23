@@ -1,0 +1,76 @@
+# CTP2 full-retail parity task 22 field coverage inventory
+
+Scope: inventory every unique released-game gameplay/catalog field currently parsed from the retail CTP2 data files, and record high-level runtime/execution coverage status. This is an inventory only; it is not a full-parity claim.
+
+Source data root:
+`ctp2/ctp2_released_game/ctp2_data/default/gamedata`
+
+Regression guard:
+- `internal/gameplay/rules/retail_field_inventory_test.go`
+- `TestRetailFieldInventorySnapshot` verifies the released catalog field counts and sentinel behavior-affecting fields.
+
+## Summary counts
+
+| Catalog | Records | Unique fields, including nested fields | Current coverage summary |
+| --- | ---: | ---: | --- |
+| Units | 74 | 194 | Core cost/prereq/obsolete/combat/move/fuel/ranged/bombard fields are partially projected/executed. Many special actions, cargo/vision classes, stealth, active defense, upgrades, support, and sound/UI fields remain pending. |
+| Advances | 107 | 19 | Cost/prerequisites/unlocks are partially executed. Infrastructure/capitalization, pollution modifiers, feat triggers, and movement/terraform flags remain pending. |
+| Wonders | 30 | 39 | Cost/prereq/obsolete metadata is projected; selected effects are still incomplete. Gaia and global effects require more execution coverage. |
+| Buildings | 52 | 42 | Cost/upkeep/prereq/obsolete and production/gold percent effects are projected/executed. Science, happiness, crime, population, pollution, protection, combat, trade, and growth effects remain pending. |
+| Terrain improvements | 40 | 36 | Class, construction cost/time, movement/yield effects, CantBuildOn, and Excludes are partially supported. Vision/radar/heal/terraform/endgame/listening-post behavior remains pending. |
+| Terrain | 26 | 43 | EnvBase yields are used for city/production yield. EnvCity/EnvRiver, resources, transforms, hut/tile-set, death and advance gates remain pending. |
+| Governments | 12 | 69 | EnableAdvance and economy/research coefficients are partially applied. Readiness, martial law, support, pollution, ranks/advice, rations/wages/workday, trade caps, rush modifiers, and war discontent remain pending. |
+| Pollution trigger lists | 4 | 1 | Trigger levels/disaster types are projected and phase/history integration is wired. Full disaster map/city/unit outcomes remain pending. |
+
+## Full field inventory
+
+<details><summary>Units (194)</summary>
+
+ActiveDefenseOnlyWhenCarryingEnablers, ActiveDefenseRange, Advertise, Armor, AssasinateRuler, AssasinateRuler.Chance, AssasinateRuler.DeathChance, AssasinateRuler.EliteChance, Attack, AttackWoodenShipBonus, BioTerror, BioTerror.Chance, BioTerror.Effect, BioTerror.Sound, BombRounds, BombardRange, BonusAgainstMounted, BuildingRemovesAPop, CanAttack, CanBeExpelled, CanBeGifted, CanBeSued, CanBeachAssault, CanBombard, CanCarry, CanCounterBombard, CanEntrench, CanExpel, CanInjoin, CanInjoin.Effect, CanInjoin.Sound, CanPillage, CanPirate, CanReform, CanReform.Effect, CanReform.Sound, CanSee, CanSoothsay, CanSoothsay.Effect, CanSoothsay.Sound, CanSue, CantBuild, CantCaptureCity, CargoData, CargoData.Load, CargoData.MaxCargo, CargoData.Unload, Category, CauseUnhappiness, CauseUnhappiness.Amount, CauseUnhappiness.Chance, CauseUnhappiness.Effect, CauseUnhappiness.Sound, CauseUnhappiness.Timer, CityGrowthCoefficient, Civilian, ConvertCities, ConvertCities.Chance, ConvertCities.DeathChance, ConvertCities.Effect, ConvertCities.Sound, CreateFranchise, CreateFranchise.Chance, CreateFranchise.Effect, CreateFranchise.Sound, CreateParks, CreateParks.Effect, CreateParks.Sound, DeathEffectsHappy, DefaultIcon, DefaultSprite, Defend, DefendAgainstSpies, Defense, Description, EnableAdvance, EnableCarrierDefenses, EstablishEmbassy, ExertsMartialLaw, Explodes, Firepower, FoodHunger, GLHidden, GoldHunger, GovernmentType, HasPopAndCanBuild, IgnoreZOC, ImmuneToHostileTerrain, InciteRevolution, InciteRevolution.Chance, InciteRevolution.DeathChance, InciteRevolution.Effect, InciteRevolution.EliteChance, InciteRevolution.Sound, IndulgenceSales, IndulgenceSales.Effect, IndulgenceSales.Sound, InvestigateCity, InvestigateCity.Chance, InvestigateCity.DeathChance, InvestigateCity.EliteChance, InvisibleForGlobeSat, IsFlanker, IsMounted, IsSpecialForces, IsSubmarine, IsTelevangelist, IsTrader, LossMoveToDmgNone, MaxFuel, MaxHP, MaxMovePoints, MountedBonus, MovementType, NanoTerror, NanoTerror.Chance, NanoTerror.Effect, NanoTerror.Sound, NeedsCityGood, NeedsNoSupport, NoFuelThenCrash, NoIndex, NoSlaves, NoZoc, NuclearAttack, NuclearAttack.Effect, NuclearAttack.Sound, ObsoleteAdvance, OnlyBuildOne, Paratrooper, ParatrooperTransport, Plague, Plague.Chance, Plague.Effect, Plague.Sound, PlantNuke, PlantNuke.Chance, PlantNuke.Effect, PlantNuke.EscapeChance, PlantNuke.Sound, PowerPoints, Revolution, Revolution.Effect, Revolution.Sound, Settle, SettleBuilding, SettleCityType, SettleSize, SettlerSlaveRaids, SettlerSlaveRaids.Effect, SettlerSlaveRaids.Sound, ShieldCost, ShieldHunger, SingleUse, Size, SlaveRaids, SlaveRaids.Amount, SlaveRaids.Chance, SlaveRaids.DeathChance, SlaveRaids.Effect, SlaveRaids.Sound, SlaveRaids.Timer, SlaveUprising, SlaveUprising.Effect, SlaveUprising.Sound, SoundAcknowledge, SoundAttack, SoundCantMove, SoundDeath, SoundMove, SoundSelect1, SoundSelect2, SoundVictory, SoundWork, SpaceLaunch, StealTechnology, StealTechnology.DeathChance, StealTechnology.Effect, StealTechnology.RandomChance, StealTechnology.Sound, StealTechnology.SpecificChance, ThrowParty, UndergroundRailway, UndergroundRailway.Chance, UndergroundRailway.DeathChance, UndergroundRailway.Effect, UndergroundRailway.Sound, UpgradeTo, VictoryEnslavement, VisionClass, VisionRange, WoodenShip, WoodenShipBonus, ZBRangeAttack
+
+</details>
+
+<details><summary>Advances (19)</summary>
+
+Age, Branch, Capitalization, Cost, DeepOcean, GLHidden, Icon, Infrastructure, KeyAdvanceAdvice, MagLev, PlantNuke, PollutionProductionModifier, PollutionSizeModifier, Prerequisites, Railroads, Roads, Transform, TriggerFeat, Tunnels
+
+</details>
+
+<details><summary>Wonders (39)</summary>
+
+ActualBuildingEverywhere, BonusGold, BuildingEverywhere, CloseEmbassies, DecCrimePercent, DecEmpireSize, DefaultIcon, Description, EliminateNukes, EmbassiesEverywhereEvenAtWar, EnableAdvance, EnableParkRangers, FreeSlaves, GlobalRadar, GoldPerInternationalTradeRoute, GoldPerTelevision, GoldPerWaterTradeRoute, IncHappinessEmpire, IncKnowledgePercent, IncreaseBoatMovement, IncreaseBrokerages, IncreaseFoodAllCities, IncreaseHp, IncreaseProduction, IncreaseRegard, IncreaseScientists, Movie, ObsoleteAdvance, PollutersToParks, PreventConversion, ProductionCost, ProhibitSlavers, ProtectFromBarbarians, ReduceReadinessCost, ReformCities, RevoltingCitiesJoinPlayer, SpiesEverywhere, StartGaiaController, TemporaryFullHappiness
+
+</details>
+
+<details><summary>Buildings (42)</summary>
+
+Airport, AllowGrunts, Brokerage, CantBuildInSea, Capitol, Cathedral, CityWalls, CoastalBuilding, CommercePercent, DefaultIcon, DefendersPercent, Description, DoubleTelevangelists, EnableAdvance, FoodPercent, FoodVat, ForceField, GoldPerCitizen, HappyInc, IsReligious, LowerCrime, LowerPeaceMovement, NuclearPlant, OffenseBonusAir, OffenseBonusLand, OffenseBonusWater, PopulationPollutionPercent, PrerequisiteBuilding, PreventConversion, PreventSlavery, ProductionCost, ProductionPercent, ProductionPollutionPercent, ProtectFromBioAgents, ProtectFromNanoVirus, ProtectFromNukes, RaiseMaxPopulation, RaiseOvercrowdingLevel, SciencePercent, StarvationProtection, Television, Upkeep
+
+</details>
+
+<details><summary>Terrain improvements (36)</summary>
+
+CanSee, CantBuildOn, Class, Column, ConstructionTiles, Excludes, GLHidden, Icon, IntBorderRadius, IsCityRuin, Level, Sound, SquaredBorderRadius, Statusbar, TerraformTerrain, TerrainEffect, TerrainEffect.Airport, TerrainEffect.BonusFood, TerrainEffect.BonusGold, TerrainEffect.BonusProduction, TerrainEffect.CanUpgrade, TerrainEffect.DefenseBonus, TerrainEffect.EnableAdvance, TerrainEffect.Endgame, TerrainEffect.Freight, TerrainEffect.HealRate, TerrainEffect.ListeningPost, TerrainEffect.MoveCost, TerrainEffect.ProductionCost, TerrainEffect.ProductionTime, TerrainEffect.Radar, TerrainEffect.RadarRange, TerrainEffect.Terrain, TerrainEffect.TilesetIndex, TerrainEffect.VisionRange, Tooltip
+
+</details>
+
+<details><summary>Terrain (43)</summary>
+
+AddAdvance, CanDie, EnvBase, EnvBase.DeadFood, EnvBase.DeadGold, EnvBase.DeadShield, EnvBase.Defense, EnvBase.Food, EnvBase.Freight, EnvBase.Gold, EnvBase.Movement, EnvBase.Score, EnvBase.Shield, EnvCity, EnvCity.CanUpgrade, EnvCity.Food, EnvCity.Freight, EnvCity.Gold, EnvCity.Movement, EnvCity.Score, EnvCity.Shield, EnvRiver, EnvRiver.Food, EnvRiver.Freight, EnvRiver.Gold, EnvRiver.Movement, EnvRiver.Score, EnvRiver.Shield, GLHidden, HutTilesetIndexA, HutTilesetIndexB, Icon, InternalType, MovementType, RemoveAdvance, Resources, TilesetIndex, TransformAdd, TransformAdd.Materials, TransformAdd.Time, TransformRemove, TransformRemove.Materials, TransformRemove.Time
+
+</details>
+
+<details><summary>Governments (69)</summary>
+
+AtHomeRadius, BuildingRushModifier, CapitalizationCoefficient, CommerceRank, ConquestDistress, ConquestDistressDecay, CrimeCoef, CrimeOffset, DefenseCoef, EmpireDistanceScale, EnableAdvance, EndGameRushModifier, FoodCoef, GoldCoef, GoldRank, GrowthRank, HigherRankAdvice, HomeDefeatCoef, HomeDefeatDecay, Icon, InfrastructureCoefficient, IsEcotopia, KnowledgeCoef, LoyaltyRank, MartialLawEffect, MartialLawRank, MartialLawThreshold, MaxEmpireDistance, MaxIncomingTrade, MaxMartialLawUnits, MaxOutgoingTrade, MaxScienceRate, MilitaryRank, MinEmpireDistance, NegativeRationsCoef, NegativeWagesCoef, NegativeWorkdayCoef, OverseasCoef, OverseasDefeatCoef, OverseasDefeatDecay, PollutionCoef, PollutionRank, PollutionUnhappyCoef, PositiveRationsCoef, PositiveWagesCoef, PositiveWorkdayCoef, ProductionCoef, ProductionRank, ProfessionalUnits, Rank, RationsExpectation, ReadyAlertCoef, ReadyAlertHP, ReadyPeaceCoef, ReadyPeaceHP, ReadyWarCoef, ReadyWarHP, SameRankAdvice, ScienceRank, SupportCoef, TooManyCitiesCoefficient, TooManyCitiesThreshold, TurnsToNewReadiness, UnitRushModifier, WagesExpectation, WarDiscontentMaxUnits, WarDiscontentPerUnit, WonderRushModifier, WorkdayExpectation
+
+</details>
+
+<details><summary>Pollution trigger lists (1)</summary>
+
+POLLUTION_TRIGGER
+
+</details>
+
+Validation commands:
+- `go test ./internal/gameplay/rules -run RetailFieldInventorySnapshot -count=1`

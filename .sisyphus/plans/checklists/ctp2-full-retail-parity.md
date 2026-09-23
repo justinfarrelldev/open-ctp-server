@@ -3,7 +3,7 @@
 ## Planning
 - [x] Current stable work committed before new planning.
 - [x] Full retail parity plan created.
-- [ ] Field coverage inventory created for all retail catalogs.
+- [x] Field coverage inventory created for all retail catalogs.
 - [x] AI-vs-AI 100-turn harness created and recording artifact generated.
 
 ## Retail Data / Runtime
