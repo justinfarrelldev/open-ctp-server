@@ -173,6 +173,7 @@ type City struct {
 	Name             string           `json:"name,omitempty"`
 	OwnerID          string           `json:"owner_id"`
 	TileID           string           `json:"tile_id"`
+	Population       int              `json:"population,omitempty"`
 	WorkedTileIDs    []string         `json:"worked_tile_ids,omitempty"`
 	StoredProduction int              `json:"stored_production,omitempty"`
 	Queue            []ProductionItem `json:"queue,omitempty"`

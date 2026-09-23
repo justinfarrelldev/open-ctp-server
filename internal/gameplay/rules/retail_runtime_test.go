@@ -47,8 +47,12 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if settler.Movement != 100 || settler.Attack != 0 || settler.Defense != 10 || settler.Health != 10 || settler.ProductionCost != 740 {
 		t.Fatalf("settler runtime = %+v", settler)
 	}
-	if !runtimeUnitHasEffect(settler, "settler") {
-		t.Fatalf("settler effect missing: %+v", settler.Effects)
+	if !runtimeUnitHasEffect(settler, "settler") || !runtimeUnitHasEffectValue(settler, "settle_size", 1) {
+		t.Fatalf("settler effects missing: %+v", settler.Effects)
+	}
+	seaEngineer, ok := runtime.Unit("UNIT_SEA_ENGINEER")
+	if !ok || !runtimeUnitHasEffectID(seaEngineer, "settle_building", "IMPROVE_GRANARY") {
+		t.Fatalf("sea engineer runtime = %+v ok=%v", seaEngineer, ok)
 	}
 	if runtime.Starter.Movement != 100 || runtime.Starter.Health != 10 || !runtimeStarterHasEffect(runtime.Starter, "settler") {
 		t.Fatalf("starter = %+v, want retail settler", runtime.Starter)
@@ -126,6 +130,24 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 func runtimeUnitHasEffect(unit RuntimeUnitDefinition, kind string) bool {
 	for _, effect := range unit.Effects {
 		if effect.Kind == kind {
+			return true
+		}
+	}
+	return false
+}
+
+func runtimeUnitHasEffectValue(unit RuntimeUnitDefinition, kind string, value int) bool {
+	for _, effect := range unit.Effects {
+		if effect.Kind == kind && effect.Value == value {
+			return true
+		}
+	}
+	return false
+}
+
+func runtimeUnitHasEffectID(unit RuntimeUnitDefinition, kind string, id string) bool {
+	for _, effect := range unit.Effects {
+		if effect.Kind == kind && effect.ID == id {
 			return true
 		}
 	}

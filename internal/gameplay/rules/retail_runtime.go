@@ -3,6 +3,7 @@ package rules
 import (
 	"math"
 	"sort"
+	"strconv"
 )
 
 // ProjectRetailRuntime maps the source-preserving retail catalog into the
@@ -131,6 +132,12 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	effects := make([]RuntimeStarterEffect, 0)
 	if unit.Category == "UNIT_CATEGORY_SETTLER" || len(retailFieldValues(unit.RawFields, "Settle")) > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("settler"), Kind: "settler"})
+		if size := firstRetailUnitInt(unit, "SettleSize"); size > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: effectID("settle_size"), Kind: "settle_size", Value: size})
+		}
+		for _, buildingID := range retailFieldValues(unit.RawFields, "SettleBuilding") {
+			effects = append(effects, RuntimeStarterEffect{ID: buildingID, Kind: "settle_building"})
+		}
 	}
 	if retailContainsString(unit.Flags, "EstablishEmbassy") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_embassy"), Kind: "special_embassy"})
@@ -138,8 +145,25 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if len(unit.FieldsByKey("StealTechnology")) > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_steal"), Kind: "special_steal", Value: 100})
 	}
-	sort.Slice(effects, func(i, j int) bool { return effects[i].Kind < effects[j].Kind })
+	sort.Slice(effects, func(i, j int) bool {
+		if effects[i].Kind != effects[j].Kind {
+			return effects[i].Kind < effects[j].Kind
+		}
+		return effects[i].ID < effects[j].ID
+	})
 	return effects
+}
+
+func firstRetailUnitInt(unit RetailUnit, key string) int {
+	values := retailFieldValues(unit.RawFields, key)
+	if len(values) == 0 {
+		return 0
+	}
+	value, err := strconv.Atoi(values[0])
+	if err != nil {
+		return 0
+	}
+	return value
 }
 
 func (u RetailUnit) FieldsByKey(key string) []RetailRawField {

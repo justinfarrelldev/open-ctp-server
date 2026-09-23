@@ -15,6 +15,8 @@ const (
 	ProductionWonder   = "wonder"
 
 	EffectSettler                = "settler"
+	EffectSettleSize             = "settle_size"
+	EffectSettleBuilding         = "settle_building"
 	EffectYieldFood              = "yield_food"
 	EffectYieldProduction        = "yield_production"
 	EffectYieldGold              = "yield_gold"
@@ -138,9 +140,30 @@ func foundCity(state *State, actor string, payload FoundCityPayload) error {
 		}
 	}
 	tileID := unit.TileID
+	population, buildings := foundedCitySeed(unit.Effects)
 	removeUnitAndCargo(state, unit.ID)
-	state.Cities = append(state.Cities, City{ID: payload.CityID, Name: payload.Name, OwnerID: actor, TileID: tileID})
+	state.Cities = append(state.Cities, City{ID: payload.CityID, Name: payload.Name, OwnerID: actor, TileID: tileID, Population: population, Buildings: buildings})
 	return nil
+}
+
+func foundedCitySeed(effects []Effect) (int, []Building) {
+	population := 1
+	buildings := make([]Building, 0)
+	seenBuildings := make(map[string]bool)
+	for _, effect := range effects {
+		switch effect.Kind {
+		case EffectSettleSize:
+			if effect.Value > 0 {
+				population = effect.Value
+			}
+		case EffectSettleBuilding:
+			if effect.ID != "" && !seenBuildings[effect.ID] {
+				buildings = append(buildings, Building{ID: effect.ID})
+				seenBuildings[effect.ID] = true
+			}
+		}
+	}
+	return population, buildings
 }
 
 func queueProduction(state *State, actor string, payload QueueProductionPayload, runtime *rules.RuntimeRules) error {
@@ -588,7 +611,7 @@ func validateEffects(effects []Effect) error {
 			return errors.New("effect id is required")
 		}
 		switch effect.Kind {
-		case EffectSettler, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectBonus, EffectCombatAttack, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
+		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectBonus, EffectCombatAttack, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
 		default:
 			return fmt.Errorf("unsupported effect kind %q", effect.Kind)
 		}

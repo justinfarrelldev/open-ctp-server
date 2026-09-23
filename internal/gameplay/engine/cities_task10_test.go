@@ -32,6 +32,15 @@ func task10Apply(t *testing.T, state State, actor, kind string, payload any) Sta
 	return next
 }
 
+func TestRetailSettlerEffectsSeedFoundedCitySizeAndBuildings(t *testing.T) {
+	state := task10State()
+	state.Units[0].Effects = []Effect{{ID: "settle", Kind: EffectSettler}, {ID: "settle-size", Kind: EffectSettleSize, Value: 3}, {ID: "IMPROVE_GRANARY", Kind: EffectSettleBuilding}}
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	if len(state.Cities) != 1 || state.Cities[0].Population != 3 || len(state.Cities[0].Buildings) != 1 || state.Cities[0].Buildings[0].ID != "IMPROVE_GRANARY" {
+		t.Fatalf("founded city = %+v", state.Cities)
+	}
+}
+
 func TestTask10FoundCityConsumesSettlerAndRejectsIllegalSite(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
