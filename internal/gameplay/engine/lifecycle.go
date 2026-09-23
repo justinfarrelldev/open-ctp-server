@@ -364,12 +364,12 @@ func researchRate(state State, nation Nation) int {
 func cityResearchEffects(state State, city City) []Effect {
 	effects := append([]Effect(nil), city.Effects...)
 	for _, building := range city.Buildings {
-		if !isObsolete(city.Obsolete, building.ObsoletedBy) {
+		if !isObsoleteForPlayer(state, city.OwnerID, city.Obsolete, building.ObsoletedBy) {
 			effects = append(effects, building.Effects...)
 		}
 	}
 	for _, wonder := range state.Wonders {
-		if !wonder.Destroyed && !isObsolete(city.Obsolete, wonder.ObsoletedBy) && (wonder.Scope == "global" || wonder.OwnerID == city.OwnerID) {
+		if !wonder.Destroyed && !isObsoleteForPlayer(state, wonder.OwnerID, city.Obsolete, wonder.ObsoletedBy) && (wonder.Scope == "global" || wonder.OwnerID == city.OwnerID) {
 			effects = append(effects, wonder.Effects...)
 		}
 	}

@@ -78,6 +78,23 @@ func TestRetailRuntimeBuildingFoodPercentDrivesCityYield(t *testing.T) {
 	}
 }
 
+func TestRuntimeBuildingEffectsObsoleteWhenNationHasObsoleteAdvance(t *testing.T) {
+	state := State{
+		Tiles:   []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS"}},
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", Advances: []string{"ADVANCE_OBSOLETE"}}},
+	}
+	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Buildings: []Building{{ID: "IMPROVE_OLD", ObsoletedBy: "ADVANCE_OBSOLETE", Effects: []Effect{{ID: "old-production", Kind: EffectYieldProduction, Value: 99}}}}}
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_PLAINS", Cost: 100, Domains: []string{DomainLand}, Production: 10}}}}
+	yield, err := cityYieldWithRuntime(state, city, runtime)
+	if err != nil {
+		t.Fatalf("cityYieldWithRuntime() error = %v", err)
+	}
+	if yield.Production != 10 {
+		t.Fatalf("production yield = %d, want obsolete building ignored", yield.Production)
+	}
+}
+
 func TestRetailRuntimeWonderEffectsDriveOwnedCityYields(t *testing.T) {
 	state := State{
 		Tiles:   []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS"}, {ID: "tile-b", Terrain: "TERRAIN_PLAINS"}},

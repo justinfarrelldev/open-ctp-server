@@ -515,12 +515,12 @@ func cityEffects(state State, city City) []Effect {
 		}
 	}
 	for _, building := range city.Buildings {
-		if !isObsolete(city.Obsolete, building.ObsoletedBy) {
+		if !isObsoleteForPlayer(state, city.OwnerID, city.Obsolete, building.ObsoletedBy) {
 			effects = append(effects, building.Effects...)
 		}
 	}
 	for _, wonder := range state.Wonders {
-		if !wonder.Destroyed && !isObsolete(city.Obsolete, wonder.ObsoletedBy) && (wonder.Scope == "global" || wonder.OwnerID == city.OwnerID) {
+		if !wonder.Destroyed && !isObsoleteForPlayer(state, wonder.OwnerID, city.Obsolete, wonder.ObsoletedBy) && (wonder.Scope == "global" || wonder.OwnerID == city.OwnerID) {
 			effects = append(effects, wonder.Effects...)
 		}
 	}
@@ -754,6 +754,22 @@ func nationForPlayer(state State, playerID string) string {
 func hasEffect(effects []Effect, kind string) bool {
 	for _, effect := range effects {
 		if effect.Kind == kind {
+			return true
+		}
+	}
+	return false
+}
+
+func isObsoleteForPlayer(state State, playerID string, obsolete []string, required string) bool {
+	if isObsolete(obsolete, required) {
+		return true
+	}
+	if required == "" {
+		return false
+	}
+	nationID := nationForPlayer(state, playerID)
+	for _, nation := range state.Nations {
+		if nation.ID == nationID && containsString(nation.Advances, required) {
 			return true
 		}
 	}
