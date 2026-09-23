@@ -233,6 +233,21 @@ func CanonicalDefinitions(definitions []byte) ([]byte, error) {
 	return json.Marshal(value)
 }
 
+func CanonicalRuntimeDefinitions(runtime RuntimeRules) ([]byte, string, error) {
+	runtime.ContentHash = ""
+	sortRuntimeProjection(&runtime)
+	encoded, err := json.Marshal(runtime)
+	if err != nil {
+		return nil, "", err
+	}
+	canonical, err := CanonicalDefinitions(encoded)
+	if err != nil {
+		return nil, "", err
+	}
+	digest := sha256.Sum256(canonical)
+	return canonical, hex.EncodeToString(digest[:]), nil
+}
+
 func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error) {
 	canonical, err := CanonicalDefinitions(definitions)
 	if err != nil {
@@ -241,6 +256,13 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 	digest := sha256.Sum256(canonical)
 	if hex.EncodeToString(digest[:]) != contentHash {
 		return RuntimeRules{}, errors.New("rules content hash mismatch")
+	}
+	var top map[string]json.RawMessage
+	if err := json.Unmarshal(definitions, &top); err != nil {
+		return RuntimeRules{}, errors.New("rules definitions are malformed")
+	}
+	if _, hasRecords := top["records"]; !hasRecords {
+		return compileRuntimeProjectionDefinitions(definitions, contentHash)
 	}
 	var definition struct {
 		CompatibilityVersion       string                 `json:"compatibility_version"`
@@ -336,6 +358,99 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 	sort.Slice(runtime.Effects, func(i, j int) bool { return runtime.Effects[i].ID < runtime.Effects[j].ID })
 	sort.Slice(runtime.Movement.Terrains, func(i, j int) bool { return runtime.Movement.Terrains[i].ID < runtime.Movement.Terrains[j].ID })
 	return runtime, nil
+}
+
+func compileRuntimeProjectionDefinitions(definitions []byte, contentHash string) (RuntimeRules, error) {
+	var runtime RuntimeRules
+	if err := json.Unmarshal(definitions, &runtime); err != nil {
+		return RuntimeRules{}, errors.New("rules definitions are malformed")
+	}
+	if runtime.CompatibilityVersion != CTP2CompatibilityVersion {
+		return RuntimeRules{}, errors.New("rules compatibility version is unsupported")
+	}
+	runtime.ContentHash = contentHash
+	sortRuntimeProjection(&runtime)
+	if len(runtime.Production) == 0 {
+		return RuntimeRules{}, errors.New("runtime definitions contain no production records")
+	}
+	if len(runtime.Units) == 0 {
+		return RuntimeRules{}, errors.New("runtime definitions contain no unit records")
+	}
+	if runtime.Movement.Configured {
+		runtime.Movement.PolicyConfigured = len(runtime.Movement.Terrains) > 0
+		if !runtime.Movement.PolicyConfigured {
+			return RuntimeRules{}, errors.New("runtime definitions require movement terrains")
+		}
+	}
+	if runtime.Starter.Domain == "" || runtime.Starter.Movement < 1 || runtime.Starter.Health < 1 {
+		starter, ok := runtime.Unit("UNIT_SETTLER")
+		if !ok {
+			return RuntimeRules{}, errors.New("runtime definitions require a starter unit")
+		}
+		runtime.Starter = RuntimeStarter{Domain: starter.Domain, Movement: starter.Movement, Attack: starter.Attack, Defense: starter.Defense, Strength: starter.Strength, Armor: starter.Armor, Health: starter.Health, ZOC: starter.ZOC, TransportCapacity: starter.TransportCapacity, CargoDomains: append([]string(nil), starter.CargoDomains...), VisibilityRange: starter.VisibilityRange, Effects: append([]RuntimeStarterEffect(nil), starter.Effects...)}
+	}
+	if err := validateRuntimeProjection(runtime); err != nil {
+		return RuntimeRules{}, err
+	}
+	return runtime, nil
+}
+
+func validateRuntimeProjection(runtime RuntimeRules) error {
+	seenProduction := make(map[string]struct{}, len(runtime.Production))
+	for _, production := range runtime.Production {
+		if production.ID == "" || production.Kind == "" {
+			return errors.New("runtime production record is malformed")
+		}
+		if _, exists := seenProduction[production.ID]; exists {
+			return fmt.Errorf("runtime production record %q is duplicated", production.ID)
+		}
+		seenProduction[production.ID] = struct{}{}
+	}
+	seenUnits := make(map[string]struct{}, len(runtime.Units))
+	for _, unit := range runtime.Units {
+		if unit.ID == "" || unit.Domain == "" || unit.Movement < 1 || unit.Health < 1 {
+			return fmt.Errorf("runtime unit %q is malformed", unit.ID)
+		}
+		if _, exists := seenUnits[unit.ID]; exists {
+			return fmt.Errorf("runtime unit %q is duplicated", unit.ID)
+		}
+		seenUnits[unit.ID] = struct{}{}
+	}
+	if err := validateRuntimeAdvanceProjection(runtime.Advances); err != nil {
+		return err
+	}
+	for _, government := range runtime.Governments {
+		if government.EnableAdvanceID != "" {
+			if _, ok := runtime.Advance(government.EnableAdvanceID); !ok {
+				return fmt.Errorf("runtime government %q references missing advance %q", government.ID, government.EnableAdvanceID)
+			}
+		}
+	}
+	return nil
+}
+
+func validateRuntimeAdvanceProjection(advances []RuntimeAdvanceDefinition) error {
+	seen := make(map[string]struct{}, len(advances))
+	for _, advance := range advances {
+		if advance.ID == "" {
+			return errors.New("runtime advance record is malformed")
+		}
+		if _, exists := seen[advance.ID]; exists {
+			return fmt.Errorf("runtime advance %q is duplicated", advance.ID)
+		}
+		seen[advance.ID] = struct{}{}
+	}
+	for _, advance := range advances {
+		for _, prerequisite := range advance.Prerequisites {
+			if prerequisite == advance.ID {
+				continue
+			}
+			if _, ok := seen[prerequisite]; !ok {
+				return fmt.Errorf("runtime advance %q references missing prerequisite %q", advance.ID, prerequisite)
+			}
+		}
+	}
+	return nil
 }
 
 // ServerOwnedSyntheticRuleset is the fixed original synthetic catalog used when

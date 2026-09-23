@@ -119,7 +119,7 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "2a3ffe3ad9087ae8bf73f279c79b386d316b3273a7272c10d5f8a9bf1b7885e1"
+      "sha256": "687c40907fe193170ae9b2e6b0d7466188aa915d505f5dd4f31ff431f0dc34b1"
     },
     {
       "path": "internal/gameplay/service/ai.go",
