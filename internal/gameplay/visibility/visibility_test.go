@@ -30,6 +30,30 @@ func fixtureState() engine.State {
 	}
 }
 
+func TestRetailTradeRouteProjectionDoesNotLeakHiddenDestinations(t *testing.T) {
+	state := fixtureState()
+	state.Tiles = append(state.Tiles, engine.Tile{ID: "5,0", X: 5, Y: 0, Terrain: engine.TerrainPlains, Open: true})
+	state.Cities = append(state.Cities, engine.City{ID: "home", OwnerID: "a", TileID: "0,0"}, engine.City{ID: "far", OwnerID: "b", TileID: "5,0"})
+	state.TradeRoutes = []engine.TradeRoute{{ID: "hidden-route", SourceCityID: "home", DestinationCityID: "far", CrossesWater: true}}
+
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(projection.TradeRoutes) != 0 {
+		t.Fatalf("hidden trade route leaked: %#v", projection.TradeRoutes)
+	}
+
+	state.Wonders = []engine.Wonder{{ID: "WONDER_RADAR", OwnerID: "a", CityID: "home", Scope: "nation", Effects: []engine.Effect{{ID: "radar", Kind: engine.EffectGlobalRadar}}}}
+	projection, err = Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(projection.TradeRoutes) != 1 || projection.TradeRoutes[0].ID != "hidden-route" || !projection.TradeRoutes[0].CrossesWater {
+		t.Fatalf("visible trade route missing: %#v", projection.TradeRoutes)
+	}
+}
+
 func TestRetailEmbassiesEverywhereProjectionHonorsCloseEmbassies(t *testing.T) {
 	state := fixtureState()
 	state.Nations = []engine.Nation{{ID: "a"}, {ID: "b"}}

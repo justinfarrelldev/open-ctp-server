@@ -92,6 +92,13 @@ type ResearchProjection struct {
 	Available []string `json:"available,omitempty"`
 }
 
+type TradeRouteProjection struct {
+	ID                string `json:"id"`
+	SourceCityID      string `json:"source_city_id"`
+	DestinationCityID string `json:"destination_city_id"`
+	CrossesWater      bool   `json:"crosses_water,omitempty"`
+}
+
 type DiplomacyRelationProjection struct {
 	TargetPlayerID string `json:"target_player_id"`
 	Treaty         string `json:"treaty,omitempty"`
@@ -134,18 +141,19 @@ type ActionProjection struct {
 }
 
 type Projection struct {
-	Revision         int64                `json:"revision"`
-	Turn             int                  `json:"turn"`
-	Tiles            []TileProjection     `json:"tiles"`
-	Units            []UnitProjection     `json:"units"`
-	Cities           []CityProjection     `json:"cities"`
-	Research         *ResearchProjection  `json:"research,omitempty"`
-	Diplomacy        *DiplomacyProjection `json:"diplomacy,omitempty"`
-	Rules            *RulesProjection     `json:"rules,omitempty"`
-	CityReports      []engine.CityReport  `json:"city_reports,omitempty"`
-	LegalActions     []ActionProjection   `json:"legal_actions,omitempty"`
-	EmbassyPlayerIDs []string             `json:"embassy_player_ids,omitempty"`
-	PlanningStatus   string               `json:"planning_status,omitempty"`
+	Revision         int64                  `json:"revision"`
+	Turn             int                    `json:"turn"`
+	Tiles            []TileProjection       `json:"tiles"`
+	Units            []UnitProjection       `json:"units"`
+	Cities           []CityProjection       `json:"cities"`
+	TradeRoutes      []TradeRouteProjection `json:"trade_routes,omitempty"`
+	Research         *ResearchProjection    `json:"research,omitempty"`
+	Diplomacy        *DiplomacyProjection   `json:"diplomacy,omitempty"`
+	Rules            *RulesProjection       `json:"rules,omitempty"`
+	CityReports      []engine.CityReport    `json:"city_reports,omitempty"`
+	LegalActions     []ActionProjection     `json:"legal_actions,omitempty"`
+	EmbassyPlayerIDs []string               `json:"embassy_player_ids,omitempty"`
+	PlanningStatus   string                 `json:"planning_status,omitempty"`
 }
 
 // Update records only what each player can currently observe. The returned state
@@ -254,12 +262,27 @@ func Project(state engine.State, playerID string) (Projection, error) {
 			result.Cities = append(result.Cities, projectCity(city, playerID, state.Phase.Turn))
 		}
 	}
+	result.TradeRoutes = tradeRouteProjection(state, playerID, visible)
 	sort.Slice(result.Tiles, func(i, j int) bool { return result.Tiles[i].ID < result.Tiles[j].ID })
 	sort.Slice(result.Units, func(i, j int) bool { return result.Units[i].ID < result.Units[j].ID })
 	sort.Slice(result.Cities, func(i, j int) bool { return result.Cities[i].ID < result.Cities[j].ID })
+	sort.Slice(result.TradeRoutes, func(i, j int) bool { return result.TradeRoutes[i].ID < result.TradeRoutes[j].ID })
 	sort.Strings(result.EmbassyPlayerIDs)
 	result.LegalActions = legalActions(state, result, playerID)
 	return result, nil
+}
+
+func tradeRouteProjection(state engine.State, playerID string, visible map[string]bool) []TradeRouteProjection {
+	projection := make([]TradeRouteProjection, 0)
+	for _, route := range state.TradeRoutes {
+		source, sourceOK := cityByID(state.Cities, route.SourceCityID)
+		destination, destinationOK := cityByID(state.Cities, route.DestinationCityID)
+		if !sourceOK || !destinationOK || source.OwnerID != playerID || !visible[source.TileID] || !visible[destination.TileID] {
+			continue
+		}
+		projection = append(projection, TradeRouteProjection{ID: route.ID, SourceCityID: route.SourceCityID, DestinationCityID: route.DestinationCityID, CrossesWater: route.CrossesWater})
+	}
+	return projection
 }
 
 func diplomacyProjection(state engine.State, playerID string, nation engine.Nation) *DiplomacyProjection {
@@ -1438,6 +1461,15 @@ func tileAt(tiles []engine.Tile, x, y int) (engine.Tile, bool) {
 	}
 	return engine.Tile{}, false
 }
+func cityByID(cities []engine.City, id string) (engine.City, bool) {
+	for _, city := range cities {
+		if city.ID == id {
+			return city, true
+		}
+	}
+	return engine.City{}, false
+}
+
 func citiesByTile(cities []engine.City) map[string]engine.City {
 	result := make(map[string]engine.City, len(cities))
 	for _, city := range cities {
