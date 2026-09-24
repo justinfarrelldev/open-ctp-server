@@ -103,12 +103,14 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 	}
 	if _, ok := armyByID(state, attackers.ID); !ok {
 		result.Outcome = CombatOutcomeDefenderHeld
+		promoteArmyVeterans(state, defenders.ID)
 	} else if _, ok := armyByID(state, defenders.ID); !ok {
 		result.Outcome = CombatOutcomeAttackerWon
 		if armyCanCaptureTargetCity(*state, *attackers, targetTileID) {
 			moveArmyToTile(state, attackers.ID, targetTileID)
 			result.CapturedCityID = captureCityAt(state, command.ActorPlayerID, targetTileID)
 		}
+		promoteArmyVeterans(state, attackers.ID)
 	} else {
 		result.Outcome = CombatOutcomeRetreated
 	}
@@ -117,6 +119,22 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 		return nil, nil, err
 	}
 	return result, eventPayload, nil
+}
+
+func promoteArmyVeterans(state *State, armyID string) {
+	army, ok := armyByID(state, armyID)
+	if !ok {
+		return
+	}
+	unitIDs := make(map[string]bool, len(army.UnitIDs))
+	for _, unitID := range army.UnitIDs {
+		unitIDs[unitID] = true
+	}
+	for index := range state.Units {
+		if unitIDs[state.Units[index].ID] && state.Units[index].Health > 0 {
+			state.Units[index].Veteran = true
+		}
+	}
 }
 
 func barbarianAttackBlocked(state State, attackerID, defenderID string) bool {

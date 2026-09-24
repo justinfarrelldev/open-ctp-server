@@ -30,6 +30,23 @@ func combatCommand() Command {
 	return Command{SchemaVersion: CommandSchemaV1, ID: "combat-1", ActorPlayerID: "player-a", Type: CommandCombat, Payload: payload}
 }
 
+func TestRetailCombatPromotesSurvivingWinnersToVeteran(t *testing.T) {
+	state := combatState()
+	state.Units = []Unit{
+		{ID: "attacker", OwnerID: "player-a", TileID: "a", ArmyID: "attackers", Domain: DomainLand, Attack: 100, Defense: 10, Strength: 20, Armor: 1, Health: 10, MaxHealth: 10},
+		{ID: "defender", OwnerID: "player-b", TileID: "b", ArmyID: "defenders", Domain: DomainLand, Attack: 0, Defense: 1, Strength: 1, Armor: 1, Health: 5, MaxHealth: 5},
+	}
+	state.Armies = []Army{{ID: "attackers", OwnerID: "player-a", UnitIDs: []string{"attacker"}}, {ID: "defenders", OwnerID: "player-b", UnitIDs: []string{"defender"}}}
+	next, _, _, err := Apply(state, combatCommand(), state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	attacker, ok := unitByID(next, "attacker")
+	if !ok || !attacker.Veteran {
+		t.Fatalf("surviving winner was not promoted: unit=%+v ok=%v", attacker, ok)
+	}
+}
+
 func TestRetailCombatDomainMasksSelectEligibleTargets(t *testing.T) {
 	state := combatState()
 	state.Units = []Unit{
