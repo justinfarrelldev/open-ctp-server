@@ -77,6 +77,7 @@
 - [x] Task 126: Underground-railway special actions honor deterministic effect success chances.
 - [x] Task 127: Franchise markers reduce target city production by the retail 10% loss.
 - [x] Task 128: Grouped retail special-action death chances import and resolve deterministically.
+- [x] Task 129: Grouped combat/bombard domain targeting skips ineligible targets and requires underwater attacks for submarines.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
