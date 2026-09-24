@@ -99,6 +99,7 @@
 - [x] Task 148: AI plans city-target special actions from projected legal actions.
 - [x] Task 149: Nation science-percent slider controls city gold/trade research and projects safely.
 - [x] Task 150: Set-science-rate command persists explicit slider values and projects safe legal actions.
+- [x] Task 151: AI consumes projected science-rate actions without redundant default-100 actions.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

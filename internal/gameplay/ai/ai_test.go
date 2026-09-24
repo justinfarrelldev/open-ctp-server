@@ -107,6 +107,25 @@ func TestPlannerUsesOnlyProjectionAndStableCandidateTuples(t *testing.T) {
 	}
 }
 
+func TestPlannerUsesProjectedScienceRateAction(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		LegalActions: []visibility.ActionProjection{{Command: engine.CommandSetScienceRate, Route: "set-science-rate", EntityID: "ai", TargetID: "100", Payload: json.RawMessage(`{"science_percent":100}`)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandSetScienceRate && candidate.EntityID == "ai" && candidate.TargetID == "100" {
+			return
+		}
+	}
+	t.Fatalf("science-rate candidate missing: %#v", candidates)
+}
+
 func TestPlannerUsesProjectedCitySpecialActions(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		LegalActions: []visibility.ActionProjection{{Command: engine.CommandCreateFranchise, Route: "create-franchise", EntityID: "branch", TargetID: "city", Payload: json.RawMessage(`{"unit_id":"branch","city_id":"city"}`)}},

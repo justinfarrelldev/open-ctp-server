@@ -189,6 +189,7 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 	candidates := []Candidate{{Type: fallbackType, EntityID: playerID, Score: 100, Payload: json.RawMessage(`{}`)}}
 	candidates = append(candidates, researchCandidates(projection, playerID)...)
 	candidates = append(candidates, governmentCandidates(projection, playerID)...)
+	candidates = append(candidates, projectedScienceRateCandidates(projection)...)
 	candidates = append(candidates, diplomacyCandidates(projection, playerID)...)
 	candidates = append(candidates, projectedUnitSpecialTargetCandidates(projection)...)
 	candidates = append(candidates, combatCandidates(projection, playerID)...)
@@ -324,6 +325,23 @@ func governmentCandidates(projection visibility.Projection, playerID string) []C
 		return nil
 	}
 	return []Candidate{candidate(engine.CommandSetGovernment, playerID, "GOVERNMENT_SYNTHETIC_REPUBLIC", 760, map[string]string{"government_id": "GOVERNMENT_SYNTHETIC_REPUBLIC"})}
+}
+
+func projectedScienceRateCandidates(projection visibility.Projection) []Candidate {
+	candidates := make([]Candidate, 0)
+	for _, action := range projection.LegalActions {
+		if action.Command != engine.CommandSetScienceRate || len(action.Payload) == 0 {
+			continue
+		}
+		var payload struct {
+			SciencePercent int `json:"science_percent"`
+		}
+		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.SciencePercent != 100 {
+			continue
+		}
+		candidates = append(candidates, Candidate{Type: engine.CommandSetScienceRate, EntityID: action.EntityID, TargetID: action.TargetID, Score: 755, Payload: append(json.RawMessage(nil), action.Payload...)})
+	}
+	return candidates
 }
 
 func diplomacyCandidates(projection visibility.Projection, playerID string) []Candidate {

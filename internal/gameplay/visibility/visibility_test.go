@@ -39,6 +39,16 @@ func projectionHasUnit(projection Projection, unitID string) bool {
 	return false
 }
 
+func TestScienceRateLegalActionsTreatUnsetAsDefaultHundred(t *testing.T) {
+	projection := Projection{Rules: &RulesProjection{}, Diplomacy: &DiplomacyProjection{}}
+	actions := governmentActions(projection, "a")
+	for _, action := range actions {
+		if action.Command == engine.CommandSetScienceRate && action.TargetID == "100" {
+			t.Fatalf("default science percent should already be 100; legal actions=%#v", actions)
+		}
+	}
+}
+
 func TestRetailStealthProjectionRequiresStealthDetection(t *testing.T) {
 	state := fixtureState()
 	state.Cities = []engine.City{{ID: "home", OwnerID: "a", TileID: "0,0"}}
