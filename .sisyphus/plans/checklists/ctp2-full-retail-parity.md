@@ -45,6 +45,7 @@
 - [x] Task 94: Retail sue special actions apply lawsuit disruption.
 - [x] Task 95: Retail food-vat effects reduce city food consumption.
 - [x] Task 96: Retail building upkeep is applied as gold maintenance, not production loss.
+- [x] Task 97: Retail unit upkeep is preserved and subtracts from national research gold.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
