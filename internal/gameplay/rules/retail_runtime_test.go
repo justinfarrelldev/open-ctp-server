@@ -138,6 +138,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeProductionHasEffectValue(ecoTransit, "pollution_population_percent", -50) {
 		t.Fatalf("eco transit production effects = %+v ok=%v", ecoTransit, ok)
 	}
+	airport, ok := runtime.ProductionDefinition("IMPROVE_AIRPORT")
+	if !ok || !runtimeProductionHasEffect(airport, "airport") {
+		t.Fatalf("airport production effects = %+v ok=%v", airport, ok)
+	}
 	matter, ok := runtime.ProductionDefinition("IMPROVE_MATTER_DECOMPILER")
 	if !ok || !runtimeProductionHasEffectValue(matter, "pollution_production_percent", -50) {
 		t.Fatalf("matter decomposer production effects = %+v ok=%v", matter, ok)
@@ -196,6 +200,15 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || len(pyramids.Effects) != 1 || pyramids.Effects[0].Kind != "yield_gold" || pyramids.Effects[0].Value != 100 {
 		t.Fatalf("Pyramids effects = %+v ok=%v", pyramids, ok)
 	}
+}
+
+func runtimeProductionHasEffect(production RuntimeProduction, kind string) bool {
+	for _, effect := range production.Effects {
+		if effect.Kind == kind {
+			return true
+		}
+	}
+	return false
 }
 
 func runtimeProductionHasEffectValue(production RuntimeProduction, kind string, value int) bool {

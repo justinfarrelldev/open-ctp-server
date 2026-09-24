@@ -119,8 +119,23 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 		if state.Units[index].TransportID == "" {
 			state.Units[index].Movement = runtime.Starter.Movement
 		}
+		if state.Units[index].MaxFuel > 0 && unitCanRefuel(*state, state.Units[index]) {
+			state.Units[index].Fuel = state.Units[index].MaxFuel
+		}
 	}
 	advanceResearch(state, runtime)
+}
+
+func unitCanRefuel(state State, unit Unit) bool {
+	if unit.TransportID != "" {
+		return true
+	}
+	for _, city := range state.Cities {
+		if city.TileID == unit.TileID && city.OwnerID == unit.OwnerID {
+			return true
+		}
+	}
+	return false
 }
 
 func advancePollution(state *State, runtime *rules.RuntimeRules) {

@@ -233,6 +233,19 @@ func TestUnitMovementSpendsFuelAndRejectsEmptyFuel(t *testing.T) {
 	}
 }
 
+func TestAirUnitsRefuelAtFriendlyCitiesOnAdvanceRound(t *testing.T) {
+	state := task8State()
+	state.Units = []Unit{{ID: "air", OwnerID: "player-a", TileID: "a", Domain: DomainAir, Movement: 0, Fuel: 1, MaxFuel: 5}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "a"}}
+	runtime := &rules.RuntimeRules{Starter: rules.RuntimeStarter{Movement: 2}}
+
+	advanceRound(&state, runtime)
+	unit, ok := unitByID(state, "air")
+	if !ok || unit.Fuel != 5 || unit.Movement != 2 {
+		t.Fatalf("unit after advance = %+v ok=%v, want refueled and movement refreshed", unit, ok)
+	}
+}
+
 func TestTask8MovementAndCargoFailureVectors(t *testing.T) {
 	state := task8State()
 	for index := range state.Units {

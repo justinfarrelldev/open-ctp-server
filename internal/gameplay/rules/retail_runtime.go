@@ -118,6 +118,9 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 	if value := building.IntValues["StarvationProtection"]; value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":starvation-protection", Kind: "starvation_protection", Value: value})
 	}
+	if retailContainsString(building.Flags, "Airport") {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":airport", Kind: "airport"})
+	}
 	if value := retailPercentFieldPoints(building.FloatValues["DefendersPercent"]); value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":defenders-percent", Kind: "combat_defense", Value: value})
 	}
