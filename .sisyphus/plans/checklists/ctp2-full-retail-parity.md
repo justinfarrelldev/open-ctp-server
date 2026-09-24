@@ -90,6 +90,8 @@
 - [x] Task 139: Visible unit projections expose only safe targetability markers and unit-target legal actions use them.
 - [x] Task 140: Retail stealth vision classes import and hide enemy stealth units unless a stealth detector is in range.
 - [x] Task 141: Visible foreign owners project safe establish-contact actions until contact exists.
+- [x] Task 142: AI plans establish-contact from projected legal actions.
+- [x] Task 143: AI plans unit-target sue/expel special actions from projected legal actions.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

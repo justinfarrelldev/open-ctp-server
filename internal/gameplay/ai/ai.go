@@ -190,6 +190,7 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 	candidates = append(candidates, researchCandidates(projection, playerID)...)
 	candidates = append(candidates, governmentCandidates(projection, playerID)...)
 	candidates = append(candidates, diplomacyCandidates(projection, playerID)...)
+	candidates = append(candidates, projectedUnitSpecialTargetCandidates(projection)...)
 	candidates = append(candidates, combatCandidates(projection, playerID)...)
 	candidates = append(candidates, transportCandidates(projection, playerID)...)
 	candidates = append(candidates, terrainImprovementCandidates(projection, playerID)...)
@@ -326,10 +327,10 @@ func governmentCandidates(projection visibility.Projection, playerID string) []C
 }
 
 func diplomacyCandidates(projection visibility.Projection, playerID string) []Candidate {
+	candidates := projectedEstablishContactCandidates(projection)
 	if projection.Diplomacy == nil {
-		return nil
+		return candidates
 	}
-	candidates := make([]Candidate, 0)
 	pending := make(map[string]bool, len(projection.Diplomacy.Proposals))
 	for _, proposal := range projection.Diplomacy.Proposals {
 		if proposal.Kind != "" && proposal.FromPlayerID != "" && proposal.ToPlayerID != "" {
@@ -346,6 +347,51 @@ func diplomacyCandidates(projection visibility.Projection, playerID string) []Ca
 		}
 		proposalID := "ai-union-" + playerID + "-" + relation.TargetPlayerID
 		candidates = append(candidates, candidate(engine.CommandProposeAgreement, relation.TargetPlayerID, "union", 430, map[string]string{"proposal_id": proposalID, "target_player_id": relation.TargetPlayerID, "kind": "union"}))
+	}
+	return candidates
+}
+
+func projectedUnitSpecialTargetCandidates(projection visibility.Projection) []Candidate {
+	scores := map[string]int{engine.CommandExpel: 650, engine.CommandSue: 645}
+	candidates := make([]Candidate, 0)
+	seen := map[string]bool{}
+	for _, action := range projection.LegalActions {
+		score, ok := scores[action.Command]
+		if !ok || len(action.Payload) == 0 {
+			continue
+		}
+		var payload struct {
+			UnitID       string `json:"unit_id"`
+			TargetUnitID string `json:"target_unit_id"`
+		}
+		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.UnitID == "" || payload.TargetUnitID == "" {
+			continue
+		}
+		key := action.Command + "\x00" + payload.UnitID + "\x00" + payload.TargetUnitID
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		candidates = append(candidates, Candidate{Type: action.Command, EntityID: payload.UnitID, TargetID: payload.TargetUnitID, Score: score, Payload: append(json.RawMessage(nil), action.Payload...)})
+	}
+	return candidates
+}
+
+func projectedEstablishContactCandidates(projection visibility.Projection) []Candidate {
+	candidates := make([]Candidate, 0)
+	seen := map[string]bool{}
+	for _, action := range projection.LegalActions {
+		if action.Command != engine.CommandEstablishContact || len(action.Payload) == 0 {
+			continue
+		}
+		var payload struct {
+			TargetPlayerID string `json:"target_player_id"`
+		}
+		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.TargetPlayerID == "" || seen[payload.TargetPlayerID] {
+			continue
+		}
+		seen[payload.TargetPlayerID] = true
+		candidates = append(candidates, candidate(engine.CommandEstablishContact, action.EntityID, payload.TargetPlayerID, 735, payload))
 	}
 	return candidates
 }

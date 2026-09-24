@@ -107,6 +107,48 @@ func TestPlannerUsesOnlyProjectionAndStableCandidateTuples(t *testing.T) {
 	}
 }
 
+func TestPlannerUsesProjectedUnitSpecialTargetActions(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		LegalActions: []visibility.ActionProjection{
+			{Command: engine.CommandExpel, Route: "expel", EntityID: "lawyer", TargetID: "unit-b", Payload: json.RawMessage(`{"unit_id":"lawyer","target_unit_id":"unit-b"}`)},
+			{Command: engine.CommandSue, Route: "sue", EntityID: "lawyer", TargetID: "unit-c", Payload: json.RawMessage(`{"unit_id":"lawyer","target_unit_id":"unit-c"}`)},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := map[string]bool{}
+	for _, candidate := range candidates {
+		seen[candidate.Type] = true
+	}
+	if !seen[engine.CommandExpel] || !seen[engine.CommandSue] {
+		t.Fatalf("unit special target candidates missing: %#v", candidates)
+	}
+}
+
+func TestPlannerUsesProjectedEstablishContactAction(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		LegalActions: []visibility.ActionProjection{{Command: engine.CommandEstablishContact, Route: "establish-contact", EntityID: "ai", TargetID: "foreign", Payload: json.RawMessage(`{"target_player_id":"foreign"}`)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandEstablishContact && candidate.TargetID == "foreign" {
+			return
+		}
+	}
+	t.Fatalf("establish-contact candidate missing: %#v", candidates)
+}
+
 func TestPlannerFoundsHomeCityWithSettlersOnly(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		Tiles: []visibility.TileProjection{{ID: "origin", X: 0, Y: 0, Terrain: engine.TerrainPlains}},
