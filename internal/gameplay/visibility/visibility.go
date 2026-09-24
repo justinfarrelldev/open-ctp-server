@@ -620,9 +620,32 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 		actions = append(actions, embarkActions(projection, unit)...)
 		actions = append(actions, combatActions(projection, tiles, unit)...)
 		actions = append(actions, bombardActions(projection, tiles, unit)...)
+		actions = append(actions, expelActions(projection, tiles, unit)...)
 		actions = append(actions, specialActions(projection, tiles, cities, unit, playerID)...)
 		actions = append(actions, terrainActions(projection, tiles, unit)...)
 		actions = append(actions, createParkActions(projection, tiles, unit)...)
+	}
+	return actions
+}
+
+func expelActions(projection Projection, tiles map[string]TileProjection, unit UnitProjection) []ActionProjection {
+	if unit.TileID == "" || unit.Movement < 1 || !hasEffect(unit.Effects, engine.EffectSpecialExpel) {
+		return nil
+	}
+	origin, ok := tiles[unit.TileID]
+	if !ok {
+		return nil
+	}
+	actions := make([]ActionProjection, 0)
+	for _, target := range projection.Units {
+		if target.OwnerID == unit.OwnerID || target.TileID == "" || target.TransportID != "" {
+			continue
+		}
+		targetTile, ok := tiles[target.TileID]
+		if !ok || targetTile.Stale || !adjacentProjection(origin, targetTile) {
+			continue
+		}
+		actions = append(actions, action(engine.CommandExpel, "expel", unit.ID, target.ID, map[string]string{"unit_id": unit.ID, "target_unit_id": target.ID}, []string{"unit_id", "target_unit_id"}))
 	}
 	return actions
 }

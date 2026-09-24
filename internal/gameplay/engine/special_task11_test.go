@@ -46,6 +46,21 @@ func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
 	}
 }
 
+func TestRetailExpelMovesAdjacentEnemyUnit(t *testing.T) {
+	state := task11State()
+	state.Tiles = append(state.Tiles, Tile{ID: "c", X: 2, Y: 0, Terrain: TerrainPlains, OwnerID: "player-b", Open: true})
+	state.Units = append(state.Units, Unit{ID: "intruder", OwnerID: "player-b", TileID: "b", Domain: DomainLand, Movement: 1})
+	state.Units[0].Effects = []Effect{{ID: "expel", Kind: EffectSpecialExpel}}
+	next, events, err := task11Apply(t, state, CommandExpel, ExpelPayload{UnitID: "agent", TargetUnitID: "intruder"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	target, ok := unitByID(next, "intruder")
+	if !ok || target.TileID != "c" || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventUnitExpelled || strings.Contains(string(events[0].Payload), "intruder") {
+		t.Fatalf("expel outcome target=%+v ok=%v unit=%+v events=%+v", target, ok, next.Units[0], events)
+	}
+}
+
 func TestRetailAssassinateRulerDestabilizesTargetNation(t *testing.T) {
 	state := task11State()
 	state.Nations[1].GovernmentID = "GOVERNMENT_MONARCHY"

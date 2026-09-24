@@ -67,9 +67,14 @@ type CreateParkPayload struct {
 	TileID string `json:"tile_id"`
 }
 
+type ExpelPayload struct {
+	UnitID       string `json:"unit_id"`
+	TargetUnitID string `json:"target_unit_id"`
+}
+
 func isSpecialCommand(kind string) bool {
 	switch kind {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandAssassinateRuler, CommandCreatePark, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandAssassinateRuler, CommandCreatePark, CommandExpel, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
 		return true
 	default:
 		return false
@@ -143,6 +148,12 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			return "", nil, err
 		}
 		return createPark(state, command.ActorPlayerID, payload)
+	case CommandExpel:
+		var payload ExpelPayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", nil, err
+		}
+		return expelUnit(state, command.ActorPlayerID, payload)
 	case CommandTerraform:
 		var payload TerraformPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -283,6 +294,80 @@ func specialTarget(state *State, actorID string, payload SpecialActionPayload) (
 		return nil, nil, nil, nil, errors.New("special action target is unavailable")
 	}
 	return unit, city, actorNation, targetNation, nil
+}
+
+func expelUnit(state *State, actorID string, payload ExpelPayload) (string, json.RawMessage, error) {
+	unit, err := ownedUnit(state, actorID, payload.UnitID)
+	if err != nil || unit.TileID == "" || !hasEffect(unit.Effects, EffectSpecialExpel) {
+		return "", nil, errors.New("expel target is unavailable")
+	}
+	target := unitPointer(state, payload.TargetUnitID)
+	unitTile, unitOK := tileByID(*state, unit.TileID)
+	if target == nil || target.OwnerID == actorID || target.TileID == "" || target.TransportID != "" || !unitOK {
+		return "", nil, errors.New("expel target is unavailable")
+	}
+	targetTile, ok := tileByID(*state, target.TileID)
+	if !ok || !adjacent(unitTile, targetTile) {
+		return "", nil, errors.New("expel target is unavailable")
+	}
+	destination := expelDestination(*state, *target, targetTile)
+	if destination == "" {
+		return "", nil, errors.New("expel target is unavailable")
+	}
+	if err := spendSpecialMove(unit); err != nil {
+		return "", nil, err
+	}
+	target.TileID = destination
+	target.Fortified = false
+	return EventUnitExpelled, json.RawMessage(`{"disclosed":true}`), nil
+}
+
+func unitPointer(state *State, unitID string) *Unit {
+	for index := range state.Units {
+		if state.Units[index].ID == unitID {
+			return &state.Units[index]
+		}
+	}
+	return nil
+}
+
+func expelDestination(state State, target Unit, origin Tile) string {
+	candidates := make([]Tile, 0)
+	for _, tile := range state.Tiles {
+		if tile.ID == origin.ID || !tile.Open || !adjacent(tile, origin) || tileOccupied(state, tile.ID) || cityOnTileState(state, tile.ID) {
+			continue
+		}
+		candidates = append(candidates, tile)
+	}
+	sort.Slice(candidates, func(i, j int) bool {
+		leftOwned, rightOwned := candidates[i].OwnerID == target.OwnerID, candidates[j].OwnerID == target.OwnerID
+		if leftOwned != rightOwned {
+			return leftOwned
+		}
+		return candidates[i].ID < candidates[j].ID
+	})
+	if len(candidates) == 0 {
+		return ""
+	}
+	return candidates[0].ID
+}
+
+func tileOccupied(state State, tileID string) bool {
+	for _, unit := range state.Units {
+		if unit.TileID == tileID && unit.TransportID == "" {
+			return true
+		}
+	}
+	return false
+}
+
+func cityOnTileState(state State, tileID string) bool {
+	for _, city := range state.Cities {
+		if city.TileID == tileID {
+			return true
+		}
+	}
+	return false
 }
 
 func assassinateRuler(unit *Unit, targetNation *Nation) (string, json.RawMessage, error) {
