@@ -16,6 +16,8 @@
 - [x] Task 65: Remaining retail wonder marker fields are projected and preserved.
 - [x] Task 66: Retail special-action unit capabilities are projected and preserved.
 - [x] Task 67: Retail no-fuel crash units are projected and removed when stranded.
+- [x] Task 68: Retail non-capturing units are prevented from capturing cities.
+- [x] Task 69: Retail air-defense bonuses are projected and applied in combat.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
