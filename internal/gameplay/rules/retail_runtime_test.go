@@ -88,7 +88,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("cavalry runtime = %+v ok=%v", cavalry, ok)
 	}
 	archer, ok := runtime.Unit("UNIT_ARCHER")
-	if !ok || !runtimeUnitHasEffect(archer, "can_entrench") {
+	if !ok || !runtimeUnitHasEffect(archer, "can_entrench") || !runtimeUnitHasEffect(archer, "can_pillage") {
 		t.Fatalf("archer runtime = %+v ok=%v", archer, ok)
 	}
 	bomber, ok := runtime.Unit("UNIT_BOMBER")

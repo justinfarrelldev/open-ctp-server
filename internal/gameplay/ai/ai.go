@@ -227,7 +227,7 @@ func projectedUnitCanFortify(effects []engine.Effect) bool {
 	}
 	for _, effect := range effects {
 		switch effect.Kind {
-		case engine.EffectCantCaptureCity, engine.EffectNoFuelThenCrash, engine.EffectIgnoreZOC, engine.EffectCanAttackLand, engine.EffectCanAttackSea, engine.EffectCanAttackAir, engine.EffectCanAttackSpace, engine.EffectCanAttackUnderwater, engine.EffectSubmarine, engine.EffectWoodenShip,
+		case engine.EffectCantCaptureCity, engine.EffectNoFuelThenCrash, engine.EffectCanPillage, engine.EffectIgnoreZOC, engine.EffectCanAttackLand, engine.EffectCanAttackSea, engine.EffectCanAttackAir, engine.EffectCanAttackSpace, engine.EffectCanAttackUnderwater, engine.EffectSubmarine, engine.EffectWoodenShip,
 			engine.EffectSpecialEmbassy, engine.EffectSpecialSoothsaying, engine.EffectSpecialSteal, engine.EffectSpecialCapture, engine.EffectSpecialTerraform, engine.EffectSpecialTerraformTurns,
 			engine.EffectSpecialConvertCity, engine.EffectSpecialCreateFranchise, engine.EffectSpecialInvestigateCity, engine.EffectSpecialPlantNuke, engine.EffectSpecialBioTerror, engine.EffectSpecialNanoTerror, engine.EffectSpecialPlague,
 			engine.EffectSpecialAssassinateRuler, engine.EffectSpecialSlaveRaid, engine.EffectSpecialSettlerSlaveRaid, engine.EffectSpecialUndergroundRailway, engine.EffectSpecialInjoin, engine.EffectSpecialReform,

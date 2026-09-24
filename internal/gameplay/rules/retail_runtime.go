@@ -339,6 +339,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "CanEntrench") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_entrench"), Kind: "can_entrench"})
 	}
+	if retailContainsString(unit.Flags, "CanPillage") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_pillage"), Kind: "can_pillage"})
+	}
 	if retailContainsString(unit.Flags, "IgnoreZOC") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("ignore_zoc"), Kind: "ignore_zoc"})
 	}

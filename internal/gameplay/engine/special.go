@@ -40,6 +40,10 @@ type SpecialActionPayload struct {
 	CityID string `json:"city_id"`
 }
 
+type PillagePayload struct {
+	UnitID string `json:"unit_id"`
+}
+
 type TerraformPayload struct {
 	UnitID        string `json:"unit_id"`
 	TileID        string `json:"tile_id"`
@@ -58,7 +62,7 @@ type CancelTerraformPayload struct {
 
 func isSpecialCommand(kind string) bool {
 	switch kind {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
 		return true
 	default:
 		return false
@@ -106,6 +110,12 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		default:
 			return stealTechnology(state, unit, actorNation, targetNation, sources)
 		}
+	case CommandPillage:
+		var payload PillagePayload
+		if err := decodePayload(command.Payload, &payload); err != nil || payload.UnitID == "" {
+			return "", nil, errors.New("pillage payload is invalid")
+		}
+		return pillage(state, command.ActorPlayerID, payload)
 	case CommandTerraform:
 		var payload TerraformPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -362,6 +372,39 @@ func validateSpecialState(state State) error {
 		}
 	}
 	return nil
+}
+
+func pillage(state *State, actorID string, payload PillagePayload) (string, json.RawMessage, error) {
+	unit, err := ownedUnit(state, actorID, payload.UnitID)
+	if err != nil || unit.TileID == "" || unit.TransportID != "" || !hasEffect(unit.Effects, EffectCanPillage) {
+		return "", nil, errors.New("pillage target is unavailable")
+	}
+	tile, ok := tileByID(*state, unit.TileID)
+	if !ok || tile.OwnerID == actorID {
+		return "", nil, errors.New("pillage target is unavailable")
+	}
+	kept := state.Overlays[:0]
+	removed := 0
+	for _, overlay := range state.Overlays {
+		if overlay.TileID == unit.TileID && overlay.Kind == "improvement" && overlay.Remaining == 0 {
+			removed++
+			continue
+		}
+		kept = append(kept, overlay)
+	}
+	if removed == 0 {
+		return "", nil, errors.New("pillage target is unavailable")
+	}
+	state.Overlays = kept
+	if err := spendSpecialMove(unit); err != nil {
+		return "", nil, err
+	}
+	payloadJSON, _ := json.Marshal(struct {
+		UnitID  string `json:"unit_id"`
+		TileID  string `json:"tile_id"`
+		Removed int    `json:"removed"`
+	}{UnitID: unit.ID, TileID: unit.TileID, Removed: removed})
+	return EventPillaged, payloadJSON, nil
 }
 
 func terraformLegal(from, to string) bool { return from == TerrainForest && to == TerrainPlains }

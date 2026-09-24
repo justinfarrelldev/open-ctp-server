@@ -25,6 +25,27 @@ func task11Apply(t *testing.T, state State, kind string, payload any) (State, []
 	return next, events, err
 }
 
+func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
+	state := task11State()
+	state.Tiles[0].OwnerID = "player-b"
+	state.Units[0].Effects = []Effect{{ID: "pillage", Kind: EffectCanPillage}}
+	state.Overlays = []TileOverlay{{ID: "farm", TileID: "a", Kind: "improvement", OwnerID: "player-b", ImprovementID: "TILEIMP_FARMS", YieldFood: 1}, {ID: "pending", TileID: "a", Kind: "improvement", OwnerID: "player-b", ImprovementID: "TILEIMP_MINES", Remaining: 1}}
+
+	next, events, err := task11Apply(t, state, CommandPillage, PillagePayload{UnitID: "agent"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 || events[0].Type != EventPillaged {
+		t.Fatalf("pillage events = %+v", events)
+	}
+	if len(next.Overlays) != 1 || next.Overlays[0].ID != "pending" {
+		t.Fatalf("overlays after pillage = %+v", next.Overlays)
+	}
+	if next.Units[0].Movement != 3 {
+		t.Fatalf("pillage did not spend movement: %+v", next.Units[0])
+	}
+}
+
 func TestTask11EmbassySoothsayingAndDisclosureVectors(t *testing.T) {
 	state := task11State()
 	next, events, err := task11Apply(t, state, CommandEstablishEmbassy, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
