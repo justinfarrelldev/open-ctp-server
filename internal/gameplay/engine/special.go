@@ -40,6 +40,7 @@ const (
 	EffectSpecialCreateFranchiseDeathChance    = EffectSpecialCreateFranchise + "_death_chance"
 	EffectSpecialInvestigateCityDeathChance    = EffectSpecialInvestigateCity + "_death_chance"
 	EffectSpecialPlantNukeDeathChance          = EffectSpecialPlantNuke + "_death_chance"
+	EffectSpecialPlantNukeEscapeChance         = EffectSpecialPlantNuke + "_escape_chance"
 	EffectSpecialBioTerrorDeathChance          = EffectSpecialBioTerror + "_death_chance"
 	EffectSpecialNanoTerrorDeathChance         = EffectSpecialNanoTerror + "_death_chance"
 	EffectSpecialPlagueDeathChance             = EffectSpecialPlague + "_death_chance"
@@ -638,8 +639,54 @@ func plantNuke(state *State, unit *Unit, city *City, actorNation *Nation, target
 	if tile := tilePointer(state, city.TileID); tile != nil {
 		tile.Pollution += 10
 	}
+	resolvePlantNukeEscape(state, unit, sources)
 	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialPlantNuke, sources)
 	return EventNukePlanted, json.RawMessage(`{"disclosed":true}`), nil
+}
+
+func resolvePlantNukeEscape(state *State, unit *Unit, sources Sources) {
+	escapeChance := effectValue(unit.Effects, EffectSpecialPlantNukeEscapeChance)
+	if escapeChance <= 0 {
+		return
+	}
+	if escapeChance < 100 {
+		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+		setRNG(state, RNGDomainSpecialAction, next)
+		if int(roll%100) >= escapeChance {
+			return
+		}
+	}
+	tileID := nearestFriendlyCityTile(*state, unit.OwnerID, unit.TileID)
+	if tileID == "" {
+		return
+	}
+	if unit.ArmyID != "" {
+		moveArmyToTile(state, unit.ArmyID, tileID)
+		return
+	}
+	unit.TileID = tileID
+}
+
+func nearestFriendlyCityTile(state State, ownerID, fromTileID string) string {
+	from, ok := tileByID(state, fromTileID)
+	if !ok {
+		return ""
+	}
+	bestTileID, bestDistance, bestCityID := "", 0, ""
+	for _, city := range state.Cities {
+		if city.OwnerID != ownerID || city.TileID == "" {
+			continue
+		}
+		tile, ok := tileByID(state, city.TileID)
+		if !ok {
+			continue
+		}
+		distance := tileDistance(from, tile)
+		if bestTileID == "" || distance < bestDistance || distance == bestDistance && city.ID < bestCityID {
+			bestTileID, bestDistance, bestCityID = city.TileID, distance, city.ID
+		}
+	}
+	return bestTileID
 }
 
 func tilePointer(state *State, tileID string) *Tile {

@@ -81,7 +81,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("corporate branch runtime = %+v ok=%v", corporateBranch, ok)
 	}
 	cyberNinja, ok := runtime.Unit("UNIT_CYBER_NINJA")
-	if !ok || !runtimeUnitHasEffectValue(cyberNinja, "special_steal", 50) || !runtimeUnitHasEffectValue(cyberNinja, "special_capture", 25) || !runtimeUnitHasEffectValue(cyberNinja, "special_investigate_city_death_chance", 25) || !runtimeUnitHasEffectValue(cyberNinja, "special_investigate_city_elite_chance", 20) || !runtimeUnitHasEffect(cyberNinja, "stealth") || !runtimeUnitHasEffect(cyberNinja, "can_see_stealth") {
+	if !ok || !runtimeUnitHasEffectValue(cyberNinja, "special_steal", 50) || !runtimeUnitHasEffectValue(cyberNinja, "special_capture", 25) || !runtimeUnitHasEffectValue(cyberNinja, "special_investigate_city_death_chance", 25) || !runtimeUnitHasEffectValue(cyberNinja, "special_investigate_city_elite_chance", 20) || !runtimeUnitHasEffectValue(cyberNinja, "special_plant_nuke_escape_chance", 50) || !runtimeUnitHasEffect(cyberNinja, "stealth") || !runtimeUnitHasEffect(cyberNinja, "can_see_stealth") {
 		t.Fatalf("cyber ninja runtime = %+v ok=%v", cyberNinja, ok)
 	}
 	abolitionist, ok := runtime.Unit("UNIT_ABOLITIONIST")

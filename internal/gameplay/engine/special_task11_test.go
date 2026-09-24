@@ -43,6 +43,22 @@ func TestRetailWatchfulCityHalvesSpecialSuccessChanceAndExpires(t *testing.T) {
 	}
 }
 
+func TestRetailPlantNukeEscapeChanceTeleportsToNearestOwnCity(t *testing.T) {
+	state := task11State()
+	state.Tiles = append(state.Tiles, Tile{ID: "home-tile", X: 0, Y: 1, Terrain: TerrainPlains, OwnerID: "player-a", Open: true})
+	state.Cities = append(state.Cities, City{ID: "home", OwnerID: "player-a", TileID: "home-tile"})
+	state.Cities[0].Population = 8
+	state.Units[0].Effects = []Effect{{ID: "plant", Kind: EffectSpecialPlantNuke, Value: 100}, {ID: "escape", Kind: EffectSpecialPlantNukeEscapeChance, Value: 100}}
+	next, events, err := task11Apply(t, state, CommandPlantNuke, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	unit, ok := unitByID(next, "agent")
+	if !ok || unit.TileID != "home-tile" || len(events) != 1 || events[0].Type != EventNukePlanted {
+		t.Fatalf("plant nuke escape failed: unit=%+v ok=%v events=%+v", unit, ok, events)
+	}
+}
+
 func TestRetailVeteranSpecialActionUsesEliteChance(t *testing.T) {
 	state := task11State()
 	state.Units[0].Effects = []Effect{{ID: "investigate", Kind: EffectSpecialInvestigateCity, Value: 1}, {ID: "elite-investigate", Kind: EffectSpecialInvestigateCity + "_elite_chance", Value: 100}}

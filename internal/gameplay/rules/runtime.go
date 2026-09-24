@@ -1016,7 +1016,7 @@ func validUnitEffectKind(kind string) bool {
 		return true
 	}
 	switch kind {
-	case "settler", "special_embassy", "special_soothsaying", "special_steal", "special_capture", "special_terraform", "special_terraform_turns", "can_be_sued", "can_be_expelled", "stealth", "can_see_stealth", "max_science_percent", "special_convert_city_death_chance", "special_create_franchise_death_chance", "special_investigate_city_death_chance", "special_plant_nuke_death_chance", "special_bio_terror_death_chance", "special_nano_terror_death_chance", "special_plague_death_chance", "special_assassinate_ruler_death_chance", "special_slave_raid_death_chance", "special_settler_slave_raid_death_chance", "special_underground_railway_death_chance":
+	case "settler", "special_embassy", "special_soothsaying", "special_steal", "special_capture", "special_terraform", "special_terraform_turns", "can_be_sued", "can_be_expelled", "stealth", "can_see_stealth", "max_science_percent", "special_convert_city_death_chance", "special_create_franchise_death_chance", "special_investigate_city_death_chance", "special_plant_nuke_death_chance", "special_plant_nuke_escape_chance", "special_bio_terror_death_chance", "special_nano_terror_death_chance", "special_plague_death_chance", "special_assassinate_ruler_death_chance", "special_slave_raid_death_chance", "special_settler_slave_raid_death_chance", "special_underground_railway_death_chance":
 		return true
 	default:
 		return false
