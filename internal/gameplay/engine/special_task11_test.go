@@ -371,6 +371,16 @@ func TestRetailConvertCityHonorsProtectionAndDisclosure(t *testing.T) {
 	}
 
 	state = task11State()
+	state.Units[0].Effects = []Effect{{ID: "convert", Kind: EffectSpecialConvertCity, Value: 10}}
+	next, events, err = task11Apply(t, state, CommandConvertCity, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Cities[0].OwnerID != "player-b" || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventCityConversionFailed {
+		t.Fatalf("chance-failed conversion outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
+	}
+
+	state = task11State()
 	state.Units[0].Effects = append(state.Units[0].Effects, Effect{ID: "convert", Kind: EffectSpecialConvertCity})
 	state.Cities[0].Effects = append(state.Cities[0].Effects, Effect{ID: "walls", Kind: EffectPreventConversion, Value: 100})
 	next, events, err = task11Apply(t, state, CommandConvertCity, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})

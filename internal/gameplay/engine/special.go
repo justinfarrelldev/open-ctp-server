@@ -646,6 +646,17 @@ func convertCity(state *State, unit *Unit, city *City, sources Sources) (string,
 			return EventCityConversionFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
+	chance := effectValue(unit.Effects, EffectSpecialConvertCity)
+	if chance <= 0 {
+		chance = 100
+	}
+	if chance < 100 {
+		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+		setRNG(state, RNGDomainSpecialAction, next)
+		if int(roll%100) >= chance {
+			return EventCityConversionFailed, json.RawMessage(`{"disclosed":true}`), nil
+		}
+	}
 	city.OwnerID = unit.OwnerID
 	return EventCityConverted, json.RawMessage(`{"disclosed":true}`), nil
 }
