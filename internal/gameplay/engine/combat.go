@@ -170,8 +170,8 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 	if !ok || !targetOK || !combatVisible(*state, command.ActorPlayerID, payload.TargetTileID) || tileDistance(origin, targetTile) > unit.BombardRange {
 		return "", nil, errors.New("bombard target is unavailable")
 	}
-	targets := bombardTargets(*state, command.ActorPlayerID, payload.TargetTileID)
-	if len(targets) == 0 || attackerHasCanAttackMetadata(*unit) && !attackerCanAttackTarget(*unit, *targets[0]) {
+	targets := combatEligibleTargets(*unit, bombardTargets(*state, command.ActorPlayerID, payload.TargetTileID))
+	if len(targets) == 0 {
 		return "", nil, errors.New("bombard target is unavailable")
 	}
 	activeDefenseHits := 0
@@ -324,8 +324,8 @@ func attackerHasCanAttackMetadata(attacker Unit) bool {
 }
 
 func attackerCanAttackTarget(attacker, target Unit) bool {
-	if hasEffect(target.Effects, EffectSubmarine) && hasEffect(attacker.Effects, EffectCanAttackUnderwater) {
-		return true
+	if hasEffect(target.Effects, EffectSubmarine) {
+		return hasEffect(attacker.Effects, EffectCanAttackUnderwater)
 	}
 	switch target.Domain {
 	case DomainLand:
@@ -343,14 +343,31 @@ func attackerCanAttackTarget(attacker, target Unit) bool {
 	}
 }
 
+func combatEligibleTargets(attacker Unit, targets []*Unit) []*Unit {
+	eligible := targets[:0]
+	for _, target := range targets {
+		if unitCanTarget(attacker, *target) {
+			eligible = append(eligible, target)
+		}
+	}
+	return eligible
+}
+
+func unitCanTarget(attacker, target Unit) bool {
+	if attackerHasCanAttackMetadata(attacker) {
+		return attackerCanAttackTarget(attacker, target)
+	}
+	return attacker.Domain == "" || target.Domain == "" || attacker.Domain == target.Domain || attacker.Domain == DomainAmphibious || target.Domain == DomainAmphibious
+}
+
 func combatStrike(state *State, sources Sources, attackers, defenders []*Unit, ranged bool, result *CombatResult) {
 	for _, attacker := range livingCombatUnits(attackers) {
 		if (ranged && attacker.Ranged <= 0) || (!ranged && attacker.Attack <= 0) {
 			continue
 		}
-		targets := livingCombatUnits(defenders)
+		targets := combatEligibleTargets(*attacker, livingCombatUnits(defenders))
 		if len(targets) == 0 {
-			return
+			continue
 		}
 		target := targets[0]
 		attack := attacker.Attack

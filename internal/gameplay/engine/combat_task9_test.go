@@ -30,6 +30,58 @@ func combatCommand() Command {
 	return Command{SchemaVersion: CommandSchemaV1, ID: "combat-1", ActorPlayerID: "player-a", Type: CommandCombat, Payload: payload}
 }
 
+func TestRetailCombatDomainMasksSelectEligibleTargets(t *testing.T) {
+	state := combatState()
+	state.Units = []Unit{
+		{ID: "attacker", OwnerID: "player-a", TileID: "a", ArmyID: "attackers", Domain: DomainLand, Attack: 100, Defense: 10, Strength: 10, Armor: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "land", Kind: EffectCanAttackLand}}},
+		{ID: "air-first", OwnerID: "player-b", TileID: "b", ArmyID: "defenders", Domain: DomainAir, Attack: 0, Defense: 1, Strength: 1, Armor: 1, Health: 5, MaxHealth: 5},
+		{ID: "land-second", OwnerID: "player-b", TileID: "b", ArmyID: "defenders", Domain: DomainLand, Attack: 0, Defense: 1, Strength: 1, Armor: 1, Health: 5, MaxHealth: 5},
+	}
+	state.Armies = []Army{{ID: "attackers", OwnerID: "player-a", UnitIDs: []string{"attacker"}}, {ID: "defenders", OwnerID: "player-b", UnitIDs: []string{"air-first", "land-second"}}}
+	next, _, _, err := Apply(state, combatCommand(), state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if air, ok := unitByID(next, "air-first"); !ok || air.Health != 5 {
+		t.Fatalf("ineligible air target was damaged: unit=%+v ok=%v", air, ok)
+	}
+	if _, ok := unitByID(next, "land-second"); ok {
+		t.Fatalf("eligible land target survived: %+v", next.Units)
+	}
+}
+
+func TestRetailBombardDomainMasksSelectEligibleTargets(t *testing.T) {
+	state := combatState()
+	state.Units = []Unit{
+		{ID: "bombarder", OwnerID: "player-a", TileID: "a", Movement: 1, Ranged: 100, BombardRange: 2, BombRounds: 1, Strength: 10, Armor: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "sea", Kind: EffectCanAttackSea}}},
+		{ID: "land-first", OwnerID: "player-b", TileID: "retreat", Domain: DomainLand, Defense: 1, Strength: 1, Armor: 1, Health: 5, MaxHealth: 5},
+		{ID: "sea-second", OwnerID: "player-b", TileID: "retreat", Domain: DomainSea, Defense: 1, Strength: 1, Armor: 1, Health: 5, MaxHealth: 5},
+	}
+	state.Armies = nil
+	state.Fog = append(state.Fog, FogObservation{PlayerID: "player-a", TileID: "retreat", Turn: 1})
+	payload, _ := json.Marshal(map[string]string{"unit_id": "bombarder", "target_tile_id": "retreat"})
+	next, _, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "bombard-domain", ActorPlayerID: "player-a", Type: CommandBombard, Payload: payload}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if land, ok := unitByID(next, "land-first"); !ok || land.Health != 5 {
+		t.Fatalf("ineligible land bombard target was damaged: unit=%+v ok=%v", land, ok)
+	}
+	if _, ok := unitByID(next, "sea-second"); ok {
+		t.Fatalf("eligible sea bombard target survived: %+v", next.Units)
+	}
+}
+
+func TestRetailSubmarineRequiresUnderwaterAttackCapability(t *testing.T) {
+	target := Unit{Domain: DomainSea, Effects: []Effect{{ID: "sub", Kind: EffectSubmarine}}}
+	if attackerCanAttackTarget(Unit{Effects: []Effect{{ID: "sea", Kind: EffectCanAttackSea}}}, target) {
+		t.Fatal("sea-only attacker could attack submarine")
+	}
+	if !attackerCanAttackTarget(Unit{Effects: []Effect{{ID: "underwater", Kind: EffectCanAttackUnderwater}}}, target) {
+		t.Fatal("underwater-capable attacker could not attack submarine")
+	}
+}
+
 func TestRetailProtectFromBarbariansBlocksBarbarianCombat(t *testing.T) {
 	state := combatState()
 	state.Players = []Player{{ID: "barbarian", NationID: "CIVILIZATION_BARBARIAN", Lifecycle: PlayerActive, Controller: ControllerAI}, {ID: "player-b", NationID: "nation-b", Lifecycle: PlayerActive, Controller: ControllerHuman}}
