@@ -129,7 +129,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		case CommandCreateFranchise:
 			return createFranchise(state, unit, city, sources)
 		case CommandInvestigateCity:
-			return investigateCity(unit, city, actorNation, state.Phase.Turn)
+			return investigateCity(state, unit, city, actorNation, state.Phase.Turn, sources)
 		case CommandPlantNuke:
 			return plantNuke(state, unit, city, targetNation, sources)
 		case CommandAssassinateRuler:
@@ -545,12 +545,23 @@ func tilePointer(state *State, tileID string) *Tile {
 	return nil
 }
 
-func investigateCity(unit *Unit, city *City, actorNation *Nation, turn int) (string, json.RawMessage, error) {
+func investigateCity(state *State, unit *Unit, city *City, actorNation *Nation, turn int, sources Sources) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialInvestigateCity) {
 		return "", nil, errors.New("special action is not authorized")
 	}
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
+	}
+	chance := effectValue(unit.Effects, EffectSpecialInvestigateCity)
+	if chance <= 0 {
+		chance = 100
+	}
+	if chance < 100 {
+		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+		setRNG(state, RNGDomainSpecialAction, next)
+		if int(roll%100) >= chance {
+			return EventCityInvestigationFailed, json.RawMessage(`{"disclosed":true}`), nil
+		}
 	}
 	report := CityReport{CityID: city.ID, OwnerID: city.OwnerID, TileID: city.TileID, Turn: turn, Population: city.Population, Effects: append([]Effect(nil), city.Effects...)}
 	for _, building := range city.Buildings {

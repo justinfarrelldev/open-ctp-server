@@ -97,6 +97,7 @@ const (
 	EventFranchiseCreated         = "city.franchise_created"
 	EventFranchiseFailed          = "city.franchise_failed"
 	EventCityInvestigated         = "city.investigated"
+	EventCityInvestigationFailed  = "city.investigation_failed"
 	EventNukePlanted              = "city.nuked"
 	EventNukeFailed               = "city.nuke_failed"
 	EventParkCreated              = "tile.park_created"

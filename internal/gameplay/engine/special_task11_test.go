@@ -263,6 +263,17 @@ func TestRetailInvestigateCityStoresPrivateCityReport(t *testing.T) {
 		t.Fatalf("city reports = %+v", got)
 	}
 
+	failedState := task11State()
+	failedState.Cities[0].Population = 9
+	failedState.Units[0].Effects = []Effect{{ID: "investigate", Kind: EffectSpecialInvestigateCity, Value: 10}}
+	failed, failedEvents, err := task11Apply(t, failedState, CommandInvestigateCity, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(failed.Nations[0].CityReports) != 0 || failed.Units[0].Movement != 3 || len(failedEvents) != 1 || failedEvents[0].Type != EventCityInvestigationFailed {
+		t.Fatalf("chance-failed investigation outcome nation=%+v unit=%+v events=%+v", failed.Nations[0], failed.Units[0], failedEvents)
+	}
+
 	next.Cities[0].Population = 7
 	next.Units[0].Movement = 1
 	next, _, err = task11Apply(t, next, CommandInvestigateCity, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
