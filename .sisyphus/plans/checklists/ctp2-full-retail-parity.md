@@ -44,6 +44,7 @@
 - [x] Task 93: Retail underground-railway special actions free population.
 - [x] Task 94: Retail sue special actions apply lawsuit disruption.
 - [x] Task 95: Retail food-vat effects reduce city food consumption.
+- [x] Task 96: Retail building upkeep is applied as gold maintenance, not production loss.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
