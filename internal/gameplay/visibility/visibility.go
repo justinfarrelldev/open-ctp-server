@@ -503,11 +503,25 @@ func governmentActions(projection Projection, playerID string) []ActionProjectio
 }
 
 func diplomacyActions(projection Projection, playerID string) []ActionProjection {
+	contacted := map[string]bool{}
+	if projection.Diplomacy != nil {
+		for _, relation := range projection.Diplomacy.Relations {
+			if relation.TargetPlayerID != "" {
+				contacted[relation.TargetPlayerID] = true
+			}
+		}
+	}
+	actions := make([]ActionProjection, 0)
+	for _, target := range visibleForeignOwners(projection, playerID) {
+		if contacted[target] {
+			continue
+		}
+		actions = append(actions, action(engine.CommandEstablishContact, "establish-contact", playerID, target, map[string]string{"target_player_id": target}, []string{"target_player_id"}))
+	}
 	if projection.Diplomacy == nil {
-		return nil
+		return actions
 	}
 	pending := make(map[string]bool, len(projection.Diplomacy.Proposals))
-	actions := make([]ActionProjection, 0)
 	for _, proposal := range projection.Diplomacy.Proposals {
 		if proposal.Kind != "" && proposal.FromPlayerID != "" && proposal.ToPlayerID != "" {
 			pending[proposal.Kind+"\x00"+proposal.FromPlayerID+"\x00"+proposal.ToPlayerID] = true
@@ -525,6 +539,26 @@ func diplomacyActions(projection Projection, playerID string) []ActionProjection
 		actions = append(actions, action(engine.CommandProposeAgreement, "propose-agreement", playerID, relation.TargetPlayerID, map[string]string{"proposal_id": proposalID, "target_player_id": relation.TargetPlayerID, "kind": "union"}, []string{"proposal_id", "target_player_id", "kind"}))
 	}
 	return actions
+}
+
+func visibleForeignOwners(projection Projection, playerID string) []string {
+	owners := map[string]bool{}
+	for _, city := range projection.Cities {
+		if city.OwnerID != "" && city.OwnerID != playerID {
+			owners[city.OwnerID] = true
+		}
+	}
+	for _, unit := range projection.Units {
+		if unit.OwnerID != "" && unit.OwnerID != playerID {
+			owners[unit.OwnerID] = true
+		}
+	}
+	result := make([]string, 0, len(owners))
+	for owner := range owners {
+		result = append(result, owner)
+	}
+	sort.Strings(result)
+	return result
 }
 
 func projectedUnitCanFortify(effects []engine.Effect) bool {

@@ -537,6 +537,32 @@ func TestTask12ProjectEventExposesStableEnvelopeOnly(t *testing.T) {
 	}
 }
 
+func TestRetailVisibleForeignOwnerProjectsEstablishContact(t *testing.T) {
+	state := fixtureState()
+	state.Cities = nil
+	state.Units = []engine.Unit{{ID: "scout", OwnerID: "a", TileID: "0,0", VisibilityRange: 2}, {ID: "foreign", OwnerID: "b", TileID: "1,0"}}
+	state.Nations = []engine.Nation{{ID: "a"}, {ID: "b"}}
+	state.Diplomacy = nil
+	state.Phase.ActivePlayerOrder = []string{"a", "b"}
+	state.Phase.ActivePlayerIndex = 0
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasAction(projection.LegalActions, engine.CommandEstablishContact) {
+		t.Fatalf("visible foreign owner did not project contact action: %#v", projection.LegalActions)
+	}
+
+	state.Diplomacy = []engine.DiplomaticRelation{{ID: "a:b", PlayerAID: "a", PlayerBID: "b", Contact: true}}
+	projection, err = Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasAction(projection.LegalActions, engine.CommandEstablishContact) {
+		t.Fatalf("existing contact still projected establish action: %#v", projection.LegalActions)
+	}
+}
+
 func TestRetailUnitTargetActionsUsePublicTargetMarkers(t *testing.T) {
 	state := fixtureState()
 	state.Tiles = []engine.Tile{{ID: "a", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "b", X: 1, Y: 0, Terrain: engine.TerrainPlains, Open: true}}
