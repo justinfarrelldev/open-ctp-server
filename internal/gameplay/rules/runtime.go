@@ -116,6 +116,9 @@ type RuntimeGovernmentDefinition struct {
 	ProductionPercent        int     `json:"production_percent,omitempty"`
 	GoldPercent              int     `json:"gold_percent,omitempty"`
 	PollutionPercent         int     `json:"pollution_percent,omitempty"`
+	PollutionUnhappyCoef     float64 `json:"pollution_unhappy_coef,omitempty"`
+	CrimeCoef                float64 `json:"crime_coef,omitempty"`
+	CrimeOffset              int     `json:"crime_offset,omitempty"`
 	WorkdayExpectation       int     `json:"workday_expectation,omitempty"`
 	PositiveWorkdayCoef      float64 `json:"positive_workday_coef,omitempty"`
 	NegativeWorkdayCoef      float64 `json:"negative_workday_coef,omitempty"`
@@ -863,6 +866,18 @@ func compileGovernmentDefinition(record Record) (RuntimeGovernmentDefinition, er
 	if err != nil {
 		return RuntimeGovernmentDefinition{}, err
 	}
+	pollutionUnhappyCoef, err := optionalFloat(record, "PollutionUnhappyCoef", 0)
+	if err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	crimeCoef, err := optionalFloat(record, "CrimeCoef", 0)
+	if err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	crimeOffset, err := optionalInteger(record, "CrimeOffset", 0)
+	if err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
 	definition, err := compileGovernmentSocialFields(record)
 	if err != nil {
 		return RuntimeGovernmentDefinition{}, err
@@ -912,6 +927,9 @@ func compileGovernmentDefinition(record Record) (RuntimeGovernmentDefinition, er
 	definition.ProductionPercent = productionPercent
 	definition.GoldPercent = goldPercent
 	definition.PollutionPercent = pollutionPercent
+	definition.PollutionUnhappyCoef = pollutionUnhappyCoef
+	definition.CrimeCoef = crimeCoef
+	definition.CrimeOffset = crimeOffset
 	return definition, nil
 }
 

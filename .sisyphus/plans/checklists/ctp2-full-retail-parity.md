@@ -107,6 +107,7 @@
 - [x] Task 156: Retail empire-distance government settings reduce city happiness with DecreaseEmpireSize support.
 - [x] Task 157: Retail workday/wages/rations government coefficients affect city happiness.
 - [x] Task 158: Set-social-policy command and owner projections cover workday/wages/rations sliders.
+- [x] Task 159: Retail government crime coefficients and offsets import and compute happiness-derived crime.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
