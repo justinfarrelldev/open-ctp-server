@@ -86,6 +86,7 @@
 - [x] Task 135: Lawsuit unit target path removes all can-be-sued enemy units on the target tile.
 - [x] Task 136: Plant-nuke special action requires the runtime-declared nuke advance.
 - [x] Task 137: Watchful city duration and success modifier apply to grouped special-action attempts.
+- [x] Task 138: Create-park-capable unit production requires an active EnableParkRangers wonder effect.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
