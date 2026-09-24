@@ -31,6 +31,7 @@
 - [x] Task 80: Retail bio/nano/plague special actions execute with protection checks.
 - [x] Task 81: Retail slave-raid special actions execute with slavery protection checks.
 - [x] Task 82: Retail create-franchise special actions mark city franchise state.
+- [x] Task 83: Retail investigate-city special actions create private city reports.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
