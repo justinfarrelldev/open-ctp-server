@@ -75,6 +75,7 @@
 - [x] Task 124: Assassinate-ruler special actions honor deterministic effect success chances.
 - [x] Task 125: Investigate-city special actions honor deterministic effect success chances.
 - [x] Task 126: Underground-railway special actions honor deterministic effect success chances.
+- [x] Task 127: Franchise markers reduce target city production by the retail 10% loss.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
