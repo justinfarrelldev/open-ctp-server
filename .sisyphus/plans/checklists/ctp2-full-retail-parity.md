@@ -98,6 +98,7 @@
 - [x] Task 147: Retail martial-law unit and government fields boost city happiness with cap/threshold semantics.
 - [x] Task 148: AI plans city-target special actions from projected legal actions.
 - [x] Task 149: Nation science-percent slider controls city gold/trade research and projects safely.
+- [x] Task 150: Set-science-rate command persists explicit slider values and projects safe legal actions.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

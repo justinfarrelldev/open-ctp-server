@@ -30,6 +30,7 @@ const (
 	CommandProposeAgreement   = "propose-agreement"
 	CommandRespondAgreement   = "respond-agreement"
 	CommandSetGovernment      = "set-government"
+	CommandSetScienceRate     = "set-science-rate"
 	CommandPass               = "pass"
 	CommandMoveUnit           = "move-unit"
 	CommandDisband            = "disband-unit"
@@ -78,6 +79,7 @@ const (
 	EventAgreementProposed        = "diplomacy.agreement_proposed"
 	EventAgreementResponded       = "diplomacy.agreement_responded"
 	EventGovernmentChanged        = "government.changed"
+	EventScienceRateChanged       = "government.science_rate_changed"
 	EventUnitMoved                = "unit.moved"
 	EventCombatResolved           = "combat.resolved"
 	EventBombarded                = "bombard.resolved"
@@ -532,7 +534,7 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 	switch command.Type {
 	case CommandSetWar, CommandEstablishContact, CommandProposeAgreement, CommandRespondAgreement:
 		eventType, eventPayload, err = applyDiplomacyCommand(state, command)
-	case CommandSetGovernment:
+	case CommandSetGovernment, CommandSetScienceRate:
 		eventType, eventPayload, err = applyGovernmentCommand(state, command, runtime)
 	case CommandSetResearch, CommandRoundComplete, CommandEndGame, CommandLeaveGame, CommandTakeoverAI:
 		eventType, eventPayload, err = applyLifecycleCommand(state, command, runtime)

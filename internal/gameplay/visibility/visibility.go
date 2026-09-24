@@ -500,6 +500,12 @@ func governmentActions(projection Projection, playerID string) []ActionProjectio
 		known = projection.Research.Advances
 	}
 	actions := make([]ActionProjection, 0)
+	for _, percent := range []int{0, 50, 100} {
+		if projection.Diplomacy.SciencePercent != nil && *projection.Diplomacy.SciencePercent == percent {
+			continue
+		}
+		actions = append(actions, action(engine.CommandSetScienceRate, "set-science-rate", playerID, strconv.Itoa(percent), map[string]int{"science_percent": percent}, []string{"science_percent"}))
+	}
 	for _, government := range projection.Rules.Governments {
 		if government.ID == "" || government.ID == projection.Diplomacy.GovernmentID || !advanceSatisfied(known, government.EnableAdvanceID) {
 			continue

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
@@ -11,6 +12,21 @@ func TestGovernmentRuntimeYieldPercentEffects(t *testing.T) {
 	upsertGovernmentEffects(&nation, rules.RuntimeGovernmentDefinition{ID: "GOVERNMENT_RETAIL", ResearchPercent: 100, FoodPercent: 25, ProductionPercent: 15, GoldPercent: 25, PollutionPercent: -20})
 	if !hasEffect(nation.Effects, EffectResearchPercent) || !hasEffect(nation.Effects, EffectYieldFoodPercent) || !hasEffect(nation.Effects, EffectYieldProductionPercent) || !hasEffect(nation.Effects, EffectYieldGoldPercent) || !hasEffect(nation.Effects, EffectPollutionPercent) || !hasEffect(nation.Effects, EffectYieldFood) {
 		t.Fatalf("government effects = %#v", nation.Effects)
+	}
+}
+
+func TestRetailSetScienceRateCommandPersistsExplicitZero(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Nations = []Nation{{ID: "nation-a"}}
+	body, _ := json.Marshal(map[string]int{"science_percent": 0})
+	next, events, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "science-zero", ActorPlayerID: "player-a", Type: CommandSetScienceRate, Payload: body}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Nations[0].SciencePercent == nil || *next.Nations[0].SciencePercent != 0 || len(events) != 1 || events[0].Type != EventScienceRateChanged {
+		t.Fatalf("science rate command failed: nation=%+v events=%+v", next.Nations[0], events)
 	}
 }
 
