@@ -241,7 +241,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 		}
 	}
 	for _, unit := range state.Units {
-		if unit.OwnerID == playerID || visible[unit.TileID] {
+		if unitVisibleToPlayer(state, playerID, visible, unit) {
 			projected := UnitProjection{ID: unit.ID, OwnerID: unit.OwnerID, TileID: unit.TileID, TransportID: unit.TransportID, ArmyID: unit.ArmyID, Fortified: unit.Fortified}
 			if unit.OwnerID == playerID {
 				projected.Domain, projected.Movement, projected.MaxMovement = unit.Domain, unit.Movement, unit.MaxMovement
@@ -806,6 +806,52 @@ func bombardActions(projection Projection, tiles map[string]TileProjection, atta
 
 func projectedTileDistance(left, right TileProjection) int {
 	return abs(left.X-right.X) + abs(left.Y-right.Y)
+}
+
+func unitVisibleToPlayer(state engine.State, playerID string, visible map[string]bool, unit engine.Unit) bool {
+	if unit.OwnerID == playerID {
+		return true
+	}
+	if !visible[unit.TileID] {
+		return false
+	}
+	if !effectHasKind(unit.Effects, engine.EffectSubmarine) {
+		return true
+	}
+	return submarineDetectedByPlayer(state, playerID, unit.TileID)
+}
+
+func submarineDetectedByPlayer(state engine.State, playerID, tileID string) bool {
+	target, ok := tileByID(state.Tiles, tileID)
+	if !ok {
+		return false
+	}
+	for _, unit := range state.Units {
+		if unit.OwnerID != playerID || unit.TileID == "" || unit.TransportID != "" || !effectHasKind(unit.Effects, engine.EffectCanAttackUnderwater) {
+			continue
+		}
+		origin, ok := tileByID(state.Tiles, unit.TileID)
+		if !ok {
+			continue
+		}
+		radius := defaultSightRadius
+		if unit.VisibilityRange > radius {
+			radius = unit.VisibilityRange
+		}
+		if abs(origin.X-target.X)+abs(origin.Y-target.Y) <= radius {
+			return true
+		}
+	}
+	return false
+}
+
+func effectHasKind(effects []engine.Effect, kind string) bool {
+	for _, effect := range effects {
+		if effect.Kind == kind {
+			return true
+		}
+	}
+	return false
 }
 
 func specialActions(projection Projection, tiles map[string]TileProjection, cities map[string]CityProjection, unit UnitProjection, playerID string) []ActionProjection {

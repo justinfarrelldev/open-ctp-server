@@ -30,6 +30,37 @@ func fixtureState() engine.State {
 	}
 }
 
+func projectionHasUnit(projection Projection, unitID string) bool {
+	for _, unit := range projection.Units {
+		if unit.ID == unitID {
+			return true
+		}
+	}
+	return false
+}
+
+func TestRetailSubmarineProjectionRequiresUnderwaterDetection(t *testing.T) {
+	state := fixtureState()
+	state.Cities = []engine.City{{ID: "home", OwnerID: "a", TileID: "0,0"}}
+	state.Units = []engine.Unit{{ID: "sub", OwnerID: "b", TileID: "1,0", Effects: []engine.Effect{{ID: "sub", Kind: engine.EffectSubmarine}}}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if projectionHasUnit(projection, "sub") {
+		t.Fatalf("submarine leaked without detector: %#v", projection.Units)
+	}
+
+	state.Units = append(state.Units, engine.Unit{ID: "detector", OwnerID: "a", TileID: "0,0", VisibilityRange: 2, Effects: []engine.Effect{{ID: "underwater", Kind: engine.EffectCanAttackUnderwater}}})
+	projection, err = Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !projectionHasUnit(projection, "sub") {
+		t.Fatalf("submarine was hidden from underwater detector: %#v", projection.Units)
+	}
+}
+
 func projectionHasTile(projection Projection, tileID string) bool {
 	for _, tile := range projection.Tiles {
 		if tile.ID == tileID {
@@ -114,15 +145,6 @@ func TestRetailGlobalRadarRevealsAllTilesAndUnits(t *testing.T) {
 	if len(projection.Tiles) != len(state.Tiles) || !projectionHasUnit(projection, "HIDDEN_UNIT_TOKEN") || !projectionHasCity(projection, "HIDDEN_CITY_TOKEN") {
 		t.Fatalf("global radar projection = %+v", projection)
 	}
-}
-
-func projectionHasUnit(projection Projection, id string) bool {
-	for _, unit := range projection.Units {
-		if unit.ID == id {
-			return true
-		}
-	}
-	return false
 }
 
 func projectionHasCity(projection Projection, id string) bool {
