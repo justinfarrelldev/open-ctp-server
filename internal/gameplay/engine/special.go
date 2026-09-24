@@ -61,9 +61,14 @@ type CancelTerraformPayload struct {
 	TileID string `json:"tile_id"`
 }
 
+type CreateParkPayload struct {
+	UnitID string `json:"unit_id"`
+	TileID string `json:"tile_id"`
+}
+
 func isSpecialCommand(kind string) bool {
 	switch kind {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandCreatePark, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
 		return true
 	default:
 		return false
@@ -129,6 +134,12 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			return "", nil, errors.New("pillage payload is invalid")
 		}
 		return pillage(state, command.ActorPlayerID, payload)
+	case CommandCreatePark:
+		var payload CreateParkPayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", nil, err
+		}
+		return createPark(state, command.ActorPlayerID, payload)
 	case CommandTerraform:
 		var payload TerraformPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -269,6 +280,33 @@ func specialTarget(state *State, actorID string, payload SpecialActionPayload) (
 		return nil, nil, nil, nil, errors.New("special action target is unavailable")
 	}
 	return unit, city, actorNation, targetNation, nil
+}
+
+func createPark(state *State, actorID string, payload CreateParkPayload) (string, json.RawMessage, error) {
+	unit, err := ownedUnit(state, actorID, payload.UnitID)
+	if err != nil || unit.TileID == "" || unit.TransportID != "" || !hasEffect(unit.Effects, EffectSpecialCreatePark) {
+		return "", nil, errors.New("park target is unavailable")
+	}
+	tile := tilePointer(state, payload.TileID)
+	unitTile, ok := tileByID(*state, unit.TileID)
+	if tile == nil || !ok || (!adjacent(*tile, unitTile) && tile.ID != unitTile.ID) || parkForTile(*state, tile.ID) != nil {
+		return "", nil, errors.New("park target is unavailable")
+	}
+	if err := spendSpecialMove(unit); err != nil {
+		return "", nil, err
+	}
+	tile.Pollution = 0
+	state.Overlays = append(state.Overlays, TileOverlay{ID: "park:" + actorID + ":" + tile.ID, TileID: tile.ID, Kind: "park", OwnerID: actorID})
+	return EventParkCreated, json.RawMessage(`{"disclosed":false}`), nil
+}
+
+func parkForTile(state State, tileID string) *TileOverlay {
+	for i := range state.Overlays {
+		if state.Overlays[i].TileID == tileID && state.Overlays[i].Kind == "park" {
+			return &state.Overlays[i]
+		}
+	}
+	return nil
 }
 
 func plantNuke(state *State, unit *Unit, city *City, targetNation *Nation) (string, json.RawMessage, error) {
@@ -533,6 +571,10 @@ func validateSpecialState(state State) error {
 			}
 		case "improvement":
 			if overlay.TileID == "" || overlay.OwnerID == "" || overlay.Remaining < 0 || overlay.ImprovementID == "" {
+				return errors.New("terrain overlay is invalid")
+			}
+		case "park":
+			if overlay.TileID == "" || overlay.OwnerID == "" || overlay.Remaining != 0 {
 				return errors.New("terrain overlay is invalid")
 			}
 		default:

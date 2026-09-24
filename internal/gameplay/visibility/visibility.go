@@ -622,6 +622,25 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 		actions = append(actions, bombardActions(projection, tiles, unit)...)
 		actions = append(actions, specialActions(projection, tiles, cities, unit, playerID)...)
 		actions = append(actions, terrainActions(projection, tiles, unit)...)
+		actions = append(actions, createParkActions(projection, tiles, unit)...)
+	}
+	return actions
+}
+
+func createParkActions(projection Projection, tiles map[string]TileProjection, unit UnitProjection) []ActionProjection {
+	if unit.TileID == "" || unit.Movement < 1 || !hasEffect(unit.Effects, engine.EffectSpecialCreatePark) {
+		return nil
+	}
+	origin, ok := tiles[unit.TileID]
+	if !ok {
+		return nil
+	}
+	actions := make([]ActionProjection, 0)
+	for _, tile := range projection.Tiles {
+		if tile.Stale || tile.Pollution <= 0 || projectedTileDistance(origin, tile) > 1 {
+			continue
+		}
+		actions = append(actions, action(engine.CommandCreatePark, "create-park", unit.ID, tile.ID, map[string]string{"unit_id": unit.ID, "tile_id": tile.ID}, []string{"unit_id", "tile_id"}))
 	}
 	return actions
 }

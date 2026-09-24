@@ -46,6 +46,24 @@ func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
 	}
 }
 
+func TestRetailCreateParkCleansPollutedAdjacentTile(t *testing.T) {
+	state := task11State()
+	state.Tiles[1].Pollution = 7
+	state.Units[0].Effects = []Effect{{ID: "park", Kind: EffectSpecialCreatePark}}
+	next, events, err := task11Apply(t, state, CommandCreatePark, CreateParkPayload{UnitID: "agent", TileID: "b"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Tiles[1].Pollution != 0 || next.Units[0].Movement != 3 || len(next.Overlays) != 1 || next.Overlays[0].Kind != "park" || len(events) != 1 || events[0].Type != EventParkCreated {
+		t.Fatalf("park outcome tile=%+v unit=%+v overlays=%+v events=%+v", next.Tiles[1], next.Units[0], next.Overlays, events)
+	}
+
+	_, _, err = task11Apply(t, next, CommandCreatePark, CreateParkPayload{UnitID: "agent", TileID: "b"})
+	if err == nil {
+		t.Fatal("duplicate park accepted")
+	}
+}
+
 func TestRetailPlantNukeDamagesCityAndHonorsProtection(t *testing.T) {
 	state := task11State()
 	state.Cities[0].Population = 8
