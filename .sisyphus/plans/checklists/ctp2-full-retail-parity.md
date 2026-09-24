@@ -79,6 +79,7 @@
 - [x] Task 128: Grouped retail special-action death chances import and resolve deterministically.
 - [x] Task 129: Grouped combat/bombard domain targeting skips ineligible targets and requires underwater attacks for submarines.
 - [x] Task 130: Safe projections hide undetected submarines unless underwater-capable detectors are in sight range.
+- [x] Task 131: Franchise production loss is transferred to the franchise-owner nation each recalculation.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
