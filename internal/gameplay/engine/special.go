@@ -439,7 +439,7 @@ func expelUnit(state *State, actorID string, payload ExpelPayload) (string, json
 	}
 	target := unitPointer(state, payload.TargetUnitID)
 	unitTile, unitOK := tileByID(*state, unit.TileID)
-	if target == nil || target.OwnerID == actorID || target.TileID == "" || target.TransportID != "" || !unitOK {
+	if target == nil || target.OwnerID == actorID || target.TileID == "" || target.TransportID != "" || !unitOK || !hasEffect(target.Effects, EffectCanBeExpelled) {
 		return "", nil, errors.New("expel target is unavailable")
 	}
 	targetTile, ok := tileByID(*state, target.TileID)

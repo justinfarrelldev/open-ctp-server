@@ -337,6 +337,12 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "CantCaptureCity") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("cant_capture_city"), Kind: "cant_capture_city"})
 	}
+	if retailContainsString(unit.Flags, "CanBeSued") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_be_sued"), Kind: "can_be_sued"})
+	}
+	if retailContainsString(unit.Flags, "CanBeExpelled") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_be_expelled"), Kind: "can_be_expelled"})
+	}
 	if retailContainsString(unit.Flags, "CanEntrench") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_entrench"), Kind: "can_entrench"})
 	}
