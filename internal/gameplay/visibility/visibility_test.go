@@ -39,6 +39,21 @@ func projectionHasUnit(projection Projection, unitID string) bool {
 	return false
 }
 
+func TestSocialPolicyProjectsOwnSliderValuesAndLegalAction(t *testing.T) {
+	workday, wages, rations := 1, -1, 0
+	projection := Projection{Rules: &RulesProjection{}, Diplomacy: &DiplomacyProjection{Workday: &workday, Wages: &wages, Rations: &rations}}
+	actions := governmentActions(projection, "a")
+	for _, action := range actions {
+		if action.Command == engine.CommandSetSocialPolicy && action.EntityID == "a" {
+			if !bytes.Contains(action.Payload, []byte(`"workday":1`)) || !bytes.Contains(action.Payload, []byte(`"wages":-1`)) || !bytes.Contains(action.Payload, []byte(`"rations":0`)) {
+				t.Fatalf("social policy payload = %s", action.Payload)
+			}
+			return
+		}
+	}
+	t.Fatalf("social policy action missing: %#v", actions)
+}
+
 func TestScienceRateLegalActionsTreatUnsetAsDefaultHundred(t *testing.T) {
 	projection := Projection{Rules: &RulesProjection{}, Diplomacy: &DiplomacyProjection{}}
 	actions := governmentActions(projection, "a")

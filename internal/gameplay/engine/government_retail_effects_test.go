@@ -15,6 +15,21 @@ func TestGovernmentRuntimeYieldPercentEffects(t *testing.T) {
 	}
 }
 
+func TestRetailSetSocialPolicyCommandPersistsSliders(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Nations = []Nation{{ID: "nation-a"}}
+	body, _ := json.Marshal(map[string]int{"workday": 1, "wages": -1, "rations": 0})
+	next, events, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "social", ActorPlayerID: "player-a", Type: CommandSetSocialPolicy, Payload: body}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Nations[0].Workday == nil || *next.Nations[0].Workday != 1 || next.Nations[0].Wages == nil || *next.Nations[0].Wages != -1 || next.Nations[0].Rations == nil || *next.Nations[0].Rations != 0 || len(events) != 1 || events[0].Type != EventSocialPolicyChanged {
+		t.Fatalf("social policy command failed: nation=%+v events=%+v", next.Nations[0], events)
+	}
+}
+
 func TestRetailSetScienceRateCommandPersistsExplicitZero(t *testing.T) {
 	state := fixtureState()
 	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}

@@ -15,9 +15,18 @@ type setScienceRatePayload struct {
 	SciencePercent int `json:"science_percent"`
 }
 
+type setSocialPolicyPayload struct {
+	Workday int `json:"workday"`
+	Wages   int `json:"wages"`
+	Rations int `json:"rations"`
+}
+
 func applyGovernmentCommand(state *State, command Command, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if command.Type == CommandSetScienceRate {
 		return applyScienceRateCommand(state, command)
+	}
+	if command.Type == CommandSetSocialPolicy {
+		return applySocialPolicyCommand(state, command)
 	}
 	var payload setGovernmentPayload
 	if err := json.Unmarshal(command.Payload, &payload); err != nil || payload.GovernmentID == "" {
@@ -42,6 +51,27 @@ func applyGovernmentCommand(state *State, command Command, runtime *rules.Runtim
 	upsertGovernmentEffects(nation, government)
 	encoded, _ := json.Marshal(payload)
 	return EventGovernmentChanged, encoded, nil
+}
+
+func applySocialPolicyCommand(state *State, command Command) (string, json.RawMessage, error) {
+	var payload setSocialPolicyPayload
+	if err := json.Unmarshal(command.Payload, &payload); err != nil || payload.Workday < -10 || payload.Workday > 10 || payload.Wages < -10 || payload.Wages > 10 || payload.Rations < -10 || payload.Rations > 10 {
+		return "", nil, errors.New("social policy payload is invalid")
+	}
+	player, ok := playerByID(state, command.ActorPlayerID)
+	if !ok {
+		return "", nil, errors.New("owner is not a game player")
+	}
+	nation := nationForID(state, player.NationID)
+	if nation == nil {
+		return "", nil, errors.New("government is unavailable")
+	}
+	workday, wages, rations := payload.Workday, payload.Wages, payload.Rations
+	nation.Workday = &workday
+	nation.Wages = &wages
+	nation.Rations = &rations
+	encoded, _ := json.Marshal(payload)
+	return EventSocialPolicyChanged, encoded, nil
 }
 
 func applyScienceRateCommand(state *State, command Command) (string, json.RawMessage, error) {
