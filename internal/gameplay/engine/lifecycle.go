@@ -408,7 +408,7 @@ func researchRate(state State, nation Nation) int {
 		if nationForPlayer(state, city.OwnerID) != nation.ID {
 			continue
 		}
-		cityRate := city.Yields.Gold
+		cityRate := city.Yields.Gold + ownerWonderEffectSum(state, city.OwnerID, EffectIncreaseScientists)
 		cityResearchFlat := 0
 		cityResearchPercent := 0
 		for _, effect := range cityResearchEffects(state, city) {

@@ -78,6 +78,16 @@ func TestRuntimeRulesNaturalVictoryTransitions(t *testing.T) {
 	}
 }
 
+func TestRetailIncreaseScientistsWonderAddsCityResearch(t *testing.T) {
+	state := fixtureState()
+	state.Nations = []Nation{{ID: "nation-a"}, {ID: "nation-b"}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Yields: Yield{Gold: 1}}, {ID: "city-b", OwnerID: "player-a", TileID: "tile-b", Yields: Yield{Gold: 1}}}
+	state.Wonders = []Wonder{{ID: "WONDER_LABYRINTH", OwnerID: "player-a", CityID: "city-a", Scope: "nation", Effects: []Effect{{ID: "scientists", Kind: EffectIncreaseScientists, Value: 5}}}}
+	if got := researchRate(state, state.Nations[0]); got != 13 {
+		t.Fatalf("research rate with increase scientists = %d, want 13", got)
+	}
+}
+
 func TestTask6ResearchCompletesAdvancesAndUnlocksProduction(t *testing.T) {
 	state := runtimeStartedState(t)
 	state.Phase.ActivePlayerOrder = []string{"player-a"}
