@@ -18,6 +18,7 @@
 - [x] Task 67: Retail no-fuel crash units are projected and removed when stranded.
 - [x] Task 68: Retail non-capturing units are prevented from capturing cities.
 - [x] Task 69: Retail air-defense bonuses are projected and applied in combat.
+- [x] Task 70: Retail wooden-ship attack bonuses are projected and applied in combat.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
