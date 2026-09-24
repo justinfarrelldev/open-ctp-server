@@ -161,7 +161,7 @@ func buildTerrainImprovement(state *State, actorID string, payload BuildImprovem
 		return "", nil, err
 	}
 	actorNation.PublicWorks -= definition.PublicWorksCost
-	state.Overlays = append(state.Overlays, TileOverlay{ID: "improvement:" + tile.ID + ":" + definition.ID, TileID: tile.ID, Kind: "improvement", OwnerID: actorID, Remaining: definition.BuildTurns, ImprovementID: definition.ID, MovementCostDelta: definition.MovementCostDelta, YieldFood: definition.YieldFood, YieldProduction: definition.YieldProduction, YieldGold: definition.YieldGold, PollutionDelta: definition.PollutionDelta})
+	state.Overlays = append(state.Overlays, TileOverlay{ID: "improvement:" + tile.ID + ":" + definition.ID, TileID: tile.ID, Kind: "improvement", OwnerID: actorID, Remaining: definition.BuildTurns, TargetTerrain: definition.TargetTerrain, ImprovementID: definition.ID, MovementCostDelta: definition.MovementCostDelta, YieldFood: definition.YieldFood, YieldProduction: definition.YieldProduction, YieldGold: definition.YieldGold, PollutionDelta: definition.PollutionDelta})
 	return EventImprovementQueued, json.RawMessage(`{"disclosed":false}`), nil
 }
 
@@ -277,12 +277,15 @@ func advanceTerraform(state *State) {
 }
 
 func applyImprovementCompletion(state *State, overlay *TileOverlay) {
-	if overlay.PollutionDelta == 0 {
+	if overlay.PollutionDelta == 0 && overlay.TargetTerrain == "" {
 		return
 	}
 	for i := range state.Tiles {
 		if state.Tiles[i].ID != overlay.TileID {
 			continue
+		}
+		if overlay.TargetTerrain != "" {
+			state.Tiles[i].Terrain = overlay.TargetTerrain
 		}
 		state.Tiles[i].Pollution += overlay.PollutionDelta
 		if state.Tiles[i].Pollution < 0 {
@@ -295,6 +298,9 @@ func applyImprovementCompletion(state *State, overlay *TileOverlay) {
 func filterCompletedOneShotImprovements(overlays []TileOverlay) []TileOverlay {
 	kept := overlays[:0]
 	for _, overlay := range overlays {
+		if overlay.Kind == "improvement" && overlay.Remaining == 0 && overlay.TargetTerrain != "" {
+			continue
+		}
 		if overlay.Kind == "improvement" && overlay.Remaining == 0 && overlay.MovementCostDelta == 0 && overlay.YieldFood == 0 && overlay.YieldProduction == 0 && overlay.YieldGold == 0 {
 			continue
 		}

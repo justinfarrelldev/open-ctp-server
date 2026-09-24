@@ -140,6 +140,10 @@ func TestLoadRetailRulesFromDirectoryPreservesTypedRetailValues(t *testing.T) {
 	if farms.Effects[0].BonusFood != 10 || farms.Effects[0].ProductionCost != 200 || farms.Effects[0].ProductionTime != 2 {
 		t.Fatalf("TILEIMP_FARMS effect values = %+v", farms.Effects[0])
 	}
+	terraformGrassland, ok := db.TerrainImprovement("TILEIMP_TERRAFORM_GRASSLAND")
+	if !ok || terraformGrassland.TerraformTerrain != "TERRAIN_GRASSLAND" {
+		t.Fatalf("TILEIMP_TERRAFORM_GRASSLAND = %+v ok=%v", terraformGrassland, ok)
+	}
 
 	plains, ok := db.Terrain("TERRAIN_PLAINS")
 	if !ok {

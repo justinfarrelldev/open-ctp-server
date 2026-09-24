@@ -80,6 +80,7 @@ type RuntimeTerrainImprovementDefinition struct {
 	YieldProduction   int      `json:"yield_production,omitempty"`
 	YieldGold         int      `json:"yield_gold,omitempty"`
 	PollutionDelta    int      `json:"pollution_delta,omitempty"`
+	TargetTerrain     string   `json:"target_terrain,omitempty"`
 	CantBuildOn       []string `json:"cant_build_on,omitempty"`
 	Excludes          []string `json:"excludes,omitempty"`
 }
@@ -749,6 +750,7 @@ func compileTerrainImprovementDefinition(record Record) (RuntimeTerrainImproveme
 	if err != nil {
 		return RuntimeTerrainImprovementDefinition{}, err
 	}
+	targetTerrain := record.Tags["TargetTerrain"]
 	cantBuildOn, err := optionalIDs(record, "CantBuildOn")
 	if err != nil {
 		return RuntimeTerrainImprovementDefinition{}, err
@@ -757,10 +759,10 @@ func compileTerrainImprovementDefinition(record Record) (RuntimeTerrainImproveme
 	if err != nil {
 		return RuntimeTerrainImprovementDefinition{}, err
 	}
-	if movementCostDelta == 0 && yieldFood == 0 && yieldProduction == 0 && yieldGold == 0 && pollutionDelta == 0 {
+	if movementCostDelta == 0 && yieldFood == 0 && yieldProduction == 0 && yieldGold == 0 && pollutionDelta == 0 && targetTerrain == "" {
 		return RuntimeTerrainImprovementDefinition{}, fmt.Errorf("rules definition record %q has no terrain improvement effect", record.ID)
 	}
-	return RuntimeTerrainImprovementDefinition{ID: record.ID, Class: record.Tags["Class"], BuildTurns: buildTurns, PublicWorksCost: publicWorksCost, MovementCostDelta: movementCostDelta, YieldFood: yieldFood, YieldProduction: yieldProduction, YieldGold: yieldGold, PollutionDelta: pollutionDelta, CantBuildOn: cantBuildOn, Excludes: excludes}, nil
+	return RuntimeTerrainImprovementDefinition{ID: record.ID, Class: record.Tags["Class"], BuildTurns: buildTurns, PublicWorksCost: publicWorksCost, MovementCostDelta: movementCostDelta, YieldFood: yieldFood, YieldProduction: yieldProduction, YieldGold: yieldGold, PollutionDelta: pollutionDelta, TargetTerrain: targetTerrain, CantBuildOn: cantBuildOn, Excludes: excludes}, nil
 }
 
 func compilePollutionSourceDefinition(record Record) (RuntimePollutionSourceDefinition, error) {

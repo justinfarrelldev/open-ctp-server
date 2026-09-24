@@ -578,7 +578,7 @@ func validateCTP2Tags(kind string, id token, tags map[string]string, path string
 		allowed = map[string]bool{"Description": true, "Cost": true, "PrerequisiteAdvanceIDs": true}
 		required = []string{"Description", "Cost"}
 	case "terrain_improvement":
-		allowed = map[string]bool{"Description": true, "BuildTurns": true, "PublicWorksCost": true, "MovementCostDelta": true, "YieldFood": true, "YieldProduction": true, "YieldGold": true, "PollutionDelta": true}
+		allowed = map[string]bool{"Description": true, "BuildTurns": true, "PublicWorksCost": true, "MovementCostDelta": true, "YieldFood": true, "YieldProduction": true, "YieldGold": true, "PollutionDelta": true, "TargetTerrain": true}
 		required = []string{"Description", "BuildTurns", "PublicWorksCost"}
 	case "pollution_source":
 		allowed = map[string]bool{"Description": true, "PollutionPoints": true, "EffectScope": true}

@@ -100,6 +100,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || farms.BuildTurns != 2 || farms.PublicWorksCost != 200 || farms.YieldFood != 10 || farms.Class != "Farm" || !retailContainsString(farms.CantBuildOn, "TERRAIN_WATER_SHELF") || !retailContainsString(farms.Excludes, "Mine") {
 		t.Fatalf("farms runtime = %+v ok=%v", farms, ok)
 	}
+	terraformGrassland, ok := runtime.TerrainImprovement("TILEIMP_TERRAFORM_GRASSLAND")
+	if !ok || terraformGrassland.TargetTerrain != "TERRAIN_GRASSLAND" || terraformGrassland.BuildTurns != 1 || terraformGrassland.PublicWorksCost != 1 {
+		t.Fatalf("terraform grassland runtime = %+v ok=%v", terraformGrassland, ok)
+	}
 
 	granary, ok := runtime.ProductionDefinition("IMPROVE_GRANARY")
 	if !ok || granary.Kind != "building" || granary.Cost != 300 || granary.Upkeep != 1 || !sameStringSlices(granary.Prerequisites, []string{"ADVANCE_AGRICULTURE"}) {
