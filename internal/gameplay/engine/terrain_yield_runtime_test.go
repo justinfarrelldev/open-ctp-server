@@ -75,6 +75,14 @@ func TestRetailBuildingMaxPopulationCapsFoodGrowth(t *testing.T) {
 	}
 }
 
+func TestRetailOvercrowdingEffectsAccumulateFromBuildings(t *testing.T) {
+	state := State{}
+	city := City{ID: "city-a", Buildings: []Building{{ID: "IMPROVE_AQUEDUCT", Effects: []Effect{{ID: "aqueduct", Kind: EffectOvercrowdingLevel, Value: 6}}}, {ID: "IMPROVE_ARCOLOGIES", Effects: []Effect{{ID: "arcologies", Kind: EffectOvercrowdingLevel, Value: 8}}}}}
+	if got := cityOvercrowdingLevel(state, city); got != 14 {
+		t.Fatalf("city overcrowding level = %d, want summed building levels", got)
+	}
+}
+
 func TestRetailStarvationProtectionDelaysPopulationLoss(t *testing.T) {
 	city := City{ID: "city-a", Population: 2, Yields: Yield{Food: 0}}
 	advanceCityFood(&city, 0, 2)

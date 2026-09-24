@@ -62,20 +62,21 @@ type UnitProjection struct {
 }
 
 type CityProjection struct {
-	ID               string                  `json:"id"`
-	OwnerID          string                  `json:"owner_id"`
-	TileID           string                  `json:"tile_id"`
-	Population       int                     `json:"population,omitempty"`
-	Happiness        int                     `json:"happiness,omitempty"`
-	CrimePercent     int                     `json:"crime_percent,omitempty"`
-	Effects          []engine.Effect         `json:"effects,omitempty"`
-	StoredFood       int                     `json:"stored_food,omitempty"`
-	StoredProduction int                     `json:"stored_production,omitempty"`
-	Queue            []engine.ProductionItem `json:"queue,omitempty"`
-	Buildings        []engine.Building       `json:"buildings,omitempty"`
-	Yields           *engine.Yield           `json:"yields,omitempty"`
-	Stale            bool                    `json:"stale"`
-	Observed         int                     `json:"observed_turn"`
+	ID                string                  `json:"id"`
+	OwnerID           string                  `json:"owner_id"`
+	TileID            string                  `json:"tile_id"`
+	Population        int                     `json:"population,omitempty"`
+	Happiness         int                     `json:"happiness,omitempty"`
+	CrimePercent      int                     `json:"crime_percent,omitempty"`
+	OvercrowdingLevel int                     `json:"overcrowding_level,omitempty"`
+	Effects           []engine.Effect         `json:"effects,omitempty"`
+	StoredFood        int                     `json:"stored_food,omitempty"`
+	StoredProduction  int                     `json:"stored_production,omitempty"`
+	Queue             []engine.ProductionItem `json:"queue,omitempty"`
+	Buildings         []engine.Building       `json:"buildings,omitempty"`
+	Yields            *engine.Yield           `json:"yields,omitempty"`
+	Stale             bool                    `json:"stale"`
+	Observed          int                     `json:"observed_turn"`
 }
 
 type ResearchProjection struct {
@@ -287,6 +288,7 @@ func projectCity(city engine.City, playerID string, observed int) CityProjection
 		projection.Population = city.Population
 		projection.Happiness = city.Happiness
 		projection.CrimePercent = city.CrimePercent
+		projection.OvercrowdingLevel = city.OvercrowdingLevel
 		projection.StoredFood = city.StoredFood
 		projection.StoredProduction = city.StoredProduction
 		projection.Queue = append([]engine.ProductionItem(nil), city.Queue...)

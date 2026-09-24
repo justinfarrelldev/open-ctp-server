@@ -190,7 +190,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("food silo effects = %+v ok=%v", foodSilo, ok)
 	}
 	aqueduct, ok := runtime.ProductionDefinition("IMPROVE_AQUEDUCT")
-	if !ok || !runtimeProductionHasEffectValue(aqueduct, "max_population", 14) {
+	if !ok || !runtimeProductionHasEffectValue(aqueduct, "max_population", 14) || !runtimeProductionHasEffectValue(aqueduct, "overcrowding_level", 6) {
 		t.Fatalf("aqueduct effects = %+v ok=%v", aqueduct, ok)
 	}
 	arena, ok := runtime.ProductionDefinition("IMPROVE_ARENA")

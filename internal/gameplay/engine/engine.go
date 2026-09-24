@@ -169,22 +169,23 @@ type Unit struct {
 }
 
 type City struct {
-	ID               string           `json:"id"`
-	Name             string           `json:"name,omitempty"`
-	OwnerID          string           `json:"owner_id"`
-	TileID           string           `json:"tile_id"`
-	Population       int              `json:"population,omitempty"`
-	Happiness        int              `json:"happiness,omitempty"`
-	CrimePercent     int              `json:"crime_percent,omitempty"`
-	WorkedTileIDs    []string         `json:"worked_tile_ids,omitempty"`
-	StoredFood       int              `json:"stored_food,omitempty"`
-	StarvationTurns  int              `json:"starvation_turns,omitempty"`
-	StoredProduction int              `json:"stored_production,omitempty"`
-	Queue            []ProductionItem `json:"queue,omitempty"`
-	Buildings        []Building       `json:"buildings,omitempty"`
-	Obsolete         []string         `json:"obsolete,omitempty"`
-	Yields           Yield            `json:"yields,omitempty"`
-	Effects          []Effect         `json:"effects,omitempty"`
+	ID                string           `json:"id"`
+	Name              string           `json:"name,omitempty"`
+	OwnerID           string           `json:"owner_id"`
+	TileID            string           `json:"tile_id"`
+	Population        int              `json:"population,omitempty"`
+	Happiness         int              `json:"happiness,omitempty"`
+	CrimePercent      int              `json:"crime_percent,omitempty"`
+	OvercrowdingLevel int              `json:"overcrowding_level,omitempty"`
+	WorkedTileIDs     []string         `json:"worked_tile_ids,omitempty"`
+	StoredFood        int              `json:"stored_food,omitempty"`
+	StarvationTurns   int              `json:"starvation_turns,omitempty"`
+	StoredProduction  int              `json:"stored_production,omitempty"`
+	Queue             []ProductionItem `json:"queue,omitempty"`
+	Buildings         []Building       `json:"buildings,omitempty"`
+	Obsolete          []string         `json:"obsolete,omitempty"`
+	Yields            Yield            `json:"yields,omitempty"`
+	Effects           []Effect         `json:"effects,omitempty"`
 }
 
 type Army struct {
