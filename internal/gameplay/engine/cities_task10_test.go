@@ -45,6 +45,24 @@ func TestRetailFranchiseStealsProductionFromTargetCity(t *testing.T) {
 	}
 }
 
+func TestRetailFranchiseTransfersLostProductionToOwner(t *testing.T) {
+	state := fixtureState()
+	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}}
+	state.Nations = []Nation{{ID: "nation-a", FranchiseProduction: 99}, {ID: "nation-b", FranchiseProduction: 88}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-b", TileID: "tile-a", Effects: []Effect{{ID: "factory", Kind: EffectYieldProduction, Value: 8}, {ID: "franchise:player-a", Kind: EffectFranchise}}}}
+
+	next, err := RecalculateRound(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Nations[0].FranchiseProduction != 2 {
+		t.Fatalf("franchise production transfer = %d, want 2", next.Nations[0].FranchiseProduction)
+	}
+	if next.Cities[0].Yields.Production != 9 {
+		t.Fatalf("franchised city production = %d, want 9", next.Cities[0].Yields.Production)
+	}
+}
+
 func TestRetailIncreaseBrokeragesAmplifiesBrokerageCommerce(t *testing.T) {
 	state := fixtureState()
 	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}}

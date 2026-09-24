@@ -394,6 +394,7 @@ func RecalculateRound(state State) (State, error) {
 		return State{}, err
 	}
 	advanceTerraform(&next)
+	resetFranchiseProduction(&next)
 	cityOrder := cityIDs(next.Cities)
 	sort.Strings(cityOrder)
 	for _, cityID := range cityOrder {
@@ -408,9 +409,14 @@ func RecalculateRound(state State) (State, error) {
 		if !ok {
 			continue
 		}
-		city.Yields, err = cityYieldWithRuntime(next, *city, runtime)
+		var franchiseOwnerID string
+		var franchiseLoss int
+		city.Yields, franchiseOwnerID, franchiseLoss, err = cityYieldAndFranchiseLossWithRuntime(next, *city, runtime)
 		if err != nil {
 			return State{}, err
+		}
+		if franchiseLoss > 0 {
+			addFranchiseProduction(&next, franchiseOwnerID, franchiseLoss)
 		}
 		city.Happiness = cityHappiness(next, *city)
 		advanceTemporaryCityEffects(city)
@@ -423,6 +429,28 @@ func RecalculateRound(state State) (State, error) {
 	}
 	next.RecalculatedTurn = next.Phase.Turn
 	return next, nil
+}
+
+func resetFranchiseProduction(state *State) {
+	for index := range state.Nations {
+		state.Nations[index].FranchiseProduction = 0
+	}
+}
+
+func addFranchiseProduction(state *State, playerID string, amount int) {
+	if amount <= 0 {
+		return
+	}
+	nationID := nationForPlayer(*state, playerID)
+	if nationID == "" {
+		return
+	}
+	for index := range state.Nations {
+		if state.Nations[index].ID == nationID {
+			state.Nations[index].FranchiseProduction += amount
+			return
+		}
+	}
 }
 
 func cityPollutionEnabled(runtime *rules.RuntimeRules) bool {
@@ -1050,9 +1078,14 @@ func cityYield(state State, city City) (Yield, error) {
 }
 
 func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (Yield, error) {
+	yield, _, _, err := cityYieldAndFranchiseLossWithRuntime(state, city, runtime)
+	return yield, err
+}
+
+func cityYieldAndFranchiseLossWithRuntime(state State, city City, runtime *rules.RuntimeRules) (Yield, string, int, error) {
 	yield, err := cityTileYieldWithRuntime(state, city.TileID, runtime)
 	if err != nil {
-		return Yield{}, err
+		return Yield{}, "", 0, err
 	}
 	seen := map[string]bool{city.TileID: true}
 	workedLimit := len(city.WorkedTileIDs)
@@ -1061,7 +1094,7 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 	}
 	for index, tileID := range city.WorkedTileIDs {
 		if seen[tileID] {
-			return Yield{}, errors.New("worked tile is duplicated")
+			return Yield{}, "", 0, errors.New("worked tile is duplicated")
 		}
 		seen[tileID] = true
 		if index >= workedLimit {
@@ -1069,7 +1102,7 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 		}
 		worked, err := terrainYieldWithRuntime(state, tileID, runtime)
 		if err != nil {
-			return Yield{}, err
+			return Yield{}, "", 0, err
 		}
 		yield = addYield(yield, worked)
 	}
@@ -1121,8 +1154,11 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 		yield.Production -= yield.Production * crimePercent / 100
 		yield.Gold -= yield.Gold * crimePercent / 100
 	}
-	if franchisePercent := cityFranchiseProductionPercent(city); franchisePercent > 0 && yield.Production > 0 {
-		yield.Production -= (yield.Production*franchisePercent + 99) / 100
+	franchiseOwnerID := cityFranchiseOwnerID(city)
+	franchiseLoss := 0
+	if franchiseOwnerID != "" && franchiseOwnerID != city.OwnerID && yield.Production > 0 {
+		franchiseLoss = (yield.Production*10 + 99) / 100
+		yield.Production -= franchiseLoss
 	}
 	if yield.Production < 0 {
 		yield.Production = 0
@@ -1130,16 +1166,18 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 	if yield.Gold < 0 {
 		yield.Gold = 0
 	}
-	return yield, nil
+	return yield, franchiseOwnerID, franchiseLoss, nil
 }
 
-func cityFranchiseProductionPercent(city City) int {
+func cityFranchiseOwnerID(city City) string {
+	const prefix = "franchise:"
 	for _, effect := range city.Effects {
-		if effect.Kind == EffectFranchise && effect.ID != "franchise:"+city.OwnerID {
-			return 10
+		if effect.Kind != EffectFranchise || len(effect.ID) <= len(prefix) || effect.ID[:len(prefix)] != prefix {
+			continue
 		}
+		return effect.ID[len(prefix):]
 	}
-	return 0
+	return ""
 }
 
 func brokerageGoldPercentBonus(state State, city City) int {

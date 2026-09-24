@@ -243,16 +243,17 @@ type Army struct {
 }
 
 type Nation struct {
-	ID                 string       `json:"id"`
-	Effects            []Effect     `json:"effects,omitempty"`
-	Advances           []string     `json:"advances,omitempty"`
-	Embassies          []string     `json:"embassies,omitempty"`
-	CityReports        []CityReport `json:"city_reports,omitempty"`
-	PublicWorks        int          `json:"public_works,omitempty"`
-	GovernmentID       string       `json:"government_id,omitempty"`
-	ResearchTargetID   string       `json:"research_target_id,omitempty"`
-	ResearchProgress   int          `json:"research_progress,omitempty"`
-	GaiaCompletionTurn int          `json:"gaia_completion_turn,omitempty"`
+	ID                  string       `json:"id"`
+	Effects             []Effect     `json:"effects,omitempty"`
+	Advances            []string     `json:"advances,omitempty"`
+	Embassies           []string     `json:"embassies,omitempty"`
+	CityReports         []CityReport `json:"city_reports,omitempty"`
+	PublicWorks         int          `json:"public_works,omitempty"`
+	FranchiseProduction int          `json:"franchise_production,omitempty"`
+	GovernmentID        string       `json:"government_id,omitempty"`
+	ResearchTargetID    string       `json:"research_target_id,omitempty"`
+	ResearchProgress    int          `json:"research_progress,omitempty"`
+	GaiaCompletionTurn  int          `json:"gaia_completion_turn,omitempty"`
 }
 
 type CityReport struct {
