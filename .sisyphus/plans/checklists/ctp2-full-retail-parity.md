@@ -55,6 +55,7 @@
 - [x] Task 104: Retail free-slaves/prohibit-slavers effects remove slavers and block future slaver use.
 - [x] Task 105: Retail polluters-to-parks wonder effects convert the highest-pollution cities to parks.
 - [x] Task 106: Retail temporary-full-happiness wonder effects add expiring full-happiness city markers.
+- [x] Task 107: Retail reform-cities and empire conversion-prevention wonder effects execute.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
