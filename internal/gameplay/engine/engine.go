@@ -109,6 +109,7 @@ const (
 	EventUndergroundRailway       = "city.underground_railway"
 	EventUndergroundRailwayFailed = "city.underground_railway_failed"
 	EventCitySued                 = "city.sued"
+	EventUnitsSued                = "unit.sued"
 	EventTechnologyCapture        = "technology.capture"
 	EventPillaged                 = "pillage.applied"
 	EventTerraformQueued          = "terraform.queued"

@@ -52,8 +52,9 @@ const (
 )
 
 type SpecialActionPayload struct {
-	UnitID string `json:"unit_id"`
-	CityID string `json:"city_id"`
+	UnitID       string `json:"unit_id"`
+	CityID       string `json:"city_id"`
+	TargetUnitID string `json:"target_unit_id,omitempty"`
 }
 
 type PillagePayload struct {
@@ -104,6 +105,9 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		var payload SpecialActionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", nil, err
+		}
+		if command.Type == CommandSue && payload.TargetUnitID != "" {
+			return sueUnits(state, command.ActorPlayerID, payload)
 		}
 		unit, city, actorNation, targetNation, err := specialTarget(state, command.ActorPlayerID, payload, command.Type == CommandSue)
 		if err != nil {
@@ -341,6 +345,38 @@ func sueCity(unit *Unit, city *City, actorID string) (string, json.RawMessage, e
 	city.StoredProduction = 0
 	city.Effects = append(city.Effects, Effect{ID: "lawsuit", Kind: EffectLawsuit, Value: 1})
 	return EventCitySued, json.RawMessage(`{"disclosed":true}`), nil
+}
+
+func sueUnits(state *State, actorID string, payload SpecialActionPayload) (string, json.RawMessage, error) {
+	unit, err := ownedUnit(state, actorID, payload.UnitID)
+	if err != nil || unit.TileID == "" || !hasEffect(unit.Effects, EffectSpecialSue) {
+		return "", nil, errors.New("sue target is unavailable")
+	}
+	target := unitPointer(state, payload.TargetUnitID)
+	unitTile, unitOK := tileByID(*state, unit.TileID)
+	if target == nil || target.OwnerID == actorID || target.TileID == "" || target.TransportID != "" || !hasEffect(target.Effects, EffectCanBeSued) || !unitOK {
+		return "", nil, errors.New("sue target is unavailable")
+	}
+	targetTile, ok := tileByID(*state, target.TileID)
+	if !ok || (target.TileID != unit.TileID && !adjacent(unitTile, targetTile)) {
+		return "", nil, errors.New("sue target is unavailable")
+	}
+	victimIDs := make([]string, 0)
+	for _, candidate := range state.Units {
+		if candidate.OwnerID != actorID && candidate.TileID == target.TileID && candidate.TransportID == "" && hasEffect(candidate.Effects, EffectCanBeSued) {
+			victimIDs = append(victimIDs, candidate.ID)
+		}
+	}
+	if len(victimIDs) == 0 {
+		return "", nil, errors.New("sue target is unavailable")
+	}
+	if err := spendSpecialMove(unit); err != nil {
+		return "", nil, err
+	}
+	for _, victimID := range victimIDs {
+		removeUnitAndCargo(state, victimID)
+	}
+	return EventUnitsSued, json.RawMessage(`{"disclosed":true}`), nil
 }
 
 func hasExternalFranchise(city City, ownerID string) bool {

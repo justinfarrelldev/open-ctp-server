@@ -152,6 +152,39 @@ func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
 	}
 }
 
+func TestRetailSueUnitRemovesCanBeSuedTargetsOnTile(t *testing.T) {
+	state := task11State()
+	state.Units = append(state.Units,
+		Unit{ID: "branch-a", OwnerID: "player-b", TileID: "b", Domain: DomainLand, Movement: 1, Effects: []Effect{{ID: "can-be-sued", Kind: EffectCanBeSued}}},
+		Unit{ID: "branch-b", OwnerID: "player-b", TileID: "b", Domain: DomainLand, Movement: 1, Effects: []Effect{{ID: "can-be-sued", Kind: EffectCanBeSued}}},
+		Unit{ID: "guard", OwnerID: "player-b", TileID: "b", Domain: DomainLand, Movement: 1},
+	)
+	state.Units[0].Effects = []Effect{{ID: "sue", Kind: EffectSpecialSue}}
+	next, events, err := task11Apply(t, state, CommandSue, SpecialActionPayload{UnitID: "agent", TargetUnitID: "branch-a"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := unitByID(next, "branch-a"); ok {
+		t.Fatalf("primary sued target survived: %+v", next.Units)
+	}
+	if _, ok := unitByID(next, "branch-b"); ok {
+		t.Fatalf("secondary sued target on tile survived: %+v", next.Units)
+	}
+	if _, ok := unitByID(next, "guard"); !ok || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventUnitsSued || strings.Contains(string(events[0].Payload), "branch-a") {
+		t.Fatalf("sue unit outcome units=%+v events=%+v", next.Units, events)
+	}
+}
+
+func TestRetailSueUnitRequiresCanBeSuedTarget(t *testing.T) {
+	state := task11State()
+	state.Units = append(state.Units, Unit{ID: "guard", OwnerID: "player-b", TileID: "b", Domain: DomainLand, Movement: 1})
+	state.Units[0].Effects = []Effect{{ID: "sue", Kind: EffectSpecialSue}}
+	_, _, err := task11Apply(t, state, CommandSue, SpecialActionPayload{UnitID: "agent", TargetUnitID: "guard"})
+	if err == nil || !strings.Contains(err.Error(), "sue target") {
+		t.Fatalf("sue without can-be-sued marker err=%v", err)
+	}
+}
+
 func TestRetailSueCityAppliesLawsuit(t *testing.T) {
 	state := task11State()
 	state.Cities[0].StoredProduction = 7
