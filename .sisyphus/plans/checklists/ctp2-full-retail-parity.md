@@ -108,6 +108,7 @@
 - [x] Task 157: Retail workday/wages/rations government coefficients affect city happiness.
 - [x] Task 158: Set-social-policy command and owner projections cover workday/wages/rations sliders.
 - [x] Task 159: Retail government crime coefficients and offsets import and compute happiness-derived crime.
+- [x] Task 160: Retail pollution-unhappiness government coefficients reduce city happiness.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

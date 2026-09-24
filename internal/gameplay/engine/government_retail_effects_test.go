@@ -9,8 +9,8 @@ import (
 
 func TestGovernmentRuntimeYieldPercentEffects(t *testing.T) {
 	nation := Nation{ID: "nation-a", Effects: []Effect{{ID: "manual", Kind: EffectYieldFood, Value: 1}}}
-	upsertGovernmentEffects(&nation, rules.RuntimeGovernmentDefinition{ID: "GOVERNMENT_RETAIL", ResearchPercent: 100, FoodPercent: 25, ProductionPercent: 15, GoldPercent: 25, PollutionPercent: -20, CrimeCoef: 1, CrimeOffset: 95, TooManyCitiesThreshold: 2, TooManyCitiesCoefficient: 1.5, EmpireDistanceScale: 0.001, MinEmpireDistance: 500, MaxEmpireDistance: 2000, PositiveWorkdayCoef: 1, NegativeWorkdayCoef: 1, PositiveWagesCoef: 1, NegativeWagesCoef: 1, PositiveRationsCoef: 1, NegativeRationsCoef: 1})
-	if !hasEffect(nation.Effects, EffectResearchPercent) || !hasEffect(nation.Effects, EffectYieldFoodPercent) || !hasEffect(nation.Effects, EffectYieldProductionPercent) || !hasEffect(nation.Effects, EffectYieldGoldPercent) || !hasEffect(nation.Effects, EffectPollutionPercent) || !hasEffect(nation.Effects, EffectCrimeCoef) || !hasEffect(nation.Effects, EffectCrimeOffset) || !hasEffect(nation.Effects, EffectTooManyCitiesThreshold) || !hasEffect(nation.Effects, EffectTooManyCitiesCoefficient) || !hasEffect(nation.Effects, EffectEmpireDistanceScale) || !hasEffect(nation.Effects, EffectMinEmpireDistance) || !hasEffect(nation.Effects, EffectMaxEmpireDistance) || !hasEffect(nation.Effects, EffectPositiveWorkdayCoef) || !hasEffect(nation.Effects, EffectNegativeWagesCoef) || !hasEffect(nation.Effects, EffectPositiveRationsCoef) || !hasEffect(nation.Effects, EffectYieldFood) {
+	upsertGovernmentEffects(&nation, rules.RuntimeGovernmentDefinition{ID: "GOVERNMENT_RETAIL", ResearchPercent: 100, FoodPercent: 25, ProductionPercent: 15, GoldPercent: 25, PollutionPercent: -20, PollutionUnhappyCoef: 0.04, CrimeCoef: 1, CrimeOffset: 95, TooManyCitiesThreshold: 2, TooManyCitiesCoefficient: 1.5, EmpireDistanceScale: 0.001, MinEmpireDistance: 500, MaxEmpireDistance: 2000, PositiveWorkdayCoef: 1, NegativeWorkdayCoef: 1, PositiveWagesCoef: 1, NegativeWagesCoef: 1, PositiveRationsCoef: 1, NegativeRationsCoef: 1})
+	if !hasEffect(nation.Effects, EffectResearchPercent) || !hasEffect(nation.Effects, EffectYieldFoodPercent) || !hasEffect(nation.Effects, EffectYieldProductionPercent) || !hasEffect(nation.Effects, EffectYieldGoldPercent) || !hasEffect(nation.Effects, EffectPollutionPercent) || !hasEffect(nation.Effects, EffectPollutionUnhappyCoef) || !hasEffect(nation.Effects, EffectCrimeCoef) || !hasEffect(nation.Effects, EffectCrimeOffset) || !hasEffect(nation.Effects, EffectTooManyCitiesThreshold) || !hasEffect(nation.Effects, EffectTooManyCitiesCoefficient) || !hasEffect(nation.Effects, EffectEmpireDistanceScale) || !hasEffect(nation.Effects, EffectMinEmpireDistance) || !hasEffect(nation.Effects, EffectMaxEmpireDistance) || !hasEffect(nation.Effects, EffectPositiveWorkdayCoef) || !hasEffect(nation.Effects, EffectNegativeWagesCoef) || !hasEffect(nation.Effects, EffectPositiveRationsCoef) || !hasEffect(nation.Effects, EffectYieldFood) {
 		t.Fatalf("government effects = %#v", nation.Effects)
 	}
 }
@@ -42,6 +42,18 @@ func TestRetailSetScienceRateCommandPersistsExplicitZero(t *testing.T) {
 	}
 	if next.Nations[0].SciencePercent == nil || *next.Nations[0].SciencePercent != 0 || len(events) != 1 || events[0].Type != EventScienceRateChanged {
 		t.Fatalf("science rate command failed: nation=%+v events=%+v", next.Nations[0], events)
+	}
+}
+
+func TestRetailPollutionUnhappyCoefReducesHappiness(t *testing.T) {
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", Effects: []Effect{{ID: "pollution-unhappy", Kind: EffectPollutionUnhappyCoef, Value: 4}}}},
+		Tiles:   []Tile{{ID: "city-tile", Pollution: 50}},
+		Cities:  []City{{ID: "city", OwnerID: "player-a", TileID: "city-tile", Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 80}}}},
+	}
+	if got, want := cityHappiness(state, state.Cities[0]), 78; got != want {
+		t.Fatalf("happiness = %d, want base minus 50*0.04 = %d", got, want)
 	}
 }
 
