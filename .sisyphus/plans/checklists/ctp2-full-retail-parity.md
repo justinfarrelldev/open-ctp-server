@@ -70,6 +70,7 @@
 - [x] Task 119: Convert-city special actions honor deterministic effect success chances.
 - [x] Task 120: Terror special actions honor deterministic effect success chances.
 - [x] Task 121: Slave-raid special actions honor deterministic effect success chances.
+- [x] Task 122: Plant-nuke special actions honor deterministic effect success chances.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
