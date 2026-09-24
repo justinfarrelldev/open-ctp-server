@@ -62,7 +62,7 @@ type CancelTerraformPayload struct {
 
 func isSpecialCommand(kind string) bool {
 	switch kind {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
 		return true
 	default:
 		return false
@@ -74,7 +74,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		return "", nil, err
 	}
 	switch command.Type {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague:
 		var payload SpecialActionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", nil, err
@@ -109,8 +109,10 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			return EventSoothsayingApplied, json.RawMessage(`{"disclosed":true}`), nil
 		case CommandStealTechnology:
 			return stealTechnology(state, unit, actorNation, targetNation, sources)
-		default:
+		case CommandConvertCity:
 			return convertCity(state, unit, city, sources)
+		default:
+			return cityTerror(state, unit, city, command.Type, sources)
 		}
 	case CommandPillage:
 		var payload PillagePayload
@@ -258,6 +260,48 @@ func specialTarget(state *State, actorID string, payload SpecialActionPayload) (
 		return nil, nil, nil, nil, errors.New("special action target is unavailable")
 	}
 	return unit, city, actorNation, targetNation, nil
+}
+
+func cityTerror(state *State, unit *Unit, city *City, commandType string, sources Sources) (string, json.RawMessage, error) {
+	requiredEffect, protectionEffect, successEvent := "", "", ""
+	switch commandType {
+	case CommandBioTerror:
+		requiredEffect, protectionEffect, successEvent = EffectSpecialBioTerror, EffectProtectFromBioAgents, EventBioTerrorApplied
+	case CommandNanoTerror:
+		requiredEffect, protectionEffect, successEvent = EffectSpecialNanoTerror, EffectProtectFromNanoVirus, EventNanoTerrorApplied
+	case CommandPlague:
+		requiredEffect, successEvent = EffectSpecialPlague, EventPlagueApplied
+	default:
+		return "", nil, errors.New("special action is not authorized")
+	}
+	if !hasEffect(unit.Effects, requiredEffect) {
+		return "", nil, errors.New("special action is not authorized")
+	}
+	if err := spendSpecialMove(unit); err != nil {
+		return "", nil, err
+	}
+	if protectionEffect != "" && protectedByCityEffect(state, city, protectionEffect, sources) {
+		return EventTerrorFailed, json.RawMessage(`{"disclosed":true}`), nil
+	}
+	if city.Population > 1 {
+		city.Population--
+	}
+	return successEvent, json.RawMessage(`{"disclosed":true}`), nil
+}
+
+func protectedByCityEffect(state *State, city *City, effectKind string, sources Sources) bool {
+	protection := effectValue(city.Effects, effectKind)
+	if protection <= 0 {
+		return false
+	}
+	if protection >= 100 {
+		next, _ := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+		setRNG(state, RNGDomainSpecialAction, next)
+		return true
+	}
+	next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+	setRNG(state, RNGDomainSpecialAction, next)
+	return int(roll%100) < protection
 }
 
 func convertCity(state *State, unit *Unit, city *City, sources Sources) (string, json.RawMessage, error) {

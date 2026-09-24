@@ -46,6 +46,48 @@ func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
 	}
 }
 
+func TestRetailBioNanoAndPlagueSpecialsAffectCityPopulation(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		command    string
+		effectKind string
+		protection string
+		eventType  string
+	}{
+		{name: "bio", command: CommandBioTerror, effectKind: EffectSpecialBioTerror, protection: EffectProtectFromBioAgents, eventType: EventBioTerrorApplied},
+		{name: "nano", command: CommandNanoTerror, effectKind: EffectSpecialNanoTerror, protection: EffectProtectFromNanoVirus, eventType: EventNanoTerrorApplied},
+		{name: "plague", command: CommandPlague, effectKind: EffectSpecialPlague, eventType: EventPlagueApplied},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			state := task11State()
+			state.Cities[0].Population = 5
+			state.Units[0].Effects = []Effect{{ID: tc.name, Kind: tc.effectKind}}
+			next, events, err := task11Apply(t, state, tc.command, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if next.Cities[0].Population != 4 || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != tc.eventType || strings.Contains(string(events[0].Payload), "target-city") {
+				t.Fatalf("terror outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
+			}
+
+			if tc.protection == "" {
+				return
+			}
+			state = task11State()
+			state.Cities[0].Population = 5
+			state.Cities[0].Effects = append(state.Cities[0].Effects, Effect{ID: "protect", Kind: tc.protection, Value: 100})
+			state.Units[0].Effects = []Effect{{ID: tc.name, Kind: tc.effectKind}}
+			next, events, err = task11Apply(t, state, tc.command, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if next.Cities[0].Population != 5 || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventTerrorFailed {
+				t.Fatalf("protected terror outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
+			}
+		})
+	}
+}
+
 func TestRetailConvertCityHonorsProtectionAndDisclosure(t *testing.T) {
 	state := task11State()
 	state.Units[0].Effects = append(state.Units[0].Effects, Effect{ID: "convert", Kind: EffectSpecialConvertCity})
