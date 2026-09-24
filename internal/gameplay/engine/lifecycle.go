@@ -118,7 +118,7 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 	crashedUnits := make([]string, 0)
 	for index := range state.Units {
 		if state.Units[index].TransportID == "" {
-			state.Units[index].Movement = runtime.Starter.Movement
+			state.Units[index].Movement = refreshedUnitMovement(*state, state.Units[index], runtime.Starter.Movement)
 		}
 		if state.Units[index].MaxFuel > 0 && unitCanRefuel(*state, state.Units[index]) {
 			state.Units[index].Fuel = state.Units[index].MaxFuel
@@ -325,6 +325,35 @@ func playerPollutionTotals(state State) []int64 {
 		return nil
 	}
 	return []int64{total}
+}
+
+func refreshedUnitMovement(state State, unit Unit, fallback int) int {
+	movement := fallback
+	if unit.MaxMovement > 0 {
+		movement = unit.MaxMovement
+	}
+	if unit.Domain == DomainSea || unit.Domain == DomainAmphibious {
+		movement += boatMovementBonus(state, unit.OwnerID)
+	}
+	if movement < 0 {
+		return 0
+	}
+	return movement
+}
+
+func boatMovementBonus(state State, ownerID string) int {
+	bonus := 0
+	for _, wonder := range state.Wonders {
+		if wonder.Destroyed || (wonder.OwnerID != ownerID && wonder.Scope != "global") {
+			continue
+		}
+		for _, effect := range wonder.Effects {
+			if effect.Kind == EffectIncreaseBoatMovement {
+				bonus += effect.Value
+			}
+		}
+	}
+	return bonus
 }
 
 func advanceResearch(state *State, runtime *rules.RuntimeRules) {

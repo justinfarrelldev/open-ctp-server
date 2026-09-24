@@ -644,6 +644,7 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 		TileID:             city.TileID,
 		Domain:             definition.Domain,
 		Movement:           definition.Movement,
+		MaxMovement:        definition.Movement,
 		Fuel:               definition.MaxFuel,
 		MaxFuel:            definition.MaxFuel,
 		CargoCapacity:      definition.TransportCapacity,

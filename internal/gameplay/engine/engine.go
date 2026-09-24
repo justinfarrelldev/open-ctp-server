@@ -190,6 +190,7 @@ type Unit struct {
 	TransportID        string   `json:"transport_id,omitempty"`
 	Domain             string   `json:"domain,omitempty"`
 	Movement           int      `json:"movement,omitempty"`
+	MaxMovement        int      `json:"max_movement,omitempty"`
 	Fuel               int      `json:"fuel,omitempty"`
 	MaxFuel            int      `json:"max_fuel,omitempty"`
 	CargoCapacity      int      `json:"cargo_capacity,omitempty"`
