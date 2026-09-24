@@ -19,6 +19,12 @@
 - [x] Task 68: Retail non-capturing units are prevented from capturing cities.
 - [x] Task 69: Retail air-defense bonuses are projected and applied in combat.
 - [x] Task 70: Retail wooden-ship attack bonuses are projected and applied in combat.
+- [x] Task 71: Retail CanAttack target metadata is projected and enforced in combat.
+- [x] Task 72: Retail CanEntrench metadata gates fortify actions.
+- [x] Task 73: Retail IgnoreZOC metadata bypasses enemy ZOC movement stops.
+- [x] Task 74: Retail CanPillage units can pillage completed improvements.
+- [x] Task 75: Retail BuildingRemovesAPop units reduce producing city population.
+- [x] Task 76: Population-consuming unit production requires spare population.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
