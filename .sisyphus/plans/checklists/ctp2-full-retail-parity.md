@@ -85,6 +85,7 @@
 - [x] Task 134: Retail CanBeSued/CanBeExpelled target markers import and expel requires CanBeExpelled.
 - [x] Task 135: Lawsuit unit target path removes all can-be-sued enemy units on the target tile.
 - [x] Task 136: Plant-nuke special action requires the runtime-declared nuke advance.
+- [x] Task 137: Watchful city duration and success modifier apply to grouped special-action attempts.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
