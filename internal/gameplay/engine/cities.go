@@ -729,10 +729,89 @@ func applyWonderCompletionEffects(state *State, wonder Wonder) {
 			removeWarsWithPlayer(state, wonder.OwnerID)
 		case EffectFreeSlaves:
 			removeSlaverUnits(state)
+		case EffectPollutersToParks:
+			convertPollutedCitiesToParks(state, wonder.OwnerID, wonder.CityID, effect.Value)
 		case EffectEmbassiesEverywhere:
 			removeWarsWithPlayer(state, wonder.OwnerID)
 		}
 	}
+}
+
+func convertPollutedCitiesToParks(state *State, ownerID, excludedCityID string, limit int) {
+	if limit <= 0 {
+		return
+	}
+	tilePollution := make(map[string]int, len(state.Tiles))
+	for _, tile := range state.Tiles {
+		tilePollution[tile.ID] = tile.Pollution
+	}
+	type candidate struct {
+		cityID    string
+		tileID    string
+		pollution int
+	}
+	candidates := make([]candidate, 0, len(state.Cities))
+	for _, city := range state.Cities {
+		if city.ID == excludedCityID || tilePollution[city.TileID] <= 0 {
+			continue
+		}
+		candidates = append(candidates, candidate{cityID: city.ID, tileID: city.TileID, pollution: tilePollution[city.TileID]})
+	}
+	sort.Slice(candidates, func(i, j int) bool {
+		if candidates[i].pollution != candidates[j].pollution {
+			return candidates[i].pollution > candidates[j].pollution
+		}
+		return candidates[i].cityID < candidates[j].cityID
+	})
+	if limit > len(candidates) {
+		limit = len(candidates)
+	}
+	removedCities := make(map[string]bool, limit)
+	parkedTiles := make(map[string]bool, limit)
+	for _, candidate := range candidates[:limit] {
+		removedCities[candidate.cityID] = true
+		parkedTiles[candidate.tileID] = true
+		for index := range state.Tiles {
+			if state.Tiles[index].ID == candidate.tileID {
+				state.Tiles[index].Pollution = 0
+				break
+			}
+		}
+	}
+	if len(removedCities) == 0 {
+		return
+	}
+	for _, unit := range append([]Unit(nil), state.Units...) {
+		if parkedTiles[unit.TileID] {
+			removeUnitAndCargo(state, unit.ID)
+		}
+	}
+	for index := range state.Wonders {
+		if removedCities[state.Wonders[index].CityID] {
+			state.Wonders[index].Destroyed = true
+		}
+	}
+	state.Overlays = filterOverlaysNotOnTiles(state.Overlays, parkedTiles)
+	for _, candidate := range candidates[:limit] {
+		state.Overlays = append(state.Overlays, TileOverlay{ID: "park:" + ownerID + ":" + candidate.tileID, TileID: candidate.tileID, Kind: "park", OwnerID: ownerID})
+	}
+	cities := state.Cities[:0]
+	for _, city := range state.Cities {
+		if !removedCities[city.ID] {
+			cities = append(cities, city)
+		}
+	}
+	state.Cities = cities
+}
+
+func filterOverlaysNotOnTiles(overlays []TileOverlay, removed map[string]bool) []TileOverlay {
+	filtered := overlays[:0]
+	for _, overlay := range overlays {
+		if !removed[overlay.TileID] {
+			filtered = append(filtered, overlay)
+		}
+	}
+	return filtered
 }
 
 func removeSlaverUnits(state *State) {

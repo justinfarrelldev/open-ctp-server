@@ -6,6 +6,54 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
+func TestRetailPollutersToParksWonderConvertsMostPollutedCities(t *testing.T) {
+	state := State{
+		Tiles: []Tile{
+			{ID: "gaia-tile", Terrain: TerrainPlains, Open: true, Pollution: 99},
+			{ID: "dirty-a", Terrain: TerrainPlains, Open: true, Pollution: 40},
+			{ID: "dirty-b", Terrain: TerrainPlains, Open: true, Pollution: 30},
+			{ID: "clean", Terrain: TerrainPlains, Open: true, Pollution: 0},
+		},
+		Cities: []City{
+			{ID: "gaia-city", OwnerID: "player-a", TileID: "gaia-tile", StoredProduction: 1, Queue: []ProductionItem{{ID: "WONDER_GAIA", Kind: ProductionWonder, Cost: 1, Effects: []Effect{{ID: "parks", Kind: EffectPollutersToParks, Value: 2}}}}},
+			{ID: "dirty-city-a", OwnerID: "player-b", TileID: "dirty-a"},
+			{ID: "dirty-city-b", OwnerID: "player-c", TileID: "dirty-b"},
+			{ID: "clean-city", OwnerID: "player-d", TileID: "clean"},
+		},
+		Units: []Unit{{ID: "polluter-guard", OwnerID: "player-b", TileID: "dirty-a"}, {ID: "clean-guard", OwnerID: "player-d", TileID: "clean"}},
+	}
+	if err := completeProduction(&state, &state.Cities[0], nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := cityByID(state, "dirty-city-a"); ok {
+		t.Fatalf("dirty-city-a survived polluters-to-parks: %#v", state.Cities)
+	}
+	if _, ok := cityByID(state, "dirty-city-b"); ok {
+		t.Fatalf("dirty-city-b survived polluters-to-parks: %#v", state.Cities)
+	}
+	if _, ok := cityByID(state, "gaia-city"); !ok {
+		t.Fatalf("wonder city must be excluded: %#v", state.Cities)
+	}
+	if tileByIDMust(t, state, "dirty-a").Pollution != 0 || tileByIDMust(t, state, "dirty-b").Pollution != 0 || parkForTile(state, "dirty-a") == nil || parkForTile(state, "dirty-b") == nil {
+		t.Fatalf("parked polluted tiles = tiles:%#v overlays:%#v", state.Tiles, state.Overlays)
+	}
+	if _, ok := unitByID(state, "polluter-guard"); ok {
+		t.Fatalf("unit on converted city tile survived: %#v", state.Units)
+	}
+	if _, ok := unitByID(state, "clean-guard"); !ok {
+		t.Fatalf("unit away from converted cities removed: %#v", state.Units)
+	}
+}
+
+func tileByIDMust(t *testing.T, state State, id string) Tile {
+	t.Helper()
+	tile, ok := tileByID(state, id)
+	if !ok {
+		t.Fatalf("tile %s missing", id)
+	}
+	return tile
+}
+
 func TestRetailFreeSlavesWonderRemovesSlaverUnitsEverywhere(t *testing.T) {
 	state := State{
 		Tiles:  []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}},
