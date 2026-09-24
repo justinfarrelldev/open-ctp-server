@@ -529,12 +529,27 @@ func productionCandidates(projection visibility.Projection, playerID string) []C
 		if !ok {
 			item, ok = bestProjectedUnitProduction(projection)
 		}
+		if ok && city.Population <= 1 && productionItemRemovesPopulation(item) {
+			item, ok = bestProjectedCityProduction(projection, city)
+		}
 		if !ok {
 			item = engine.ProductionItem{ID: "ai-unit-" + city.ID, Kind: engine.ProductionUnit, Cost: 1}
+		}
+		if city.Population <= 1 && productionItemRemovesPopulation(item) {
+			continue
 		}
 		candidates = append(candidates, candidate(engine.CommandQueueProduction, city.ID, item.ID, 90, map[string]any{"city_id": city.ID, "item": item}))
 	}
 	return candidates
+}
+
+func productionItemRemovesPopulation(item engine.ProductionItem) bool {
+	for _, effect := range item.Effects {
+		if effect.Kind == engine.EffectBuildingRemovesPopulation {
+			return true
+		}
+	}
+	return false
 }
 
 func ownedAdvances(projection visibility.Projection) map[string]bool {

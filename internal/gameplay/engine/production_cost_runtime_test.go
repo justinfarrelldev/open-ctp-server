@@ -36,6 +36,20 @@ func TestRuntimeBuildingAndWonderProductionUsesPinnedCostAndPrerequisite(t *test
 	}
 }
 
+func TestRuntimePopulationRemovingUnitProductionRequiresSparePopulation(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainLand, Movement: 1, Health: 1, ProductionCost: 1, Effects: []rules.RuntimeStarterEffect{{ID: "pop", Kind: EffectBuildingRemovesPopulation}}}}}
+
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}, runtime); err == nil {
+		t.Fatal("queueProduction accepted a population-removing unit at population one")
+	}
+	state.Cities[0].Population = 2
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}, runtime); err != nil {
+		t.Fatalf("queueProduction with spare population error = %v", err)
+	}
+}
+
 func TestRuntimeBuildingProductionRequiresPrerequisiteBuildings(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})

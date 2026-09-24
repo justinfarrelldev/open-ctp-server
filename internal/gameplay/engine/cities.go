@@ -256,6 +256,9 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if err := requireProductionUnlock(*state, *city, payload.Item, runtime); err != nil {
 		return err
 	}
+	if productionRemovesPopulation(payload.Item, runtime) && city.Population <= 1 {
+		return errors.New("city population is insufficient")
+	}
 	if payload.Item.Kind == ProductionBuilding && cityHasBuilding(*city, payload.Item.ID) {
 		return errors.New("building already exists")
 	}
@@ -269,6 +272,22 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	}
 	city.Queue = append(city.Queue, payload.Item)
 	return nil
+}
+
+func productionRemovesPopulation(item ProductionItem, runtime *rules.RuntimeRules) bool {
+	if item.Kind != ProductionUnit || runtime == nil {
+		return hasEffect(item.Effects, EffectBuildingRemovesPopulation)
+	}
+	unit, ok := runtime.Unit(item.ID)
+	if !ok {
+		return hasEffect(item.Effects, EffectBuildingRemovesPopulation)
+	}
+	for _, effect := range unit.Effects {
+		if effect.Kind == EffectBuildingRemovesPopulation {
+			return true
+		}
+	}
+	return false
 }
 
 func applyRuntimeProductionDefaults(item ProductionItem, runtime *rules.RuntimeRules) ProductionItem {
