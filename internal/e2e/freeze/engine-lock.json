@@ -111,7 +111,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_runtime.go",
-      "sha256": "0e4475c06d5cf233402c57943d47875e01b27e7040a41859938613089ecd30f8"
+      "sha256": "f956c960e7af45cc10dc810cf3126eb79685e561bdd67413354cd8d5f86ba338"
     },
     {
       "path": "internal/gameplay/rules/rules.go",
@@ -119,7 +119,7 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "1adaa877abfe4ea9c551f16d237d53e6785ab6379e1ade0acd440ee9a1309e59"
+      "sha256": "b3d09bdf36d06ab3265ac5ea156dfb957dcef326e8ab8ececf1a1eda160e3b05"
     },
     {
       "path": "internal/gameplay/service/ai.go",

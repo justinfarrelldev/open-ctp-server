@@ -107,38 +107,53 @@ type RuntimePollutionModel struct {
 }
 
 type RuntimeGovernmentDefinition struct {
-	ID                  string  `json:"id"`
-	EnableAdvanceID     string  `json:"enable_advance_id,omitempty"`
-	ResearchBonus       int     `json:"research_bonus,omitempty"`
-	ResearchPercent     int     `json:"research_percent,omitempty"`
-	PublicWorksBonus    int     `json:"public_works_bonus,omitempty"`
-	FoodPercent         int     `json:"food_percent,omitempty"`
-	ProductionPercent   int     `json:"production_percent,omitempty"`
-	GoldPercent         int     `json:"gold_percent,omitempty"`
-	PollutionPercent    int     `json:"pollution_percent,omitempty"`
-	WorkdayExpectation  int     `json:"workday_expectation,omitempty"`
-	PositiveWorkdayCoef float64 `json:"positive_workday_coef,omitempty"`
-	NegativeWorkdayCoef float64 `json:"negative_workday_coef,omitempty"`
-	WagesExpectation    int     `json:"wages_expectation,omitempty"`
-	PositiveWagesCoef   float64 `json:"positive_wages_coef,omitempty"`
-	NegativeWagesCoef   float64 `json:"negative_wages_coef,omitempty"`
-	RationsExpectation  int     `json:"rations_expectation,omitempty"`
-	PositiveRationsCoef float64 `json:"positive_rations_coef,omitempty"`
-	NegativeRationsCoef float64 `json:"negative_rations_coef,omitempty"`
-	SupportCoef         float64 `json:"support_coef,omitempty"`
-	DefenseCoef         float64 `json:"defense_coef,omitempty"`
-	ProfessionalUnits   int     `json:"professional_units,omitempty"`
-	TurnsToNewReadiness int     `json:"turns_to_new_readiness,omitempty"`
-	ReadyPeaceCoef      float64 `json:"ready_peace_coef,omitempty"`
-	ReadyPeaceHP        float64 `json:"ready_peace_hp,omitempty"`
-	ReadyAlertCoef      float64 `json:"ready_alert_coef,omitempty"`
-	ReadyAlertHP        float64 `json:"ready_alert_hp,omitempty"`
-	ReadyWarCoef        float64 `json:"ready_war_coef,omitempty"`
-	ReadyWarHP          float64 `json:"ready_war_hp,omitempty"`
-	MartialLawMaxUnits  int     `json:"martial_law_max_units,omitempty"`
-	MartialLawEffect    int     `json:"martial_law_effect,omitempty"`
-	MartialLawThreshold int     `json:"martial_law_threshold,omitempty"`
-	MaxSciencePercent   *int    `json:"max_science_percent,omitempty"`
+	ID                       string  `json:"id"`
+	EnableAdvanceID          string  `json:"enable_advance_id,omitempty"`
+	ResearchBonus            int     `json:"research_bonus,omitempty"`
+	ResearchPercent          int     `json:"research_percent,omitempty"`
+	PublicWorksBonus         int     `json:"public_works_bonus,omitempty"`
+	FoodPercent              int     `json:"food_percent,omitempty"`
+	ProductionPercent        int     `json:"production_percent,omitempty"`
+	GoldPercent              int     `json:"gold_percent,omitempty"`
+	PollutionPercent         int     `json:"pollution_percent,omitempty"`
+	WorkdayExpectation       int     `json:"workday_expectation,omitempty"`
+	PositiveWorkdayCoef      float64 `json:"positive_workday_coef,omitempty"`
+	NegativeWorkdayCoef      float64 `json:"negative_workday_coef,omitempty"`
+	WagesExpectation         int     `json:"wages_expectation,omitempty"`
+	PositiveWagesCoef        float64 `json:"positive_wages_coef,omitempty"`
+	NegativeWagesCoef        float64 `json:"negative_wages_coef,omitempty"`
+	RationsExpectation       int     `json:"rations_expectation,omitempty"`
+	PositiveRationsCoef      float64 `json:"positive_rations_coef,omitempty"`
+	NegativeRationsCoef      float64 `json:"negative_rations_coef,omitempty"`
+	SupportCoef              float64 `json:"support_coef,omitempty"`
+	DefenseCoef              float64 `json:"defense_coef,omitempty"`
+	ProfessionalUnits        int     `json:"professional_units,omitempty"`
+	TurnsToNewReadiness      int     `json:"turns_to_new_readiness,omitempty"`
+	ReadyPeaceCoef           float64 `json:"ready_peace_coef,omitempty"`
+	ReadyPeaceHP             float64 `json:"ready_peace_hp,omitempty"`
+	ReadyAlertCoef           float64 `json:"ready_alert_coef,omitempty"`
+	ReadyAlertHP             float64 `json:"ready_alert_hp,omitempty"`
+	ReadyWarCoef             float64 `json:"ready_war_coef,omitempty"`
+	ReadyWarHP               float64 `json:"ready_war_hp,omitempty"`
+	WarDiscontentMaxUnits    int     `json:"war_discontent_max_units,omitempty"`
+	WarDiscontentPerUnit     float64 `json:"war_discontent_per_unit,omitempty"`
+	ConquestDistress         float64 `json:"conquest_distress,omitempty"`
+	ConquestDistressDecay    float64 `json:"conquest_distress_decay,omitempty"`
+	AtHomeRadius             int     `json:"at_home_radius,omitempty"`
+	OverseasCoef             float64 `json:"overseas_coef,omitempty"`
+	OverseasDefeatDecay      float64 `json:"overseas_defeat_decay,omitempty"`
+	OverseasDefeatCoef       float64 `json:"overseas_defeat_coef,omitempty"`
+	HomeDefeatDecay          float64 `json:"home_defeat_decay,omitempty"`
+	HomeDefeatCoef           float64 `json:"home_defeat_coef,omitempty"`
+	EmpireDistanceScale      float64 `json:"empire_distance_scale,omitempty"`
+	MinEmpireDistance        int     `json:"min_empire_distance,omitempty"`
+	MaxEmpireDistance        int     `json:"max_empire_distance,omitempty"`
+	TooManyCitiesThreshold   int     `json:"too_many_cities_threshold,omitempty"`
+	TooManyCitiesCoefficient float64 `json:"too_many_cities_coefficient,omitempty"`
+	MartialLawMaxUnits       int     `json:"martial_law_max_units,omitempty"`
+	MartialLawEffect         int     `json:"martial_law_effect,omitempty"`
+	MartialLawThreshold      int     `json:"martial_law_threshold,omitempty"`
+	MaxSciencePercent        *int    `json:"max_science_percent,omitempty"`
 }
 
 type RuntimeMovement struct {
@@ -866,6 +881,25 @@ func compileGovernmentDefinition(record Record) (RuntimeGovernmentDefinition, er
 	definition.ReadyAlertHP = readiness.ReadyAlertHP
 	definition.ReadyWarCoef = readiness.ReadyWarCoef
 	definition.ReadyWarHP = readiness.ReadyWarHP
+	empire, err := compileGovernmentEmpireFields(record)
+	if err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	definition.WarDiscontentMaxUnits = empire.WarDiscontentMaxUnits
+	definition.WarDiscontentPerUnit = empire.WarDiscontentPerUnit
+	definition.ConquestDistress = empire.ConquestDistress
+	definition.ConquestDistressDecay = empire.ConquestDistressDecay
+	definition.AtHomeRadius = empire.AtHomeRadius
+	definition.OverseasCoef = empire.OverseasCoef
+	definition.OverseasDefeatDecay = empire.OverseasDefeatDecay
+	definition.OverseasDefeatCoef = empire.OverseasDefeatCoef
+	definition.HomeDefeatDecay = empire.HomeDefeatDecay
+	definition.HomeDefeatCoef = empire.HomeDefeatCoef
+	definition.EmpireDistanceScale = empire.EmpireDistanceScale
+	definition.MinEmpireDistance = empire.MinEmpireDistance
+	definition.MaxEmpireDistance = empire.MaxEmpireDistance
+	definition.TooManyCitiesThreshold = empire.TooManyCitiesThreshold
+	definition.TooManyCitiesCoefficient = empire.TooManyCitiesCoefficient
 	if researchBonus < 0 || publicWorksBonus < 0 {
 		return RuntimeGovernmentDefinition{}, fmt.Errorf("rules definition record %q has invalid government bonus", record.ID)
 	}
@@ -945,6 +979,57 @@ func compileGovernmentReadinessFields(record Record) (RuntimeGovernmentDefinitio
 		return RuntimeGovernmentDefinition{}, err
 	}
 	if definition.ReadyWarHP, err = optionalFloat(record, "ReadyWarHP", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	return definition, nil
+}
+
+func compileGovernmentEmpireFields(record Record) (RuntimeGovernmentDefinition, error) {
+	var definition RuntimeGovernmentDefinition
+	var err error
+	if definition.WarDiscontentMaxUnits, err = optionalInteger(record, "WarDiscontentMaxUnits", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.WarDiscontentPerUnit, err = optionalFloat(record, "WarDiscontentPerUnit", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.ConquestDistress, err = optionalFloat(record, "ConquestDistress", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.ConquestDistressDecay, err = optionalFloat(record, "ConquestDistressDecay", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.AtHomeRadius, err = optionalInteger(record, "AtHomeRadius", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.OverseasCoef, err = optionalFloat(record, "OverseasCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.OverseasDefeatDecay, err = optionalFloat(record, "OverseasDefeatDecay", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.OverseasDefeatCoef, err = optionalFloat(record, "OverseasDefeatCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.HomeDefeatDecay, err = optionalFloat(record, "HomeDefeatDecay", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.HomeDefeatCoef, err = optionalFloat(record, "HomeDefeatCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.EmpireDistanceScale, err = optionalFloat(record, "EmpireDistanceScale", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.MinEmpireDistance, err = optionalInteger(record, "MinEmpireDistance", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.MaxEmpireDistance, err = optionalInteger(record, "MaxEmpireDistance", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.TooManyCitiesThreshold, err = optionalInteger(record, "TooManyCitiesThreshold", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.TooManyCitiesCoefficient, err = optionalFloat(record, "TooManyCitiesCoefficient", 0); err != nil {
 		return RuntimeGovernmentDefinition{}, err
 	}
 	return definition, nil

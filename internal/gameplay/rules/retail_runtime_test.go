@@ -166,6 +166,9 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if democracy.SupportCoef != 1.5 || democracy.DefenseCoef != 1.15 || democracy.TurnsToNewReadiness != 10 || democracy.ReadyPeaceCoef != 0.5 || democracy.ReadyAlertHP != 0.8 || democracy.ReadyWarHP != 1 {
 		t.Fatalf("democracy readiness fields = %+v", democracy)
 	}
+	if democracy.WarDiscontentMaxUnits != 5 || democracy.WarDiscontentPerUnit != 2 || democracy.ConquestDistress != 3 || democracy.AtHomeRadius != 2 || democracy.EmpireDistanceScale != 0.001 || democracy.MinEmpireDistance != 500 || democracy.MaxEmpireDistance != 2000 || democracy.TooManyCitiesThreshold != 35 || democracy.TooManyCitiesCoefficient != 1 {
+		t.Fatalf("democracy empire/war fields = %+v", democracy)
+	}
 	anarchy, ok := runtime.Government("GOVERNMENT_ANARCHY")
 	if !ok || anarchy.ResearchPercent != -90 || anarchy.FoodPercent != -25 || anarchy.ProductionPercent != -25 || anarchy.GoldPercent != -25 {
 		t.Fatalf("anarchy government = %+v ok=%v", anarchy, ok)
