@@ -65,6 +65,7 @@
 - [x] Task 114: Round recalculation survives city-removing wonder effects without stale slice indexes.
 - [x] Task 115: IncreaseBrokerages wonders amplify only active brokerage commerce percentages.
 - [x] Task 116: IncreaseScientists wonders add city-scoped research in the current economy model.
+- [x] Task 117: Special-action protection checks honor active building/wonder city effects.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
