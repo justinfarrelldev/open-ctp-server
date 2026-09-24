@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
 func task11State() State {
@@ -43,6 +45,27 @@ func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
 	}
 	if next.Units[0].Movement != 3 {
 		t.Fatalf("pillage did not spend movement: %+v", next.Units[0])
+	}
+}
+
+func TestRetailInjoinCityBlocksProduction(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = []Effect{{ID: "injoin", Kind: EffectSpecialInjoin}}
+	next, events, err := task11Apply(t, state, CommandInjoin, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasEffect(next.Cities[0].Effects, EffectInjunction) || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventCityInjoined || strings.Contains(string(events[0].Payload), "target-city") {
+		t.Fatalf("injoin outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
+	}
+
+	next.Cities[0].Queue = []ProductionItem{{ID: "UNIT_TEST", Kind: ProductionUnit, Cost: 1}}
+	next.Cities[0].Yields.Production = 3
+	if err := completeProduction(&next, &next.Cities[0], &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_TEST", Domain: DomainLand, Movement: 1, Health: 1}}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := unitByID(next, "unit-UNIT_TEST-target-city-7"); ok || len(next.Cities[0].Queue) != 1 {
+		t.Fatalf("injunction did not block production: city=%+v units=%+v", next.Cities[0], next.Units)
 	}
 }
 

@@ -30,6 +30,7 @@ const (
 	EffectSpecialSettlerSlaveRaid   = "special_settler_slave_raid"
 	EffectSpecialUndergroundRailway = "special_underground_railway"
 	EffectSpecialInjoin             = "special_injoin"
+	EffectInjunction                = "injunction"
 	EffectSpecialReform             = "special_reform"
 	EffectSpecialCreatePark         = "special_create_park"
 	EffectSpecialExpel              = "special_expel"
@@ -74,7 +75,7 @@ type ExpelPayload struct {
 
 func isSpecialCommand(kind string) bool {
 	switch kind {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandAssassinateRuler, CommandCreatePark, CommandExpel, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandAssassinateRuler, CommandInjoin, CommandCreatePark, CommandExpel, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
 		return true
 	default:
 		return false
@@ -86,7 +87,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		return "", nil, err
 	}
 	switch command.Type {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandAssassinateRuler:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandAssassinateRuler, CommandInjoin:
 		var payload SpecialActionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", nil, err
@@ -131,6 +132,8 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			return plantNuke(state, unit, city, targetNation)
 		case CommandAssassinateRuler:
 			return assassinateRuler(unit, targetNation)
+		case CommandInjoin:
+			return injoinCity(unit, city)
 		case CommandBioTerror, CommandNanoTerror, CommandPlague:
 			return cityTerror(state, unit, city, command.Type, sources)
 		default:
@@ -294,6 +297,17 @@ func specialTarget(state *State, actorID string, payload SpecialActionPayload) (
 		return nil, nil, nil, nil, errors.New("special action target is unavailable")
 	}
 	return unit, city, actorNation, targetNation, nil
+}
+
+func injoinCity(unit *Unit, city *City) (string, json.RawMessage, error) {
+	if !hasEffect(unit.Effects, EffectSpecialInjoin) || hasEffect(city.Effects, EffectInjunction) {
+		return "", nil, errors.New("special action is not authorized")
+	}
+	if err := spendSpecialMove(unit); err != nil {
+		return "", nil, err
+	}
+	city.Effects = append(city.Effects, Effect{ID: "injunction", Kind: EffectInjunction, Value: 1})
+	return EventCityInjoined, json.RawMessage(`{"disclosed":true}`), nil
 }
 
 func expelUnit(state *State, actorID string, payload ExpelPayload) (string, json.RawMessage, error) {
