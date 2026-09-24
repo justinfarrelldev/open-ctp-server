@@ -18,6 +18,7 @@ const (
 	EffectSpecialTerraformTurns     = "special_terraform_turns"
 	EffectSpecialConvertCity        = "special_convert_city"
 	EffectSpecialCreateFranchise    = "special_create_franchise"
+	EffectFranchise                 = "franchise"
 	EffectSpecialInvestigateCity    = "special_investigate_city"
 	EffectSpecialPlantNuke          = "special_plant_nuke"
 	EffectSpecialBioTerror          = "special_bio_terror"
@@ -62,7 +63,7 @@ type CancelTerraformPayload struct {
 
 func isSpecialCommand(kind string) bool {
 	switch kind {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
 		return true
 	default:
 		return false
@@ -74,7 +75,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		return "", nil, err
 	}
 	switch command.Type {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise:
 		var payload SpecialActionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", nil, err
@@ -111,6 +112,8 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			return stealTechnology(state, unit, actorNation, targetNation, sources)
 		case CommandConvertCity:
 			return convertCity(state, unit, city, sources)
+		case CommandCreateFranchise:
+			return createFranchise(unit, city)
 		case CommandBioTerror, CommandNanoTerror, CommandPlague:
 			return cityTerror(state, unit, city, command.Type, sources)
 		default:
@@ -262,6 +265,26 @@ func specialTarget(state *State, actorID string, payload SpecialActionPayload) (
 		return nil, nil, nil, nil, errors.New("special action target is unavailable")
 	}
 	return unit, city, actorNation, targetNation, nil
+}
+
+func createFranchise(unit *Unit, city *City) (string, json.RawMessage, error) {
+	if !hasEffect(unit.Effects, EffectSpecialCreateFranchise) || hasCityFranchise(*city, unit.OwnerID) {
+		return "", nil, errors.New("special action is not authorized")
+	}
+	if err := spendSpecialMove(unit); err != nil {
+		return "", nil, err
+	}
+	city.Effects = append(city.Effects, Effect{ID: "franchise:" + unit.OwnerID, Kind: EffectFranchise})
+	return EventFranchiseCreated, json.RawMessage(`{"disclosed":true}`), nil
+}
+
+func hasCityFranchise(city City, ownerID string) bool {
+	for _, effect := range city.Effects {
+		if effect.Kind == EffectFranchise && effect.ID == "franchise:"+ownerID {
+			return true
+		}
+	}
+	return false
 }
 
 func slaveRaid(state *State, unit *Unit, city *City, commandType string, sources Sources) (string, json.RawMessage, error) {

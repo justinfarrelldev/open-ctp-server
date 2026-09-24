@@ -691,6 +691,15 @@ func combatActions(projection Projection, tiles map[string]TileProjection, attac
 	return actions
 }
 
+func cityHasFranchise(city CityProjection, ownerID string) bool {
+	for _, effect := range city.Effects {
+		if effect.Kind == engine.EffectFranchise && effect.ID == "franchise:"+ownerID {
+			return true
+		}
+	}
+	return false
+}
+
 func bombardActions(projection Projection, tiles map[string]TileProjection, attacker UnitProjection) []ActionProjection {
 	if attacker.TileID == "" || attacker.Movement < 1 || attacker.Ranged < 1 || attacker.BombardRange < 1 || attacker.BombRounds < 1 {
 		return nil
@@ -741,6 +750,9 @@ func specialActions(projection Projection, tiles map[string]TileProjection, citi
 		}
 		if hasEffect(unit.Effects, engine.EffectSpecialConvertCity) {
 			actions = append(actions, action(engine.CommandConvertCity, "convert-city", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
+		}
+		if hasEffect(unit.Effects, engine.EffectSpecialCreateFranchise) && !cityHasFranchise(city, unit.OwnerID) {
+			actions = append(actions, action(engine.CommandCreateFranchise, "create-franchise", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
 		}
 		if hasEffect(unit.Effects, engine.EffectSpecialBioTerror) {
 			actions = append(actions, action(engine.CommandBioTerror, "bio-terror", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))

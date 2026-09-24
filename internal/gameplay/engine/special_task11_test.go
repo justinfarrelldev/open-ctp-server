@@ -46,6 +46,23 @@ func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
 	}
 }
 
+func TestRetailCreateFranchiseMarksCityOnce(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = []Effect{{ID: "franchise", Kind: EffectSpecialCreateFranchise}}
+	next, events, err := task11Apply(t, state, CommandCreateFranchise, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Units[0].Movement != 3 || len(next.Cities[0].Effects) != 1 || next.Cities[0].Effects[0].Kind != EffectFranchise || len(events) != 1 || events[0].Type != EventFranchiseCreated || strings.Contains(string(events[0].Payload), "target-city") {
+		t.Fatalf("franchise outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
+	}
+
+	next, _, err = task11Apply(t, next, CommandCreateFranchise, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err == nil {
+		t.Fatalf("duplicate franchise accepted: %+v", next.Cities[0].Effects)
+	}
+}
+
 func TestRetailSlaveRaidsReducePopulationAndHonorProtection(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
