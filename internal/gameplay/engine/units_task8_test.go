@@ -78,6 +78,11 @@ func TestTask8MoveTerrainZOCAndVisibilityVectors(t *testing.T) {
 	if _, _, err := applyTask8(t, state, CommandMoveUnit, map[string]any{"unit_id": "land", "path": []string{"b", "e"}}); err == nil || !strings.Contains(err.Error(), ErrObstructed.Error()) {
 		t.Fatalf("ZOC path must be a generic obstruction, got %v", err)
 	}
+	state.Units[0].Effects = []Effect{{ID: "ignore-zoc", Kind: EffectIgnoreZOC}}
+	if _, _, err := applyTask8(t, state, CommandMoveUnit, map[string]any{"unit_id": "land", "path": []string{"b", "e"}}); err != nil {
+		t.Fatalf("ignore-ZOC unit was stopped by ZOC: %v", err)
+	}
+	state.Units[0].Effects = nil
 	if _, _, err := applyTask8(t, state, CommandMoveUnit, map[string]any{"unit_id": "land", "path": []string{"c"}}); err == nil {
 		t.Fatal("land unit entered ocean")
 	}

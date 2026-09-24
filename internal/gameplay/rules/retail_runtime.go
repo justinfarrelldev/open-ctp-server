@@ -339,6 +339,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "CanEntrench") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_entrench"), Kind: "can_entrench"})
 	}
+	if retailContainsString(unit.Flags, "IgnoreZOC") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("ignore_zoc"), Kind: "ignore_zoc"})
+	}
 	if retailContainsString(unit.Flags, "BonusAgainstMounted") {
 		if value := percentPoints(firstRetailUnitFloat(unit, "MountedBonus")); value > 0 {
 			effects = append(effects, RuntimeStarterEffect{ID: effectID("combat_defense_vs_mounted"), Kind: "combat_defense_vs_mounted_percent", Value: value})

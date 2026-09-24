@@ -92,7 +92,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("archer runtime = %+v ok=%v", archer, ok)
 	}
 	bomber, ok := runtime.Unit("UNIT_BOMBER")
-	if !ok || !runtimeUnitHasEffect(bomber, "no_fuel_then_crash") || !runtimeUnitHasEffect(bomber, "can_attack_air") || !runtimeUnitHasEffect(bomber, "can_attack_land") || !runtimeUnitHasEffect(bomber, "can_attack_sea") {
+	if !ok || !runtimeUnitHasEffect(bomber, "no_fuel_then_crash") || !runtimeUnitHasEffect(bomber, "ignore_zoc") || !runtimeUnitHasEffect(bomber, "can_attack_air") || !runtimeUnitHasEffect(bomber, "can_attack_land") || !runtimeUnitHasEffect(bomber, "can_attack_sea") {
 		t.Fatalf("bomber runtime = %+v ok=%v", bomber, ok)
 	}
 	pikemen, ok := runtime.Unit("UNIT_PIKEMEN")

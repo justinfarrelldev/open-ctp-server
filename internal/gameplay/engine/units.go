@@ -152,7 +152,7 @@ func unitCanFortify(unit Unit) bool {
 func unitHasRetailCapabilityMetadata(unit Unit) bool {
 	for _, effect := range unit.Effects {
 		switch effect.Kind {
-		case EffectCantCaptureCity, EffectNoFuelThenCrash, EffectCanAttackLand, EffectCanAttackSea, EffectCanAttackAir, EffectCanAttackSpace, EffectCanAttackUnderwater, EffectSubmarine, EffectWoodenShip,
+		case EffectCantCaptureCity, EffectNoFuelThenCrash, EffectIgnoreZOC, EffectCanAttackLand, EffectCanAttackSea, EffectCanAttackAir, EffectCanAttackSpace, EffectCanAttackUnderwater, EffectSubmarine, EffectWoodenShip,
 			EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns,
 			EffectSpecialConvertCity, EffectSpecialCreateFranchise, EffectSpecialInvestigateCity, EffectSpecialPlantNuke, EffectSpecialBioTerror, EffectSpecialNanoTerror, EffectSpecialPlague,
 			EffectSpecialAssassinateRuler, EffectSpecialSlaveRaid, EffectSpecialSettlerSlaveRaid, EffectSpecialUndergroundRailway, EffectSpecialInjoin, EffectSpecialReform,
@@ -205,7 +205,7 @@ func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *ru
 			return ErrObstructed
 		}
 		remaining -= cost
-		if inEnemyZOC(*state, runtime, actorID, to.ID, domains) && index != len(payload.Path)-1 {
+		if !moversIgnoreZOC(movers) && inEnemyZOC(*state, runtime, actorID, to.ID, domains) && index != len(payload.Path)-1 {
 			return ErrObstructed
 		}
 		from = to
@@ -591,6 +591,18 @@ func intersectDomains(left, right []string) []string {
 	}
 	return result
 }
+func moversIgnoreZOC(movers []*Unit) bool {
+	if len(movers) == 0 {
+		return false
+	}
+	for _, mover := range movers {
+		if !hasEffect(mover.Effects, EffectIgnoreZOC) {
+			return false
+		}
+	}
+	return true
+}
+
 func inEnemyZOC(state State, runtime *rules.RuntimeRules, actorID, tileID string, domains []string) bool {
 	tile, ok := tileByID(state, tileID)
 	if !ok || runtime == nil || !runtime.Movement.Configured || !runtime.Movement.ZOCStopsPath {
