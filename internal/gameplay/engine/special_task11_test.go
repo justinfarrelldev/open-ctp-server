@@ -27,6 +27,34 @@ func task11Apply(t *testing.T, state State, kind string, payload any) (State, []
 	return next, events, err
 }
 
+func TestRetailWatchfulCityHalvesSpecialSuccessChanceAndExpires(t *testing.T) {
+	city := City{ID: "target", Effects: []Effect{{ID: "watchful", Kind: EffectWatchful, Value: 2}}}
+	unitEffects := []Effect{{ID: "franchise", Kind: EffectSpecialCreateFranchise, Value: 75}}
+	if got := citySpecialActionChance(city, unitEffects, EffectSpecialCreateFranchise); got != 37 {
+		t.Fatalf("watchful chance = %d, want 37", got)
+	}
+	advanceTemporaryCityEffects(&city)
+	if got := effectValue(city.Effects, EffectWatchful); got != 1 {
+		t.Fatalf("watchful turns after first advance = %d, want 1", got)
+	}
+	advanceTemporaryCityEffects(&city)
+	if hasEffect(city.Effects, EffectWatchful) {
+		t.Fatalf("watchful effect did not expire: %+v", city.Effects)
+	}
+}
+
+func TestRetailSpecialActionAttemptsSetCityWatchful(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = []Effect{{ID: "franchise", Kind: EffectSpecialCreateFranchise, Value: 10}}
+	next, events, err := task11Apply(t, state, CommandCreateFranchise, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasEffect(next.Cities[0].Effects, EffectWatchful) || effectValue(next.Cities[0].Effects, EffectWatchful) != 7 || len(events) != 1 || events[0].Type != EventFranchiseFailed {
+		t.Fatalf("watchful franchise attempt city=%+v events=%+v", next.Cities[0], events)
+	}
+}
+
 func TestRetailSpecialDeathChanceRemovesActingUnitAfterResolvedActions(t *testing.T) {
 	for _, tc := range []struct {
 		name        string
@@ -445,7 +473,7 @@ func TestRetailCreateFranchiseMarksCityOnce(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if next.Units[0].Movement != 3 || len(next.Cities[0].Effects) != 1 || next.Cities[0].Effects[0].Kind != EffectFranchise || len(events) != 1 || events[0].Type != EventFranchiseCreated || strings.Contains(string(events[0].Payload), "target-city") {
+	if next.Units[0].Movement != 3 || !hasEffect(next.Cities[0].Effects, EffectFranchise) || !hasEffect(next.Cities[0].Effects, EffectWatchful) || len(events) != 1 || events[0].Type != EventFranchiseCreated || strings.Contains(string(events[0].Payload), "target-city") {
 		t.Fatalf("franchise outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
 	}
 
@@ -455,7 +483,7 @@ func TestRetailCreateFranchiseMarksCityOnce(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(failed.Cities[0].Effects) != 0 || failed.Units[0].Movement != 3 || len(failedEvents) != 1 || failedEvents[0].Type != EventFranchiseFailed {
+	if !hasEffect(failed.Cities[0].Effects, EffectWatchful) || failed.Units[0].Movement != 3 || len(failedEvents) != 1 || failedEvents[0].Type != EventFranchiseFailed {
 		t.Fatalf("chance-failed franchise outcome city=%+v unit=%+v events=%+v", failed.Cities[0], failed.Units[0], failedEvents)
 	}
 
