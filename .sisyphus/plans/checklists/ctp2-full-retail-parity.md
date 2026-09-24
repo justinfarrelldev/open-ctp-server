@@ -36,6 +36,7 @@
 - [x] Task 85: Retail create-park special actions clean polluted tiles and persist park overlays.
 - [x] Task 86: Retail assassinate-ruler special actions destabilize target nations.
 - [x] Task 87: Retail force fields block planted nukes.
+- [x] Task 88: Retail expel special actions displace adjacent enemy units.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
