@@ -38,6 +38,7 @@
 - [x] Task 87: Retail force fields block planted nukes.
 - [x] Task 88: Retail expel special actions displace adjacent enemy units.
 - [x] Task 89: Retail active-defense range stats are preserved in runtime, units, and projections.
+- [x] Task 90: Retail active-defense units can intercept bombardment.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
