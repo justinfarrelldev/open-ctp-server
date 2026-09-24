@@ -634,6 +634,9 @@ func convertCity(state *State, unit *Unit, city *City, sources Sources) (string,
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
 	}
+	if HasActiveWonderEffect(*state, city.OwnerID, EffectPreventConversionEmpire) {
+		return EventCityConversionFailed, json.RawMessage(`{"disclosed":true}`), nil
+	}
 	protection := effectValue(city.Effects, EffectPreventConversion)
 	if protection > 0 {
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))

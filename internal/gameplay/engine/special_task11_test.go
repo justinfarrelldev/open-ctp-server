@@ -357,6 +357,19 @@ func TestRetailConvertCityHonorsProtectionAndDisclosure(t *testing.T) {
 	}
 }
 
+func TestRetailPreventConversionEmpireWonderBlocksCityConversion(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = []Effect{{ID: "convert", Kind: EffectSpecialConvertCity}}
+	state.Wonders = []Wonder{{ID: "WONDER_GUTTENBERGS_BIBLE", OwnerID: "player-b", CityID: "target-city", Effects: []Effect{{ID: "prevent", Kind: EffectPreventConversionEmpire}}}}
+	next, events, err := task11Apply(t, state, CommandConvertCity, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Cities[0].OwnerID != "player-b" || len(events) != 1 || events[0].Type != EventCityConversionFailed {
+		t.Fatalf("conversion with empire prevention = city:%#v events:%#v", next.Cities[0], events)
+	}
+}
+
 func TestTask11EmbassySoothsayingAndDisclosureVectors(t *testing.T) {
 	state := task11State()
 	next, events, err := task11Apply(t, state, CommandEstablishEmbassy, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})

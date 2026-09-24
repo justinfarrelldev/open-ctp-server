@@ -6,6 +6,23 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
+func TestRetailReformCitiesWonderClearsOwnerCityCrimeAndInjunctions(t *testing.T) {
+	state := State{
+		Tiles: []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}, {ID: "tile-b", Terrain: TerrainPlains, Open: true}},
+		Cities: []City{
+			{ID: "wonder-city", OwnerID: "player-a", TileID: "tile-a", StoredProduction: 1, Queue: []ProductionItem{{ID: "WONDER_GUTTENBERGS_BIBLE", Kind: ProductionWonder, Cost: 1, Effects: []Effect{{ID: "reform", Kind: EffectReformCities}}}}},
+			{ID: "troubled-city", OwnerID: "player-a", TileID: "tile-b", CrimePercent: 80, Effects: []Effect{{ID: "injunction", Kind: EffectInjunction}}},
+		},
+	}
+	if err := completeProduction(&state, &state.Cities[0], nil); err != nil {
+		t.Fatal(err)
+	}
+	city, ok := cityByID(state, "troubled-city")
+	if !ok || city.CrimePercent != 0 || hasEffect(city.Effects, EffectInjunction) {
+		t.Fatalf("reformed city = %#v", city)
+	}
+}
+
 func TestRetailTemporaryFullHappinessWonderAddsExpiringCityMarkers(t *testing.T) {
 	state := fixtureState()
 	state.RecalculatedTurn = 0

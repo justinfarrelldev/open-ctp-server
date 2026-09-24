@@ -763,10 +763,32 @@ func applyWonderCompletionEffects(state *State, wonder Wonder) {
 			convertPollutedCitiesToParks(state, wonder.OwnerID, wonder.CityID, effect.Value)
 		case EffectTemporaryFullHappiness:
 			applyTemporaryFullHappiness(state, wonder.OwnerID, wonder.ID, effect.Value)
+		case EffectReformCities:
+			reformOwnerCities(state, wonder.OwnerID)
 		case EffectEmbassiesEverywhere:
 			removeWarsWithPlayer(state, wonder.OwnerID)
 		}
 	}
+}
+
+func reformOwnerCities(state *State, ownerID string) {
+	for index := range state.Cities {
+		if state.Cities[index].OwnerID != ownerID {
+			continue
+		}
+		state.Cities[index].CrimePercent = 0
+		state.Cities[index].Effects = removeEffectsByKind(state.Cities[index].Effects, EffectInjunction)
+	}
+}
+
+func removeEffectsByKind(effects []Effect, kind string) []Effect {
+	filtered := effects[:0]
+	for _, effect := range effects {
+		if effect.Kind != kind {
+			filtered = append(filtered, effect)
+		}
+	}
+	return filtered
 }
 
 func applyTemporaryFullHappiness(state *State, ownerID, sourceID string, turns int) {
