@@ -82,6 +82,7 @@
 - [x] Task 131: Franchise production loss is transferred to the franchise-owner nation each recalculation.
 - [x] Task 132: Government max science rates cap the trade/gold portion of research.
 - [x] Task 133: Sue special action supports the retail own-city franchise removal path and safe action projection.
+- [x] Task 134: Retail CanBeSued/CanBeExpelled target markers import and expel requires CanBeExpelled.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
