@@ -32,6 +32,7 @@
 - [x] Task 81: Retail slave-raid special actions execute with slavery protection checks.
 - [x] Task 82: Retail create-franchise special actions mark city franchise state.
 - [x] Task 83: Retail investigate-city special actions create private city reports.
+- [x] Task 84: Retail plant-nuke special actions execute with nuke protection checks.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
