@@ -75,6 +75,22 @@ func TestRetailBuildingMaxPopulationCapsFoodGrowth(t *testing.T) {
 	}
 }
 
+func TestRetailStarvationProtectionDelaysPopulationLoss(t *testing.T) {
+	city := City{ID: "city-a", Population: 2, Yields: Yield{Food: 0}}
+	advanceCityFood(&city, 0, 2)
+	if city.Population != 2 || city.StarvationTurns != 1 {
+		t.Fatalf("after first starvation city = %+v, want protected with one starvation turn recorded", city)
+	}
+	advanceCityFood(&city, 0, 2)
+	if city.Population != 2 || city.StarvationTurns != 2 {
+		t.Fatalf("after second starvation city = %+v, want protection limit reached", city)
+	}
+	advanceCityFood(&city, 0, 2)
+	if city.Population != 1 {
+		t.Fatalf("after third starvation population = %d, want 1", city.Population)
+	}
+}
+
 func TestRetailRuntimeTerrainYieldsDriveCityYield(t *testing.T) {
 	state := State{Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS"}}}
 	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}

@@ -153,8 +153,12 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("academy production effects = %+v ok=%v", academy, ok)
 	}
 	granaryEffects, ok := runtime.ProductionDefinition("IMPROVE_GRANARY")
-	if !ok || len(granaryEffects.Effects) != 1 || granaryEffects.Effects[0].Kind != "yield_food_percent" || granaryEffects.Effects[0].Value != 10 {
+	if !ok || !runtimeProductionHasEffectValue(granaryEffects, "yield_food_percent", 10) || !runtimeProductionHasEffectValue(granaryEffects, "starvation_protection", 2) {
 		t.Fatalf("granary production effects = %+v ok=%v", granaryEffects, ok)
+	}
+	foodSilo, ok := runtime.ProductionDefinition("IMPROVE_FOOD_SILO")
+	if !ok || !runtimeProductionHasEffectValue(foodSilo, "yield_food_percent", 15) || !runtimeProductionHasEffectValue(foodSilo, "starvation_protection", 5) {
+		t.Fatalf("food silo effects = %+v ok=%v", foodSilo, ok)
 	}
 	aqueduct, ok := runtime.ProductionDefinition("IMPROVE_AQUEDUCT")
 	if !ok || !runtimeProductionHasEffectValue(aqueduct, "max_population", 14) {

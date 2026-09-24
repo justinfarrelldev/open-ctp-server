@@ -22,6 +22,7 @@ const (
 	EffectYieldGold                  = "yield_gold"
 	EffectYieldGoldPerPopulation     = "yield_gold_per_population"
 	EffectMaxPopulation              = "max_population"
+	EffectStarvationProtection       = "starvation_protection"
 	EffectPollutionPercent           = "pollution_percent"
 	EffectPollutionPopulationPercent = "pollution_population_percent"
 	EffectPollutionProductionPercent = "pollution_production_percent"
@@ -292,7 +293,7 @@ func RecalculateRound(state State) (State, error) {
 		if err != nil {
 			return State{}, err
 		}
-		advanceCityFood(city, cityMaxPopulation(next, *city))
+		advanceCityFood(city, cityMaxPopulation(next, *city), cityStarvationProtection(next, *city))
 		if cityPollutionEnabled(runtime) {
 			applyCityPollution(&next, *city, runtimePollutionModel(runtime))
 		}
@@ -385,19 +386,27 @@ func signedPercentDelta(value, percent int) int {
 	return value * percent / 100
 }
 
-func advanceCityFood(city *City, maxPopulation int) {
+func advanceCityFood(city *City, maxPopulation int, starvationProtection int) {
 	if city.Population < 1 {
 		city.Population = 1
 	}
 	surplus := city.Yields.Food - cityFoodConsumption(city.Population)
 	city.StoredFood += surplus
 	if city.StoredFood < 0 {
+		if starvationProtection > 0 {
+			city.StarvationTurns++
+			if city.StarvationTurns <= starvationProtection {
+				city.StoredFood = 0
+				return
+			}
+		}
 		if city.Population > 1 {
 			city.Population--
 		}
 		city.StoredFood = 0
 		return
 	}
+	city.StarvationTurns = 0
 	for city.StoredFood >= cityFoodGrowthThreshold(city.Population) {
 		if maxPopulation > 0 && city.Population >= maxPopulation {
 			return
@@ -405,6 +414,16 @@ func advanceCityFood(city *City, maxPopulation int) {
 		city.StoredFood -= cityFoodGrowthThreshold(city.Population)
 		city.Population++
 	}
+}
+
+func cityStarvationProtection(state State, city City) int {
+	protection := 0
+	for _, effect := range cityEffects(state, city) {
+		if effect.Kind == EffectStarvationProtection && effect.Value > 0 {
+			protection += effect.Value
+		}
+	}
+	return protection
 }
 
 func cityMaxPopulation(state State, city City) int {
@@ -785,7 +804,7 @@ func validateEffects(effects []Effect) error {
 			return errors.New("effect id is required")
 		}
 		switch effect.Kind {
-		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldGoldPerPopulation, EffectMaxPopulation, EffectPollutionPercent, EffectPollutionPopulationPercent, EffectPollutionProductionPercent, EffectPollution, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectResearchPercent, EffectBonus, EffectCombatAttack, EffectCombatAttackLand, EffectCombatAttackSea, EffectCombatAttackAir, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
+		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldGoldPerPopulation, EffectMaxPopulation, EffectStarvationProtection, EffectPollutionPercent, EffectPollutionPopulationPercent, EffectPollutionProductionPercent, EffectPollution, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectResearchPercent, EffectBonus, EffectCombatAttack, EffectCombatAttackLand, EffectCombatAttackSea, EffectCombatAttackAir, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
 		default:
 			return fmt.Errorf("unsupported effect kind %q", effect.Kind)
 		}
