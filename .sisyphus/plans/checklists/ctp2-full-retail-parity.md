@@ -76,6 +76,7 @@
 - [x] Task 125: Investigate-city special actions honor deterministic effect success chances.
 - [x] Task 126: Underground-railway special actions honor deterministic effect success chances.
 - [x] Task 127: Franchise markers reduce target city production by the retail 10% loss.
+- [x] Task 128: Grouped retail special-action death chances import and resolve deterministically.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
