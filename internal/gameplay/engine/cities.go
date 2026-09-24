@@ -1104,6 +1104,9 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 			yield.Victory += effect.Value
 		}
 	}
+	if brokeragePercent := brokerageGoldPercentBonus(state, city); brokeragePercent != 0 {
+		yield.Gold += signedYieldPercentDelta(yield.Gold, brokeragePercent)
+	}
 	if hasTelevision && goldPerTelevision > 0 {
 		yield.Gold += goldPerTelevision
 	}
@@ -1125,6 +1128,33 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 		yield.Gold = 0
 	}
 	return yield, nil
+}
+
+func brokerageGoldPercentBonus(state State, city City) int {
+	increasePercent := ownerWonderEffectSum(state, city.OwnerID, EffectIncreaseBrokerages)
+	if increasePercent == 0 {
+		return 0
+	}
+	bonusPercent := 0
+	for _, building := range city.Buildings {
+		if isObsoleteForPlayer(state, city.OwnerID, city.Obsolete, building.ObsoletedBy) {
+			continue
+		}
+		brokerage := false
+		commercePercent := 0
+		for _, effect := range building.Effects {
+			switch effect.Kind {
+			case EffectBrokerage:
+				brokerage = true
+			case EffectYieldGoldPercent:
+				commercePercent += effect.Value
+			}
+		}
+		if brokerage && commercePercent != 0 {
+			bonusPercent += commercePercent * increasePercent / 100
+		}
+	}
+	return bonusPercent
 }
 
 func tradeRouteWonderGold(state State, city City) int {

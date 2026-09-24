@@ -32,6 +32,25 @@ func task10Apply(t *testing.T, state State, actor, kind string, payload any) Sta
 	return next
 }
 
+func TestRetailIncreaseBrokeragesAmplifiesBrokerageCommerce(t *testing.T) {
+	state := fixtureState()
+	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Buildings: []Building{{ID: "IMPROVE_BROKERAGE", Effects: []Effect{{ID: "commerce", Kind: EffectYieldGoldPercent, Value: 20}, {ID: "brokerage", Kind: EffectBrokerage}}}}}}
+
+	withoutWonder, err := cityYield(state, state.Cities[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Wonders = []Wonder{{ID: "WONDER_ELECTRONIC_COMMERCE_ACT", OwnerID: "player-a", CityID: "city-a", Scope: "nation", Effects: []Effect{{ID: "brokerages", Kind: EffectIncreaseBrokerages, Value: 50}}}}
+	withWonder, err := cityYield(state, state.Cities[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if withoutWonder.Gold != 2 || withWonder.Gold != 3 {
+		t.Fatalf("brokerage commerce gold = %d/%d, want 2/3", withoutWonder.Gold, withWonder.Gold)
+	}
+}
+
 func TestRetailSettlerEffectsSeedFoundedCitySizeAndBuildings(t *testing.T) {
 	state := task10State()
 	state.Units[0].Effects = []Effect{{ID: "settle", Kind: EffectSettler}, {ID: "settle-size", Kind: EffectSettleSize, Value: 3}, {ID: "IMPROVE_GRANARY", Kind: EffectSettleBuilding}}
