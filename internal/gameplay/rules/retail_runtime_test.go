@@ -202,8 +202,16 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("courthouse effects = %+v ok=%v", courthouse, ok)
 	}
 	cityWalls, ok := runtime.ProductionDefinition("IMPROVE_CITY_WALLS")
-	if !ok || !runtimeProductionHasEffectValue(cityWalls, "combat_defense", 15) || !runtimeProductionHasEffectValue(cityWalls, "city_walls", 15) {
+	if !ok || !runtimeProductionHasEffectValue(cityWalls, "combat_defense", 15) || !runtimeProductionHasEffectValue(cityWalls, "city_walls", 15) || !runtimeProductionHasEffectValue(cityWalls, "prevent_conversion_percent", 50) || !runtimeProductionHasEffectValue(cityWalls, "prevent_slavery_percent", 50) {
 		t.Fatalf("city walls effects = %+v ok=%v", cityWalls, ok)
+	}
+	missiles, ok := runtime.ProductionDefinition("IMPROVE_ANTI_BALLISTIC_MISSILES")
+	if !ok || !runtimeProductionHasEffect(missiles, "protect_from_nukes") {
+		t.Fatalf("missile protection effects = %+v ok=%v", missiles, ok)
+	}
+	forceField, ok := runtime.ProductionDefinition("IMPROVE_FORCEFIELD")
+	if !ok || !runtimeProductionHasEffect(forceField, "force_field") {
+		t.Fatalf("force field effects = %+v ok=%v", forceField, ok)
 	}
 	ballista, ok := runtime.ProductionDefinition("IMPROVE_BALLISTA_TOWERS")
 	if !ok || !runtimeProductionHasEffectValue(ballista, "combat_attack_land", 20) {

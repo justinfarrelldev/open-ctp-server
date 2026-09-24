@@ -127,6 +127,24 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 	if retailContainsString(building.Flags, "Airport") {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":airport", Kind: "airport"})
 	}
+	if retailContainsString(building.Flags, "ProtectFromNukes") {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":protect-from-nukes", Kind: "protect_from_nukes"})
+	}
+	if value := percentPoints(building.FloatValues["ProtectFromBioAgents"]); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":protect-from-bio-agents", Kind: "protect_from_bio_agents_percent", Value: value})
+	}
+	if value := percentPoints(building.FloatValues["ProtectFromNanoVirus"]); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":protect-from-nano-virus", Kind: "protect_from_nano_virus_percent", Value: value})
+	}
+	if value := percentPoints(building.FloatValues["PreventConversion"]); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":prevent-conversion", Kind: "prevent_conversion_percent", Value: value})
+	}
+	if value := percentPoints(building.FloatValues["PreventSlavery"]); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":prevent-slavery", Kind: "prevent_slavery_percent", Value: value})
+	}
+	if retailContainsString(building.Flags, "ForceField") {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":force-field", Kind: "force_field"})
+	}
 	if value := retailPercentFieldPoints(building.FloatValues["DefendersPercent"]); value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":defenders-percent", Kind: "combat_defense", Value: value})
 		if retailContainsString(building.Flags, "CityWalls") {
