@@ -10,13 +10,29 @@ import (
 )
 
 const (
-	EffectSpecialEmbassy        = "special_embassy"
-	EffectSpecialSoothsaying    = "special_soothsaying"
-	EffectSpecialSteal          = "special_steal"
-	EffectSpecialCapture        = "special_capture"
-	EffectSpecialTerraform      = "special_terraform"
-	EffectSpecialTerraformTurns = "special_terraform_turns"
-	EffectSoothsaying           = "soothsaying"
+	EffectSpecialEmbassy            = "special_embassy"
+	EffectSpecialSoothsaying        = "special_soothsaying"
+	EffectSpecialSteal              = "special_steal"
+	EffectSpecialCapture            = "special_capture"
+	EffectSpecialTerraform          = "special_terraform"
+	EffectSpecialTerraformTurns     = "special_terraform_turns"
+	EffectSpecialConvertCity        = "special_convert_city"
+	EffectSpecialCreateFranchise    = "special_create_franchise"
+	EffectSpecialInvestigateCity    = "special_investigate_city"
+	EffectSpecialPlantNuke          = "special_plant_nuke"
+	EffectSpecialBioTerror          = "special_bio_terror"
+	EffectSpecialNanoTerror         = "special_nano_terror"
+	EffectSpecialPlague             = "special_plague"
+	EffectSpecialAssassinateRuler   = "special_assassinate_ruler"
+	EffectSpecialSlaveRaid          = "special_slave_raid"
+	EffectSpecialSettlerSlaveRaid   = "special_settler_slave_raid"
+	EffectSpecialUndergroundRailway = "special_underground_railway"
+	EffectSpecialInjoin             = "special_injoin"
+	EffectSpecialReform             = "special_reform"
+	EffectSpecialCreatePark         = "special_create_park"
+	EffectSpecialExpel              = "special_expel"
+	EffectSpecialSue                = "special_sue"
+	EffectSoothsaying               = "soothsaying"
 )
 
 type SpecialActionPayload struct {

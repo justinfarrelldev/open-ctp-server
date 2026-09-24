@@ -344,6 +344,39 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if len(unit.FieldsByKey("CanSoothsay")) > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_soothsaying"), Kind: "special_soothsaying"})
 	}
+	for _, special := range []struct {
+		field string
+		kind  string
+	}{
+		{"ConvertCities", "special_convert_city"},
+		{"CreateFranchise", "special_create_franchise"},
+		{"InvestigateCity", "special_investigate_city"},
+		{"PlantNuke", "special_plant_nuke"},
+		{"BioTerror", "special_bio_terror"},
+		{"NanoTerror", "special_nano_terror"},
+		{"Plague", "special_plague"},
+		{"AssasinateRuler", "special_assassinate_ruler"},
+		{"SlaveRaids", "special_slave_raid"},
+		{"SettlerSlaveRaids", "special_settler_slave_raid"},
+		{"UndergroundRailway", "special_underground_railway"},
+		{"CanInjoin", "special_injoin"},
+		{"CanReform", "special_reform"},
+		{"CreateParks", "special_create_park"},
+	} {
+		if fields := unit.FieldsByKey(special.field); len(fields) > 0 {
+			chance := percentPoints(retailRawFieldFloat(fields[0], "Chance"))
+			if chance <= 0 {
+				chance = 100
+			}
+			effects = append(effects, RuntimeStarterEffect{ID: effectID(special.kind), Kind: special.kind, Value: chance})
+		}
+	}
+	if retailContainsString(unit.Flags, "CanExpel") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_expel"), Kind: "special_expel"})
+	}
+	if retailContainsString(unit.Flags, "CanSue") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_sue"), Kind: "special_sue"})
+	}
 	if fields := unit.FieldsByKey("StealTechnology"); len(fields) > 0 {
 		chance := percentPoints(retailRawFieldFloat(fields[0], "RandomChance"))
 		if chance <= 0 {
