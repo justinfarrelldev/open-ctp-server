@@ -48,6 +48,19 @@ func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
 	}
 }
 
+func TestRetailSueCityAppliesLawsuit(t *testing.T) {
+	state := task11State()
+	state.Cities[0].StoredProduction = 7
+	state.Units[0].Effects = []Effect{{ID: "sue", Kind: EffectSpecialSue}}
+	next, events, err := task11Apply(t, state, CommandSue, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Cities[0].StoredProduction != 0 || !hasEffect(next.Cities[0].Effects, EffectLawsuit) || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventCitySued {
+		t.Fatalf("sue outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
+	}
+}
+
 func TestRetailUndergroundRailwayFreesPopulation(t *testing.T) {
 	state := task11State()
 	state.Cities[0].Population = 4
