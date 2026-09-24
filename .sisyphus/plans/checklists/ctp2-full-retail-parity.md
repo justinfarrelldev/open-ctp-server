@@ -25,6 +25,8 @@
 - [x] Task 74: Retail CanPillage units can pillage completed improvements.
 - [x] Task 75: Retail BuildingRemovesAPop units reduce producing city population.
 - [x] Task 76: Population-consuming unit production requires spare population.
+- [x] Task 77: Retail bombard range/round stats are preserved on produced units and owner projections.
+- [x] Task 78: Retail ranged units can execute deterministic bombard actions against visible targets.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
