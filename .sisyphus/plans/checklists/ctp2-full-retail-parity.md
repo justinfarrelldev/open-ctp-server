@@ -60,6 +60,7 @@
 - [x] Task 109: Retail eliminate-nukes wonder effects disarm nations and remove nuke-capable units.
 - [x] Task 110: Retail protect-from-barbarians wonder effects block barbarian combat.
 - [x] Task 111: Retail trade-route wonder gold applies to water and international trade routes.
+- [x] Task 112: Retail active-defense bombard interception resolves multiple eligible interceptors deterministically.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
