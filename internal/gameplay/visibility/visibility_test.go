@@ -30,6 +30,30 @@ func fixtureState() engine.State {
 	}
 }
 
+func TestRetailEmbassiesEverywhereProjectionHonorsCloseEmbassies(t *testing.T) {
+	state := fixtureState()
+	state.Nations = []engine.Nation{{ID: "a"}, {ID: "b"}}
+	state.Cities = append(state.Cities, engine.City{ID: "home-city", OwnerID: "a", TileID: "0,0"})
+	state.Wonders = []engine.Wonder{{ID: "WONDER_GLOBAL_SURVEILLANCE_CENTER", OwnerID: "a", CityID: "home-city", Scope: "nation", Effects: []engine.Effect{{ID: "everywhere", Kind: engine.EffectEmbassiesEverywhere}}}}
+
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !containsString(projection.EmbassyPlayerIDs, "b") {
+		t.Fatalf("embassies-everywhere projection = %#v", projection.EmbassyPlayerIDs)
+	}
+
+	state.Wonders = append(state.Wonders, engine.Wonder{ID: "WONDER_CLOSE", OwnerID: "b", CityID: "HIDDEN_CITY_TOKEN", Effects: []engine.Effect{{ID: "close", Kind: engine.EffectCloseEmbassies}}})
+	projection, err = Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if containsString(projection.EmbassyPlayerIDs, "b") {
+		t.Fatalf("close embassies target still projected as embassy: %#v", projection.EmbassyPlayerIDs)
+	}
+}
+
 func TestRetailGlobalRadarRevealsAllTilesAndUnits(t *testing.T) {
 	state := fixtureState()
 	state.Cities = append(state.Cities, engine.City{ID: "radar-city", OwnerID: "a", TileID: "0,0"})

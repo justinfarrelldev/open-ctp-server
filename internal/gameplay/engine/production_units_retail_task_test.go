@@ -6,6 +6,28 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
+func TestRetailCloseEmbassiesWonderRemovesForeignEmbassiesAndWars(t *testing.T) {
+	state := State{
+		Tiles:   []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}},
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}, {ID: "player-b", NationID: "nation-b"}, {ID: "player-c", NationID: "nation-c"}},
+		Nations: []Nation{{ID: "nation-a", Embassies: []string{"nation-b"}}, {ID: "nation-b", Embassies: []string{"nation-a"}}, {ID: "nation-c", Embassies: []string{"nation-a"}}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", StoredProduction: 1, Queue: []ProductionItem{{ID: "WONDER_CLOSE", Kind: ProductionWonder, Cost: 1, Effects: []Effect{{ID: "close", Kind: EffectCloseEmbassies}}}}}},
+		Policy:  TurnPolicyState{Wars: []TurnPolicyWar{{A: "player-a", B: "player-b"}, {A: "player-b", B: "player-c"}}},
+	}
+	if err := completeProduction(&state, &state.Cities[0], nil); err != nil {
+		t.Fatal(err)
+	}
+	if containsString(state.Nations[1].Embassies, "nation-a") || containsString(state.Nations[2].Embassies, "nation-a") {
+		t.Fatalf("foreign embassies with close-embassy owner remain: %#v", state.Nations)
+	}
+	if !containsString(state.Nations[0].Embassies, "nation-b") {
+		t.Fatalf("owner's outbound embassies should remain explicit: %#v", state.Nations[0].Embassies)
+	}
+	if len(state.Policy.Wars) != 1 || state.Policy.Wars[0].A != "player-b" || state.Policy.Wars[0].B != "player-c" {
+		t.Fatalf("wars after close embassies = %#v", state.Policy.Wars)
+	}
+}
+
 func TestRetailIncreaseHPWonderRaisesExistingAndFutureUnitHealth(t *testing.T) {
 	state := State{
 		Phase:   PhaseState{Turn: 1},

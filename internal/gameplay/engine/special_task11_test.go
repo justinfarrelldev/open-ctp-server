@@ -27,6 +27,21 @@ func task11Apply(t *testing.T, state State, kind string, payload any) (State, []
 	return next, events, err
 }
 
+func TestRetailEmbassyWonderEffectsBlockRedundantEmbassyActions(t *testing.T) {
+	state := task11State()
+	state.Wonders = []Wonder{{ID: "WONDER_CLOSE", OwnerID: "player-b", CityID: "target-city", Effects: []Effect{{ID: "close", Kind: EffectCloseEmbassies}}}}
+	if _, _, err := task11Apply(t, state, CommandEstablishEmbassy, SpecialActionPayload{UnitID: "agent", CityID: "target-city"}); err == nil || !strings.Contains(err.Error(), "special action") {
+		t.Fatalf("close-embassies target allowed embassy err=%v", err)
+	}
+
+	state = task11State()
+	state.Cities = append(state.Cities, City{ID: "home-city", OwnerID: "player-a", TileID: "a"})
+	state.Wonders = []Wonder{{ID: "WONDER_GLOBAL_SURVEILLANCE_CENTER", OwnerID: "player-a", CityID: "home-city", Effects: []Effect{{ID: "everywhere", Kind: EffectEmbassiesEverywhere}}}}
+	if _, _, err := task11Apply(t, state, CommandEstablishEmbassy, SpecialActionPayload{UnitID: "agent", CityID: "target-city"}); err == nil || !strings.Contains(err.Error(), "special action") {
+		t.Fatalf("embassies-everywhere owner allowed redundant embassy err=%v", err)
+	}
+}
+
 func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
 	state := task11State()
 	state.Tiles[0].OwnerID = "player-b"

@@ -213,11 +213,9 @@ func Project(state engine.State, playerID string) (Projection, error) {
 			result.Research = researchProjection(state, nation)
 			result.Diplomacy = diplomacyProjection(state, playerID, nation)
 			result.CityReports = cloneCityReports(nation.CityReports)
-			for _, embassyNationID := range nation.Embassies {
-				for _, embassyPlayer := range state.Players {
-					if embassyPlayer.NationID == embassyNationID {
-						result.EmbassyPlayerIDs = append(result.EmbassyPlayerIDs, embassyPlayer.ID)
-					}
+			for _, embassyPlayer := range state.Players {
+				if embassyPlayer.ID != playerID && engine.HasEffectiveEmbassyWith(state, playerID, embassyPlayer.ID) {
+					result.EmbassyPlayerIDs = append(result.EmbassyPlayerIDs, embassyPlayer.ID)
 				}
 			}
 		}

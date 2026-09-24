@@ -634,7 +634,7 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 func ownerWonderEffectSum(state State, ownerID, kind string) int {
 	total := 0
 	for _, wonder := range state.Wonders {
-		if wonder.Destroyed || (wonder.OwnerID != ownerID && wonder.Scope != "global") {
+		if !wonderAppliesToPlayer(state, wonder, ownerID) {
 			continue
 		}
 		for _, effect := range wonder.Effects {
@@ -644,6 +644,39 @@ func ownerWonderEffectSum(state State, ownerID, kind string) int {
 		}
 	}
 	return total
+}
+
+// HasActiveWonderEffect reports whether a player is affected by an active wonder marker.
+func HasActiveWonderEffect(state State, playerID, kind string) bool {
+	for _, wonder := range state.Wonders {
+		if !wonderAppliesToPlayer(state, wonder, playerID) {
+			continue
+		}
+		for _, effect := range wonder.Effects {
+			if effect.Kind == kind {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func wonderAppliesToPlayer(state State, wonder Wonder, playerID string) bool {
+	return !wonder.Destroyed && (wonder.OwnerID == playerID || wonder.Scope == "global") && !isObsoleteForPlayer(state, wonder.OwnerID, nil, wonder.ObsoletedBy)
+}
+
+// HasEffectiveEmbassyWith applies retail embassy wonder modifiers in addition to explicit embassies.
+func HasEffectiveEmbassyWith(state State, actorPlayerID, targetPlayerID string) bool {
+	if actorPlayerID == "" || targetPlayerID == "" || actorPlayerID == targetPlayerID || HasActiveWonderEffect(state, targetPlayerID, EffectCloseEmbassies) {
+		return false
+	}
+	if HasActiveWonderEffect(state, actorPlayerID, EffectEmbassiesEverywhere) {
+		return true
+	}
+	actorNationID := nationForPlayer(state, actorPlayerID)
+	targetNationID := nationForPlayer(state, targetPlayerID)
+	actorNation := nationForID(&state, actorNationID)
+	return actorNation != nil && targetNationID != "" && containsString(actorNation.Embassies, targetNationID)
 }
 
 func applyWonderCompletionEffects(state *State, wonder Wonder) {
@@ -663,8 +696,37 @@ func applyWonderCompletionEffects(state *State, wonder Wonder) {
 				state.Units[index].Health += effect.Value
 				state.Units[index].MaxHealth += effect.Value
 			}
+		case EffectCloseEmbassies:
+			closeForeignEmbassiesWithOwner(state, wonder.OwnerID)
+			removeWarsWithPlayer(state, wonder.OwnerID)
+		case EffectEmbassiesEverywhere:
+			removeWarsWithPlayer(state, wonder.OwnerID)
 		}
 	}
+}
+
+func closeForeignEmbassiesWithOwner(state *State, ownerID string) {
+	ownerNationID := nationForPlayer(*state, ownerID)
+	if ownerNationID == "" {
+		return
+	}
+	for index := range state.Nations {
+		if state.Nations[index].ID == ownerNationID {
+			continue
+		}
+		state.Nations[index].Embassies = removeString(state.Nations[index].Embassies, ownerNationID)
+	}
+}
+
+func removeWarsWithPlayer(state *State, playerID string) {
+	wars := state.Policy.Wars[:0]
+	for _, war := range state.Policy.Wars {
+		if war.A == playerID || war.B == playerID {
+			continue
+		}
+		wars = append(wars, war)
+	}
+	state.Policy.Wars = wars
 }
 
 func completeUnitProduction(state *State, city *City, item ProductionItem, runtime *rules.RuntimeRules) error {

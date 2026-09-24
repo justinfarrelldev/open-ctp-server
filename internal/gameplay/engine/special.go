@@ -100,7 +100,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		}
 		switch command.Type {
 		case CommandEstablishEmbassy:
-			if !hasEffect(unit.Effects, EffectSpecialEmbassy) || containsString(actorNation.Embassies, targetNation.ID) {
+			if !hasEffect(unit.Effects, EffectSpecialEmbassy) || HasActiveWonderEffect(*state, city.OwnerID, EffectCloseEmbassies) || HasEffectiveEmbassyWith(*state, command.ActorPlayerID, city.OwnerID) {
 				return "", nil, errors.New("special action is not authorized")
 			}
 			if err := spendSpecialMove(unit); err != nil {
