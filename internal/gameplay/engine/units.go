@@ -373,7 +373,7 @@ func validateUnitState(state State) error {
 		}
 	}
 	for _, unit := range state.Units {
-		if unit.ID == "" || unit.OwnerID == "" || (unit.Domain != "" && !supportedDomain(unit.Domain)) || unit.Movement < 0 || unit.Fuel < 0 || unit.MaxFuel < 0 || (unit.MaxFuel == 0 && unit.Fuel != 0) || (unit.MaxFuel > 0 && unit.Fuel > unit.MaxFuel) || unit.CargoCapacity < 0 || unit.BombardRange < 0 || unit.BombRounds < 0 || unit.ActiveDefenseRange < 0 || unit.VisibilityRange < 0 {
+		if unit.ID == "" || unit.OwnerID == "" || (unit.Domain != "" && !supportedDomain(unit.Domain)) || unit.Movement < 0 || unit.Fuel < 0 || unit.MaxFuel < 0 || (unit.MaxFuel == 0 && unit.Fuel != 0) || (unit.MaxFuel > 0 && unit.Fuel > unit.MaxFuel) || unit.CargoCapacity < 0 || unit.Upkeep < 0 || unit.BombardRange < 0 || unit.BombRounds < 0 || unit.ActiveDefenseRange < 0 || unit.VisibilityRange < 0 {
 			return errors.New("unit capability is invalid")
 		}
 		if unit.TransportID != "" {

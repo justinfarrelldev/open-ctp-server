@@ -194,6 +194,7 @@ type Unit struct {
 	MaxFuel            int      `json:"max_fuel,omitempty"`
 	CargoCapacity      int      `json:"cargo_capacity,omitempty"`
 	CargoDomains       []string `json:"cargo_domains,omitempty"`
+	Upkeep             int      `json:"upkeep,omitempty"`
 	ZOC                bool     `json:"zoc,omitempty"`
 	Fortified          bool     `json:"fortified,omitempty"`
 	Effects            []Effect `json:"effects,omitempty"`

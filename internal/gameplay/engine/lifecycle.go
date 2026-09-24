@@ -396,11 +396,25 @@ func researchRate(state State, nation Nation) int {
 			cityResearch += cityRate
 		}
 	}
+	cityResearch -= unitUpkeepForNation(state, nation.ID)
+	if cityResearch < 0 {
+		cityResearch = 0
+	}
 	rate += cityResearch + signedYieldPercentDelta(cityResearch, nationResearchPercent) + nationResearchFlat
 	if rate < 0 {
 		return 0
 	}
 	return rate
+}
+
+func unitUpkeepForNation(state State, nationID string) int {
+	upkeep := 0
+	for _, unit := range state.Units {
+		if nationForPlayer(state, unit.OwnerID) == nationID {
+			upkeep += unit.Upkeep
+		}
+	}
+	return upkeep
 }
 
 func cityResearchEffects(state State, city City) []Effect {

@@ -648,6 +648,7 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 		MaxFuel:            definition.MaxFuel,
 		CargoCapacity:      definition.TransportCapacity,
 		CargoDomains:       append([]string(nil), definition.CargoDomains...),
+		Upkeep:             definition.Upkeep,
 		ZOC:                definition.ZOC,
 		Effects:            runtimeUnitEffects(definition),
 		Attack:             definition.Attack,
