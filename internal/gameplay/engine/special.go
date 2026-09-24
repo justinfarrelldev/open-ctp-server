@@ -123,7 +123,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			city.Effects = append(city.Effects, Effect{ID: "soothsaying:" + unit.ID, Kind: EffectSoothsaying})
 			return EventSoothsayingApplied, json.RawMessage(`{"disclosed":true}`), nil
 		case CommandStealTechnology:
-			return stealTechnology(state, unit, actorNation, targetNation, sources)
+			return stealTechnology(state, unit, city, actorNation, targetNation, sources)
 		case CommandConvertCity:
 			return convertCity(state, unit, city, sources)
 		case CommandCreateFranchise:
@@ -649,7 +649,20 @@ func convertCity(state *State, unit *Unit, city *City, sources Sources) (string,
 	return EventCityConverted, json.RawMessage(`{"disclosed":true}`), nil
 }
 
-func stealTechnology(state *State, unit *Unit, actor, target *Nation, sources Sources) (string, json.RawMessage, error) {
+func stoppedBySpiesEverywhere(state *State, unit *Unit, city *City, sources Sources) bool {
+	if !HasActiveWonderEffect(*state, city.OwnerID, EffectSpiesEverywhere) {
+		return false
+	}
+	next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+	setRNG(state, RNGDomainSpecialAction, next)
+	if int(roll%100) >= 50 {
+		return false
+	}
+	removeUnitAndCargo(state, unit.ID)
+	return true
+}
+
+func stealTechnology(state *State, unit *Unit, city *City, actor, target *Nation, sources Sources) (string, json.RawMessage, error) {
 	chance := effectValue(unit.Effects, EffectSpecialSteal)
 	if chance < 0 || chance > 100 {
 		return "", nil, errors.New("special action is not authorized")
@@ -666,6 +679,9 @@ func stealTechnology(state *State, unit *Unit, actor, target *Nation, sources So
 	}
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
+	}
+	if stoppedBySpiesEverywhere(state, unit, city, sources) {
+		return EventTechnologyFailed, json.RawMessage(`{"disclosed":true}`), nil
 	}
 	next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
 	setRNG(state, RNGDomainSpecialAction, next)

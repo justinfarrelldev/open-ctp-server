@@ -394,6 +394,19 @@ func TestTask11EmbassySoothsayingAndDisclosureVectors(t *testing.T) {
 	}
 }
 
+func TestRetailSpiesEverywhereStopsTechnologyTheftAndKillsAgent(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = []Effect{{ID: "steal", Kind: EffectSpecialSteal, Value: 100}}
+	state.Wonders = []Wonder{{ID: "WONDER_THE_AGENCY", OwnerID: "player-b", CityID: "target-city", Effects: []Effect{{ID: "spies", Kind: EffectSpiesEverywhere}}}}
+	next, events, err := task11Apply(t, state, CommandStealTechnology, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := unitByID(next, "agent"); ok || len(events) != 1 || events[0].Type != EventTechnologyFailed || containsString(next.Nations[0].Advances, "alpha") || containsString(next.Nations[0].Advances, "zeta") {
+		t.Fatalf("spies-everywhere theft result units=%#v nations=%#v events=%#v", next.Units, next.Nations, events)
+	}
+}
+
 func TestTask11StealTechnologySortedRNGFailureCaptureAndDisclosure(t *testing.T) {
 	state := task11State()
 	next, events, err := task11Apply(t, state, CommandStealTechnology, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
