@@ -515,6 +515,26 @@ func TestTask12ProjectEventExposesStableEnvelopeOnly(t *testing.T) {
 	}
 }
 
+func TestRetailSueFranchiseActionProjectsForOwnFranchisedCity(t *testing.T) {
+	state := fixtureState()
+	state.Tiles = []engine.Tile{{ID: "a", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "b", X: 1, Y: 0, Terrain: engine.TerrainPlains, Open: true}}
+	state.Cities = []engine.City{{ID: "city-a", OwnerID: "a", TileID: "b", Effects: []engine.Effect{{ID: "franchise:b", Kind: engine.EffectFranchise}}}}
+	state.Units = []engine.Unit{{ID: "lawyer", OwnerID: "a", TileID: "a", Movement: 1, Effects: []engine.Effect{{ID: "sue", Kind: engine.EffectSpecialSue}}}}
+	state.Phase.ActivePlayerOrder = []string{"a", "b"}
+	state.Phase.ActivePlayerIndex = 0
+	state, err := Update(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasAction(projection.LegalActions, engine.CommandSue) {
+		t.Fatalf("sue franchise action missing from %#v", projection.LegalActions)
+	}
+}
+
 func TestTerrainActionsUseRetailAIImprovementListOrder(t *testing.T) {
 	projection := Projection{
 		Diplomacy: &DiplomacyProjection{PublicWorks: 10},

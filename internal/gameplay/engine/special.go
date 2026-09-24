@@ -105,7 +105,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", nil, err
 		}
-		unit, city, actorNation, targetNation, err := specialTarget(state, command.ActorPlayerID, payload)
+		unit, city, actorNation, targetNation, err := specialTarget(state, command.ActorPlayerID, payload, command.Type == CommandSue)
 		if err != nil {
 			return "", nil, err
 		}
@@ -152,7 +152,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		case CommandUndergroundRailway:
 			return undergroundRailway(state, unit, city, actorNation, sources)
 		case CommandSue:
-			return sueCity(unit, city)
+			return sueCity(unit, city, command.ActorPlayerID)
 		case CommandBioTerror, CommandNanoTerror, CommandPlague:
 			return cityTerror(state, unit, city, command.Type, sources)
 		default:
@@ -290,7 +290,7 @@ func terrainImprovementAllowed(state State, runtime *rules.RuntimeRules, definit
 	return true
 }
 
-func specialTarget(state *State, actorID string, payload SpecialActionPayload) (*Unit, *City, *Nation, *Nation, error) {
+func specialTarget(state *State, actorID string, payload SpecialActionPayload, allowOwnCity bool) (*Unit, *City, *Nation, *Nation, error) {
 	unit, err := ownedUnit(state, actorID, payload.UnitID)
 	if err != nil {
 		return nil, nil, nil, nil, errors.New("special action is not authorized")
@@ -302,7 +302,7 @@ func specialTarget(state *State, actorID string, payload SpecialActionPayload) (
 			break
 		}
 	}
-	if city == nil || city.OwnerID == actorID {
+	if city == nil || (!allowOwnCity && city.OwnerID == actorID) {
 		return nil, nil, nil, nil, errors.New("special action target is unavailable")
 	}
 	unitTile, ok := tileByID(*state, unit.TileID)
@@ -318,8 +318,21 @@ func specialTarget(state *State, actorID string, payload SpecialActionPayload) (
 	return unit, city, actorNation, targetNation, nil
 }
 
-func sueCity(unit *Unit, city *City) (string, json.RawMessage, error) {
-	if !hasEffect(unit.Effects, EffectSpecialSue) || hasEffect(city.Effects, EffectLawsuit) {
+func sueCity(unit *Unit, city *City, actorID string) (string, json.RawMessage, error) {
+	if !hasEffect(unit.Effects, EffectSpecialSue) {
+		return "", nil, errors.New("special action is not authorized")
+	}
+	if city.OwnerID == actorID {
+		if !hasExternalFranchise(*city, actorID) {
+			return "", nil, errors.New("special action is not authorized")
+		}
+		if err := spendSpecialMove(unit); err != nil {
+			return "", nil, err
+		}
+		city.Effects = removeExternalFranchises(city.Effects, actorID)
+		return EventCitySued, json.RawMessage(`{"disclosed":true}`), nil
+	}
+	if hasEffect(city.Effects, EffectLawsuit) {
 		return "", nil, errors.New("special action is not authorized")
 	}
 	if err := spendSpecialMove(unit); err != nil {
@@ -328,6 +341,26 @@ func sueCity(unit *Unit, city *City) (string, json.RawMessage, error) {
 	city.StoredProduction = 0
 	city.Effects = append(city.Effects, Effect{ID: "lawsuit", Kind: EffectLawsuit, Value: 1})
 	return EventCitySued, json.RawMessage(`{"disclosed":true}`), nil
+}
+
+func hasExternalFranchise(city City, ownerID string) bool {
+	for _, effect := range city.Effects {
+		if effect.Kind == EffectFranchise && effect.ID != "franchise:"+ownerID {
+			return true
+		}
+	}
+	return false
+}
+
+func removeExternalFranchises(effects []Effect, ownerID string) []Effect {
+	kept := effects[:0]
+	for _, effect := range effects {
+		if effect.Kind == EffectFranchise && effect.ID != "franchise:"+ownerID {
+			continue
+		}
+		kept = append(kept, effect)
+	}
+	return kept
 }
 
 func undergroundRailway(state *State, unit *Unit, city *City, actorNation *Nation, sources Sources) (string, json.RawMessage, error) {

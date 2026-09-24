@@ -780,6 +780,15 @@ func cityHasFranchise(city CityProjection, ownerID string) bool {
 	return false
 }
 
+func cityHasExternalFranchise(city CityProjection, ownerID string) bool {
+	for _, effect := range city.Effects {
+		if effect.Kind == engine.EffectFranchise && effect.ID != "franchise:"+ownerID {
+			return true
+		}
+	}
+	return false
+}
+
 func bombardActions(projection Projection, tiles map[string]TileProjection, attacker UnitProjection) []ActionProjection {
 	if attacker.TileID == "" || attacker.Movement < 1 || attacker.Ranged < 1 || attacker.BombardRange < 1 || attacker.BombRounds < 1 {
 		return nil
@@ -865,7 +874,13 @@ func specialActions(projection Projection, tiles map[string]TileProjection, citi
 	actions := make([]ActionProjection, 0)
 	for _, city := range cities {
 		cityTile, ok := tiles[city.TileID]
-		if !ok || city.OwnerID == playerID || !adjacentProjection(origin, cityTile) {
+		if !ok || !adjacentProjection(origin, cityTile) {
+			continue
+		}
+		if city.OwnerID == playerID {
+			if hasEffect(unit.Effects, engine.EffectSpecialSue) && cityHasExternalFranchise(city, playerID) {
+				actions = append(actions, action(engine.CommandSue, "sue", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
+			}
 			continue
 		}
 		if hasEffect(unit.Effects, engine.EffectSpecialEmbassy) && !containsString(projection.EmbassyPlayerIDs, city.OwnerID) {
