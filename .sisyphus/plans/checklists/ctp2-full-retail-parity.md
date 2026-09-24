@@ -52,6 +52,7 @@
 - [x] Task 101: Retail global-radar wonder effects reveal all tiles through safe projections.
 - [x] Task 102: Retail increase-HP wonder effects raise existing and future owner units' health.
 - [x] Task 103: Retail embassy wonder effects close protected embassies and project effective global embassies.
+- [x] Task 104: Retail free-slaves/prohibit-slavers effects remove slavers and block future slaver use.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
