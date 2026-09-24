@@ -66,6 +66,7 @@ type CityProjection struct {
 	OwnerID          string                  `json:"owner_id"`
 	TileID           string                  `json:"tile_id"`
 	Population       int                     `json:"population,omitempty"`
+	Happiness        int                     `json:"happiness,omitempty"`
 	Effects          []engine.Effect         `json:"effects,omitempty"`
 	StoredFood       int                     `json:"stored_food,omitempty"`
 	StoredProduction int                     `json:"stored_production,omitempty"`
@@ -283,6 +284,7 @@ func projectCity(city engine.City, playerID string, observed int) CityProjection
 	projection := CityProjection{ID: city.ID, OwnerID: city.OwnerID, TileID: city.TileID, Effects: append([]engine.Effect(nil), city.Effects...), Observed: observed}
 	if city.OwnerID == playerID {
 		projection.Population = city.Population
+		projection.Happiness = city.Happiness
 		projection.StoredFood = city.StoredFood
 		projection.StoredProduction = city.StoredProduction
 		projection.Queue = append([]engine.ProductionItem(nil), city.Queue...)

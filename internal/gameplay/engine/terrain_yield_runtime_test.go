@@ -91,6 +91,15 @@ func TestRetailStarvationProtectionDelaysPopulationLoss(t *testing.T) {
 	}
 }
 
+func TestRetailHappinessEffectsAccumulateFromBuildingsAndWonders(t *testing.T) {
+	state := State{Players: []Player{{ID: "player-a", NationID: "nation-a"}}, Nations: []Nation{{ID: "nation-a"}}}
+	city := City{ID: "city-a", OwnerID: "player-a", Buildings: []Building{{ID: "IMPROVE_ARENA", Effects: []Effect{{ID: "arena", Kind: EffectHappiness, Value: 2}}}}}
+	state.Wonders = []Wonder{{ID: "WONDER_GUTTENBERGS_BIBLE", OwnerID: "player-a", Scope: "owner", Effects: []Effect{{ID: "bible", Kind: EffectHappiness, Value: 2}}}}
+	if got := cityHappiness(state, city); got != 4 {
+		t.Fatalf("city happiness = %d, want building + wonder", got)
+	}
+}
+
 func TestRetailRuntimeTerrainYieldsDriveCityYield(t *testing.T) {
 	state := State{Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS"}}}
 	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}

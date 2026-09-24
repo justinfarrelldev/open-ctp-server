@@ -139,6 +139,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || hagia.Kind != "wonder" || hagia.Cost != 3240 || !sameStringSlices(hagia.Prerequisites, []string{"ADVANCE_THEOLOGY"}) {
 		t.Fatalf("hagia production = %+v ok=%v", hagia, ok)
 	}
+	gutenberg, ok := runtime.ProductionDefinition("WONDER_GUTTENBERGS_BIBLE")
+	if !ok || !runtimeProductionHasEffectValue(gutenberg, "happiness", 2) {
+		t.Fatalf("Gutenberg effects = %+v ok=%v", gutenberg, ok)
+	}
 	factory, ok := runtime.ProductionDefinition("IMPROVE_FACTORY")
 	if !ok || len(factory.Effects) != 1 || factory.Effects[0].Kind != "yield_production_percent" || factory.Effects[0].Value != 15 {
 		t.Fatalf("factory production effects = %+v ok=%v", factory, ok)
@@ -180,6 +184,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	aqueduct, ok := runtime.ProductionDefinition("IMPROVE_AQUEDUCT")
 	if !ok || !runtimeProductionHasEffectValue(aqueduct, "max_population", 14) {
 		t.Fatalf("aqueduct effects = %+v ok=%v", aqueduct, ok)
+	}
+	arena, ok := runtime.ProductionDefinition("IMPROVE_ARENA")
+	if !ok || !runtimeProductionHasEffectValue(arena, "happiness", 2) {
+		t.Fatalf("arena effects = %+v ok=%v", arena, ok)
 	}
 	cityWalls, ok := runtime.ProductionDefinition("IMPROVE_CITY_WALLS")
 	if !ok || !runtimeProductionHasEffectValue(cityWalls, "combat_defense", 15) {

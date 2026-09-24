@@ -112,6 +112,9 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 	if value := building.IntValues["GoldPerCitizen"]; value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":gold-per-citizen", Kind: "yield_gold_per_population", Value: value})
 	}
+	if value := building.IntValues["HappyInc"]; value != 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":happy-inc", Kind: "happiness", Value: value})
+	}
 	if value := building.IntValues["RaiseMaxPopulation"]; value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":max-population", Kind: "max_population", Value: value})
 	}
@@ -165,6 +168,9 @@ func retailWonderRuntimeEffects(wonder RetailWonder, buildingEffects map[string]
 	}
 	if value := wonder.IntValues["IncreaseProduction"]; value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":production", Kind: "yield_production_percent", Value: value})
+	}
+	if value := wonder.IntValues["IncHappinessEmpire"]; value != 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":happiness", Kind: "happiness", Value: value})
 	}
 	for _, buildingID := range append(retailFieldValues(wonder.RawFields, "BuildingEverywhere"), retailFieldValues(wonder.RawFields, "ActualBuildingEverywhere")...) {
 		for _, effect := range buildingEffects[buildingID] {
