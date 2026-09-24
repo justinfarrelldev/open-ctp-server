@@ -737,6 +737,8 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 		yield = addYield(yield, worked)
 	}
 	effects := cityEffects(state, city)
+	hasTelevision := false
+	goldPerTelevision := 0
 	for _, effect := range effects {
 		switch effect.Kind {
 		case EffectYieldFood:
@@ -753,6 +755,10 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 			yield.Production += signedYieldPercentDelta(yield.Production, effect.Value)
 		case EffectYieldGoldPercent:
 			yield.Gold += signedYieldPercentDelta(yield.Gold, effect.Value)
+		case EffectTelevision:
+			hasTelevision = true
+		case EffectGoldPerTelevision:
+			goldPerTelevision += effect.Value
 		case EffectCombat:
 			yield.Combat += effect.Value
 		case EffectVision:
@@ -760,6 +766,9 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 		case EffectVictory:
 			yield.Victory += effect.Value
 		}
+	}
+	if hasTelevision && goldPerTelevision > 0 {
+		yield.Gold += goldPerTelevision
 	}
 	for _, building := range city.Buildings {
 		if !isObsolete(city.Obsolete, building.ObsoletedBy) {

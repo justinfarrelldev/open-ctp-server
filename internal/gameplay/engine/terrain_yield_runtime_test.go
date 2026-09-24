@@ -83,6 +83,19 @@ func TestRetailOvercrowdingEffectsAccumulateFromBuildings(t *testing.T) {
 	}
 }
 
+func TestRetailWonderGoldPerTelevisionUsesCityTelevision(t *testing.T) {
+	state := State{Players: []Player{{ID: "player-a", NationID: "nation-a"}}, Nations: []Nation{{ID: "nation-a"}}, Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS", Open: true}}, Cities: []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Buildings: []Building{{ID: "IMPROVE_TELEVISION", Effects: []Effect{{ID: "tv", Kind: EffectTelevision}}}}}}, Wonders: []Wonder{{ID: "WONDER_MEDIA", OwnerID: "player-a", Scope: "owner", Effects: []Effect{{ID: "tv-gold", Kind: EffectGoldPerTelevision, Value: 7}}}}}
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_PLAINS", Cost: 100, Domains: []string{DomainLand}, Gold: 3}}}}
+
+	yield, err := cityYieldWithRuntime(state, state.Cities[0], runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if yield.Gold != 10 {
+		t.Fatalf("gold = %d, want base 3 + wonder 7 per television", yield.Gold)
+	}
+}
+
 func TestRetailCrimePercentReducesProductionAndGold(t *testing.T) {
 	state := State{Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS", Open: true}}, Cities: []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", CrimePercent: 25}}}
 	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_PLAINS", Cost: 100, Domains: []string{DomainLand}, Production: 8, Gold: 12, Food: 4}}}}
