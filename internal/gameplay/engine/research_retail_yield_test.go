@@ -47,6 +47,23 @@ func TestRetailResearchRateSubtractsUnitUpkeep(t *testing.T) {
 	}
 }
 
+func TestRetailResearchRateUsesNationSciencePercent(t *testing.T) {
+	science := 50
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", SciencePercent: &science}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", Yields: Yield{Gold: 12}}},
+	}
+	if got, want := researchRate(state, state.Nations[0]), 7; got != want {
+		t.Fatalf("research rate = %d, want science slider half gold plus base = %d", got, want)
+	}
+	zero := 0
+	state.Nations[0].SciencePercent = &zero
+	if got, want := researchRate(state, state.Nations[0]), 1; got != want {
+		t.Fatalf("research rate = %d, want explicit zero science to leave only base = %d", got, want)
+	}
+}
+
 func TestRetailResearchRateHonorsGovernmentMaxScienceRate(t *testing.T) {
 	state := State{
 		Players: []Player{{ID: "player-a", NationID: "nation-a"}},

@@ -97,6 +97,7 @@
 - [x] Task 146: Plant-nuke EscapeChance imports and teleports successful escaping units/armies to the nearest friendly city.
 - [x] Task 147: Retail martial-law unit and government fields boost city happiness with cap/threshold semantics.
 - [x] Task 148: AI plans city-target special actions from projected legal actions.
+- [x] Task 149: Nation science-percent slider controls city gold/trade research and projects safely.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

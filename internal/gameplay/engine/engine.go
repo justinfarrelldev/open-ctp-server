@@ -252,6 +252,7 @@ type Nation struct {
 	CityReports         []CityReport `json:"city_reports,omitempty"`
 	PublicWorks         int          `json:"public_works,omitempty"`
 	FranchiseProduction int          `json:"franchise_production,omitempty"`
+	SciencePercent      *int         `json:"science_percent,omitempty"`
 	GovernmentID        string       `json:"government_id,omitempty"`
 	ResearchTargetID    string       `json:"research_target_id,omitempty"`
 	ResearchProgress    int          `json:"research_progress,omitempty"`

@@ -114,10 +114,11 @@ type DiplomacyProposalProjection struct {
 }
 
 type DiplomacyProjection struct {
-	GovernmentID string                        `json:"government_id,omitempty"`
-	PublicWorks  int                           `json:"public_works,omitempty"`
-	Relations    []DiplomacyRelationProjection `json:"relations,omitempty"`
-	Proposals    []DiplomacyProposalProjection `json:"proposals,omitempty"`
+	GovernmentID   string                        `json:"government_id,omitempty"`
+	PublicWorks    int                           `json:"public_works,omitempty"`
+	SciencePercent *int                          `json:"science_percent,omitempty"`
+	Relations      []DiplomacyRelationProjection `json:"relations,omitempty"`
+	Proposals      []DiplomacyProposalProjection `json:"proposals,omitempty"`
 }
 
 type RulesProjection struct {
@@ -292,6 +293,10 @@ func tradeRouteProjection(state engine.State, playerID string, visible map[strin
 
 func diplomacyProjection(state engine.State, playerID string, nation engine.Nation) *DiplomacyProjection {
 	projection := &DiplomacyProjection{GovernmentID: nation.GovernmentID, PublicWorks: nation.PublicWorks}
+	if nation.SciencePercent != nil {
+		science := *nation.SciencePercent
+		projection.SciencePercent = &science
+	}
 	for _, relation := range state.Diplomacy {
 		if relation.PlayerAID != playerID && relation.PlayerBID != playerID || !relation.Contact {
 			continue
@@ -311,7 +316,7 @@ func diplomacyProjection(state engine.State, playerID string, nation engine.Nati
 		return projection.Relations[i].TargetPlayerID < projection.Relations[j].TargetPlayerID
 	})
 	sort.Slice(projection.Proposals, func(i, j int) bool { return projection.Proposals[i].ID < projection.Proposals[j].ID })
-	if projection.GovernmentID == "" && projection.PublicWorks == 0 && len(projection.Relations) == 0 && len(projection.Proposals) == 0 {
+	if projection.GovernmentID == "" && projection.PublicWorks == 0 && projection.SciencePercent == nil && len(projection.Relations) == 0 && len(projection.Proposals) == 0 {
 		return nil
 	}
 	return projection
