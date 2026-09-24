@@ -246,6 +246,18 @@ func TestAirUnitsRefuelAtFriendlyCitiesOnAdvanceRound(t *testing.T) {
 	}
 }
 
+func TestNoFuelThenCrashRemovesStrandedAirUnitsOnAdvanceRound(t *testing.T) {
+	state := task8State()
+	state.Units = []Unit{{ID: "air", OwnerID: "player-a", TileID: "a", Domain: DomainAir, Movement: 0, Fuel: 0, MaxFuel: 5, Effects: []Effect{{ID: "crash", Kind: EffectNoFuelThenCrash}}}}
+	runtime := &rules.RuntimeRules{Starter: rules.RuntimeStarter{Movement: 2}}
+
+	advanceRound(&state, runtime)
+
+	if _, ok := unitByID(state, "air"); ok {
+		t.Fatal("stranded no-fuel air unit survived advanceRound")
+	}
+}
+
 func TestTask8MovementAndCargoFailureVectors(t *testing.T) {
 	state := task8State()
 	for index := range state.Units {

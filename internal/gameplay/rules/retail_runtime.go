@@ -330,6 +330,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "IsMounted") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("mounted"), Kind: "mounted"})
 	}
+	if retailContainsString(unit.Flags, "NoFuelThenCrash") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("no_fuel_then_crash"), Kind: "no_fuel_then_crash"})
+	}
 	if retailContainsString(unit.Flags, "BonusAgainstMounted") {
 		if value := percentPoints(firstRetailUnitFloat(unit, "MountedBonus")); value > 0 {
 			effects = append(effects, RuntimeStarterEffect{ID: effectID("combat_defense_vs_mounted"), Kind: "combat_defense_vs_mounted_percent", Value: value})

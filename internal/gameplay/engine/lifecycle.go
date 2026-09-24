@@ -115,6 +115,7 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 	if runtime == nil || runtime.Starter.Movement < 1 {
 		return
 	}
+	crashedUnits := make([]string, 0)
 	for index := range state.Units {
 		if state.Units[index].TransportID == "" {
 			state.Units[index].Movement = runtime.Starter.Movement
@@ -122,6 +123,12 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 		if state.Units[index].MaxFuel > 0 && unitCanRefuel(*state, state.Units[index]) {
 			state.Units[index].Fuel = state.Units[index].MaxFuel
 		}
+		if state.Units[index].MaxFuel > 0 && state.Units[index].Fuel == 0 && hasEffect(state.Units[index].Effects, EffectNoFuelThenCrash) {
+			crashedUnits = append(crashedUnits, state.Units[index].ID)
+		}
+	}
+	for _, unitID := range crashedUnits {
+		removeUnitAndCargo(state, unitID)
 	}
 	advanceResearch(state, runtime)
 }
