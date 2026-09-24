@@ -223,13 +223,14 @@ type RuntimeGaia struct {
 }
 
 type RuntimeProduction struct {
-	ID            string                 `json:"id"`
-	Kind          string                 `json:"kind"`
-	Cost          int                    `json:"cost,omitempty"`
-	Upkeep        int                    `json:"upkeep,omitempty"`
-	Prerequisites []string               `json:"prerequisites,omitempty"`
-	ObsoleteBy    []string               `json:"obsolete_by,omitempty"`
-	Effects       []RuntimeStarterEffect `json:"effects,omitempty"`
+	ID                string                 `json:"id"`
+	Kind              string                 `json:"kind"`
+	Cost              int                    `json:"cost,omitempty"`
+	Upkeep            int                    `json:"upkeep,omitempty"`
+	Prerequisites     []string               `json:"prerequisites,omitempty"`
+	RequiredBuildings []string               `json:"required_buildings,omitempty"`
+	ObsoleteBy        []string               `json:"obsolete_by,omitempty"`
+	Effects           []RuntimeStarterEffect `json:"effects,omitempty"`
 }
 
 type RuntimeAI struct {
@@ -706,11 +707,15 @@ func compileProductionDefinition(record Record, kind string) (RuntimeProduction,
 			return RuntimeProduction{}, err
 		}
 	}
+	requiredBuildings, err := optionalIDs(record, "RequiredBuildings")
+	if err != nil {
+		return RuntimeProduction{}, err
+	}
 	obsoleteBy, err := optionalIDs(record, "ObsoleteBy")
 	if err != nil {
 		return RuntimeProduction{}, err
 	}
-	return RuntimeProduction{ID: record.ID, Kind: kind, Cost: cost, Upkeep: upkeep, Prerequisites: prerequisites, ObsoleteBy: obsoleteBy}, nil
+	return RuntimeProduction{ID: record.ID, Kind: kind, Cost: cost, Upkeep: upkeep, Prerequisites: prerequisites, RequiredBuildings: requiredBuildings, ObsoleteBy: obsoleteBy}, nil
 }
 
 func compileAdvanceDefinition(record Record) (RuntimeAdvanceDefinition, error) {

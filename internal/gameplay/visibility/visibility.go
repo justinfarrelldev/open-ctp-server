@@ -499,7 +499,7 @@ func productionActions(projection Projection, playerID string) []ActionProjectio
 		}
 		built := cityBuildingIDs(city)
 		for _, production := range projection.Rules.Production {
-			if production.ID == "" || production.Kind == engine.ProductionUnit || !allAdvancesSatisfied(known, production.Prerequisites) || anyAdvanceSatisfied(known, production.ObsoleteBy) {
+			if production.ID == "" || production.Kind == engine.ProductionUnit || !allAdvancesSatisfied(known, production.Prerequisites) || !allBuildingsSatisfied(built, production.RequiredBuildings) || anyAdvanceSatisfied(known, production.ObsoleteBy) {
 				continue
 			}
 			if production.Kind == engine.ProductionBuilding && built[production.ID] {
@@ -839,6 +839,15 @@ func advanceSatisfied(known []string, advanceID string) bool {
 func allAdvancesSatisfied(known, required []string) bool {
 	for _, advanceID := range required {
 		if !containsString(known, advanceID) {
+			return false
+		}
+	}
+	return true
+}
+
+func allBuildingsSatisfied(built map[string]bool, required []string) bool {
+	for _, id := range required {
+		if !built[id] {
 			return false
 		}
 	}

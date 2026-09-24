@@ -869,15 +869,32 @@ func wonderExists(state State, id string) bool {
 func requireProductionUnlock(state State, city City, item ProductionItem, runtime *rules.RuntimeRules) error {
 	prerequisite := item.Prerequisite
 	obsolete := item.ObsoletedBy
-	if runtime != nil && item.Kind == ProductionUnit {
-		if unit, ok := runtime.Unit(item.ID); ok {
-			if prerequisite == "" && len(unit.Prerequisites) > 0 {
-				prerequisite = unit.Prerequisites[0]
-			} else if prerequisite != "" && len(unit.Prerequisites) > 0 && !containsString(unit.Prerequisites, prerequisite) {
+	if runtime != nil {
+		if production, ok := runtime.ProductionDefinition(item.ID); ok {
+			if prerequisite == "" && len(production.Prerequisites) > 0 {
+				prerequisite = production.Prerequisites[0]
+			} else if prerequisite != "" && len(production.Prerequisites) > 0 && !containsString(production.Prerequisites, prerequisite) {
 				return errors.New("production prerequisite is not met")
 			}
-			if obsolete == "" && len(unit.ObsoleteBy) > 0 {
-				obsolete = unit.ObsoleteBy[0]
+			for _, requiredBuilding := range production.RequiredBuildings {
+				if !cityHasBuilding(city, requiredBuilding) {
+					return errors.New("production prerequisite is not met")
+				}
+			}
+			if obsolete == "" && len(production.ObsoleteBy) > 0 {
+				obsolete = production.ObsoleteBy[0]
+			}
+		}
+		if item.Kind == ProductionUnit {
+			if unit, ok := runtime.Unit(item.ID); ok {
+				if prerequisite == "" && len(unit.Prerequisites) > 0 {
+					prerequisite = unit.Prerequisites[0]
+				} else if prerequisite != "" && len(unit.Prerequisites) > 0 && !containsString(unit.Prerequisites, prerequisite) {
+					return errors.New("production prerequisite is not met")
+				}
+				if obsolete == "" && len(unit.ObsoleteBy) > 0 {
+					obsolete = unit.ObsoleteBy[0]
+				}
 			}
 		}
 	}
