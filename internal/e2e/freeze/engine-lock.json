@@ -43,7 +43,7 @@
     },
     {
       "path": "internal/gameplay/engine/cities.go",
-      "sha256": "8cac6e716e3506f935303836999347225edb17512fe13d07c3e7e75fd00bc40a"
+      "sha256": "a2c0d758e219e6f182dc95a6030360c81537ee98df2fe1fa5e6da11959d17752"
     },
     {
       "path": "internal/gameplay/engine/combat.go",
@@ -71,7 +71,7 @@
     },
     {
       "path": "internal/gameplay/engine/special.go",
-      "sha256": "5fb91b69120b21a883fad512d8aeaad8e48de67ee48203f8e62f2dad5361d6f4"
+      "sha256": "daefebfd622d7a213441e9e650714fef0e335aa97edcce5b4ea33cd3bfcceec7"
     },
     {
       "path": "internal/gameplay/engine/turns/turns.go",

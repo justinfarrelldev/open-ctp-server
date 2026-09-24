@@ -6,6 +6,38 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
+func TestRetailFreeSlavesWonderRemovesSlaverUnitsEverywhere(t *testing.T) {
+	state := State{
+		Tiles:  []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}},
+		Cities: []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", StoredProduction: 1, Queue: []ProductionItem{{ID: "WONDER_EMANCIPATION", Kind: ProductionWonder, Cost: 1, Effects: []Effect{{ID: "free", Kind: EffectFreeSlaves}}}}}},
+		Units: []Unit{
+			{ID: "slaver-a", OwnerID: "player-a", TileID: "tile-a", Effects: []Effect{{ID: "slave", Kind: EffectSpecialSlaveRaid}}},
+			{ID: "slaver-b", OwnerID: "player-b", TileID: "tile-a", Effects: []Effect{{ID: "settler-slave", Kind: EffectSpecialSettlerSlaveRaid}}},
+			{ID: "guard", OwnerID: "player-b", TileID: "tile-a"},
+		},
+	}
+	if err := completeProduction(&state, &state.Cities[0], nil); err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Units) != 1 || state.Units[0].ID != "guard" {
+		t.Fatalf("units after free-slaves wonder = %#v", state.Units)
+	}
+}
+
+func TestRetailProhibitSlaversBlocksSlaverProduction(t *testing.T) {
+	state := State{
+		Tiles:   []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}},
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a"}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}},
+		Wonders: []Wonder{{ID: "WONDER_EMANCIPATION", OwnerID: "player-a", CityID: "city-a", Effects: []Effect{{ID: "prohibit", Kind: EffectProhibitSlavers}}}},
+	}
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SLAVER", Domain: DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "slave", Kind: EffectSpecialSlaveRaid}}}}}
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_SLAVER", Kind: ProductionUnit, Cost: 1}}, runtime); err == nil {
+		t.Fatal("slaver production allowed under prohibit-slavers wonder")
+	}
+}
+
 func TestRetailCloseEmbassiesWonderRemovesForeignEmbassiesAndWars(t *testing.T) {
 	state := State{
 		Tiles:   []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}},

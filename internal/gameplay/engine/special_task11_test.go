@@ -243,6 +243,15 @@ func TestRetailCreateFranchiseMarksCityOnce(t *testing.T) {
 	}
 }
 
+func TestRetailProhibitSlaversBlocksSlaveRaidCommands(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = []Effect{{ID: "slave", Kind: EffectSpecialSlaveRaid}}
+	state.Wonders = []Wonder{{ID: "WONDER_EMANCIPATION", OwnerID: "player-a", CityID: "target-city", Effects: []Effect{{ID: "prohibit", Kind: EffectProhibitSlavers}}}}
+	if _, _, err := task11Apply(t, state, CommandSlaveRaid, SpecialActionPayload{UnitID: "agent", CityID: "target-city"}); err == nil || !strings.Contains(err.Error(), "special action") {
+		t.Fatalf("slave raid allowed under prohibit-slavers wonder err=%v", err)
+	}
+}
+
 func TestRetailSlaveRaidsReducePopulationAndHonorProtection(t *testing.T) {
 	for _, tc := range []struct {
 		name   string

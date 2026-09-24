@@ -259,6 +259,9 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if productionRemovesPopulation(payload.Item, runtime) && city.Population <= 1 {
 		return errors.New("city population is insufficient")
 	}
+	if payload.Item.Kind == ProductionUnit && HasActiveWonderEffect(*state, actor, EffectProhibitSlavers) && productionHasSlaverEffect(payload.Item, runtime) {
+		return errors.New("production prerequisite is not met")
+	}
 	if payload.Item.Kind == ProductionBuilding && cityHasBuilding(*city, payload.Item.ID) {
 		return errors.New("building already exists")
 	}
@@ -272,6 +275,31 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	}
 	city.Queue = append(city.Queue, payload.Item)
 	return nil
+}
+
+func productionHasSlaverEffect(item ProductionItem, runtime *rules.RuntimeRules) bool {
+	if item.Kind != ProductionUnit || runtime == nil {
+		return effectsContainSlavery(item.Effects)
+	}
+	unit, ok := runtime.Unit(item.ID)
+	if !ok {
+		return effectsContainSlavery(item.Effects)
+	}
+	for _, effect := range unit.Effects {
+		if effect.Kind == EffectSpecialSlaveRaid || effect.Kind == EffectSpecialSettlerSlaveRaid {
+			return true
+		}
+	}
+	return false
+}
+
+func effectsContainSlavery(effects []Effect) bool {
+	for _, effect := range effects {
+		if effect.Kind == EffectSpecialSlaveRaid || effect.Kind == EffectSpecialSettlerSlaveRaid {
+			return true
+		}
+	}
+	return false
 }
 
 func productionRemovesPopulation(item ProductionItem, runtime *rules.RuntimeRules) bool {
@@ -699,10 +727,33 @@ func applyWonderCompletionEffects(state *State, wonder Wonder) {
 		case EffectCloseEmbassies:
 			closeForeignEmbassiesWithOwner(state, wonder.OwnerID)
 			removeWarsWithPlayer(state, wonder.OwnerID)
+		case EffectFreeSlaves:
+			removeSlaverUnits(state)
 		case EffectEmbassiesEverywhere:
 			removeWarsWithPlayer(state, wonder.OwnerID)
 		}
 	}
+}
+
+func removeSlaverUnits(state *State) {
+	removed := make([]string, 0)
+	for _, unit := range state.Units {
+		if unitHasSlaveryEffect(unit) {
+			removed = append(removed, unit.ID)
+		}
+	}
+	for _, id := range removed {
+		removeUnitAndCargo(state, id)
+	}
+}
+
+func unitHasSlaveryEffect(unit Unit) bool {
+	for _, effect := range unit.Effects {
+		if effect.Kind == EffectSpecialSlaveRaid || effect.Kind == EffectSpecialSettlerSlaveRaid {
+			return true
+		}
+	}
+	return false
 }
 
 func closeForeignEmbassiesWithOwner(state *State, ownerID string) {

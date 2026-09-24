@@ -570,7 +570,7 @@ func slaveRaid(state *State, unit *Unit, city *City, commandType string, sources
 	} else if commandType != CommandSlaveRaid {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if !hasEffect(unit.Effects, requiredEffect) {
+	if !hasEffect(unit.Effects, requiredEffect) || HasActiveWonderEffect(*state, unit.OwnerID, EffectProhibitSlavers) {
 		return "", nil, errors.New("special action is not authorized")
 	}
 	if err := spendSpecialMove(unit); err != nil {
