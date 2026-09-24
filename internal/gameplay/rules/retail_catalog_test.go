@@ -155,6 +155,9 @@ func TestLoadRetailRulesFromDirectoryPreservesTypedRetailValues(t *testing.T) {
 	if plains.EnvCity.Movement != 50 || plains.EnvCity.Food != 10 || plains.EnvCity.Shield != 15 || plains.EnvCity.Gold != 15 {
 		t.Fatalf("TERRAIN_PLAINS EnvCity = %+v", plains.EnvCity)
 	}
+	if plains.TransformAdd.Time != 1 || plains.TransformAdd.Materials != 200 || plains.TransformRemove.Time != 1 || plains.TransformRemove.Materials != 50 {
+		t.Fatalf("TERRAIN_PLAINS transform data = add %+v remove %+v", plains.TransformAdd, plains.TransformRemove)
+	}
 	if got, want := plains.MovementTypes, []string{"Air", "Land"}; !sameStringSlices(got, want) {
 		t.Fatalf("TERRAIN_PLAINS movement types = %#v, want %#v", got, want)
 	}

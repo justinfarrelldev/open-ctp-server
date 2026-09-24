@@ -710,7 +710,8 @@ func terrainActions(projection Projection, tiles map[string]TileProjection, unit
 		}
 		if projection.Rules != nil {
 			for _, improvement := range orderedTerrainImprovements(*projection.Rules) {
-				if improvement.PublicWorksCost < 1 || improvement.BuildTurns < 1 || projection.Diplomacy.PublicWorks < improvement.PublicWorksCost {
+				effective := projectedEffectiveTerrainImprovement(*projection.Rules, improvement, tile.Terrain)
+				if effective.PublicWorksCost < 1 || effective.BuildTurns < 1 || projection.Diplomacy.PublicWorks < effective.PublicWorksCost {
 					continue
 				}
 				actions = append(actions, action(engine.CommandBuildImprovement, "build-improvement", unit.ID, tile.ID, map[string]string{"unit_id": unit.ID, "tile_id": tile.ID, "improvement_id": improvement.ID}, []string{"unit_id", "tile_id", "improvement_id"}))
@@ -719,6 +720,30 @@ func terrainActions(projection Projection, tiles map[string]TileProjection, unit
 		}
 	}
 	return actions
+}
+
+func projectedEffectiveTerrainImprovement(projection RulesProjection, improvement rules.RuntimeTerrainImprovementDefinition, sourceTerrain string) rules.RuntimeTerrainImprovementDefinition {
+	if improvement.TargetTerrain == "" || projection.Movement == nil {
+		return improvement
+	}
+	from, fromOK := projectedRuntimeTerrain(projection.Movement.Terrains, sourceTerrain)
+	to, toOK := projectedRuntimeTerrain(projection.Movement.Terrains, improvement.TargetTerrain)
+	if !fromOK || !toOK || from.TransformRemoveTime < 1 || from.TransformRemoveMaterials < 1 || to.TransformAddTime < 1 || to.TransformAddMaterials < 1 {
+		return improvement
+	}
+	effective := improvement
+	effective.BuildTurns = from.TransformRemoveTime + to.TransformAddTime
+	effective.PublicWorksCost = from.TransformRemoveMaterials + to.TransformAddMaterials
+	return effective
+}
+
+func projectedRuntimeTerrain(terrains []rules.RuntimeTerrain, id string) (rules.RuntimeTerrain, bool) {
+	for _, terrain := range terrains {
+		if terrain.ID == id {
+			return terrain, true
+		}
+	}
+	return rules.RuntimeTerrain{}, false
 }
 
 func orderedTerrainImprovements(projection RulesProjection) []rules.RuntimeTerrainImprovementDefinition {

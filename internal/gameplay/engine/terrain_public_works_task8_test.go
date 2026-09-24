@@ -49,6 +49,25 @@ func TestTask8PublicWorksImprovementChangesMovementYieldAndPollution(t *testing.
 	}
 }
 
+func TestRetailTerraformImprovementUsesTerrainTransformCostAndTurns(t *testing.T) {
+	state := runtimeStartedState(t)
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Nations[0].PublicWorks = 600
+	state.Tiles = []Tile{{ID: "tile-a", X: 0, Y: 0, Terrain: TerrainPlains, OwnerID: "player-a", Open: true}, {ID: "tile-b", X: 1, Y: 0, Terrain: TerrainForest, OwnerID: "player-a", Open: true}}
+	state.Units = []Unit{{ID: "worker", OwnerID: "player-a", TileID: "tile-a", Domain: DomainLand, Movement: 2, Effects: []Effect{{ID: "terraform", Kind: EffectSpecialTerraform}}}}
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: DomainLand, Movement: 1, Health: 1}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainLand, Movement: 1, Health: 1}}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}, Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: TerrainForest, TransformRemoveTime: 1, TransformRemoveMaterials: 200}, {ID: "TERRAIN_GRASSLAND", TransformAddTime: 1, TransformAddMaterials: 400}}}, TerrainImprovements: []rules.RuntimeTerrainImprovementDefinition{{ID: "TILEIMP_TERRAFORM_GRASSLAND", BuildTurns: 1, PublicWorksCost: 1, TargetTerrain: "TERRAIN_GRASSLAND"}}}
+	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Rules = RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: contentHash, Definitions: definitions}
+
+	queued := runtimeApply(t, state, "player-a", CommandBuildImprovement, BuildImprovementPayload{UnitID: "worker", TileID: "tile-b", ImprovementID: "TILEIMP_TERRAFORM_GRASSLAND"})
+	if queued.Nations[0].PublicWorks != 0 || len(queued.Overlays) != 1 || queued.Overlays[0].Remaining != 2 {
+		t.Fatalf("queued terraform public works/overlay = %d/%+v, want retail transform cost 600 and turns 2", queued.Nations[0].PublicWorks, queued.Overlays)
+	}
+}
+
 func TestRetailTerraformImprovementChangesTileTerrain(t *testing.T) {
 	state := runtimeStartedState(t)
 	state.Phase.ActivePlayerOrder = []string{"player-a"}

@@ -121,12 +121,19 @@ type RetailTerrainImprovementEffect struct {
 }
 
 type RetailTerrain struct {
-	ID            string                 `json:"id"`
-	InternalType  string                 `json:"internal_type,omitempty"`
-	MovementTypes []string               `json:"movement_types,omitempty"`
-	EnvBase       RetailTerrainModifiers `json:"env_base"`
-	EnvCity       RetailTerrainModifiers `json:"env_city"`
-	RawFields     []RetailRawField       `json:"raw_fields"`
+	ID              string                 `json:"id"`
+	InternalType    string                 `json:"internal_type,omitempty"`
+	MovementTypes   []string               `json:"movement_types,omitempty"`
+	EnvBase         RetailTerrainModifiers `json:"env_base"`
+	EnvCity         RetailTerrainModifiers `json:"env_city"`
+	TransformAdd    RetailTransformData    `json:"transform_add"`
+	TransformRemove RetailTransformData    `json:"transform_remove"`
+	RawFields       []RetailRawField       `json:"raw_fields"`
+}
+
+type RetailTransformData struct {
+	Time      int `json:"time,omitempty"`
+	Materials int `json:"materials,omitempty"`
 }
 
 type RetailTerrainModifiers struct {
@@ -518,6 +525,20 @@ func compileRetailTerrain(record RetailRawRecord) (RetailTerrain, error) {
 		}
 		terrain.EnvCity = modifiers
 	}
+	if transformAdd, ok := record.FirstBlock("TransformAdd"); ok {
+		data, err := retailTransformData(record.ID, transformAdd)
+		if err != nil {
+			return RetailTerrain{}, err
+		}
+		terrain.TransformAdd = data
+	}
+	if transformRemove, ok := record.FirstBlock("TransformRemove"); ok {
+		data, err := retailTransformData(record.ID, transformRemove)
+		if err != nil {
+			return RetailTerrain{}, err
+		}
+		terrain.TransformRemove = data
+	}
 	return terrain, nil
 }
 
@@ -684,6 +705,18 @@ func retailParseFloat(recordID, key, value string) (float64, error) {
 		return 0, fmt.Errorf("retail record %q field %s: %w", recordID, key, err)
 	}
 	return parsed, nil
+}
+
+func retailTransformData(recordID string, field RetailRawField) (RetailTransformData, error) {
+	time, err := retailFieldInt(recordID, field, "Time")
+	if err != nil {
+		return RetailTransformData{}, err
+	}
+	materials, err := retailFieldInt(recordID, field, "Materials")
+	if err != nil {
+		return RetailTransformData{}, err
+	}
+	return RetailTransformData{Time: time, Materials: materials}, nil
 }
 
 func retailTerrainModifiers(recordID string, field RetailRawField) (RetailTerrainModifiers, error) {
