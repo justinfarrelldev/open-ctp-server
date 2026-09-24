@@ -92,6 +92,7 @@
 - [x] Task 141: Visible foreign owners project safe establish-contact actions until contact exists.
 - [x] Task 142: AI plans establish-contact from projected legal actions.
 - [x] Task 143: AI plans unit-target sue/expel special actions from projected legal actions.
+- [x] Task 144: Retail EliteChance imports and veteran units use elite special-action chances.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

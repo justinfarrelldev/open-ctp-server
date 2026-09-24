@@ -203,6 +203,7 @@ type Unit struct {
 	Upkeep             int      `json:"upkeep,omitempty"`
 	ZOC                bool     `json:"zoc,omitempty"`
 	Fortified          bool     `json:"fortified,omitempty"`
+	Veteran            bool     `json:"veteran,omitempty"`
 	Effects            []Effect `json:"effects,omitempty"`
 	Attack             int      `json:"attack,omitempty"`
 	Defense            int      `json:"defense,omitempty"`

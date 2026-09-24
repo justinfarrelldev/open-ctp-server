@@ -43,6 +43,27 @@ func TestRetailWatchfulCityHalvesSpecialSuccessChanceAndExpires(t *testing.T) {
 	}
 }
 
+func TestRetailVeteranSpecialActionUsesEliteChance(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = []Effect{{ID: "investigate", Kind: EffectSpecialInvestigateCity, Value: 1}, {ID: "elite-investigate", Kind: EffectSpecialInvestigateCity + "_elite_chance", Value: 100}}
+	failed, failedEvents, err := task11Apply(t, state, CommandInvestigateCity, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(failedEvents) != 1 || failedEvents[0].Type != EventCityInvestigationFailed || len(failed.Nations[0].CityReports) != 0 {
+		t.Fatalf("non-veteran investigation used elite chance: reports=%+v events=%+v", failed.Nations[0].CityReports, failedEvents)
+	}
+
+	state.Units[0].Veteran = true
+	succeeded, events, err := task11Apply(t, state, CommandInvestigateCity, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 || events[0].Type != EventCityInvestigated || len(succeeded.Nations[0].CityReports) != 1 {
+		t.Fatalf("veteran investigation did not use elite chance: reports=%+v events=%+v", succeeded.Nations[0].CityReports, events)
+	}
+}
+
 func TestRetailSpecialActionAttemptsSetCityWatchful(t *testing.T) {
 	state := task11State()
 	state.Units[0].Effects = []Effect{{ID: "franchise", Kind: EffectSpecialCreateFranchise, Value: 10}}

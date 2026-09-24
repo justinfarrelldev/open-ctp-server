@@ -46,6 +46,7 @@ type UnitProjection struct {
 	TransportID        string          `json:"transport_id,omitempty"`
 	ArmyID             string          `json:"army_id,omitempty"`
 	Fortified          bool            `json:"fortified"`
+	Veteran            bool            `json:"veteran,omitempty"`
 	Domain             string          `json:"domain,omitempty"`
 	Movement           int             `json:"movement,omitempty"`
 	MaxMovement        int             `json:"max_movement,omitempty"`
@@ -248,6 +249,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 			}
 			if unit.OwnerID == playerID {
 				projected.Domain, projected.Movement, projected.MaxMovement = unit.Domain, unit.Movement, unit.MaxMovement
+				projected.Veteran = unit.Veteran
 				projected.CargoCapacity = unit.CargoCapacity
 				projected.CargoDomains = append([]string(nil), unit.CargoDomains...)
 				projected.Upkeep = unit.Upkeep

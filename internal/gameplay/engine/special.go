@@ -149,7 +149,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		case CommandPlantNuke:
 			return plantNuke(state, unit, city, actorNation, targetNation, sources, runtime)
 		case CommandAssassinateRuler:
-			return assassinateRuler(state, unit, targetNation, sources)
+			return assassinateRuler(state, unit, city, targetNation, sources)
 		case CommandInjoin:
 			return injoinCity(unit, city)
 		case CommandReform:
@@ -407,7 +407,7 @@ func undergroundRailway(state *State, unit *Unit, city *City, actorNation *Natio
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
 	}
-	chance := citySpecialActionChance(*city, unit.Effects, EffectSpecialUndergroundRailway)
+	chance := unitCitySpecialActionChance(*city, *unit, EffectSpecialUndergroundRailway)
 	setCityWatchful(city)
 	if chance < 100 {
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
@@ -541,17 +541,15 @@ func cityOnTileState(state State, tileID string) bool {
 	return false
 }
 
-func assassinateRuler(state *State, unit *Unit, targetNation *Nation, sources Sources) (string, json.RawMessage, error) {
+func assassinateRuler(state *State, unit *Unit, city *City, targetNation *Nation, sources Sources) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialAssassinateRuler) {
 		return "", nil, errors.New("special action is not authorized")
 	}
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
 	}
-	chance := effectValue(unit.Effects, EffectSpecialAssassinateRuler)
-	if chance <= 0 {
-		chance = 100
-	}
+	chance := unitCitySpecialActionChance(*city, *unit, EffectSpecialAssassinateRuler)
+	setCityWatchful(city)
 	if chance < 100 {
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
 		setRNG(state, RNGDomainSpecialAction, next)
@@ -621,7 +619,7 @@ func plantNuke(state *State, unit *Unit, city *City, actorNation *Nation, target
 	if hasEffect(cityEffects, EffectProtectFromNukes) || hasEffect(cityEffects, EffectForceField) || hasEffect(targetNation.Effects, EffectEliminateNukes) {
 		return EventNukeFailed, json.RawMessage(`{"disclosed":true}`), nil
 	}
-	chance := citySpecialActionChance(*city, unit.Effects, EffectSpecialPlantNuke)
+	chance := unitCitySpecialActionChance(*city, *unit, EffectSpecialPlantNuke)
 	setCityWatchful(city)
 	if chance < 100 {
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
@@ -660,14 +658,12 @@ func investigateCity(state *State, unit *Unit, city *City, actorNation *Nation, 
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
 	}
-	chance := effectValue(unit.Effects, EffectSpecialInvestigateCity)
-	if chance <= 0 {
-		chance = 100
-	}
+	chance := unitCitySpecialActionChance(*city, *unit, EffectSpecialInvestigateCity)
 	if chance < 100 {
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
 		setRNG(state, RNGDomainSpecialAction, next)
 		if int(roll%100) >= chance {
+			setCityWatchful(city)
 			maybeResolveSpecialDeath(state, unit.ID, EffectSpecialInvestigateCity, sources)
 			return EventCityInvestigationFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
@@ -679,11 +675,13 @@ func investigateCity(state *State, unit *Unit, city *City, actorNation *Nation, 
 	for index := range actorNation.CityReports {
 		if actorNation.CityReports[index].CityID == report.CityID {
 			actorNation.CityReports[index] = report
+			setCityWatchful(city)
 			maybeResolveSpecialDeath(state, unit.ID, EffectSpecialInvestigateCity, sources)
 			return EventCityInvestigated, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
 	actorNation.CityReports = append(actorNation.CityReports, report)
+	setCityWatchful(city)
 	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialInvestigateCity, sources)
 	return EventCityInvestigated, json.RawMessage(`{"disclosed":true}`), nil
 }
@@ -695,7 +693,7 @@ func createFranchise(state *State, unit *Unit, city *City, sources Sources) (str
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
 	}
-	chance := citySpecialActionChance(*city, unit.Effects, EffectSpecialCreateFranchise)
+	chance := unitCitySpecialActionChance(*city, *unit, EffectSpecialCreateFranchise)
 	setCityWatchful(city)
 	if chance < 100 {
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
@@ -720,7 +718,20 @@ func hasCityFranchise(city City, ownerID string) bool {
 }
 
 func citySpecialActionChance(city City, unitEffects []Effect, actionKind string) int {
+	return specialActionChance(city, unitEffects, actionKind, false)
+}
+
+func unitCitySpecialActionChance(city City, unit Unit, actionKind string) int {
+	return specialActionChance(city, unit.Effects, actionKind, unit.Veteran)
+}
+
+func specialActionChance(city City, unitEffects []Effect, actionKind string, veteran bool) int {
 	chance := effectValue(unitEffects, actionKind)
+	if veteran {
+		if eliteChance := effectValue(unitEffects, actionKind+"_elite_chance"); eliteChance > 0 {
+			chance = eliteChance
+		}
+	}
 	if chance <= 0 {
 		chance = 100
 	}
@@ -750,7 +761,7 @@ func slaveRaid(state *State, unit *Unit, city *City, commandType string, sources
 	if protectedByCityEffect(state, city, EffectPreventSlavery, sources) {
 		return EventSlaveRaidFailed, json.RawMessage(`{"disclosed":true}`), nil
 	}
-	chance := citySpecialActionChance(*city, unit.Effects, requiredEffect)
+	chance := unitCitySpecialActionChance(*city, *unit, requiredEffect)
 	setCityWatchful(city)
 	if chance < 100 {
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
@@ -788,7 +799,7 @@ func cityTerror(state *State, unit *Unit, city *City, commandType string, source
 	if protectionEffect != "" && protectedByCityEffect(state, city, protectionEffect, sources) {
 		return EventTerrorFailed, json.RawMessage(`{"disclosed":true}`), nil
 	}
-	chance := citySpecialActionChance(*city, unit.Effects, requiredEffect)
+	chance := unitCitySpecialActionChance(*city, *unit, requiredEffect)
 	setCityWatchful(city)
 	if chance < 100 {
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
@@ -838,7 +849,7 @@ func convertCity(state *State, unit *Unit, city *City, sources Sources) (string,
 			return EventCityConversionFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
-	chance := citySpecialActionChance(*city, unit.Effects, EffectSpecialConvertCity)
+	chance := unitCitySpecialActionChance(*city, *unit, EffectSpecialConvertCity)
 	setCityWatchful(city)
 	if chance < 100 {
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))

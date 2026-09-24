@@ -1012,8 +1012,23 @@ func unitEffects(record Record) ([]RuntimeStarterEffect, error) {
 }
 
 func validUnitEffectKind(kind string) bool {
+	if validSpecialEliteChanceRuntimeKind(kind) {
+		return true
+	}
 	switch kind {
 	case "settler", "special_embassy", "special_soothsaying", "special_steal", "special_capture", "special_terraform", "special_terraform_turns", "can_be_sued", "can_be_expelled", "stealth", "can_see_stealth", "max_science_percent", "special_convert_city_death_chance", "special_create_franchise_death_chance", "special_investigate_city_death_chance", "special_plant_nuke_death_chance", "special_bio_terror_death_chance", "special_nano_terror_death_chance", "special_plague_death_chance", "special_assassinate_ruler_death_chance", "special_slave_raid_death_chance", "special_settler_slave_raid_death_chance", "special_underground_railway_death_chance":
+		return true
+	default:
+		return false
+	}
+}
+
+func validSpecialEliteChanceRuntimeKind(kind string) bool {
+	if !strings.HasSuffix(kind, "_elite_chance") {
+		return false
+	}
+	switch strings.TrimSuffix(kind, "_elite_chance") {
+	case "special_convert_city", "special_create_franchise", "special_investigate_city", "special_plant_nuke", "special_bio_terror", "special_nano_terror", "special_plague", "special_assassinate_ruler", "special_slave_raid", "special_settler_slave_raid", "special_underground_railway":
 		return true
 	default:
 		return false

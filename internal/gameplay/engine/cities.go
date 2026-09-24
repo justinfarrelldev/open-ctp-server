@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
@@ -1437,6 +1438,9 @@ func validateEffects(effects []Effect) error {
 		if effect.ID == "" {
 			return errors.New("effect id is required")
 		}
+		if validSpecialEliteChanceKind(effect.Kind) {
+			continue
+		}
 		switch effect.Kind {
 		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldGoldPerPopulation, EffectHappiness, EffectCrimePercent, EffectMaxPopulation, EffectOvercrowdingLevel, EffectStarvationProtection, EffectAirport, EffectMounted, EffectNoFuelThenCrash, EffectCantCaptureCity, EffectCanBeSued, EffectCanBeExpelled, EffectCanEntrench, EffectCanPillage, EffectBuildingRemovesPopulation, EffectIgnoreZOC, EffectCombatDefenseVsMountedPercent, EffectCombatDefenseVsAirPercent, EffectWoodenShip, EffectSubmarine, EffectStealth, EffectCanSeeStealth, EffectCanAttackLand, EffectCanAttackSea, EffectCanAttackAir, EffectCanAttackSpace, EffectCanAttackUnderwater, EffectCombatAttackVsWoodenShipPercent, EffectCityWalls, EffectIgnoreCityWalls, EffectProtectFromNukes, EffectProtectFromBioAgents, EffectProtectFromNanoVirus, EffectPreventConversion, EffectPreventSlavery, EffectForceField, EffectFoodVatPercent, EffectAllowGrunts, EffectBrokerage, EffectCapitol, EffectCathedral, EffectDoubleTelevangelists, EffectIsReligious, EffectLowerPeaceMovementPercent, EffectNuclearPlant, EffectTelevision, EffectEliminateNukes, EffectCloseEmbassies, EffectEmbassiesEverywhere, EffectEnableParkRangers, EffectFreeSlaves, EffectGlobalRadar, EffectIncreaseBoatMovement, EffectIncreaseHP, EffectIncreaseBrokerages, EffectIncreaseRegard, EffectIncreaseScientists, EffectPreventConversionEmpire, EffectProhibitSlavers, EffectProtectFromBarbarians, EffectReduceReadinessCost, EffectReformCities, EffectRevoltingCitiesJoinPlayer, EffectSpiesEverywhere, EffectStartGaiaController, EffectTemporaryFullHappiness, EffectPollutersToParks, EffectGoldPerWaterTradeRoute, EffectGoldPerInternationalTradeRoute, EffectGoldPerTelevision, EffectDecreaseEmpireSize, EffectPollutionPercent, EffectPollutionPopulationPercent, EffectPollutionProductionPercent, EffectPollution, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectResearchPercent, EffectMaxSciencePercent, EffectBonus, EffectCombatAttack, EffectCombatAttackLand, EffectCombatAttackSea, EffectCombatAttackAir, EffectCombatDefense, EffectSoothsaying, EffectFranchise, EffectRulerAssassinated, EffectFreedPopulation, EffectInjunction, EffectLawsuit, EffectWatchful, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns, EffectSpecialConvertCity, EffectSpecialCreateFranchise, EffectSpecialInvestigateCity, EffectSpecialPlantNuke, EffectSpecialBioTerror, EffectSpecialNanoTerror, EffectSpecialPlague, EffectSpecialAssassinateRuler, EffectSpecialSlaveRaid, EffectSpecialSettlerSlaveRaid, EffectSpecialUndergroundRailway, EffectSpecialInjoin, EffectSpecialReform, EffectSpecialCreatePark, EffectSpecialExpel, EffectSpecialSue, EffectSpecialConvertCityDeathChance, EffectSpecialCreateFranchiseDeathChance, EffectSpecialInvestigateCityDeathChance, EffectSpecialPlantNukeDeathChance, EffectSpecialBioTerrorDeathChance, EffectSpecialNanoTerrorDeathChance, EffectSpecialPlagueDeathChance, EffectSpecialAssassinateRulerDeathChance, EffectSpecialSlaveRaidDeathChance, EffectSpecialSettlerSlaveRaidDeathChance, EffectSpecialUndergroundRailwayDeathChance:
 		default:
@@ -1444,6 +1448,18 @@ func validateEffects(effects []Effect) error {
 		}
 	}
 	return nil
+}
+
+func validSpecialEliteChanceKind(kind string) bool {
+	if !strings.HasSuffix(kind, "_elite_chance") {
+		return false
+	}
+	switch strings.TrimSuffix(kind, "_elite_chance") {
+	case EffectSpecialConvertCity, EffectSpecialCreateFranchise, EffectSpecialInvestigateCity, EffectSpecialPlantNuke, EffectSpecialBioTerror, EffectSpecialNanoTerror, EffectSpecialPlague, EffectSpecialAssassinateRuler, EffectSpecialSlaveRaid, EffectSpecialSettlerSlaveRaid, EffectSpecialUndergroundRailway:
+		return true
+	default:
+		return false
+	}
 }
 
 func cityByID(state State, id string) (*City, bool) {
