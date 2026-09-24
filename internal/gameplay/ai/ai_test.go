@@ -107,6 +107,25 @@ func TestPlannerUsesOnlyProjectionAndStableCandidateTuples(t *testing.T) {
 	}
 }
 
+func TestPlannerUsesProjectedCitySpecialActions(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		LegalActions: []visibility.ActionProjection{{Command: engine.CommandCreateFranchise, Route: "create-franchise", EntityID: "branch", TargetID: "city", Payload: json.RawMessage(`{"unit_id":"branch","city_id":"city"}`)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandCreateFranchise && candidate.EntityID == "branch" && candidate.TargetID == "city" {
+			return
+		}
+	}
+	t.Fatalf("city special candidate missing: %#v", candidates)
+}
+
 func TestPlannerUsesProjectedUnitSpecialTargetActions(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		LegalActions: []visibility.ActionProjection{

@@ -352,29 +352,70 @@ func diplomacyCandidates(projection visibility.Projection, playerID string) []Ca
 }
 
 func projectedUnitSpecialTargetCandidates(projection visibility.Projection) []Candidate {
-	scores := map[string]int{engine.CommandExpel: 650, engine.CommandSue: 645}
+	unitTargetScores := map[string]int{engine.CommandExpel: 650, engine.CommandSue: 645}
+	cityTargetScores := map[string]int{
+		engine.CommandUndergroundRailway: 640,
+		engine.CommandSlaveRaid:          635,
+		engine.CommandSettlerSlaveRaid:   635,
+		engine.CommandBioTerror:          630,
+		engine.CommandNanoTerror:         630,
+		engine.CommandPlague:             630,
+		engine.CommandCreateFranchise:    625,
+		engine.CommandConvertCity:        620,
+		engine.CommandInvestigateCity:    610,
+		engine.CommandAssassinateRuler:   605,
+		engine.CommandInjoin:             600,
+		engine.CommandReform:             600,
+		engine.CommandPlantNuke:          500,
+	}
 	candidates := make([]Candidate, 0)
 	seen := map[string]bool{}
 	for _, action := range projection.LegalActions {
-		score, ok := scores[action.Command]
-		if !ok || len(action.Payload) == 0 {
+		if score, ok := unitTargetScores[action.Command]; ok {
+			candidate, ok := projectedUnitTargetActionCandidate(action, score)
+			if ok && !seen[candidate.Type+"\x00"+candidate.EntityID+"\x00"+candidate.TargetID] {
+				seen[candidate.Type+"\x00"+candidate.EntityID+"\x00"+candidate.TargetID] = true
+				candidates = append(candidates, candidate)
+			}
 			continue
 		}
-		var payload struct {
-			UnitID       string `json:"unit_id"`
-			TargetUnitID string `json:"target_unit_id"`
+		if score, ok := cityTargetScores[action.Command]; ok {
+			candidate, ok := projectedCityTargetActionCandidate(action, score)
+			if ok && !seen[candidate.Type+"\x00"+candidate.EntityID+"\x00"+candidate.TargetID] {
+				seen[candidate.Type+"\x00"+candidate.EntityID+"\x00"+candidate.TargetID] = true
+				candidates = append(candidates, candidate)
+			}
 		}
-		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.UnitID == "" || payload.TargetUnitID == "" {
-			continue
-		}
-		key := action.Command + "\x00" + payload.UnitID + "\x00" + payload.TargetUnitID
-		if seen[key] {
-			continue
-		}
-		seen[key] = true
-		candidates = append(candidates, Candidate{Type: action.Command, EntityID: payload.UnitID, TargetID: payload.TargetUnitID, Score: score, Payload: append(json.RawMessage(nil), action.Payload...)})
 	}
 	return candidates
+}
+
+func projectedUnitTargetActionCandidate(action visibility.ActionProjection, score int) (Candidate, bool) {
+	if len(action.Payload) == 0 {
+		return Candidate{}, false
+	}
+	var payload struct {
+		UnitID       string `json:"unit_id"`
+		TargetUnitID string `json:"target_unit_id"`
+	}
+	if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.UnitID == "" || payload.TargetUnitID == "" {
+		return Candidate{}, false
+	}
+	return Candidate{Type: action.Command, EntityID: payload.UnitID, TargetID: payload.TargetUnitID, Score: score, Payload: append(json.RawMessage(nil), action.Payload...)}, true
+}
+
+func projectedCityTargetActionCandidate(action visibility.ActionProjection, score int) (Candidate, bool) {
+	if len(action.Payload) == 0 {
+		return Candidate{}, false
+	}
+	var payload struct {
+		UnitID string `json:"unit_id"`
+		CityID string `json:"city_id"`
+	}
+	if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.UnitID == "" || payload.CityID == "" {
+		return Candidate{}, false
+	}
+	return Candidate{Type: action.Command, EntityID: payload.UnitID, TargetID: payload.CityID, Score: score, Payload: append(json.RawMessage(nil), action.Payload...)}, true
 }
 
 func projectedEstablishContactCandidates(projection visibility.Projection) []Candidate {
