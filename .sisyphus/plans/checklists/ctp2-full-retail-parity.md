@@ -48,6 +48,7 @@
 - [x] Task 97: Retail unit upkeep is preserved and subtracts from national research gold.
 - [x] Task 98: Positive city crime reduces production and gold yields.
 - [x] Task 99: Retail gold-per-television wonder effects add city gold when a city has television.
+- [x] Task 100: Retail boat-movement wonder effects increase sea/amphibious movement refresh.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
