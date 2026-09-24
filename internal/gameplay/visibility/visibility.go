@@ -825,6 +825,9 @@ func specialActions(projection Projection, tiles map[string]TileProjection, citi
 		if hasEffect(unit.Effects, engine.EffectSpecialReform) {
 			actions = append(actions, action(engine.CommandReform, "reform", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
 		}
+		if hasEffect(unit.Effects, engine.EffectSpecialUndergroundRailway) {
+			actions = append(actions, action(engine.CommandUndergroundRailway, "underground-railway", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
+		}
 		if hasEffect(unit.Effects, engine.EffectSpecialBioTerror) {
 			actions = append(actions, action(engine.CommandBioTerror, "bio-terror", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
 		}
