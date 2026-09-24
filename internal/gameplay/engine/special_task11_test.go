@@ -27,6 +27,70 @@ func task11Apply(t *testing.T, state State, kind string, payload any) (State, []
 	return next, events, err
 }
 
+func TestRetailSpecialDeathChanceRemovesActingUnitAfterResolvedActions(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		command     string
+		actionKind  string
+		deathKind   string
+		setup       func(*State)
+		wantEvent   string
+		assertState func(*testing.T, State)
+	}{
+		{name: "investigate", command: CommandInvestigateCity, actionKind: EffectSpecialInvestigateCity, deathKind: EffectSpecialInvestigateCityDeathChance, wantEvent: EventCityInvestigated, assertState: func(t *testing.T, state State) {
+			if len(state.Nations[0].CityReports) != 1 {
+				t.Fatalf("investigation report missing: %+v", state.Nations[0])
+			}
+		}},
+		{name: "franchise", command: CommandCreateFranchise, actionKind: EffectSpecialCreateFranchise, deathKind: EffectSpecialCreateFranchiseDeathChance, wantEvent: EventFranchiseCreated, assertState: func(t *testing.T, state State) {
+			if !hasCityFranchise(state.Cities[0], "player-a") {
+				t.Fatalf("franchise marker missing: %+v", state.Cities[0])
+			}
+		}},
+		{name: "plant-nuke", command: CommandPlantNuke, actionKind: EffectSpecialPlantNuke, deathKind: EffectSpecialPlantNukeDeathChance, wantEvent: EventNukePlanted, setup: func(state *State) { state.Cities[0].Population = 8 }, assertState: func(t *testing.T, state State) {
+			if state.Cities[0].Population != 4 || state.Tiles[1].Pollution == 0 {
+				t.Fatalf("nuke effects missing: city=%+v tile=%+v", state.Cities[0], state.Tiles[1])
+			}
+		}},
+		{name: "assassinate", command: CommandAssassinateRuler, actionKind: EffectSpecialAssassinateRuler, deathKind: EffectSpecialAssassinateRulerDeathChance, wantEvent: EventRulerAssassinated, setup: func(state *State) { state.Nations[1].GovernmentID = "GOVERNMENT_MONARCHY" }, assertState: func(t *testing.T, state State) {
+			if state.Nations[1].GovernmentID != "" || !hasEffect(state.Nations[1].Effects, EffectRulerAssassinated) {
+				t.Fatalf("assassination effects missing: %+v", state.Nations[1])
+			}
+		}},
+		{name: "underground", command: CommandUndergroundRailway, actionKind: EffectSpecialUndergroundRailway, deathKind: EffectSpecialUndergroundRailwayDeathChance, wantEvent: EventUndergroundRailway, setup: func(state *State) { state.Cities[0].Population = 4 }, assertState: func(t *testing.T, state State) {
+			if state.Cities[0].Population != 3 || !hasEffect(state.Nations[0].Effects, EffectFreedPopulation) {
+				t.Fatalf("underground railway effects missing: city=%+v nation=%+v", state.Cities[0], state.Nations[0])
+			}
+		}},
+		{name: "slave", command: CommandSlaveRaid, actionKind: EffectSpecialSlaveRaid, deathKind: EffectSpecialSlaveRaidDeathChance, wantEvent: EventSlaveRaidApplied, setup: func(state *State) { state.Cities[0].Population = 4 }, assertState: func(t *testing.T, state State) {
+			if state.Cities[0].Population != 3 {
+				t.Fatalf("slave raid effects missing: %+v", state.Cities[0])
+			}
+		}},
+		{name: "terror", command: CommandBioTerror, actionKind: EffectSpecialBioTerror, deathKind: EffectSpecialBioTerrorDeathChance, wantEvent: EventBioTerrorApplied, setup: func(state *State) { state.Cities[0].Population = 4 }, assertState: func(t *testing.T, state State) {
+			if state.Cities[0].Population != 3 {
+				t.Fatalf("terror effects missing: %+v", state.Cities[0])
+			}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			state := task11State()
+			if tc.setup != nil {
+				tc.setup(&state)
+			}
+			state.Units[0].Effects = []Effect{{ID: "action", Kind: tc.actionKind}, {ID: "death", Kind: tc.deathKind, Value: 100}}
+			next, events, err := task11Apply(t, state, tc.command, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, ok := unitByID(next, "agent"); ok || len(events) != 1 || events[0].Type != tc.wantEvent {
+				t.Fatalf("death chance outcome unit_present=%v events=%+v", ok, events)
+			}
+			tc.assertState(t, next)
+		})
+	}
+}
+
 func TestRetailSpecialProtectionsUseActiveCityBuildings(t *testing.T) {
 	state := task11State()
 	state.Units[0].Effects = []Effect{{ID: "convert", Kind: EffectSpecialConvertCity}}

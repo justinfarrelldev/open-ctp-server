@@ -404,6 +404,10 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 				chance = 100
 			}
 			effects = append(effects, RuntimeStarterEffect{ID: effectID(special.kind), Kind: special.kind, Value: chance})
+			if deathChance := percentPoints(retailRawFieldFloat(fields[0], "DeathChance")); deathChance > 0 {
+				deathKind := special.kind + "_death_chance"
+				effects = append(effects, RuntimeStarterEffect{ID: effectID(deathKind), Kind: deathKind, Value: deathChance})
+			}
 		}
 	}
 	if retailContainsString(unit.Flags, "CanExpel") {

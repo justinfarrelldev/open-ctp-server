@@ -1007,7 +1007,7 @@ func unitEffects(record Record) ([]RuntimeStarterEffect, error) {
 
 func validUnitEffectKind(kind string) bool {
 	switch kind {
-	case "settler", "special_embassy", "special_soothsaying", "special_steal", "special_capture", "special_terraform", "special_terraform_turns":
+	case "settler", "special_embassy", "special_soothsaying", "special_steal", "special_capture", "special_terraform", "special_terraform_turns", "special_convert_city_death_chance", "special_create_franchise_death_chance", "special_investigate_city_death_chance", "special_plant_nuke_death_chance", "special_bio_terror_death_chance", "special_nano_terror_death_chance", "special_plague_death_chance", "special_assassinate_ruler_death_chance", "special_slave_raid_death_chance", "special_settler_slave_raid_death_chance", "special_underground_railway_death_chance":
 		return true
 	default:
 		return false

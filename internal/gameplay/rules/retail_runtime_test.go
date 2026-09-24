@@ -76,8 +76,12 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("corporate branch runtime = %+v ok=%v", corporateBranch, ok)
 	}
 	cyberNinja, ok := runtime.Unit("UNIT_CYBER_NINJA")
-	if !ok || !runtimeUnitHasEffectValue(cyberNinja, "special_steal", 50) || !runtimeUnitHasEffectValue(cyberNinja, "special_capture", 25) {
+	if !ok || !runtimeUnitHasEffectValue(cyberNinja, "special_steal", 50) || !runtimeUnitHasEffectValue(cyberNinja, "special_capture", 25) || !runtimeUnitHasEffectValue(cyberNinja, "special_investigate_city_death_chance", 25) {
 		t.Fatalf("cyber ninja runtime = %+v ok=%v", cyberNinja, ok)
+	}
+	abolitionist, ok := runtime.Unit("UNIT_ABOLITIONIST")
+	if !ok || !runtimeUnitHasEffectValue(abolitionist, "special_underground_railway", 75) || !runtimeUnitHasEffectValue(abolitionist, "special_underground_railway_death_chance", 50) {
+		t.Fatalf("abolitionist runtime = %+v ok=%v", abolitionist, ok)
 	}
 	if runtime.Starter.Movement != 100 || runtime.Starter.Health != 10 || !runtimeStarterHasEffect(runtime.Starter, "settler") || !runtimeStarterHasEffect(runtime.Starter, "building_removes_population") {
 		t.Fatalf("starter = %+v, want retail settler", runtime.Starter)

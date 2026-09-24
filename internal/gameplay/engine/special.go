@@ -10,34 +10,45 @@ import (
 )
 
 const (
-	EffectSpecialEmbassy            = "special_embassy"
-	EffectSpecialSoothsaying        = "special_soothsaying"
-	EffectSpecialSteal              = "special_steal"
-	EffectSpecialCapture            = "special_capture"
-	EffectSpecialTerraform          = "special_terraform"
-	EffectSpecialTerraformTurns     = "special_terraform_turns"
-	EffectSpecialConvertCity        = "special_convert_city"
-	EffectSpecialCreateFranchise    = "special_create_franchise"
-	EffectFranchise                 = "franchise"
-	EffectSpecialInvestigateCity    = "special_investigate_city"
-	EffectSpecialPlantNuke          = "special_plant_nuke"
-	EffectSpecialBioTerror          = "special_bio_terror"
-	EffectSpecialNanoTerror         = "special_nano_terror"
-	EffectSpecialPlague             = "special_plague"
-	EffectSpecialAssassinateRuler   = "special_assassinate_ruler"
-	EffectRulerAssassinated         = "ruler_assassinated"
-	EffectSpecialSlaveRaid          = "special_slave_raid"
-	EffectSpecialSettlerSlaveRaid   = "special_settler_slave_raid"
-	EffectSpecialUndergroundRailway = "special_underground_railway"
-	EffectFreedPopulation           = "freed_population"
-	EffectSpecialInjoin             = "special_injoin"
-	EffectInjunction                = "injunction"
-	EffectSpecialReform             = "special_reform"
-	EffectSpecialCreatePark         = "special_create_park"
-	EffectSpecialExpel              = "special_expel"
-	EffectSpecialSue                = "special_sue"
-	EffectLawsuit                   = "lawsuit"
-	EffectSoothsaying               = "soothsaying"
+	EffectSpecialEmbassy                       = "special_embassy"
+	EffectSpecialSoothsaying                   = "special_soothsaying"
+	EffectSpecialSteal                         = "special_steal"
+	EffectSpecialCapture                       = "special_capture"
+	EffectSpecialTerraform                     = "special_terraform"
+	EffectSpecialTerraformTurns                = "special_terraform_turns"
+	EffectSpecialConvertCity                   = "special_convert_city"
+	EffectSpecialCreateFranchise               = "special_create_franchise"
+	EffectFranchise                            = "franchise"
+	EffectSpecialInvestigateCity               = "special_investigate_city"
+	EffectSpecialPlantNuke                     = "special_plant_nuke"
+	EffectSpecialBioTerror                     = "special_bio_terror"
+	EffectSpecialNanoTerror                    = "special_nano_terror"
+	EffectSpecialPlague                        = "special_plague"
+	EffectSpecialAssassinateRuler              = "special_assassinate_ruler"
+	EffectRulerAssassinated                    = "ruler_assassinated"
+	EffectSpecialSlaveRaid                     = "special_slave_raid"
+	EffectSpecialSettlerSlaveRaid              = "special_settler_slave_raid"
+	EffectSpecialUndergroundRailway            = "special_underground_railway"
+	EffectFreedPopulation                      = "freed_population"
+	EffectSpecialInjoin                        = "special_injoin"
+	EffectInjunction                           = "injunction"
+	EffectSpecialReform                        = "special_reform"
+	EffectSpecialCreatePark                    = "special_create_park"
+	EffectSpecialExpel                         = "special_expel"
+	EffectSpecialSue                           = "special_sue"
+	EffectSpecialConvertCityDeathChance        = EffectSpecialConvertCity + "_death_chance"
+	EffectSpecialCreateFranchiseDeathChance    = EffectSpecialCreateFranchise + "_death_chance"
+	EffectSpecialInvestigateCityDeathChance    = EffectSpecialInvestigateCity + "_death_chance"
+	EffectSpecialPlantNukeDeathChance          = EffectSpecialPlantNuke + "_death_chance"
+	EffectSpecialBioTerrorDeathChance          = EffectSpecialBioTerror + "_death_chance"
+	EffectSpecialNanoTerrorDeathChance         = EffectSpecialNanoTerror + "_death_chance"
+	EffectSpecialPlagueDeathChance             = EffectSpecialPlague + "_death_chance"
+	EffectSpecialAssassinateRulerDeathChance   = EffectSpecialAssassinateRuler + "_death_chance"
+	EffectSpecialSlaveRaidDeathChance          = EffectSpecialSlaveRaid + "_death_chance"
+	EffectSpecialSettlerSlaveRaidDeathChance   = EffectSpecialSettlerSlaveRaid + "_death_chance"
+	EffectSpecialUndergroundRailwayDeathChance = EffectSpecialUndergroundRailway + "_death_chance"
+	EffectLawsuit                              = "lawsuit"
+	EffectSoothsaying                          = "soothsaying"
 )
 
 type SpecialActionPayload struct {
@@ -334,11 +345,13 @@ func undergroundRailway(state *State, unit *Unit, city *City, actorNation *Natio
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
 		setRNG(state, RNGDomainSpecialAction, next)
 		if int(roll%100) >= chance {
+			maybeResolveSpecialDeath(state, unit.ID, EffectSpecialUndergroundRailway, sources)
 			return EventUndergroundRailwayFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
 	city.Population--
 	upsertNationEffect(actorNation, EffectFreedPopulation, 1)
+	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialUndergroundRailway, sources)
 	return EventUndergroundRailway, json.RawMessage(`{"disclosed":true}`), nil
 }
 
@@ -475,6 +488,7 @@ func assassinateRuler(state *State, unit *Unit, targetNation *Nation, sources So
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
 		setRNG(state, RNGDomainSpecialAction, next)
 		if int(roll%100) >= chance {
+			maybeResolveSpecialDeath(state, unit.ID, EffectSpecialAssassinateRuler, sources)
 			return EventRulerAssassinationFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
@@ -483,6 +497,7 @@ func assassinateRuler(state *State, unit *Unit, targetNation *Nation, sources So
 	if !hasEffect(targetNation.Effects, EffectRulerAssassinated) {
 		targetNation.Effects = append(targetNation.Effects, Effect{ID: "assassinated-ruler", Kind: EffectRulerAssassinated, Value: 1})
 	}
+	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialAssassinateRuler, sources)
 	return EventRulerAssassinated, json.RawMessage(`{"disclosed":true}`), nil
 }
 
@@ -532,6 +547,7 @@ func plantNuke(state *State, unit *Unit, city *City, targetNation *Nation, sourc
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
 		setRNG(state, RNGDomainSpecialAction, next)
 		if int(roll%100) >= chance {
+			maybeResolveSpecialDeath(state, unit.ID, EffectSpecialPlantNuke, sources)
 			return EventNukeFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
@@ -544,6 +560,7 @@ func plantNuke(state *State, unit *Unit, city *City, targetNation *Nation, sourc
 	if tile := tilePointer(state, city.TileID); tile != nil {
 		tile.Pollution += 10
 	}
+	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialPlantNuke, sources)
 	return EventNukePlanted, json.RawMessage(`{"disclosed":true}`), nil
 }
 
@@ -571,6 +588,7 @@ func investigateCity(state *State, unit *Unit, city *City, actorNation *Nation, 
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
 		setRNG(state, RNGDomainSpecialAction, next)
 		if int(roll%100) >= chance {
+			maybeResolveSpecialDeath(state, unit.ID, EffectSpecialInvestigateCity, sources)
 			return EventCityInvestigationFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
@@ -581,10 +599,12 @@ func investigateCity(state *State, unit *Unit, city *City, actorNation *Nation, 
 	for index := range actorNation.CityReports {
 		if actorNation.CityReports[index].CityID == report.CityID {
 			actorNation.CityReports[index] = report
+			maybeResolveSpecialDeath(state, unit.ID, EffectSpecialInvestigateCity, sources)
 			return EventCityInvestigated, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
 	actorNation.CityReports = append(actorNation.CityReports, report)
+	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialInvestigateCity, sources)
 	return EventCityInvestigated, json.RawMessage(`{"disclosed":true}`), nil
 }
 
@@ -603,10 +623,12 @@ func createFranchise(state *State, unit *Unit, city *City, sources Sources) (str
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
 		setRNG(state, RNGDomainSpecialAction, next)
 		if int(roll%100) >= chance {
+			maybeResolveSpecialDeath(state, unit.ID, EffectSpecialCreateFranchise, sources)
 			return EventFranchiseFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
 	city.Effects = append(city.Effects, Effect{ID: "franchise:" + unit.OwnerID, Kind: EffectFranchise})
+	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialCreateFranchise, sources)
 	return EventFranchiseCreated, json.RawMessage(`{"disclosed":true}`), nil
 }
 
@@ -643,12 +665,14 @@ func slaveRaid(state *State, unit *Unit, city *City, commandType string, sources
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
 		setRNG(state, RNGDomainSpecialAction, next)
 		if int(roll%100) >= chance {
+			maybeResolveSpecialDeath(state, unit.ID, requiredEffect, sources)
 			return EventSlaveRaidFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
 	if city.Population > 1 {
 		city.Population--
 	}
+	maybeResolveSpecialDeath(state, unit.ID, requiredEffect, sources)
 	return EventSlaveRaidApplied, json.RawMessage(`{"disclosed":true}`), nil
 }
 
@@ -681,12 +705,14 @@ func cityTerror(state *State, unit *Unit, city *City, commandType string, source
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
 		setRNG(state, RNGDomainSpecialAction, next)
 		if int(roll%100) >= chance {
+			maybeResolveSpecialDeath(state, unit.ID, requiredEffect, sources)
 			return EventTerrorFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
 	if city.Population > 1 {
 		city.Population--
 	}
+	maybeResolveSpecialDeath(state, unit.ID, requiredEffect, sources)
 	return successEvent, json.RawMessage(`{"disclosed":true}`), nil
 }
 
@@ -731,10 +757,12 @@ func convertCity(state *State, unit *Unit, city *City, sources Sources) (string,
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
 		setRNG(state, RNGDomainSpecialAction, next)
 		if int(roll%100) >= chance {
+			maybeResolveSpecialDeath(state, unit.ID, EffectSpecialConvertCity, sources)
 			return EventCityConversionFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
 	city.OwnerID = unit.OwnerID
+	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialConvertCity, sources)
 	return EventCityConverted, json.RawMessage(`{"disclosed":true}`), nil
 }
 
@@ -942,6 +970,22 @@ func effectValue(effects []Effect, kind string) int {
 	}
 	return 0
 }
+func maybeResolveSpecialDeath(state *State, unitID, actionKind string, sources Sources) {
+	unit, ok := unitByID(*state, unitID)
+	if !ok {
+		return
+	}
+	chance := effectValue(unit.Effects, actionKind+"_death_chance")
+	if chance <= 0 {
+		return
+	}
+	next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+	setRNG(state, RNGDomainSpecialAction, next)
+	if int(roll%100) < chance {
+		removeUnitAndCargo(state, unitID)
+	}
+}
+
 func spendSpecialMove(unit *Unit) error {
 	if unit.Movement < 1 {
 		return errors.New("special action is not authorized")
