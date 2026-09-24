@@ -483,6 +483,23 @@ func diplomacyActions(projection Projection, playerID string) []ActionProjection
 	return actions
 }
 
+func projectedUnitCanFortify(effects []engine.Effect) bool {
+	if hasEffect(effects, engine.EffectCanEntrench) {
+		return true
+	}
+	for _, effect := range effects {
+		switch effect.Kind {
+		case engine.EffectCantCaptureCity, engine.EffectNoFuelThenCrash, engine.EffectCanAttackLand, engine.EffectCanAttackSea, engine.EffectCanAttackAir, engine.EffectCanAttackSpace, engine.EffectCanAttackUnderwater, engine.EffectSubmarine, engine.EffectWoodenShip,
+			engine.EffectSpecialEmbassy, engine.EffectSpecialSoothsaying, engine.EffectSpecialSteal, engine.EffectSpecialCapture, engine.EffectSpecialTerraform, engine.EffectSpecialTerraformTurns,
+			engine.EffectSpecialConvertCity, engine.EffectSpecialCreateFranchise, engine.EffectSpecialInvestigateCity, engine.EffectSpecialPlantNuke, engine.EffectSpecialBioTerror, engine.EffectSpecialNanoTerror, engine.EffectSpecialPlague,
+			engine.EffectSpecialAssassinateRuler, engine.EffectSpecialSlaveRaid, engine.EffectSpecialSettlerSlaveRaid, engine.EffectSpecialUndergroundRailway, engine.EffectSpecialInjoin, engine.EffectSpecialReform,
+			engine.EffectSpecialCreatePark, engine.EffectSpecialExpel, engine.EffectSpecialSue:
+			return false
+		}
+	}
+	return true
+}
+
 func productionActions(projection Projection, playerID string) []ActionProjection {
 	actions := make([]ActionProjection, 0)
 	known := []string(nil)
@@ -577,7 +594,7 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 		if unit.ArmyID == "" && unit.TileID != "" {
 			actions = append(actions, action(engine.CommandArmyCreate, "army-create", unit.ID, "", map[string]any{"army_id": "client-army-" + unit.ID, "unit_ids": []string{unit.ID}}, []string{"army_id", "unit_ids"}))
 		}
-		if unit.TileID != "" && !unit.Fortified {
+		if unit.TileID != "" && !unit.Fortified && projectedUnitCanFortify(unit.Effects) {
 			actions = append(actions, action(engine.CommandFortify, "fortify", unit.ID, unit.TileID, map[string]string{"unit_id": unit.ID}, []string{"unit_id"}))
 		}
 		if unit.ArmyID == "" && unit.TileID != "" && hasEffect(unit.Effects, engine.EffectSettler) && !cityOnTile(projection, unit.TileID) {

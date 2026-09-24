@@ -59,7 +59,7 @@ func applyUnitCommand(state *State, command Command, runtime *rules.RuntimeRules
 			return "", err
 		}
 		unit, err := ownedUnit(state, command.ActorPlayerID, payload.UnitID)
-		if err != nil || unit.TransportID != "" {
+		if err != nil || unit.TransportID != "" || !unitCanFortify(*unit) {
 			return "", invalidUnitAction(err)
 		}
 		unit.Fortified = true
@@ -140,6 +140,27 @@ func invalidUnitAction(err error) error {
 		return err
 	}
 	return errors.New("unit action is invalid")
+}
+
+func unitCanFortify(unit Unit) bool {
+	if hasEffect(unit.Effects, EffectCanEntrench) {
+		return true
+	}
+	return !unitHasRetailCapabilityMetadata(unit)
+}
+
+func unitHasRetailCapabilityMetadata(unit Unit) bool {
+	for _, effect := range unit.Effects {
+		switch effect.Kind {
+		case EffectCantCaptureCity, EffectNoFuelThenCrash, EffectCanAttackLand, EffectCanAttackSea, EffectCanAttackAir, EffectCanAttackSpace, EffectCanAttackUnderwater, EffectSubmarine, EffectWoodenShip,
+			EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns,
+			EffectSpecialConvertCity, EffectSpecialCreateFranchise, EffectSpecialInvestigateCity, EffectSpecialPlantNuke, EffectSpecialBioTerror, EffectSpecialNanoTerror, EffectSpecialPlague,
+			EffectSpecialAssassinateRuler, EffectSpecialSlaveRaid, EffectSpecialSettlerSlaveRaid, EffectSpecialUndergroundRailway, EffectSpecialInjoin, EffectSpecialReform,
+			EffectSpecialCreatePark, EffectSpecialExpel, EffectSpecialSue:
+			return true
+		}
+	}
+	return false
 }
 
 func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *rules.RuntimeRules) error {

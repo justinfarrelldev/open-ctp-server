@@ -212,13 +212,30 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 		if unit.ArmyID == "" && unit.TransportID == "" && unit.TileID != "" && (!isSettler || !expansionEnabled) {
 			candidates = append(candidates, candidate(engine.CommandArmyCreate, unit.ID, "", 180, map[string]any{"army_id": "ai-army-" + unit.ID, "unit_ids": []string{unit.ID}}))
 		}
-		if unit.TransportID == "" && unit.TileID != "" {
+		if unit.TransportID == "" && unit.TileID != "" && projectedUnitCanFortify(unit.Effects) {
 			candidates = append(candidates, candidate(engine.CommandFortify, unit.ID, unit.TileID, 20, map[string]string{"unit_id": unit.ID}))
 		}
 	}
 	candidates = append(candidates, productionCandidates(projection, playerID)...)
 	sort.Slice(candidates, func(i, j int) bool { return Compare(candidates[i], candidates[j]) < 0 })
 	return candidates, nil
+}
+
+func projectedUnitCanFortify(effects []engine.Effect) bool {
+	if hasEffect(effects, engine.EffectCanEntrench) {
+		return true
+	}
+	for _, effect := range effects {
+		switch effect.Kind {
+		case engine.EffectCantCaptureCity, engine.EffectNoFuelThenCrash, engine.EffectCanAttackLand, engine.EffectCanAttackSea, engine.EffectCanAttackAir, engine.EffectCanAttackSpace, engine.EffectCanAttackUnderwater, engine.EffectSubmarine, engine.EffectWoodenShip,
+			engine.EffectSpecialEmbassy, engine.EffectSpecialSoothsaying, engine.EffectSpecialSteal, engine.EffectSpecialCapture, engine.EffectSpecialTerraform, engine.EffectSpecialTerraformTurns,
+			engine.EffectSpecialConvertCity, engine.EffectSpecialCreateFranchise, engine.EffectSpecialInvestigateCity, engine.EffectSpecialPlantNuke, engine.EffectSpecialBioTerror, engine.EffectSpecialNanoTerror, engine.EffectSpecialPlague,
+			engine.EffectSpecialAssassinateRuler, engine.EffectSpecialSlaveRaid, engine.EffectSpecialSettlerSlaveRaid, engine.EffectSpecialUndergroundRailway, engine.EffectSpecialInjoin, engine.EffectSpecialReform,
+			engine.EffectSpecialCreatePark, engine.EffectSpecialExpel, engine.EffectSpecialSue:
+			return false
+		}
+	}
+	return true
 }
 
 func aiExpansionEnabled(projection visibility.Projection) bool {

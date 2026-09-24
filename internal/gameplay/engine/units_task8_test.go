@@ -258,6 +258,18 @@ func TestNoFuelThenCrashRemovesStrandedAirUnitsOnAdvanceRound(t *testing.T) {
 	}
 }
 
+func TestRetailCanEntrenchRestrictsFortify(t *testing.T) {
+	state := task8State()
+	state.Units = []Unit{{ID: "special", OwnerID: "player-a", TileID: "a", Effects: []Effect{{ID: "retail", Kind: EffectCantCaptureCity}}}}
+	if _, _, err := applyTask8(t, state, CommandFortify, map[string]string{"unit_id": "special"}); err == nil {
+		t.Fatal("fortify accepted a retail unit without CanEntrench")
+	}
+	state.Units[0].Effects = append(state.Units[0].Effects, Effect{ID: "entrench", Kind: EffectCanEntrench})
+	if next, _, err := applyTask8(t, state, CommandFortify, map[string]string{"unit_id": "special"}); err != nil || !next.Units[0].Fortified {
+		t.Fatalf("fortify with CanEntrench failed: %v %#v", err, next.Units[0])
+	}
+}
+
 func TestTask8MovementAndCargoFailureVectors(t *testing.T) {
 	state := task8State()
 	for index := range state.Units {
