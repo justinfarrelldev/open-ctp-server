@@ -389,6 +389,41 @@ func TestTask12ProjectEventExposesStableEnvelopeOnly(t *testing.T) {
 	}
 }
 
+func TestTerrainActionsUseRetailAIImprovementListOrder(t *testing.T) {
+	projection := Projection{
+		Diplomacy: &DiplomacyProjection{PublicWorks: 10},
+		Tiles: []TileProjection{
+			{ID: "home", X: 0, Y: 0},
+			{ID: "work", X: 1, Y: 0, Terrain: engine.TerrainPlains},
+		},
+		Rules: &RulesProjection{
+			TerrainImprovements: []rules.RuntimeTerrainImprovementDefinition{
+				{ID: "TILEIMP_ADVANCED_FARMS", BuildTurns: 1, PublicWorksCost: 1},
+				{ID: "TILEIMP_FARMS", BuildTurns: 1, PublicWorksCost: 1},
+			},
+			AI: &rules.RuntimeAI{ImprovementLists: []rules.RuntimeAIList{{ID: "IMPROVEMENT_LIST_GROWTH", Items: []string{"TILEIMP_FARMS"}}}},
+		},
+	}
+	unit := UnitProjection{ID: "worker", OwnerID: "a", TileID: "home", Movement: 1, Effects: []engine.Effect{{ID: "terraform", Kind: engine.EffectSpecialTerraform}}}
+	actions := terrainActions(projection, projectedTiles(projection), unit)
+	for _, action := range actions {
+		if action.Command != engine.CommandBuildImprovement || action.TargetID != "work" {
+			continue
+		}
+		var payload struct {
+			ImprovementID string `json:"improvement_id"`
+		}
+		if err := json.Unmarshal(action.Payload, &payload); err != nil {
+			t.Fatal(err)
+		}
+		if payload.ImprovementID != "TILEIMP_FARMS" {
+			t.Fatalf("terrain action payload = %+v, want retail AI list improvement", payload)
+		}
+		return
+	}
+	t.Fatalf("missing build-improvement action: %#v", actions)
+}
+
 func hasAction(actions []ActionProjection, command string) bool {
 	for _, action := range actions {
 		if action.Command == command && len(action.Payload) > 0 && action.Route != "" {

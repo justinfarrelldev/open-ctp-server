@@ -403,6 +403,9 @@ func terrainImprovementCandidates(projection visibility.Projection, playerID str
 	if projection.Diplomacy == nil || projection.Diplomacy.PublicWorks < 1 {
 		return nil
 	}
+	if candidates := projectedTerrainImprovementActionCandidates(projection); len(candidates) > 0 {
+		return candidates
+	}
 	tiles := projectionTiles(projection)
 	candidates := make([]Candidate, 0)
 	for _, unit := range projection.Units {
@@ -424,6 +427,70 @@ func terrainImprovementCandidates(projection visibility.Projection, playerID str
 		}
 	}
 	return candidates
+}
+
+func projectedTerrainImprovementActionCandidates(projection visibility.Projection) []Candidate {
+	if len(projection.LegalActions) == 0 {
+		return nil
+	}
+	ranks := retailImprovementRanks(projection)
+	tiles := projectionTiles(projection)
+	improvements := projectedTerrainImprovements(projection)
+	candidates := make([]Candidate, 0)
+	for _, action := range projection.LegalActions {
+		if action.Command != engine.CommandBuildImprovement || len(action.Payload) == 0 {
+			continue
+		}
+		var payload struct {
+			UnitID        string `json:"unit_id"`
+			TileID        string `json:"tile_id"`
+			ImprovementID string `json:"improvement_id"`
+		}
+		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.UnitID == "" || payload.TileID == "" || payload.ImprovementID == "" {
+			continue
+		}
+		improvement := improvements[payload.ImprovementID]
+		if improvement.PollutionDelta < 0 {
+			if tile, ok := tiles[payload.TileID]; ok && tile.Pollution <= 0 {
+				continue
+			}
+		}
+		rank, listed := ranks[payload.ImprovementID]
+		if !listed {
+			rank = len(ranks) + 100
+		}
+		candidates = append(candidates, candidate(engine.CommandBuildImprovement, payload.UnitID, payload.TileID, 620-rank, payload))
+	}
+	return candidates
+}
+
+func projectedTerrainImprovements(projection visibility.Projection) map[string]rules.RuntimeTerrainImprovementDefinition {
+	result := map[string]rules.RuntimeTerrainImprovementDefinition{}
+	if projection.Rules == nil {
+		return result
+	}
+	for _, improvement := range projection.Rules.TerrainImprovements {
+		result[improvement.ID] = improvement
+	}
+	return result
+}
+
+func retailImprovementRanks(projection visibility.Projection) map[string]int {
+	ranks := map[string]int{}
+	if projection.Rules == nil || projection.Rules.AI == nil {
+		return ranks
+	}
+	rank := 0
+	for _, list := range projection.Rules.AI.ImprovementLists {
+		for _, id := range list.Items {
+			if _, seen := ranks[id]; seen {
+				continue
+			}
+			ranks[id] = rank
+			rank++
+		}
+	}
+	return ranks
 }
 
 func productionCandidates(projection visibility.Projection, playerID string) []Candidate {

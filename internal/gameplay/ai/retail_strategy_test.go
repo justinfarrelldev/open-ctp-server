@@ -296,3 +296,37 @@ func TestPlannerQueuesProjectedRetailLikeUnitProduction(t *testing.T) {
 	}
 	t.Fatalf("missing production candidate: %#v", candidates)
 }
+
+func TestPlannerUsesRetailAIImprovementListOrder(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		Diplomacy: &visibility.DiplomacyProjection{PublicWorks: 10},
+		LegalActions: []visibility.ActionProjection{
+			{Command: engine.CommandBuildImprovement, EntityID: "worker", TargetID: "tile", Payload: json.RawMessage(`{"unit_id":"worker","tile_id":"tile","improvement_id":"TILEIMP_ADVANCED_FARMS"}`)},
+			{Command: engine.CommandBuildImprovement, EntityID: "worker", TargetID: "tile", Payload: json.RawMessage(`{"unit_id":"worker","tile_id":"tile","improvement_id":"TILEIMP_FARMS"}`)},
+		},
+		Rules: &visibility.RulesProjection{AI: &rules.RuntimeAI{ImprovementLists: []rules.RuntimeAIList{{ID: "IMPROVEMENT_LIST_GROWTH", Items: []string{"TILEIMP_FARMS"}}}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type != engine.CommandBuildImprovement {
+			continue
+		}
+		var payload struct {
+			ImprovementID string `json:"improvement_id"`
+		}
+		if err := json.Unmarshal(candidate.Payload, &payload); err != nil {
+			t.Fatal(err)
+		}
+		if payload.ImprovementID != "TILEIMP_FARMS" {
+			t.Fatalf("improvement candidate payload = %+v, want retail AI list item", payload)
+		}
+		return
+	}
+	t.Fatalf("missing build-improvement candidate: %#v", candidates)
+}

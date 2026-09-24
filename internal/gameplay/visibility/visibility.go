@@ -709,7 +709,7 @@ func terrainActions(projection Projection, tiles map[string]TileProjection, unit
 			actions = append(actions, action(engine.CommandTerraform, "terraform", unit.ID, tile.ID, map[string]string{"unit_id": unit.ID, "tile_id": tile.ID, "target_terrain": engine.TerrainPlains}, []string{"unit_id", "tile_id", "target_terrain"}))
 		}
 		if projection.Rules != nil {
-			for _, improvement := range projection.Rules.TerrainImprovements {
+			for _, improvement := range orderedTerrainImprovements(*projection.Rules) {
 				if improvement.PublicWorksCost < 1 || improvement.BuildTurns < 1 || projection.Diplomacy.PublicWorks < improvement.PublicWorksCost {
 					continue
 				}
@@ -719,6 +719,32 @@ func terrainActions(projection Projection, tiles map[string]TileProjection, unit
 		}
 	}
 	return actions
+}
+
+func orderedTerrainImprovements(projection RulesProjection) []rules.RuntimeTerrainImprovementDefinition {
+	if len(projection.TerrainImprovements) == 0 || projection.AI == nil || len(projection.AI.ImprovementLists) == 0 {
+		return append([]rules.RuntimeTerrainImprovementDefinition(nil), projection.TerrainImprovements...)
+	}
+	byID := make(map[string]rules.RuntimeTerrainImprovementDefinition, len(projection.TerrainImprovements))
+	used := make(map[string]bool, len(projection.TerrainImprovements))
+	for _, improvement := range projection.TerrainImprovements {
+		byID[improvement.ID] = improvement
+	}
+	ordered := make([]rules.RuntimeTerrainImprovementDefinition, 0, len(projection.TerrainImprovements))
+	for _, list := range projection.AI.ImprovementLists {
+		for _, id := range list.Items {
+			if improvement, ok := byID[id]; ok && !used[id] {
+				ordered = append(ordered, improvement)
+				used[id] = true
+			}
+		}
+	}
+	for _, improvement := range projection.TerrainImprovements {
+		if !used[improvement.ID] {
+			ordered = append(ordered, improvement)
+		}
+	}
+	return ordered
 }
 
 func action(command, route, entityID, targetID string, payload any, fields []string) ActionProjection {
