@@ -6,6 +6,42 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
+func TestRetailTemporaryFullHappinessWonderAddsExpiringCityMarkers(t *testing.T) {
+	state := fixtureState()
+	state.RecalculatedTurn = 0
+	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}, {ID: "tile-b", Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{
+		{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", StoredProduction: 1, Queue: []ProductionItem{{ID: "WONDER_RAMAYANA", Kind: ProductionWonder, Cost: 1, Effects: []Effect{{ID: "full-happiness", Kind: EffectTemporaryFullHappiness, Value: 2}}}}},
+		{ID: "city-b", OwnerID: "player-a", TileID: "tile-b"},
+	}
+
+	first, err := RecalculateRound(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Cities[0].Happiness != 100 || first.Cities[1].Happiness != 100 || effectValue(first.Cities[0].Effects, EffectTemporaryFullHappiness) != 1 || effectValue(first.Cities[1].Effects, EffectTemporaryFullHappiness) != 1 {
+		t.Fatalf("first full-happiness round cities = %#v", first.Cities)
+	}
+
+	first.Phase.Turn = 2
+	second, err := RecalculateRound(first)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second.Cities[0].Happiness != 100 || second.Cities[1].Happiness != 100 || hasEffect(second.Cities[0].Effects, EffectTemporaryFullHappiness) || hasEffect(second.Cities[1].Effects, EffectTemporaryFullHappiness) {
+		t.Fatalf("second full-happiness round cities = %#v", second.Cities)
+	}
+
+	second.Phase.Turn = 3
+	third, err := RecalculateRound(second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if third.Cities[0].Happiness != 0 || third.Cities[1].Happiness != 0 {
+		t.Fatalf("expired full-happiness cities = %#v", third.Cities)
+	}
+}
+
 func TestRetailPollutersToParksWonderConvertsMostPollutedCities(t *testing.T) {
 	state := State{
 		Tiles: []Tile{

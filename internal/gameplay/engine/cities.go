@@ -405,6 +405,7 @@ func RecalculateRound(state State) (State, error) {
 			return State{}, err
 		}
 		city.Happiness = cityHappiness(next, *city)
+		advanceTemporaryCityEffects(city)
 		city.CrimePercent = cityCrimePercent(next, *city)
 		city.OvercrowdingLevel = cityOvercrowdingLevel(next, *city)
 		advanceCityFood(city, cityMaxPopulation(next, *city), cityStarvationProtection(next, *city), foodVatPercent(*city))
@@ -557,7 +558,36 @@ func cityHappiness(state State, city City) int {
 			happiness += effect.Value
 		}
 	}
+	if cityHasTemporaryFullHappiness(city) && happiness < 100 {
+		return 100
+	}
 	return happiness
+}
+
+func cityHasTemporaryFullHappiness(city City) bool {
+	for _, effect := range city.Effects {
+		if effect.Kind == EffectTemporaryFullHappiness && effect.Value > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func advanceTemporaryCityEffects(city *City) {
+	if len(city.Effects) == 0 {
+		return
+	}
+	effects := city.Effects[:0]
+	for _, effect := range city.Effects {
+		if effect.Kind == EffectTemporaryFullHappiness {
+			effect.Value--
+			if effect.Value <= 0 {
+				continue
+			}
+		}
+		effects = append(effects, effect)
+	}
+	city.Effects = effects
 }
 
 func cityCrimePercent(state State, city City) int {
@@ -731,10 +761,36 @@ func applyWonderCompletionEffects(state *State, wonder Wonder) {
 			removeSlaverUnits(state)
 		case EffectPollutersToParks:
 			convertPollutedCitiesToParks(state, wonder.OwnerID, wonder.CityID, effect.Value)
+		case EffectTemporaryFullHappiness:
+			applyTemporaryFullHappiness(state, wonder.OwnerID, wonder.ID, effect.Value)
 		case EffectEmbassiesEverywhere:
 			removeWarsWithPlayer(state, wonder.OwnerID)
 		}
 	}
+}
+
+func applyTemporaryFullHappiness(state *State, ownerID, sourceID string, turns int) {
+	if turns <= 0 {
+		return
+	}
+	for index := range state.Cities {
+		if state.Cities[index].OwnerID != ownerID {
+			continue
+		}
+		upsertCityEffect(&state.Cities[index], Effect{ID: "temporary-full-happiness:" + sourceID, Kind: EffectTemporaryFullHappiness, Value: turns})
+	}
+}
+
+func upsertCityEffect(city *City, effect Effect) {
+	for index := range city.Effects {
+		if city.Effects[index].Kind == effect.Kind && city.Effects[index].ID == effect.ID {
+			if effect.Value > city.Effects[index].Value {
+				city.Effects[index].Value = effect.Value
+			}
+			return
+		}
+	}
+	city.Effects = append(city.Effects, effect)
 }
 
 func convertPollutedCitiesToParks(state *State, ownerID, excludedCityID string, limit int) {
