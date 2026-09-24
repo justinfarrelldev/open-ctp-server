@@ -175,30 +175,31 @@ type Tile struct {
 }
 
 type Unit struct {
-	ID              string   `json:"id"`
-	OwnerID         string   `json:"owner_id"`
-	TileID          string   `json:"tile_id"`
-	ArmyID          string   `json:"army_id,omitempty"`
-	TransportID     string   `json:"transport_id,omitempty"`
-	Domain          string   `json:"domain,omitempty"`
-	Movement        int      `json:"movement,omitempty"`
-	Fuel            int      `json:"fuel,omitempty"`
-	MaxFuel         int      `json:"max_fuel,omitempty"`
-	CargoCapacity   int      `json:"cargo_capacity,omitempty"`
-	CargoDomains    []string `json:"cargo_domains,omitempty"`
-	ZOC             bool     `json:"zoc,omitempty"`
-	Fortified       bool     `json:"fortified,omitempty"`
-	Effects         []Effect `json:"effects,omitempty"`
-	Attack          int      `json:"attack,omitempty"`
-	Defense         int      `json:"defense,omitempty"`
-	Ranged          int      `json:"ranged,omitempty"`
-	BombardRange    int      `json:"bombard_range,omitempty"`
-	BombRounds      int      `json:"bomb_rounds,omitempty"`
-	Strength        int      `json:"strength,omitempty"`
-	Armor           int      `json:"armor,omitempty"`
-	Health          int      `json:"health,omitempty"`
-	MaxHealth       int      `json:"max_health,omitempty"`
-	VisibilityRange int      `json:"visibility_range,omitempty"`
+	ID                 string   `json:"id"`
+	OwnerID            string   `json:"owner_id"`
+	TileID             string   `json:"tile_id"`
+	ArmyID             string   `json:"army_id,omitempty"`
+	TransportID        string   `json:"transport_id,omitempty"`
+	Domain             string   `json:"domain,omitempty"`
+	Movement           int      `json:"movement,omitempty"`
+	Fuel               int      `json:"fuel,omitempty"`
+	MaxFuel            int      `json:"max_fuel,omitempty"`
+	CargoCapacity      int      `json:"cargo_capacity,omitempty"`
+	CargoDomains       []string `json:"cargo_domains,omitempty"`
+	ZOC                bool     `json:"zoc,omitempty"`
+	Fortified          bool     `json:"fortified,omitempty"`
+	Effects            []Effect `json:"effects,omitempty"`
+	Attack             int      `json:"attack,omitempty"`
+	Defense            int      `json:"defense,omitempty"`
+	Ranged             int      `json:"ranged,omitempty"`
+	BombardRange       int      `json:"bombard_range,omitempty"`
+	BombRounds         int      `json:"bomb_rounds,omitempty"`
+	ActiveDefenseRange int      `json:"active_defense_range,omitempty"`
+	Strength           int      `json:"strength,omitempty"`
+	Armor              int      `json:"armor,omitempty"`
+	Health             int      `json:"health,omitempty"`
+	MaxHealth          int      `json:"max_health,omitempty"`
+	VisibilityRange    int      `json:"visibility_range,omitempty"`
 }
 
 type City struct {

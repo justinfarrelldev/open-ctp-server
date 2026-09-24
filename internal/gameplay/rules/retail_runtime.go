@@ -313,7 +313,7 @@ func signedCoefficientPercentPoints(value float64) int {
 func projectRetailUnit(unit RetailUnit) RuntimeUnitDefinition {
 	effects := retailUnitEffects(unit)
 	cargoDomains := retailCargoDomains(unit.CanCarry)
-	return RuntimeUnitDefinition{ID: unit.ID, Role: unit.Category, Domain: retailUnitDomain(unit.MovementTypes), Movement: positiveOrOne(unit.MaxMovePoints), Attack: unit.Attack, Defense: unit.Defense, Ranged: unit.ZBRangeAttack, BombardRange: unit.BombardRange, BombRounds: unit.BombRounds, Strength: unit.Attack, Armor: unit.Armor, Health: positiveOrOne(unit.MaxHP), MaxFuel: unit.MaxFuel, ZOC: !retailContainsString(unit.Flags, "NoZoc"), TransportCapacity: unit.CargoMax, CargoDomains: cargoDomains, ProductionCost: unit.ShieldCost, Upkeep: unit.GoldHunger, Prerequisites: singleOrEmpty(unit.EnableAdvance), ObsoleteBy: append([]string(nil), unit.ObsoleteAdvance...), VisibilityRange: unit.VisionRange, Effects: effects}
+	return RuntimeUnitDefinition{ID: unit.ID, Role: unit.Category, Domain: retailUnitDomain(unit.MovementTypes), Movement: positiveOrOne(unit.MaxMovePoints), Attack: unit.Attack, Defense: unit.Defense, Ranged: unit.ZBRangeAttack, BombardRange: unit.BombardRange, BombRounds: unit.BombRounds, ActiveDefenseRange: unit.ActiveDefenseRange, Strength: unit.Attack, Armor: unit.Armor, Health: positiveOrOne(unit.MaxHP), MaxFuel: unit.MaxFuel, ZOC: !retailContainsString(unit.Flags, "NoZoc"), TransportCapacity: unit.CargoMax, CargoDomains: cargoDomains, ProductionCost: unit.ShieldCost, Upkeep: unit.GoldHunger, Prerequisites: singleOrEmpty(unit.EnableAdvance), ObsoleteBy: append([]string(nil), unit.ObsoleteAdvance...), VisibilityRange: unit.VisionRange, Effects: effects}
 }
 
 func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
