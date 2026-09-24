@@ -107,6 +107,7 @@ const (
 	EventCityInjoined             = "city.injoined"
 	EventCityReformed             = "city.reformed"
 	EventUndergroundRailway       = "city.underground_railway"
+	EventUndergroundRailwayFailed = "city.underground_railway_failed"
 	EventCitySued                 = "city.sued"
 	EventTechnologyCapture        = "technology.capture"
 	EventPillaged                 = "pillage.applied"

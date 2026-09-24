@@ -112,6 +112,17 @@ func TestRetailUndergroundRailwayFreesPopulation(t *testing.T) {
 	if next.Cities[0].Population != 3 || !hasEffect(next.Nations[0].Effects, EffectFreedPopulation) || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventUndergroundRailway {
 		t.Fatalf("railway outcome city=%+v nation=%+v unit=%+v events=%+v", next.Cities[0], next.Nations[0], next.Units[0], events)
 	}
+
+	state = task11State()
+	state.Cities[0].Population = 4
+	state.Units[0].Effects = []Effect{{ID: "railway", Kind: EffectSpecialUndergroundRailway, Value: 10}}
+	next, events, err = task11Apply(t, state, CommandUndergroundRailway, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Cities[0].Population != 4 || hasEffect(next.Nations[0].Effects, EffectFreedPopulation) || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventUndergroundRailwayFailed {
+		t.Fatalf("chance-failed railway outcome city=%+v nation=%+v unit=%+v events=%+v", next.Cities[0], next.Nations[0], next.Units[0], events)
+	}
 }
 
 func TestRetailReformCityRemovesInjunctionAndCrime(t *testing.T) {

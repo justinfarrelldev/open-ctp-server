@@ -139,7 +139,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		case CommandReform:
 			return reformCity(unit, city)
 		case CommandUndergroundRailway:
-			return undergroundRailway(unit, city, actorNation)
+			return undergroundRailway(state, unit, city, actorNation, sources)
 		case CommandSue:
 			return sueCity(unit, city)
 		case CommandBioTerror, CommandNanoTerror, CommandPlague:
@@ -319,12 +319,23 @@ func sueCity(unit *Unit, city *City) (string, json.RawMessage, error) {
 	return EventCitySued, json.RawMessage(`{"disclosed":true}`), nil
 }
 
-func undergroundRailway(unit *Unit, city *City, actorNation *Nation) (string, json.RawMessage, error) {
+func undergroundRailway(state *State, unit *Unit, city *City, actorNation *Nation, sources Sources) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialUndergroundRailway) || city.Population <= 1 {
 		return "", nil, errors.New("special action is not authorized")
 	}
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
+	}
+	chance := effectValue(unit.Effects, EffectSpecialUndergroundRailway)
+	if chance <= 0 {
+		chance = 100
+	}
+	if chance < 100 {
+		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+		setRNG(state, RNGDomainSpecialAction, next)
+		if int(roll%100) >= chance {
+			return EventUndergroundRailwayFailed, json.RawMessage(`{"disclosed":true}`), nil
+		}
 	}
 	city.Population--
 	upsertNationEffect(actorNation, EffectFreedPopulation, 1)
