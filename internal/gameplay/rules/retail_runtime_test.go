@@ -164,6 +164,18 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeProductionHasEffectValue(cityWalls, "combat_defense", 15) {
 		t.Fatalf("city walls effects = %+v ok=%v", cityWalls, ok)
 	}
+	ballista, ok := runtime.ProductionDefinition("IMPROVE_BALLISTA_TOWERS")
+	if !ok || !runtimeProductionHasEffectValue(ballista, "combat_attack_land", 20) {
+		t.Fatalf("ballista effects = %+v ok=%v", ballista, ok)
+	}
+	battlements, ok := runtime.ProductionDefinition("IMPROVE_BATTLEMENTS")
+	if !ok || !runtimeProductionHasEffectValue(battlements, "combat_attack_sea", 25) {
+		t.Fatalf("battlements effects = %+v ok=%v", battlements, ok)
+	}
+	flak, ok := runtime.ProductionDefinition("IMPROVE_FLAK_TOWERS")
+	if !ok || !runtimeProductionHasEffectValue(flak, "combat_attack_air", 40) {
+		t.Fatalf("flak tower effects = %+v ok=%v", flak, ok)
+	}
 	academyWonder, ok := runtime.ProductionDefinition("WONDER_ARISTOTLES_LYCEUM")
 	if !ok || len(academyWonder.Effects) != 1 || academyWonder.Effects[0].Kind != "research_percent" || academyWonder.Effects[0].Value != 20 {
 		t.Fatalf("Aristotle's Lyceum effects = %+v ok=%v", academyWonder, ok)

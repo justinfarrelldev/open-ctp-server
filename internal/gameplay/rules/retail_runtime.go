@@ -118,6 +118,15 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 	if value := retailPercentFieldPoints(building.FloatValues["DefendersPercent"]); value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":defenders-percent", Kind: "combat_defense", Value: value})
 	}
+	if value := retailPercentFieldPoints(building.FloatValues["OffenseBonusLand"]); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":offense-land", Kind: "combat_attack_land", Value: value})
+	}
+	if value := retailPercentFieldPoints(building.FloatValues["OffenseBonusWater"]); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":offense-water", Kind: "combat_attack_sea", Value: value})
+	}
+	if value := retailPercentFieldPoints(building.FloatValues["OffenseBonusAir"]); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":offense-air", Kind: "combat_attack_air", Value: value})
+	}
 	if value, ok := signedPercentPoints(building.FloatValues["PopulationPollutionPercent"]); ok {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":population-pollution-percent", Kind: "pollution_population_percent", Value: value})
 	}

@@ -152,7 +152,7 @@ func combatStrike(state *State, sources Sources, attackers, defenders []*Unit, r
 		if ranged {
 			attack = attacker.Ranged
 		}
-		attack += combatModifier(*state, *attacker, true)
+		attack += combatAttackModifier(*state, *attacker, *target)
 		defense := target.Defense + combatModifier(*state, *target, false)
 		if attack <= 0 || defense < 0 {
 			continue
@@ -200,8 +200,18 @@ func livingCombatUnits(units []*Unit) []*Unit {
 	return living
 }
 
+func combatAttackModifier(state State, unit Unit, target Unit) int {
+	modifier := combatModifier(state, unit, true)
+	for _, city := range state.Cities {
+		if city.TileID == unit.TileID {
+			modifier += effectsModifierAgainst(cityLocalEffects(state, city), true, target.Domain)
+		}
+	}
+	return modifier
+}
+
 func combatModifier(state State, unit Unit, attack bool) int {
-	modifier := effectsModifier(unit.Effects, attack)
+	modifier := effectsModifierAgainst(unit.Effects, attack, "")
 	if !attack && unit.Fortified {
 		modifier++
 	}
@@ -211,7 +221,7 @@ func combatModifier(state State, unit Unit, attack bool) int {
 		}
 		for _, city := range state.Cities {
 			if city.TileID == unit.TileID {
-				modifier += effectsModifier(cityEffects(state, city), false)
+				modifier += effectsModifierAgainst(cityLocalEffects(state, city), false, "")
 			}
 		}
 	}
@@ -219,7 +229,7 @@ func combatModifier(state State, unit Unit, attack bool) int {
 		if player.ID == unit.OwnerID {
 			for _, nation := range state.Nations {
 				if nation.ID == player.NationID {
-					modifier += effectsModifier(nation.Effects, attack)
+					modifier += effectsModifierAgainst(nation.Effects, attack, "")
 				}
 			}
 		}
@@ -227,18 +237,31 @@ func combatModifier(state State, unit Unit, attack bool) int {
 	return modifier
 }
 
-func effectsModifier(effects []Effect, attack bool) int {
+func effectsModifierAgainst(effects []Effect, attack bool, targetDomain string) int {
 	kind := EffectCombatDefense
 	if attack {
 		kind = EffectCombatAttack
 	}
 	value := 0
 	for _, effect := range effects {
-		if effect.Kind == kind || effect.Kind == EffectCombat {
+		if effect.Kind == kind || effect.Kind == EffectCombat || attack && combatAttackDomainEffectApplies(effect.Kind, targetDomain) {
 			value += effect.Value
 		}
 	}
 	return value
+}
+
+func combatAttackDomainEffectApplies(kind, targetDomain string) bool {
+	switch kind {
+	case EffectCombatAttackLand:
+		return targetDomain == DomainLand || targetDomain == DomainAmphibious
+	case EffectCombatAttackSea:
+		return targetDomain == DomainSea || targetDomain == DomainAmphibious
+	case EffectCombatAttackAir:
+		return targetDomain == DomainAir
+	default:
+		return false
+	}
 }
 
 func combatVisible(state State, playerID, tileID string) bool {

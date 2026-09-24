@@ -40,6 +40,21 @@ func TestRetailCityDefenseBuildingEffectsModifyDefenders(t *testing.T) {
 	}
 }
 
+func TestRetailCityOffenseBuildingEffectsModifyAttackersByDefenderDomain(t *testing.T) {
+	state := combatState()
+	state.Cities = append(state.Cities, City{ID: "city-a", OwnerID: "player-a", TileID: "a", Buildings: []Building{{ID: "IMPROVE_BALLISTA_TOWERS", Effects: []Effect{{ID: "ballista", Kind: EffectCombatAttackLand, Value: 20}}}}})
+	attacker := state.Units[0]
+	defender := state.Units[2]
+	defender.Domain = DomainLand
+	if got := combatAttackModifier(state, attacker, defender); got != 21 { // nation banner + ballista
+		t.Fatalf("land attack modifier = %d, want nation + city offense", got)
+	}
+	defender.Domain = DomainAir
+	if got := combatAttackModifier(state, attacker, defender); got != 1 {
+		t.Fatalf("air attack modifier = %d, want only nation banner", got)
+	}
+}
+
 func TestCombatVectorsResolveAtomicallyWithSourceOrderAndCapture(t *testing.T) {
 	state := combatState()
 	next, events, result, err := Apply(state, combatCommand(), state.Rules, fixtureSources())
