@@ -44,6 +44,7 @@ const (
 	CommandCancelProduction = "cancel-production"
 	CommandSetResearch      = "set-research"
 	CommandCombat           = "combat"
+	CommandBombard          = "bombard"
 	CommandEstablishEmbassy = "establish-embassy"
 	CommandSoothsaying      = "soothsaying"
 	CommandStealTechnology  = "steal-technology"
@@ -63,6 +64,7 @@ const (
 	EventGovernmentChanged  = "government.changed"
 	EventUnitMoved          = "unit.moved"
 	EventCombatResolved     = "combat.resolved"
+	EventBombarded          = "bombard.resolved"
 	EventUnitDisbanded      = "unit.disbanded"
 	EventEmbassyEstablished = "embassy.established"
 	EventSoothsayingApplied = "soothsaying.applied"
@@ -472,6 +474,8 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 	case CommandCombat:
 		combatResult, eventPayload, err = applyCombat(state, command, sources)
 		eventType = EventCombatResolved
+	case CommandBombard:
+		eventType, eventPayload, err = applyBombard(state, command, sources)
 	case CommandFoundCity, CommandQueueProduction, CommandCancelProduction:
 		eventType, err = applyCityCommand(state, command, runtime)
 	default:

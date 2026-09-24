@@ -19,6 +19,11 @@ type combatPayload struct {
 	DefenderArmyID string `json:"defender_army_id"`
 }
 
+type bombardPayload struct {
+	UnitID       string `json:"unit_id"`
+	TargetTileID string `json:"target_tile_id"`
+}
+
 // CombatResult is deliberately aggregate-only: it is sufficient to animate a
 // visible battle without disclosing either army's composition or RNG draws.
 type CombatResult struct {
@@ -131,6 +136,85 @@ func armyCanCaptureTargetCity(state State, attackers Army, targetTileID string) 
 		}
 	}
 	return false
+}
+
+func applyBombard(state *State, command Command, sources Sources) (string, json.RawMessage, error) {
+	if err := activeActor(*state, command.ActorPlayerID); err != nil {
+		return "", nil, err
+	}
+	var payload bombardPayload
+	if err := decodePayload(command.Payload, &payload); err != nil || payload.UnitID == "" || payload.TargetTileID == "" {
+		return "", nil, errors.New("bombard target is unavailable")
+	}
+	unit, err := ownedUnit(state, command.ActorPlayerID, payload.UnitID)
+	if err != nil || unit.TileID == "" || unit.TransportID != "" || unit.Movement < 1 || unit.Ranged <= 0 || unit.BombardRange < 1 || unit.BombRounds < 1 {
+		return "", nil, errors.New("bombard target is unavailable")
+	}
+	origin, ok := tileByID(*state, unit.TileID)
+	targetTile, targetOK := tileByID(*state, payload.TargetTileID)
+	if !ok || !targetOK || !combatVisible(*state, command.ActorPlayerID, payload.TargetTileID) || tileDistance(origin, targetTile) > unit.BombardRange {
+		return "", nil, errors.New("bombard target is unavailable")
+	}
+	targets := bombardTargets(*state, command.ActorPlayerID, payload.TargetTileID)
+	if len(targets) == 0 || attackerHasCanAttackMetadata(*unit) && !attackerCanAttackTarget(*unit, *targets[0]) {
+		return "", nil, errors.New("bombard target is unavailable")
+	}
+	hits := 0
+	for round := 0; round < unit.BombRounds && len(targets) > 0; round++ {
+		target := targets[0]
+		defense := target.Defense + combatDefenseModifier(*state, *target, *unit)
+		if defense < 0 {
+			defense = 0
+		}
+		roll := combatRoll(state, sources)
+		if int(roll%1000) < unit.Ranged*1000/(unit.Ranged+defense) {
+			damage := unit.Strength / target.Armor
+			if damage < 1 {
+				damage = 1
+			}
+			target.Health -= damage
+			hits++
+		}
+		targets = livingCombatUnits(targets)
+	}
+	unit.Movement--
+	destroyed := 0
+	for _, target := range bombardTargets(*state, command.ActorPlayerID, payload.TargetTileID) {
+		if target.Health <= 0 {
+			removeUnitAndCargo(state, target.ID)
+			destroyed++
+		}
+	}
+	payloadJSON, _ := json.Marshal(struct {
+		UnitID       string `json:"unit_id"`
+		TargetTileID string `json:"target_tile_id"`
+		Hits         int    `json:"hits"`
+		Destroyed    int    `json:"destroyed"`
+	}{UnitID: unit.ID, TargetTileID: payload.TargetTileID, Hits: hits, Destroyed: destroyed})
+	return EventBombarded, payloadJSON, nil
+}
+
+func tileDistance(left, right Tile) int {
+	dx := left.X - right.X
+	if dx < 0 {
+		dx = -dx
+	}
+	dy := left.Y - right.Y
+	if dy < 0 {
+		dy = -dy
+	}
+	return dx + dy
+}
+
+func bombardTargets(state State, actorID, tileID string) []*Unit {
+	targets := make([]*Unit, 0)
+	for i := range state.Units {
+		if state.Units[i].OwnerID != actorID && state.Units[i].TileID == tileID && state.Units[i].TransportID == "" {
+			targets = append(targets, &state.Units[i])
+		}
+	}
+	sort.Slice(targets, func(i, j int) bool { return targets[i].ID < targets[j].ID })
+	return targets
 }
 
 func canArmyFight(state State, attackers, defenders []*Unit) bool {

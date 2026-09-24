@@ -40,6 +40,33 @@ func TestRetailCityDefenseBuildingEffectsModifyDefenders(t *testing.T) {
 	}
 }
 
+func TestRetailBombardDamagesVisibleTargetAtRange(t *testing.T) {
+	state := combatState()
+	state.Units = []Unit{
+		{ID: "bombarder", OwnerID: "player-a", TileID: "a", Movement: 1, Ranged: 100, BombardRange: 2, BombRounds: 1, Strength: 4, Armor: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "can-land", Kind: EffectCanAttackLand}}},
+		{ID: "target", OwnerID: "player-b", TileID: "retreat", Domain: DomainLand, Defense: 1, Strength: 1, Armor: 2, Health: 4, MaxHealth: 4},
+	}
+	state.Armies = nil
+	state.Fog = append(state.Fog, FogObservation{PlayerID: "player-a", TileID: "retreat", Turn: 1})
+	payload, _ := json.Marshal(map[string]string{"unit_id": "bombarder", "target_tile_id": "retreat"})
+
+	next, events, result, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "bombard", ActorPlayerID: "player-a", Type: CommandBombard, Payload: payload}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 || events[0].Type != EventBombarded || result.Combat != nil {
+		t.Fatalf("bombard transition = events:%+v result:%+v", events, result)
+	}
+	target, ok := unitByID(next, "target")
+	if !ok || target.Health >= 4 {
+		t.Fatalf("target after bombard = %+v ok=%v", target, ok)
+	}
+	bombarder, ok := unitByID(next, "bombarder")
+	if !ok || bombarder.Movement != 0 {
+		t.Fatalf("bombarder movement after bombard = %+v ok=%v", bombarder, ok)
+	}
+}
+
 func TestRetailCanAttackEffectsRestrictCombatTargets(t *testing.T) {
 	state := combatState()
 	state.Units[0].Effects = []Effect{{ID: "air-only", Kind: EffectCanAttackAir}}

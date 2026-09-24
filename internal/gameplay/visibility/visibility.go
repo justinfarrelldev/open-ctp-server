@@ -606,6 +606,7 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 		actions = append(actions, moveActions(projection, tiles, unit)...)
 		actions = append(actions, embarkActions(projection, unit)...)
 		actions = append(actions, combatActions(projection, tiles, unit)...)
+		actions = append(actions, bombardActions(projection, tiles, unit)...)
 		actions = append(actions, specialActions(projection, tiles, cities, unit, playerID)...)
 		actions = append(actions, terrainActions(projection, tiles, unit)...)
 	}
@@ -688,6 +689,34 @@ func combatActions(projection Projection, tiles map[string]TileProjection, attac
 		actions = append(actions, action(engine.CommandCombat, "combat", attacker.ArmyID, defender.ArmyID, map[string]string{"attacker_army_id": attacker.ArmyID, "defender_army_id": defender.ArmyID}, []string{"attacker_army_id", "defender_army_id"}))
 	}
 	return actions
+}
+
+func bombardActions(projection Projection, tiles map[string]TileProjection, attacker UnitProjection) []ActionProjection {
+	if attacker.TileID == "" || attacker.Movement < 1 || attacker.Ranged < 1 || attacker.BombardRange < 1 || attacker.BombRounds < 1 {
+		return nil
+	}
+	origin, ok := tiles[attacker.TileID]
+	if !ok {
+		return nil
+	}
+	seenTiles := map[string]bool{}
+	actions := make([]ActionProjection, 0)
+	for _, defender := range projection.Units {
+		if defender.OwnerID == attacker.OwnerID || defender.TileID == "" || defender.TransportID != "" || seenTiles[defender.TileID] {
+			continue
+		}
+		target, ok := tiles[defender.TileID]
+		if !ok || target.Stale || projectedTileDistance(origin, target) > attacker.BombardRange || !projectionDomainsCompatible(attacker, defender) {
+			continue
+		}
+		seenTiles[defender.TileID] = true
+		actions = append(actions, action(engine.CommandBombard, "bombard", attacker.ID, defender.TileID, map[string]string{"unit_id": attacker.ID, "target_tile_id": defender.TileID}, []string{"unit_id", "target_tile_id"}))
+	}
+	return actions
+}
+
+func projectedTileDistance(left, right TileProjection) int {
+	return abs(left.X-right.X) + abs(left.Y-right.Y)
 }
 
 func specialActions(projection Projection, tiles map[string]TileProjection, cities map[string]CityProjection, unit UnitProjection, playerID string) []ActionProjection {
