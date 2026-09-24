@@ -67,6 +67,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeUnitHasEffectID(seaEngineer, "settle_building", "IMPROVE_GRANARY") {
 		t.Fatalf("sea engineer runtime = %+v ok=%v", seaEngineer, ok)
 	}
+	cleric, ok := runtime.Unit("UNIT_CLERIC")
+	if !ok || !runtimeUnitHasEffect(cleric, "special_soothsaying") {
+		t.Fatalf("cleric runtime = %+v ok=%v", cleric, ok)
+	}
 	if runtime.Starter.Movement != 100 || runtime.Starter.Health != 10 || !runtimeStarterHasEffect(runtime.Starter, "settler") {
 		t.Fatalf("starter = %+v, want retail settler", runtime.Starter)
 	}

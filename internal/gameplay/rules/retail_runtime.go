@@ -216,6 +216,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "EstablishEmbassy") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_embassy"), Kind: "special_embassy"})
 	}
+	if len(unit.FieldsByKey("CanSoothsay")) > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_soothsaying"), Kind: "special_soothsaying"})
+	}
 	if len(unit.FieldsByKey("StealTechnology")) > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_steal"), Kind: "special_steal", Value: 100})
 	}
