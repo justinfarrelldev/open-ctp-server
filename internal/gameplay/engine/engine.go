@@ -163,6 +163,8 @@ type Unit struct {
 	Attack          int      `json:"attack,omitempty"`
 	Defense         int      `json:"defense,omitempty"`
 	Ranged          int      `json:"ranged,omitempty"`
+	BombardRange    int      `json:"bombard_range,omitempty"`
+	BombRounds      int      `json:"bomb_rounds,omitempty"`
 	Strength        int      `json:"strength,omitempty"`
 	Armor           int      `json:"armor,omitempty"`
 	Health          int      `json:"health,omitempty"`

@@ -13,7 +13,7 @@ func TestProductionCompletionCopiesRuntimeRangedStats(t *testing.T) {
 	if err := completeUnitProduction(&state, &city, ProductionItem{ID: "UNIT_RANGED", Kind: ProductionUnit}, runtime); err != nil {
 		t.Fatalf("completeUnitProduction() error = %v", err)
 	}
-	if len(state.Units) != 1 || state.Units[0].Ranged != 9 {
+	if len(state.Units) != 1 || state.Units[0].Ranged != 9 || state.Units[0].BombardRange != 2 || state.Units[0].BombRounds != 4 {
 		t.Fatalf("produced ranged unit = %#v", state.Units)
 	}
 }

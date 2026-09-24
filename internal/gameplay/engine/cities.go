@@ -633,6 +633,8 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 		Attack:          definition.Attack,
 		Defense:         definition.Defense,
 		Ranged:          definition.Ranged,
+		BombardRange:    definition.BombardRange,
+		BombRounds:      definition.BombRounds,
 		Strength:        definition.Strength,
 		Armor:           definition.Armor,
 		Health:          definition.Health,
