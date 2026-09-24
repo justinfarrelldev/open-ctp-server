@@ -130,6 +130,26 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 	if retailContainsString(building.Flags, "Airport") {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":airport", Kind: "airport"})
 	}
+	if value := percentPoints(building.FloatValues["FoodVat"]); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":food-vat", Kind: "food_vat_percent", Value: value})
+	}
+	for _, marker := range []struct{ flag, kind string }{
+		{"AllowGrunts", "allow_grunts"},
+		{"Brokerage", "brokerage"},
+		{"Capitol", "capitol"},
+		{"Cathedral", "cathedral"},
+		{"DoubleTelevangelists", "double_televangelists"},
+		{"IsReligious", "is_religious"},
+		{"NuclearPlant", "nuclear_plant"},
+		{"Television", "television"},
+	} {
+		if retailContainsString(building.Flags, marker.flag) {
+			effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":" + marker.kind, Kind: marker.kind})
+		}
+	}
+	if value, ok := signedPercentPoints(building.FloatValues["LowerPeaceMovement"]); ok {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":lower-peace-movement", Kind: "lower_peace_movement_percent", Value: value})
+	}
 	if retailContainsString(building.Flags, "ProtectFromNukes") {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":protect-from-nukes", Kind: "protect_from_nukes"})
 	}

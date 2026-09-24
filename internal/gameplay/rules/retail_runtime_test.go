@@ -148,7 +148,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("Zero Crime Bill effects = %+v ok=%v", zeroCrime, ok)
 	}
 	factory, ok := runtime.ProductionDefinition("IMPROVE_FACTORY")
-	if !ok || len(factory.Effects) != 1 || factory.Effects[0].Kind != "yield_production_percent" || factory.Effects[0].Value != 15 {
+	if !ok || !runtimeProductionHasEffectValue(factory, "yield_production_percent", 15) || !runtimeProductionHasEffect(factory, "allow_grunts") {
 		t.Fatalf("factory production effects = %+v ok=%v", factory, ok)
 	}
 	bazaar, ok := runtime.ProductionDefinition("IMPROVE_BAZAAR")
@@ -201,6 +201,23 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeProductionHasEffectValue(courthouse, "crime_percent", -10) {
 		t.Fatalf("courthouse effects = %+v ok=%v", courthouse, ok)
 	}
+	capitol, ok := runtime.ProductionDefinition("IMPROVE_CAPITOL")
+	if !ok || !runtimeProductionHasEffect(capitol, "capitol") {
+		t.Fatalf("capitol effects = %+v ok=%v", capitol, ok)
+	}
+	basilica, ok := runtime.ProductionDefinition("IMPROVE_BASCILICA")
+	if !ok || !runtimeProductionHasEffect(basilica, "cathedral") || !runtimeProductionHasEffect(basilica, "is_religious") {
+		t.Fatalf("basilica effects = %+v ok=%v", basilica, ok)
+	}
+	cornucopicVat, ok := runtime.ProductionDefinition("IMPROVE_CORNUCOPIC_VAT")
+	if !ok || !runtimeProductionHasEffectValue(cornucopicVat, "food_vat_percent", 100) {
+		t.Fatalf("cornucopic vat effects = %+v ok=%v", cornucopicVat, ok)
+	}
+	brokerage, ok := runtime.ProductionDefinition("IMPROVE_BROKERAGE")
+	if !ok || !runtimeProductionHasEffect(brokerage, "brokerage") {
+		t.Fatalf("brokerage effects = %+v ok=%v", brokerage, ok)
+	}
+
 	cityWalls, ok := runtime.ProductionDefinition("IMPROVE_CITY_WALLS")
 	if !ok || !runtimeProductionHasEffectValue(cityWalls, "combat_defense", 15) || !runtimeProductionHasEffectValue(cityWalls, "city_walls", 15) || !runtimeProductionHasEffectValue(cityWalls, "prevent_conversion_percent", 50) || !runtimeProductionHasEffectValue(cityWalls, "prevent_slavery_percent", 50) {
 		t.Fatalf("city walls effects = %+v ok=%v", cityWalls, ok)
