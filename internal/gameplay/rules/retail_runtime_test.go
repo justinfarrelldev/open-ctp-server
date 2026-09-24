@@ -164,7 +164,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("eco transit production effects = %+v ok=%v", ecoTransit, ok)
 	}
 	airport, ok := runtime.ProductionDefinition("IMPROVE_AIRPORT")
-	if !ok || !runtimeProductionHasEffect(airport, "airport") {
+	if !ok || !airport.CantBuildInSea || !runtimeProductionHasEffect(airport, "airport") {
 		t.Fatalf("airport production effects = %+v ok=%v", airport, ok)
 	}
 	matter, ok := runtime.ProductionDefinition("IMPROVE_MATTER_DECOMPILER")
@@ -210,7 +210,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("ballista effects = %+v ok=%v", ballista, ok)
 	}
 	battlements, ok := runtime.ProductionDefinition("IMPROVE_BATTLEMENTS")
-	if !ok || !runtimeProductionHasEffectValue(battlements, "combat_attack_sea", 25) {
+	if !ok || !battlements.CoastalOnly || !runtimeProductionHasEffectValue(battlements, "combat_attack_sea", 25) {
 		t.Fatalf("battlements effects = %+v ok=%v", battlements, ok)
 	}
 	flak, ok := runtime.ProductionDefinition("IMPROVE_FLAK_TOWERS")

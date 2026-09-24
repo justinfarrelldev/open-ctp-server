@@ -634,13 +634,13 @@ func bestProjectedCityProduction(projection visibility.Projection, city visibili
 	for _, building := range city.Buildings {
 		built[building.ID] = true
 	}
-	if item, ok := bestAIListedBuildingProduction(projection, owned, built); ok {
+	if item, ok := bestAIListedBuildingProduction(projection, city, owned, built); ok {
 		return item, true
 	}
 	var best rules.RuntimeProduction
 	bestScore := -1
 	for _, production := range projection.Rules.Production {
-		if production.ID == "" || production.Kind != engine.ProductionBuilding || built[production.ID] || !runtimeProductionAvailable(production, owned, built) {
+		if production.ID == "" || production.Kind != engine.ProductionBuilding || built[production.ID] || !runtimeProductionAvailable(production, owned, built) || !runtimeProductionPlacementAvailable(projection, city, production) {
 			continue
 		}
 		score := projectedRuntimeProductionScore(production)
@@ -676,7 +676,7 @@ func bestAIListedUnitProduction(projection visibility.Projection, owned map[stri
 	return engine.ProductionItem{}, false
 }
 
-func bestAIListedBuildingProduction(projection visibility.Projection, owned map[string]bool, built map[string]bool) (engine.ProductionItem, bool) {
+func bestAIListedBuildingProduction(projection visibility.Projection, city visibility.CityProjection, owned map[string]bool, built map[string]bool) (engine.ProductionItem, bool) {
 	if projection.Rules == nil || projection.Rules.AI == nil || len(projection.Rules.AI.BuildingBuildLists) == 0 {
 		return engine.ProductionItem{}, false
 	}
@@ -689,13 +689,65 @@ func bestAIListedBuildingProduction(projection visibility.Projection, owned map[
 	for _, list := range projection.Rules.AI.BuildingBuildLists {
 		for _, id := range list.Items {
 			production, ok := productionByID[id]
-			if !ok || built[id] || !runtimeProductionAvailable(production, owned, built) {
+			if !ok || built[id] || !runtimeProductionAvailable(production, owned, built) || !runtimeProductionPlacementAvailable(projection, city, production) {
 				continue
 			}
 			return productionItemFromRuntime(production), true
 		}
 	}
 	return engine.ProductionItem{}, false
+}
+
+func runtimeProductionPlacementAvailable(projection visibility.Projection, city visibility.CityProjection, production rules.RuntimeProduction) bool {
+	if !production.CantBuildInSea && !production.CoastalOnly {
+		return true
+	}
+	cityTile, ok := projectedTileByID(projection, city.TileID)
+	if !ok {
+		return false
+	}
+	isSeaCity := projectedTerrainIsSea(projection, cityTile.Terrain)
+	if production.CantBuildInSea && isSeaCity {
+		return false
+	}
+	if !production.CoastalOnly || isSeaCity {
+		return true
+	}
+	for _, tile := range projection.Tiles {
+		if adjacent(cityTile, tile) && projectedTerrainIsSea(projection, tile.Terrain) {
+			return true
+		}
+	}
+	return false
+}
+
+func projectedTileByID(projection visibility.Projection, id string) (visibility.TileProjection, bool) {
+	for _, tile := range projection.Tiles {
+		if tile.ID == id {
+			return tile, true
+		}
+	}
+	return visibility.TileProjection{}, false
+}
+
+func projectedTerrainIsSea(projection visibility.Projection, terrainID string) bool {
+	if terrainID == engine.TerrainOcean {
+		return true
+	}
+	if projection.Rules == nil || projection.Rules.Movement == nil {
+		return false
+	}
+	terrain, ok := projectedRuntimeTerrain(projection.Rules.Movement.Terrains, terrainID)
+	return ok && containsString(terrain.Domains, engine.DomainSea) && !containsString(terrain.Domains, engine.DomainLand)
+}
+
+func projectedRuntimeTerrain(terrains []rules.RuntimeTerrain, id string) (rules.RuntimeTerrain, bool) {
+	for _, terrain := range terrains {
+		if terrain.ID == id {
+			return terrain, true
+		}
+	}
+	return rules.RuntimeTerrain{}, false
 }
 
 func runtimeProductionAvailable(production rules.RuntimeProduction, owned map[string]bool, built map[string]bool) bool {

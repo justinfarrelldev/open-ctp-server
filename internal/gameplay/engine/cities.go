@@ -871,6 +871,9 @@ func requireProductionUnlock(state State, city City, item ProductionItem, runtim
 	obsolete := item.ObsoletedBy
 	if runtime != nil {
 		if production, ok := runtime.ProductionDefinition(item.ID); ok {
+			if production.CantBuildInSea && cityIsSea(state, city, runtime) || production.CoastalOnly && !cityIsCoastal(state, city, runtime) {
+				return errors.New("production prerequisite is not met")
+			}
 			if prerequisite == "" && len(production.Prerequisites) > 0 {
 				prerequisite = production.Prerequisites[0]
 			} else if prerequisite != "" && len(production.Prerequisites) > 0 && !containsString(production.Prerequisites, prerequisite) {
@@ -902,6 +905,41 @@ func requireProductionUnlock(state State, city City, item ProductionItem, runtim
 		return errors.New("production prerequisite is not met")
 	}
 	return nil
+}
+
+func cityIsSea(state State, city City, runtime *rules.RuntimeRules) bool {
+	tile, ok := tileByID(state, city.TileID)
+	if !ok {
+		return false
+	}
+	return terrainIsSea(runtime, tile.Terrain)
+}
+
+func cityIsCoastal(state State, city City, runtime *rules.RuntimeRules) bool {
+	cityTile, ok := tileByID(state, city.TileID)
+	if !ok {
+		return false
+	}
+	if terrainIsSea(runtime, cityTile.Terrain) {
+		return true
+	}
+	for _, tile := range state.Tiles {
+		if adjacent(cityTile, tile) && terrainIsSea(runtime, tile.Terrain) {
+			return true
+		}
+	}
+	return false
+}
+
+func terrainIsSea(runtime *rules.RuntimeRules, terrainID string) bool {
+	if terrainID == TerrainOcean {
+		return true
+	}
+	if runtime == nil || !runtime.Movement.Configured {
+		return false
+	}
+	terrain, ok := runtime.Movement.Terrain(terrainID)
+	return ok && containsString(terrain.Domains, DomainSea) && !containsString(terrain.Domains, DomainLand)
 }
 
 func hasPrerequisite(state State, city City, prerequisite string) bool {

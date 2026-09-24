@@ -50,6 +50,25 @@ func TestRuntimeBuildingProductionRequiresPrerequisiteBuildings(t *testing.T) {
 	}
 }
 
+func TestRuntimeBuildingProductionHonorsSeaAndCoastalPlacement(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	state.Tiles = []Tile{{ID: state.Cities[0].TileID, X: 0, Y: 0, Terrain: TerrainOcean}, {ID: "land", X: 1, Y: 0, Terrain: TerrainPlains}, {ID: "inland", X: 4, Y: 4, Terrain: TerrainPlains}}
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: TerrainOcean, Domains: []string{DomainSea}}, {ID: TerrainPlains, Domains: []string{DomainLand}}}}, Production: []rules.RuntimeProduction{{ID: "IMPROVE_BATTLEMENTS", Kind: ProductionBuilding, Cost: 1, CoastalOnly: true}, {ID: "IMPROVE_GRANARY", Kind: ProductionBuilding, Cost: 1, CantBuildInSea: true}}}
+
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "IMPROVE_GRANARY", Kind: ProductionBuilding, Cost: 1}}, runtime); err == nil {
+		t.Fatal("queueProduction accepted a cant-build-in-sea building in a sea city")
+	}
+	state.Cities[0].TileID = "inland"
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "IMPROVE_BATTLEMENTS", Kind: ProductionBuilding, Cost: 1}}, runtime); err == nil {
+		t.Fatal("queueProduction accepted a coastal building in an inland city")
+	}
+	state.Cities[0].TileID = "land"
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "IMPROVE_BATTLEMENTS", Kind: ProductionBuilding, Cost: 1}}, runtime); err != nil {
+		t.Fatalf("queueProduction coastal city error = %v", err)
+	}
+}
+
 func TestRuntimeBuildingProductionRejectsAlreadyBuiltCityImprovement(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})

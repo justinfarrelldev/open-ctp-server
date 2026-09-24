@@ -229,6 +229,8 @@ type RuntimeProduction struct {
 	Upkeep            int                    `json:"upkeep,omitempty"`
 	Prerequisites     []string               `json:"prerequisites,omitempty"`
 	RequiredBuildings []string               `json:"required_buildings,omitempty"`
+	CantBuildInSea    bool                   `json:"cant_build_in_sea,omitempty"`
+	CoastalOnly       bool                   `json:"coastal_only,omitempty"`
 	ObsoleteBy        []string               `json:"obsolete_by,omitempty"`
 	Effects           []RuntimeStarterEffect `json:"effects,omitempty"`
 }
@@ -711,11 +713,13 @@ func compileProductionDefinition(record Record, kind string) (RuntimeProduction,
 	if err != nil {
 		return RuntimeProduction{}, err
 	}
+	cantBuildInSea := record.Tags["CantBuildInSea"] == "true"
+	coastalOnly := record.Tags["CoastalOnly"] == "true"
 	obsoleteBy, err := optionalIDs(record, "ObsoleteBy")
 	if err != nil {
 		return RuntimeProduction{}, err
 	}
-	return RuntimeProduction{ID: record.ID, Kind: kind, Cost: cost, Upkeep: upkeep, Prerequisites: prerequisites, RequiredBuildings: requiredBuildings, ObsoleteBy: obsoleteBy}, nil
+	return RuntimeProduction{ID: record.ID, Kind: kind, Cost: cost, Upkeep: upkeep, Prerequisites: prerequisites, RequiredBuildings: requiredBuildings, CantBuildInSea: cantBuildInSea, CoastalOnly: coastalOnly, ObsoleteBy: obsoleteBy}, nil
 }
 
 func compileAdvanceDefinition(record Record) (RuntimeAdvanceDefinition, error) {

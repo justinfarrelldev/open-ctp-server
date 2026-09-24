@@ -499,7 +499,7 @@ func productionActions(projection Projection, playerID string) []ActionProjectio
 		}
 		built := cityBuildingIDs(city)
 		for _, production := range projection.Rules.Production {
-			if production.ID == "" || production.Kind == engine.ProductionUnit || !allAdvancesSatisfied(known, production.Prerequisites) || !allBuildingsSatisfied(built, production.RequiredBuildings) || anyAdvanceSatisfied(known, production.ObsoleteBy) {
+			if production.ID == "" || production.Kind == engine.ProductionUnit || !allAdvancesSatisfied(known, production.Prerequisites) || !allBuildingsSatisfied(built, production.RequiredBuildings) || !cityProductionPlacementAllowed(projection, city, production) || anyAdvanceSatisfied(known, production.ObsoleteBy) {
 				continue
 			}
 			if production.Kind == engine.ProductionBuilding && built[production.ID] {
@@ -843,6 +843,41 @@ func allAdvancesSatisfied(known, required []string) bool {
 		}
 	}
 	return true
+}
+
+func cityProductionPlacementAllowed(projection Projection, city CityProjection, production rules.RuntimeProduction) bool {
+	if !production.CantBuildInSea && !production.CoastalOnly {
+		return true
+	}
+	tiles := projectedTiles(projection)
+	cityTile, ok := tiles[city.TileID]
+	if !ok {
+		return false
+	}
+	isSeaCity := projectedTerrainIsSea(projection, cityTile.Terrain)
+	if production.CantBuildInSea && isSeaCity {
+		return false
+	}
+	if !production.CoastalOnly || isSeaCity {
+		return true
+	}
+	for _, tile := range tiles {
+		if adjacentProjection(cityTile, tile) && projectedTerrainIsSea(projection, tile.Terrain) {
+			return true
+		}
+	}
+	return false
+}
+
+func projectedTerrainIsSea(projection Projection, terrainID string) bool {
+	if terrainID == engine.TerrainOcean {
+		return true
+	}
+	if projection.Rules == nil || projection.Rules.Movement == nil {
+		return false
+	}
+	terrain, ok := projectedRuntimeTerrain(projection.Rules.Movement.Terrains, terrainID)
+	return ok && containsString(terrain.Domains, engine.DomainSea) && !containsString(terrain.Domains, engine.DomainLand)
 }
 
 func allBuildingsSatisfied(built map[string]bool, required []string) bool {
