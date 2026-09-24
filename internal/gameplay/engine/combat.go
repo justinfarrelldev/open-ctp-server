@@ -246,6 +246,9 @@ func cityWallDefenseAt(state State, tileID string) int {
 
 func combatAttackModifier(state State, unit Unit, target Unit) int {
 	modifier := combatModifier(state, unit, true)
+	if hasEffect(target.Effects, EffectWoodenShip) {
+		modifier += unit.Attack * effectValue(unit.Effects, EffectCombatAttackVsWoodenShipPercent) / 100
+	}
 	for _, city := range state.Cities {
 		if city.TileID == unit.TileID {
 			modifier += effectsModifierAgainst(cityLocalEffects(state, city), true, target.Domain)

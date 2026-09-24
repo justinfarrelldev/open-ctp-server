@@ -344,6 +344,14 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "BonusAirDefense") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("combat_defense_vs_air"), Kind: "combat_defense_vs_air_percent", Value: 100})
 	}
+	if retailContainsString(unit.Flags, "WoodenShip") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("wooden_ship"), Kind: "wooden_ship"})
+	}
+	if retailContainsString(unit.Flags, "AttackWoodenShipBonus") {
+		if value := percentPoints(firstRetailUnitFloat(unit, "WoodenShipBonus")); value > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: effectID("combat_attack_vs_wooden_ship"), Kind: "combat_attack_vs_wooden_ship_percent", Value: value})
+		}
+	}
 	if retailContainsString(unit.Flags, "IgnoreCityWalls") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("ignore_city_walls"), Kind: "ignore_city_walls"})
 	}

@@ -87,6 +87,22 @@ func TestRetailMountedDefenseBonusModifiesDefenderAgainstMountedAttackers(t *tes
 	}
 }
 
+func TestRetailWoodenShipAttackBonusAppliesAgainstWoodenShips(t *testing.T) {
+	state := combatState()
+	attacker := state.Units[0]
+	attacker.Attack = 20
+	attacker.Effects = []Effect{{ID: "fire", Kind: EffectCombatAttackVsWoodenShipPercent, Value: 25}}
+	defender := state.Units[2]
+	defender.Effects = []Effect{{ID: "wood", Kind: EffectWoodenShip}}
+	if got := combatAttackModifier(state, attacker, defender); got != 6 { // nation banner + 25% of attack
+		t.Fatalf("wooden ship attack modifier = %d, want 6", got)
+	}
+	defender.Effects = nil
+	if got := combatAttackModifier(state, attacker, defender); got != 1 {
+		t.Fatalf("non-wooden target modifier = %d, want only nation banner", got)
+	}
+}
+
 func TestRetailCityOffenseBuildingEffectsModifyAttackersByDefenderDomain(t *testing.T) {
 	state := combatState()
 	state.Cities = append(state.Cities, City{ID: "city-a", OwnerID: "player-a", TileID: "a", Buildings: []Building{{ID: "IMPROVE_BALLISTA_TOWERS", Effects: []Effect{{ID: "ballista", Kind: EffectCombatAttackLand, Value: 20}}}}})
