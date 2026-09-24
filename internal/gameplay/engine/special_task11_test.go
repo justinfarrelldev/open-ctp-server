@@ -27,6 +27,31 @@ func task11Apply(t *testing.T, state State, kind string, payload any) (State, []
 	return next, events, err
 }
 
+func TestRetailSpecialProtectionsUseActiveCityBuildings(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = []Effect{{ID: "convert", Kind: EffectSpecialConvertCity}}
+	state.Cities[0].Buildings = []Building{{ID: "IMPROVE_CITY_WALLS", Effects: []Effect{{ID: "prevent-conversion", Kind: EffectPreventConversion, Value: 100}}}}
+	converted, events, err := task11Apply(t, state, CommandConvertCity, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if converted.Cities[0].OwnerID != "player-b" || len(events) != 1 || events[0].Type != EventCityConversionFailed {
+		t.Fatalf("building conversion protection failed: city=%+v events=%+v", converted.Cities[0], events)
+	}
+
+	state = task11State()
+	state.Units[0].Effects = []Effect{{ID: "nuke", Kind: EffectSpecialPlantNuke}}
+	state.Cities[0].Population = 8
+	state.Cities[0].Buildings = []Building{{ID: "IMPROVE_FORCE_FIELD", Effects: []Effect{{ID: "force-field", Kind: EffectForceField}}}}
+	nuked, events, err := task11Apply(t, state, CommandPlantNuke, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if nuked.Cities[0].Population != 8 || len(events) != 1 || events[0].Type != EventNukeFailed {
+		t.Fatalf("building nuke protection failed: city=%+v events=%+v", nuked.Cities[0], events)
+	}
+}
+
 func TestRetailEmbassyWonderEffectsBlockRedundantEmbassyActions(t *testing.T) {
 	state := task11State()
 	state.Wonders = []Wonder{{ID: "WONDER_CLOSE", OwnerID: "player-b", CityID: "target-city", Effects: []Effect{{ID: "close", Kind: EffectCloseEmbassies}}}}

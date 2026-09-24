@@ -498,7 +498,8 @@ func plantNuke(state *State, unit *Unit, city *City, targetNation *Nation) (stri
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
 	}
-	if hasEffect(city.Effects, EffectProtectFromNukes) || hasEffect(city.Effects, EffectForceField) || hasEffect(targetNation.Effects, EffectEliminateNukes) {
+	cityEffects := cityEffects(*state, *city)
+	if hasEffect(cityEffects, EffectProtectFromNukes) || hasEffect(cityEffects, EffectForceField) || hasEffect(targetNation.Effects, EffectEliminateNukes) {
 		return EventNukeFailed, json.RawMessage(`{"disclosed":true}`), nil
 	}
 	if city.Population > 1 {
@@ -613,7 +614,7 @@ func cityTerror(state *State, unit *Unit, city *City, commandType string, source
 }
 
 func protectedByCityEffect(state *State, city *City, effectKind string, sources Sources) bool {
-	protection := effectValue(city.Effects, effectKind)
+	protection := effectValue(cityEffects(*state, *city), effectKind)
 	if protection <= 0 {
 		return false
 	}
@@ -637,7 +638,7 @@ func convertCity(state *State, unit *Unit, city *City, sources Sources) (string,
 	if HasActiveWonderEffect(*state, city.OwnerID, EffectPreventConversionEmpire) {
 		return EventCityConversionFailed, json.RawMessage(`{"disclosed":true}`), nil
 	}
-	protection := effectValue(city.Effects, EffectPreventConversion)
+	protection := effectValue(cityEffects(*state, *city), EffectPreventConversion)
 	if protection > 0 {
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
 		setRNG(state, RNGDomainSpecialAction, next)
