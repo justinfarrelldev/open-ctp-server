@@ -341,6 +341,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 			effects = append(effects, RuntimeStarterEffect{ID: effectID("combat_defense_vs_mounted"), Kind: "combat_defense_vs_mounted_percent", Value: value})
 		}
 	}
+	if retailContainsString(unit.Flags, "BonusAirDefense") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("combat_defense_vs_air"), Kind: "combat_defense_vs_air_percent", Value: 100})
+	}
 	if retailContainsString(unit.Flags, "IgnoreCityWalls") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("ignore_city_walls"), Kind: "ignore_city_walls"})
 	}

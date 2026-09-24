@@ -229,6 +229,9 @@ func combatDefenseModifier(state State, unit Unit, attacker Unit) int {
 	if hasEffect(attacker.Effects, EffectMounted) {
 		modifier += unit.Defense * effectValue(unit.Effects, EffectCombatDefenseVsMountedPercent) / 100
 	}
+	if attacker.Domain == DomainAir {
+		modifier += unit.Defense * effectValue(unit.Effects, EffectCombatDefenseVsAirPercent) / 100
+	}
 	return modifier
 }
 

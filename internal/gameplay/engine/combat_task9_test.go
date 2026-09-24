@@ -40,6 +40,22 @@ func TestRetailCityDefenseBuildingEffectsModifyDefenders(t *testing.T) {
 	}
 }
 
+func TestRetailAirDefenseBonusModifiesDefenderAgainstAirAttackers(t *testing.T) {
+	state := combatState()
+	attacker := state.Units[0]
+	attacker.Domain = DomainAir
+	defender := state.Units[2]
+	defender.Defense = 10
+	defender.Effects = []Effect{{ID: "air-defense", Kind: EffectCombatDefenseVsAirPercent, Value: 100}}
+	if got := combatDefenseModifier(state, defender, attacker); got != 13 { // fortified + forest + city wall + 100% of defense
+		t.Fatalf("air defense modifier = %d, want terrain/city plus air defense", got)
+	}
+	attacker.Domain = DomainLand
+	if got := combatDefenseModifier(state, defender, attacker); got != 3 {
+		t.Fatalf("land attacker modifier = %d, want only terrain/city", got)
+	}
+}
+
 func TestRetailIgnoreCityWallsRemovesOnlyWallDefense(t *testing.T) {
 	state := combatState()
 	state.Cities[0].Effects = nil
