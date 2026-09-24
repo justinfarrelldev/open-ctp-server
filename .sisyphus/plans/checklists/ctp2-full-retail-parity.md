@@ -59,6 +59,7 @@
 - [x] Task 108: Retail spies-everywhere effects can stop technology theft and remove the spy.
 - [x] Task 109: Retail eliminate-nukes wonder effects disarm nations and remove nuke-capable units.
 - [x] Task 110: Retail protect-from-barbarians wonder effects block barbarian combat.
+- [x] Task 111: Retail trade-route wonder gold applies to water and international trade routes.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
