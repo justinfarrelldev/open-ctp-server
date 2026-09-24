@@ -234,8 +234,15 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if len(unit.FieldsByKey("CanSoothsay")) > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_soothsaying"), Kind: "special_soothsaying"})
 	}
-	if len(unit.FieldsByKey("StealTechnology")) > 0 {
-		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_steal"), Kind: "special_steal", Value: 100})
+	if fields := unit.FieldsByKey("StealTechnology"); len(fields) > 0 {
+		chance := percentPoints(retailRawFieldFloat(fields[0], "RandomChance"))
+		if chance <= 0 {
+			chance = 100
+		}
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_steal"), Kind: "special_steal", Value: chance})
+		if deathChance := percentPoints(retailRawFieldFloat(fields[0], "DeathChance")); deathChance > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: effectID("special_capture"), Kind: "special_capture", Value: deathChance})
+		}
 	}
 	sort.Slice(effects, func(i, j int) bool {
 		if effects[i].Kind != effects[j].Kind {
@@ -244,6 +251,18 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 		return effects[i].ID < effects[j].ID
 	})
 	return effects
+}
+
+func retailRawFieldFloat(field RetailRawField, key string) float64 {
+	value := field.FirstValue(key)
+	if value == "" {
+		return 0
+	}
+	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return 0
+	}
+	return parsed
 }
 
 func firstRetailUnitInt(unit RetailUnit, key string) int {

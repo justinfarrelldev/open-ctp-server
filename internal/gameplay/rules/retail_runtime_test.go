@@ -71,6 +71,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeUnitHasEffect(cleric, "special_soothsaying") {
 		t.Fatalf("cleric runtime = %+v ok=%v", cleric, ok)
 	}
+	cyberNinja, ok := runtime.Unit("UNIT_CYBER_NINJA")
+	if !ok || !runtimeUnitHasEffectValue(cyberNinja, "special_steal", 50) || !runtimeUnitHasEffectValue(cyberNinja, "special_capture", 25) {
+		t.Fatalf("cyber ninja runtime = %+v ok=%v", cyberNinja, ok)
+	}
 	if runtime.Starter.Movement != 100 || runtime.Starter.Health != 10 || !runtimeStarterHasEffect(runtime.Starter, "settler") {
 		t.Fatalf("starter = %+v, want retail settler", runtime.Starter)
 	}
