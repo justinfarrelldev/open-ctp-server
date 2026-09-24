@@ -56,6 +56,7 @@
 - [x] Task 105: Retail polluters-to-parks wonder effects convert the highest-pollution cities to parks.
 - [x] Task 106: Retail temporary-full-happiness wonder effects add expiring full-happiness city markers.
 - [x] Task 107: Retail reform-cities and empire conversion-prevention wonder effects execute.
+- [x] Task 108: Retail spies-everywhere effects can stop technology theft and remove the spy.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
