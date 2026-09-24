@@ -63,6 +63,7 @@
 - [x] Task 112: Retail active-defense bombard interception resolves multiple eligible interceptors deterministically.
 - [x] Task 113: Retail trade-route projections are visible only through safe owner/visibility boundaries.
 - [x] Task 114: Round recalculation survives city-removing wonder effects without stale slice indexes.
+- [x] Task 115: IncreaseBrokerages wonders amplify only active brokerage commerce percentages.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
