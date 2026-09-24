@@ -48,6 +48,21 @@ func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
 	}
 }
 
+func TestRetailReformCityRemovesInjunctionAndCrime(t *testing.T) {
+	state := task11State()
+	state.Cities[0].CrimePercent = 35
+	state.Cities[0].Happiness = 1
+	state.Cities[0].Effects = []Effect{{ID: "injunction", Kind: EffectInjunction}}
+	state.Units[0].Effects = []Effect{{ID: "reform", Kind: EffectSpecialReform}}
+	next, events, err := task11Apply(t, state, CommandReform, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasEffect(next.Cities[0].Effects, EffectInjunction) || next.Cities[0].CrimePercent != 0 || next.Cities[0].Happiness != 2 || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventCityReformed {
+		t.Fatalf("reform outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
+	}
+}
+
 func TestRetailInjoinCityBlocksProduction(t *testing.T) {
 	state := task11State()
 	state.Units[0].Effects = []Effect{{ID: "injoin", Kind: EffectSpecialInjoin}}
