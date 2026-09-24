@@ -41,6 +41,7 @@
 - [x] Task 90: Retail active-defense units can intercept bombardment.
 - [x] Task 91: Retail injoin special actions block target city production.
 - [x] Task 92: Retail reform special actions remove injunction and city crime.
+- [x] Task 93: Retail underground-railway special actions free population.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
