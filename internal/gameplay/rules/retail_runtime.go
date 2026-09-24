@@ -347,6 +347,12 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "WoodenShip") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("wooden_ship"), Kind: "wooden_ship"})
 	}
+	if retailContainsString(unit.Flags, "IsSubmarine") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("submarine"), Kind: "submarine"})
+	}
+	for _, target := range retailUnitCanAttackEffects(unit.RawFields) {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID(target), Kind: target})
+	}
 	if retailContainsString(unit.Flags, "AttackWoodenShipBonus") {
 		if value := percentPoints(firstRetailUnitFloat(unit, "WoodenShipBonus")); value > 0 {
 			effects = append(effects, RuntimeStarterEffect{ID: effectID("combat_attack_vs_wooden_ship"), Kind: "combat_attack_vs_wooden_ship_percent", Value: value})
@@ -410,6 +416,30 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 		}
 		return effects[i].ID < effects[j].ID
 	})
+	return effects
+}
+
+func retailUnitCanAttackEffects(fields []RetailRawField) []string {
+	effects := make([]string, 0)
+	add := func(kind string) {
+		if kind != "" && !retailContainsString(effects, kind) {
+			effects = append(effects, kind)
+		}
+	}
+	for _, value := range retailFieldValues(fields, "CanAttack") {
+		switch value {
+		case "Land", "Mountain":
+			add("can_attack_land")
+		case "Sea", "ShallowWater":
+			add("can_attack_sea")
+		case "Air":
+			add("can_attack_air")
+		case "Space":
+			add("can_attack_space")
+		case "Underwater":
+			add("can_attack_underwater")
+		}
+	}
 	return effects
 }
 

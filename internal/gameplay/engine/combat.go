@@ -147,16 +147,43 @@ func canArmyFight(state State, attackers, defenders []*Unit) bool {
 		if attacker.Attack <= 0 && attacker.Ranged <= 0 {
 			continue
 		}
-		if defenderCity {
-			return true
-		}
 		for _, defender := range defenders {
-			if attacker.Domain == "" || defender.Domain == "" || attacker.Domain == defender.Domain || attacker.Domain == DomainAmphibious || defender.Domain == DomainAmphibious {
+			if attackerHasCanAttackMetadata(*attacker) {
+				if attackerCanAttackTarget(*attacker, *defender) {
+					return true
+				}
+				continue
+			}
+			if defenderCity || attacker.Domain == "" || defender.Domain == "" || attacker.Domain == defender.Domain || attacker.Domain == DomainAmphibious || defender.Domain == DomainAmphibious {
 				return true
 			}
 		}
 	}
 	return false
+}
+
+func attackerHasCanAttackMetadata(attacker Unit) bool {
+	return hasEffect(attacker.Effects, EffectCanAttackLand) || hasEffect(attacker.Effects, EffectCanAttackSea) || hasEffect(attacker.Effects, EffectCanAttackAir) || hasEffect(attacker.Effects, EffectCanAttackSpace) || hasEffect(attacker.Effects, EffectCanAttackUnderwater)
+}
+
+func attackerCanAttackTarget(attacker, target Unit) bool {
+	if hasEffect(target.Effects, EffectSubmarine) && hasEffect(attacker.Effects, EffectCanAttackUnderwater) {
+		return true
+	}
+	switch target.Domain {
+	case DomainLand:
+		return hasEffect(attacker.Effects, EffectCanAttackLand)
+	case DomainSea:
+		return hasEffect(attacker.Effects, EffectCanAttackSea)
+	case DomainAir:
+		return hasEffect(attacker.Effects, EffectCanAttackAir)
+	case DomainSpace:
+		return hasEffect(attacker.Effects, EffectCanAttackSpace)
+	case DomainAmphibious:
+		return hasEffect(attacker.Effects, EffectCanAttackLand) || hasEffect(attacker.Effects, EffectCanAttackSea)
+	default:
+		return true
+	}
 }
 
 func combatStrike(state *State, sources Sources, attackers, defenders []*Unit, ranged bool, result *CombatResult) {

@@ -40,6 +40,25 @@ func TestRetailCityDefenseBuildingEffectsModifyDefenders(t *testing.T) {
 	}
 }
 
+func TestRetailCanAttackEffectsRestrictCombatTargets(t *testing.T) {
+	state := combatState()
+	state.Units[0].Effects = []Effect{{ID: "air-only", Kind: EffectCanAttackAir}}
+	state.Units[2].Domain = DomainLand
+	if canArmyFight(state, []*Unit{&state.Units[0]}, []*Unit{&state.Units[2]}) {
+		t.Fatal("air-only attacker could fight land defender")
+	}
+	state.Units[2].Domain = DomainAir
+	if !canArmyFight(state, []*Unit{&state.Units[0]}, []*Unit{&state.Units[2]}) {
+		t.Fatal("air-only attacker could not fight air defender")
+	}
+	state.Units[0].Effects = []Effect{{ID: "underwater-only", Kind: EffectCanAttackUnderwater}}
+	state.Units[2].Domain = DomainSea
+	state.Units[2].Effects = []Effect{{ID: "sub", Kind: EffectSubmarine}}
+	if !canArmyFight(state, []*Unit{&state.Units[0]}, []*Unit{&state.Units[2]}) {
+		t.Fatal("underwater attacker could not fight submarine defender")
+	}
+}
+
 func TestRetailAirDefenseBonusModifiesDefenderAgainstAirAttackers(t *testing.T) {
 	state := combatState()
 	attacker := state.Units[0]
