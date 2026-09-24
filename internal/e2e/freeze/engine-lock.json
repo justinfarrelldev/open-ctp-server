@@ -55,7 +55,7 @@
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "5fd2daba7d765b52e7dc68829f2aabbb8abd1a1f3a1076628d609598e3eae196"
+      "sha256": "b253c0c72514076df5e2988b49f43b1bbf5acda99b3ec1ab4c464f2e210ffc8b"
     },
     {
       "path": "internal/gameplay/engine/government.go",
@@ -71,7 +71,7 @@
     },
     {
       "path": "internal/gameplay/engine/special.go",
-      "sha256": "013df48a9b70197779acc8f9333468533b62de4a219e1823a774859bbb21a999"
+      "sha256": "b325017b1f8edb154c081a25bfcee952ea79df5a79933891ce156c15e72139f1"
     },
     {
       "path": "internal/gameplay/engine/turns/turns.go",
@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "7abfd5c3050efaeb7e79f517d7e14e09b38767d305453e5845ddbf19f94c4903"
+      "sha256": "ff9623ddfbe29b37b082341493fe4bb3fb649dc826253355e86657b43fce39ac"
     },
     {
       "path": "internal/runtime/runtime.go",

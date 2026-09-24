@@ -46,6 +46,42 @@ func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
 	}
 }
 
+func TestRetailSlaveRaidsReducePopulationAndHonorProtection(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		kind   string
+		effect string
+	}{
+		{name: "slave", kind: CommandSlaveRaid, effect: EffectSpecialSlaveRaid},
+		{name: "settler", kind: CommandSettlerSlaveRaid, effect: EffectSpecialSettlerSlaveRaid},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			state := task11State()
+			state.Cities[0].Population = 3
+			state.Units[0].Effects = []Effect{{ID: tc.name, Kind: tc.effect}}
+			next, events, err := task11Apply(t, state, tc.kind, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if next.Cities[0].Population != 2 || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventSlaveRaidApplied || strings.Contains(string(events[0].Payload), "target-city") {
+				t.Fatalf("slave raid outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
+			}
+
+			state = task11State()
+			state.Cities[0].Population = 3
+			state.Cities[0].Effects = append(state.Cities[0].Effects, Effect{ID: "anti-slave", Kind: EffectPreventSlavery, Value: 100})
+			state.Units[0].Effects = []Effect{{ID: tc.name, Kind: tc.effect}}
+			next, events, err = task11Apply(t, state, tc.kind, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if next.Cities[0].Population != 3 || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventSlaveRaidFailed {
+				t.Fatalf("protected slave raid outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
+			}
+		})
+	}
+}
+
 func TestRetailBioNanoAndPlagueSpecialsAffectCityPopulation(t *testing.T) {
 	for _, tc := range []struct {
 		name       string

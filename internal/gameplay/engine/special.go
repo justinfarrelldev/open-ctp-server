@@ -62,7 +62,7 @@ type CancelTerraformPayload struct {
 
 func isSpecialCommand(kind string) bool {
 	switch kind {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
 		return true
 	default:
 		return false
@@ -74,7 +74,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		return "", nil, err
 	}
 	switch command.Type {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid:
 		var payload SpecialActionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", nil, err
@@ -111,8 +111,10 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			return stealTechnology(state, unit, actorNation, targetNation, sources)
 		case CommandConvertCity:
 			return convertCity(state, unit, city, sources)
-		default:
+		case CommandBioTerror, CommandNanoTerror, CommandPlague:
 			return cityTerror(state, unit, city, command.Type, sources)
+		default:
+			return slaveRaid(state, unit, city, command.Type, sources)
 		}
 	case CommandPillage:
 		var payload PillagePayload
@@ -260,6 +262,28 @@ func specialTarget(state *State, actorID string, payload SpecialActionPayload) (
 		return nil, nil, nil, nil, errors.New("special action target is unavailable")
 	}
 	return unit, city, actorNation, targetNation, nil
+}
+
+func slaveRaid(state *State, unit *Unit, city *City, commandType string, sources Sources) (string, json.RawMessage, error) {
+	requiredEffect := EffectSpecialSlaveRaid
+	if commandType == CommandSettlerSlaveRaid {
+		requiredEffect = EffectSpecialSettlerSlaveRaid
+	} else if commandType != CommandSlaveRaid {
+		return "", nil, errors.New("special action is not authorized")
+	}
+	if !hasEffect(unit.Effects, requiredEffect) {
+		return "", nil, errors.New("special action is not authorized")
+	}
+	if err := spendSpecialMove(unit); err != nil {
+		return "", nil, err
+	}
+	if protectedByCityEffect(state, city, EffectPreventSlavery, sources) {
+		return EventSlaveRaidFailed, json.RawMessage(`{"disclosed":true}`), nil
+	}
+	if city.Population > 1 {
+		city.Population--
+	}
+	return EventSlaveRaidApplied, json.RawMessage(`{"disclosed":true}`), nil
 }
 
 func cityTerror(state *State, unit *Unit, city *City, commandType string, sources Sources) (string, json.RawMessage, error) {

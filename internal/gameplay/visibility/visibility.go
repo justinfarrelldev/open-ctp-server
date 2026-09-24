@@ -751,6 +751,12 @@ func specialActions(projection Projection, tiles map[string]TileProjection, citi
 		if hasEffect(unit.Effects, engine.EffectSpecialPlague) {
 			actions = append(actions, action(engine.CommandPlague, "plague", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
 		}
+		if hasEffect(unit.Effects, engine.EffectSpecialSlaveRaid) {
+			actions = append(actions, action(engine.CommandSlaveRaid, "slave-raid", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
+		}
+		if hasEffect(unit.Effects, engine.EffectSpecialSettlerSlaveRaid) {
+			actions = append(actions, action(engine.CommandSettlerSlaveRaid, "settler-slave-raid", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
+		}
 		if hasEffect(unit.Effects, engine.EffectSpecialSteal) || hasEffect(unit.Effects, engine.EffectSpecialCapture) {
 			actions = append(actions, action(engine.CommandStealTechnology, "steal-technology", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
 		}
