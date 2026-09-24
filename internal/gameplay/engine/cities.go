@@ -394,11 +394,19 @@ func RecalculateRound(state State) (State, error) {
 		return State{}, err
 	}
 	advanceTerraform(&next)
-	sort.Slice(next.Cities, func(i, j int) bool { return next.Cities[i].ID < next.Cities[j].ID })
-	for i := range next.Cities {
-		city := &next.Cities[i]
+	cityOrder := cityIDs(next.Cities)
+	sort.Strings(cityOrder)
+	for _, cityID := range cityOrder {
+		city, ok := cityByID(next, cityID)
+		if !ok {
+			continue
+		}
 		if err := completeProduction(&next, city, runtime); err != nil {
 			return State{}, err
+		}
+		city, ok = cityByID(next, cityID)
+		if !ok {
+			continue
 		}
 		city.Yields, err = cityYieldWithRuntime(next, *city, runtime)
 		if err != nil {

@@ -85,6 +85,23 @@ func TestRetailTemporaryFullHappinessWonderAddsExpiringCityMarkers(t *testing.T)
 	}
 }
 
+func TestRetailRecalculateRoundSurvivesCityRemovingWonder(t *testing.T) {
+	state := fixtureState()
+	state.RecalculatedTurn = 0
+	state.Tiles = []Tile{{ID: "wonder-tile", Terrain: TerrainPlains, Open: true}, {ID: "dirty-tile", Terrain: TerrainPlains, Open: true, Pollution: 50}}
+	state.Cities = []City{
+		{ID: "a-wonder-city", OwnerID: "player-a", TileID: "wonder-tile", StoredProduction: 1, Queue: []ProductionItem{{ID: "WONDER_GAIA", Kind: ProductionWonder, Cost: 1, Effects: []Effect{{ID: "parks", Kind: EffectPollutersToParks, Value: 1}}}}},
+		{ID: "b-dirty-city", OwnerID: "player-b", TileID: "dirty-tile"},
+	}
+	next, err := RecalculateRound(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := cityByID(next, "b-dirty-city"); ok {
+		t.Fatalf("dirty city survived city-removing wonder: %#v", next.Cities)
+	}
+}
+
 func TestRetailPollutersToParksWonderConvertsMostPollutedCities(t *testing.T) {
 	state := State{
 		Tiles: []Tile{
