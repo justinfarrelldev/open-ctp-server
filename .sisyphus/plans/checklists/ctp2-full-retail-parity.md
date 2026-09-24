@@ -67,6 +67,7 @@
 - [x] Task 116: IncreaseScientists wonders add city-scoped research in the current economy model.
 - [x] Task 117: Special-action protection checks honor active building/wonder city effects.
 - [x] Task 118: Obsolete wonders no longer drive movement refresh or global radar projections.
+- [x] Task 119: Convert-city special actions honor deterministic effect success chances.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
