@@ -133,7 +133,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		case CommandPlantNuke:
 			return plantNuke(state, unit, city, targetNation, sources)
 		case CommandAssassinateRuler:
-			return assassinateRuler(unit, targetNation)
+			return assassinateRuler(state, unit, targetNation, sources)
 		case CommandInjoin:
 			return injoinCity(unit, city)
 		case CommandReform:
@@ -449,12 +449,23 @@ func cityOnTileState(state State, tileID string) bool {
 	return false
 }
 
-func assassinateRuler(unit *Unit, targetNation *Nation) (string, json.RawMessage, error) {
+func assassinateRuler(state *State, unit *Unit, targetNation *Nation, sources Sources) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialAssassinateRuler) {
 		return "", nil, errors.New("special action is not authorized")
 	}
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
+	}
+	chance := effectValue(unit.Effects, EffectSpecialAssassinateRuler)
+	if chance <= 0 {
+		chance = 100
+	}
+	if chance < 100 {
+		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+		setRNG(state, RNGDomainSpecialAction, next)
+		if int(roll%100) >= chance {
+			return EventRulerAssassinationFailed, json.RawMessage(`{"disclosed":true}`), nil
+		}
 	}
 	targetNation.GovernmentID = ""
 	targetNation.ResearchProgress = 0

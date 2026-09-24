@@ -177,6 +177,18 @@ func TestRetailAssassinateRulerDestabilizesTargetNation(t *testing.T) {
 	if next.Nations[1].GovernmentID != "" || next.Nations[1].ResearchProgress != 0 || !hasEffect(next.Nations[1].Effects, EffectRulerAssassinated) || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventRulerAssassinated || strings.Contains(string(events[0].Payload), "target-city") {
 		t.Fatalf("assassination outcome nation=%+v unit=%+v events=%+v", next.Nations[1], next.Units[0], events)
 	}
+
+	state = task11State()
+	state.Nations[1].GovernmentID = "GOVERNMENT_MONARCHY"
+	state.Nations[1].ResearchProgress = 12
+	state.Units[0].Effects = []Effect{{ID: "assassin", Kind: EffectSpecialAssassinateRuler, Value: 10}}
+	next, events, err = task11Apply(t, state, CommandAssassinateRuler, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Nations[1].GovernmentID != "GOVERNMENT_MONARCHY" || next.Nations[1].ResearchProgress != 12 || hasEffect(next.Nations[1].Effects, EffectRulerAssassinated) || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventRulerAssassinationFailed {
+		t.Fatalf("chance-failed assassination outcome nation=%+v unit=%+v events=%+v", next.Nations[1], next.Units[0], events)
+	}
 }
 
 func TestRetailCreateParkCleansPollutedAdjacentTile(t *testing.T) {
