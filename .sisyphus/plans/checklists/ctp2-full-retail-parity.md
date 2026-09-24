@@ -37,6 +37,7 @@
 - [x] Task 86: Retail assassinate-ruler special actions destabilize target nations.
 - [x] Task 87: Retail force fields block planted nukes.
 - [x] Task 88: Retail expel special actions displace adjacent enemy units.
+- [x] Task 89: Retail active-defense range stats are preserved in runtime, units, and projections.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
