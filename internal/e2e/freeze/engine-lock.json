@@ -55,7 +55,7 @@
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "68064bedea0a9f62187c12963e7fdcecec7ab6c0953f1fa50fbfa4791875157e"
+      "sha256": "f63ae68ebad419d294d11c441e1536f1eddd76c26308478f707cee34d1d1c510"
     },
     {
       "path": "internal/gameplay/engine/government.go",
@@ -71,7 +71,7 @@
     },
     {
       "path": "internal/gameplay/engine/special.go",
-      "sha256": "13fbf01a98215d26a7e5caf48aa7217b53bd422945d447b0a4c37d72a5d4ec79"
+      "sha256": "f2b747ee296f079db5d1f6df7e56cbf7207283cb0126bedf925fe3624f17da8d"
     },
     {
       "path": "internal/gameplay/engine/turns/turns.go",

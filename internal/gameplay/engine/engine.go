@@ -95,6 +95,7 @@ const (
 	EventSlaveRaidApplied     = "city.slave_raid"
 	EventSlaveRaidFailed      = "city.slave_raid_failed"
 	EventFranchiseCreated     = "city.franchise_created"
+	EventFranchiseFailed      = "city.franchise_failed"
 	EventCityInvestigated     = "city.investigated"
 	EventNukePlanted          = "city.nuked"
 	EventNukeFailed           = "city.nuke_failed"

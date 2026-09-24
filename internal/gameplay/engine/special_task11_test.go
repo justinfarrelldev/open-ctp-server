@@ -273,6 +273,16 @@ func TestRetailCreateFranchiseMarksCityOnce(t *testing.T) {
 		t.Fatalf("franchise outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
 	}
 
+	state = task11State()
+	state.Units[0].Effects = []Effect{{ID: "franchise", Kind: EffectSpecialCreateFranchise, Value: 10}}
+	failed, failedEvents, err := task11Apply(t, state, CommandCreateFranchise, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(failed.Cities[0].Effects) != 0 || failed.Units[0].Movement != 3 || len(failedEvents) != 1 || failedEvents[0].Type != EventFranchiseFailed {
+		t.Fatalf("chance-failed franchise outcome city=%+v unit=%+v events=%+v", failed.Cities[0], failed.Units[0], failedEvents)
+	}
+
 	next, _, err = task11Apply(t, next, CommandCreateFranchise, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
 	if err == nil {
 		t.Fatalf("duplicate franchise accepted: %+v", next.Cities[0].Effects)
