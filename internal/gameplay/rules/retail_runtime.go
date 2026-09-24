@@ -52,7 +52,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 	}
 	for _, government := range db.Governments {
 		maxSciencePercent := percentPoints(government.MaxScienceRate)
-		runtime.Governments = append(runtime.Governments, RuntimeGovernmentDefinition{ID: government.ID, EnableAdvanceID: government.EnableAdvance, ResearchPercent: signedCoefficientPercentPoints(government.FloatValues["KnowledgeCoef"]), FoodPercent: signedCoefficientPercentPoints(government.FloatValues["FoodCoef"]), ProductionPercent: signedCoefficientPercentPoints(government.FloatValues["ProductionCoef"]), GoldPercent: signedCoefficientPercentPoints(government.FloatValues["GoldCoef"]), PollutionPercent: signedCoefficientPercentPoints(government.PollutionCoef), MaxSciencePercent: &maxSciencePercent})
+		runtime.Governments = append(runtime.Governments, RuntimeGovernmentDefinition{ID: government.ID, EnableAdvanceID: government.EnableAdvance, ResearchPercent: signedCoefficientPercentPoints(government.FloatValues["KnowledgeCoef"]), FoodPercent: signedCoefficientPercentPoints(government.FloatValues["FoodCoef"]), ProductionPercent: signedCoefficientPercentPoints(government.FloatValues["ProductionCoef"]), GoldPercent: signedCoefficientPercentPoints(government.FloatValues["GoldCoef"]), PollutionPercent: signedCoefficientPercentPoints(government.PollutionCoef), MartialLawMaxUnits: government.IntValues["MaxMartialLawUnits"], MartialLawEffect: int(government.FloatValues["MartialLawEffect"]), MartialLawThreshold: government.IntValues["MartialLawThreshold"], MaxSciencePercent: &maxSciencePercent})
 	}
 	for _, trigger := range db.PollutionTriggerLists {
 		runtime.PollutionTriggers = append(runtime.PollutionTriggers, RuntimePollutionTriggerDefinition{ID: trigger.ID, TriggerLevels: append([]int64(nil), trigger.TriggerLevels...), DisasterTypes: append([]string(nil), trigger.DisasterTypes...)})
@@ -348,6 +348,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	}
 	if retailContainsString(unit.Flags, "CanPillage") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_pillage"), Kind: "can_pillage"})
+	}
+	if retailContainsString(unit.Flags, "ExertsMartialLaw") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("exerts_martial_law"), Kind: "exerts_martial_law"})
 	}
 	if retailContainsString(unit.Flags, "BuildingRemovesAPop") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("building_removes_population"), Kind: "building_removes_population"})

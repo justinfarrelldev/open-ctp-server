@@ -67,6 +67,15 @@ func upsertGovernmentEffects(nation *Nation, government rules.RuntimeGovernmentD
 	if government.MaxSciencePercent != nil {
 		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":max-science", Kind: EffectMaxSciencePercent, Value: *government.MaxSciencePercent})
 	}
+	if government.MartialLawMaxUnits > 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":martial-law-max-units", Kind: EffectMartialLawMaxUnits, Value: government.MartialLawMaxUnits})
+	}
+	if government.MartialLawEffect > 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":martial-law-effect", Kind: EffectMartialLawEffect, Value: government.MartialLawEffect})
+	}
+	if government.MartialLawThreshold > 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":martial-law-threshold", Kind: EffectMartialLawThreshold, Value: government.MartialLawThreshold})
+	}
 	if government.PublicWorksBonus > 0 {
 		nation.PublicWorks += government.PublicWorksBonus
 	}

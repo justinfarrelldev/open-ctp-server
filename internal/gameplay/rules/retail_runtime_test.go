@@ -108,6 +108,11 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeUnitHasEffectValue(pikemen, "combat_defense_vs_mounted_percent", 50) {
 		t.Fatalf("pikemen runtime = %+v ok=%v", pikemen, ok)
 	}
+	hoplite, ok := runtime.Unit("UNIT_HOPLITE")
+	if !ok || !runtimeUnitHasEffect(hoplite, "exerts_martial_law") {
+		t.Fatalf("hoplite runtime = %+v ok=%v", hoplite, ok)
+	}
+
 	fireTrireme, ok := runtime.Unit("UNIT_FIRE_TRIREME")
 	if !ok || !runtimeUnitHasEffect(fireTrireme, "wooden_ship") || !runtimeUnitHasEffectValue(fireTrireme, "combat_attack_vs_wooden_ship_percent", 25) {
 		t.Fatalf("fire trireme runtime = %+v ok=%v", fireTrireme, ok)
@@ -158,6 +163,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	anarchy, ok := runtime.Government("GOVERNMENT_ANARCHY")
 	if !ok || anarchy.ResearchPercent != -90 || anarchy.FoodPercent != -25 || anarchy.ProductionPercent != -25 || anarchy.GoldPercent != -25 {
 		t.Fatalf("anarchy government = %+v ok=%v", anarchy, ok)
+	}
+	tyranny, ok := runtime.Government("GOVERNMENT_TYRANNY")
+	if !ok || tyranny.MartialLawMaxUnits != 4 || tyranny.MartialLawEffect != 1 || tyranny.MartialLawThreshold != 80 {
+		t.Fatalf("tyranny government = %+v ok=%v", tyranny, ok)
 	}
 
 	hagia, ok := runtime.ProductionDefinition("WONDER_HAGIA_SOPHIA")

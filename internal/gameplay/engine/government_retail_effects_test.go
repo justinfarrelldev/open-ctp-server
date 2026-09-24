@@ -14,6 +14,21 @@ func TestGovernmentRuntimeYieldPercentEffects(t *testing.T) {
 	}
 }
 
+func TestRetailMartialLawHappinessUsesGovernmentCapAndUnitMarkers(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive}}
+	state.Nations = []Nation{{ID: "nation-a", Effects: []Effect{{ID: "ml-max", Kind: EffectMartialLawMaxUnits, Value: 2}, {ID: "ml-effect", Kind: EffectMartialLawEffect, Value: 3}, {ID: "ml-threshold", Kind: EffectMartialLawThreshold, Value: 80}}}}
+	state.Cities = []City{{ID: "city", OwnerID: "player-a", TileID: "tile", Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 75}}}}
+	state.Units = []Unit{
+		{ID: "garrison-a", OwnerID: "player-a", TileID: "tile", Effects: []Effect{{ID: "martial", Kind: EffectExertsMartialLaw}}},
+		{ID: "garrison-b", OwnerID: "player-a", TileID: "tile", Effects: []Effect{{ID: "martial", Kind: EffectExertsMartialLaw}}},
+		{ID: "garrison-c", OwnerID: "player-a", TileID: "tile", Effects: []Effect{{ID: "martial", Kind: EffectExertsMartialLaw}}},
+	}
+	if got, want := cityHappiness(state, state.Cities[0]), 80; got != want {
+		t.Fatalf("martial law happiness = %d, want capped %d", got, want)
+	}
+}
+
 func TestSignedYieldPercentEffectsCanReduceCityYield(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})

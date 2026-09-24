@@ -95,6 +95,7 @@
 - [x] Task 144: Retail EliteChance imports and veteran units use elite special-action chances.
 - [x] Task 145: Decisive combat promotes surviving winners to veteran status.
 - [x] Task 146: Plant-nuke EscapeChance imports and teleports successful escaping units/armies to the nearest friendly city.
+- [x] Task 147: Retail martial-law unit and government fields boost city happiness with cap/threshold semantics.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
