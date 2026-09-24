@@ -55,6 +55,7 @@ const (
 	CommandSlaveRaid        = "slave-raid"
 	CommandSettlerSlaveRaid = "settler-slave-raid"
 	CommandCreateFranchise  = "create-franchise"
+	CommandInvestigateCity  = "investigate-city"
 	CommandPillage          = "pillage"
 	CommandTerraform        = "terraform"
 	CommandBuildImprovement = "build-improvement"
@@ -86,6 +87,7 @@ const (
 	EventSlaveRaidApplied     = "city.slave_raid"
 	EventSlaveRaidFailed      = "city.slave_raid_failed"
 	EventFranchiseCreated     = "city.franchise_created"
+	EventCityInvestigated     = "city.investigated"
 	EventTechnologyCapture    = "technology.capture"
 	EventPillaged             = "pillage.applied"
 	EventTerraformQueued      = "terraform.queued"
@@ -217,15 +219,26 @@ type Army struct {
 }
 
 type Nation struct {
-	ID                 string   `json:"id"`
-	Effects            []Effect `json:"effects,omitempty"`
-	Advances           []string `json:"advances,omitempty"`
-	Embassies          []string `json:"embassies,omitempty"`
-	PublicWorks        int      `json:"public_works,omitempty"`
-	GovernmentID       string   `json:"government_id,omitempty"`
-	ResearchTargetID   string   `json:"research_target_id,omitempty"`
-	ResearchProgress   int      `json:"research_progress,omitempty"`
-	GaiaCompletionTurn int      `json:"gaia_completion_turn,omitempty"`
+	ID                 string       `json:"id"`
+	Effects            []Effect     `json:"effects,omitempty"`
+	Advances           []string     `json:"advances,omitempty"`
+	Embassies          []string     `json:"embassies,omitempty"`
+	CityReports        []CityReport `json:"city_reports,omitempty"`
+	PublicWorks        int          `json:"public_works,omitempty"`
+	GovernmentID       string       `json:"government_id,omitempty"`
+	ResearchTargetID   string       `json:"research_target_id,omitempty"`
+	ResearchProgress   int          `json:"research_progress,omitempty"`
+	GaiaCompletionTurn int          `json:"gaia_completion_turn,omitempty"`
+}
+
+type CityReport struct {
+	CityID     string   `json:"city_id"`
+	OwnerID    string   `json:"owner_id"`
+	TileID     string   `json:"tile_id"`
+	Turn       int      `json:"turn"`
+	Population int      `json:"population,omitempty"`
+	Buildings  []string `json:"buildings,omitempty"`
+	Effects    []Effect `json:"effects,omitempty"`
 }
 
 type Effect struct {
@@ -1004,6 +1017,13 @@ func cloneStateForNormalization(state State) State {
 	state.Nations = append([]Nation(nil), state.Nations...)
 	for index := range state.Nations {
 		state.Nations[index].Effects = append([]Effect(nil), state.Nations[index].Effects...)
+		state.Nations[index].Advances = append([]string(nil), state.Nations[index].Advances...)
+		state.Nations[index].Embassies = append([]string(nil), state.Nations[index].Embassies...)
+		state.Nations[index].CityReports = append([]CityReport(nil), state.Nations[index].CityReports...)
+		for report := range state.Nations[index].CityReports {
+			state.Nations[index].CityReports[report].Buildings = append([]string(nil), state.Nations[index].CityReports[report].Buildings...)
+			state.Nations[index].CityReports[report].Effects = append([]Effect(nil), state.Nations[index].CityReports[report].Effects...)
+		}
 	}
 	state.Wonders = append([]Wonder(nil), state.Wonders...)
 	for index := range state.Wonders {
@@ -1105,6 +1125,13 @@ func normalizeState(state *State) {
 		normalizeEffects(state.Nations[i].Effects)
 		sort.Strings(state.Nations[i].Advances)
 		sort.Strings(state.Nations[i].Embassies)
+		for report := range state.Nations[i].CityReports {
+			normalizeEffects(state.Nations[i].CityReports[report].Effects)
+			sort.Strings(state.Nations[i].CityReports[report].Buildings)
+		}
+		sort.Slice(state.Nations[i].CityReports, func(left, right int) bool {
+			return state.Nations[i].CityReports[left].CityID < state.Nations[i].CityReports[right].CityID
+		})
 	}
 	for i := range state.Armies {
 		sort.Strings(state.Armies[i].UnitIDs)

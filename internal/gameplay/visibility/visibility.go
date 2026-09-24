@@ -139,6 +139,7 @@ type Projection struct {
 	Research         *ResearchProjection  `json:"research,omitempty"`
 	Diplomacy        *DiplomacyProjection `json:"diplomacy,omitempty"`
 	Rules            *RulesProjection     `json:"rules,omitempty"`
+	CityReports      []engine.CityReport  `json:"city_reports,omitempty"`
 	LegalActions     []ActionProjection   `json:"legal_actions,omitempty"`
 	EmbassyPlayerIDs []string             `json:"embassy_player_ids,omitempty"`
 	PlanningStatus   string               `json:"planning_status,omitempty"`
@@ -208,6 +209,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 			}
 			result.Research = researchProjection(state, nation)
 			result.Diplomacy = diplomacyProjection(state, playerID, nation)
+			result.CityReports = cloneCityReports(nation.CityReports)
 			for _, embassyNationID := range nation.Embassies {
 				for _, embassyPlayer := range state.Players {
 					if embassyPlayer.NationID == embassyNationID {
@@ -337,6 +339,17 @@ func rulesProjection(state engine.State) *RulesProjection {
 		Movement:            &movement,
 		AI:                  ai,
 	}
+}
+
+func cloneCityReports(reports []engine.CityReport) []engine.CityReport {
+	cloned := make([]engine.CityReport, 0, len(reports))
+	for _, report := range reports {
+		copy := report
+		copy.Buildings = append([]string(nil), report.Buildings...)
+		copy.Effects = append([]engine.Effect(nil), report.Effects...)
+		cloned = append(cloned, copy)
+	}
+	return cloned
 }
 
 func cloneRuntimePollutionModel(model *rules.RuntimePollutionModel) *rules.RuntimePollutionModel {
@@ -753,6 +766,9 @@ func specialActions(projection Projection, tiles map[string]TileProjection, citi
 		}
 		if hasEffect(unit.Effects, engine.EffectSpecialCreateFranchise) && !cityHasFranchise(city, unit.OwnerID) {
 			actions = append(actions, action(engine.CommandCreateFranchise, "create-franchise", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
+		}
+		if hasEffect(unit.Effects, engine.EffectSpecialInvestigateCity) {
+			actions = append(actions, action(engine.CommandInvestigateCity, "investigate-city", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
 		}
 		if hasEffect(unit.Effects, engine.EffectSpecialBioTerror) {
 			actions = append(actions, action(engine.CommandBioTerror, "bio-terror", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))

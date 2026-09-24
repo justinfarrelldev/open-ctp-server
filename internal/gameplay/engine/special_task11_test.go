@@ -46,6 +46,35 @@ func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
 	}
 }
 
+func TestRetailInvestigateCityStoresPrivateCityReport(t *testing.T) {
+	state := task11State()
+	state.Cities[0].Population = 6
+	state.Cities[0].Buildings = []Building{{ID: "bank"}, {ID: "walls"}}
+	state.Cities[0].Effects = []Effect{{ID: "defense", Kind: EffectCombatDefense, Value: 2}}
+	state.Units[0].Effects = []Effect{{ID: "investigate", Kind: EffectSpecialInvestigateCity}}
+
+	next, events, err := task11Apply(t, state, CommandInvestigateCity, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventCityInvestigated || strings.Contains(string(events[0].Payload), "target-city") {
+		t.Fatalf("investigate outcome unit=%+v events=%+v", next.Units[0], events)
+	}
+	if got := next.Nations[0].CityReports; len(got) != 1 || got[0].CityID != "target-city" || got[0].Population != 6 || len(got[0].Buildings) != 2 || len(got[0].Effects) != 1 {
+		t.Fatalf("city reports = %+v", got)
+	}
+
+	next.Cities[0].Population = 7
+	next.Units[0].Movement = 1
+	next, _, err = task11Apply(t, next, CommandInvestigateCity, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := next.Nations[0].CityReports; len(got) != 1 || got[0].Population != 7 {
+		t.Fatalf("city report was not updated in place: %+v", got)
+	}
+}
+
 func TestRetailCreateFranchiseMarksCityOnce(t *testing.T) {
 	state := task11State()
 	state.Units[0].Effects = []Effect{{ID: "franchise", Kind: EffectSpecialCreateFranchise}}
