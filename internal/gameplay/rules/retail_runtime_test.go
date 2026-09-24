@@ -72,7 +72,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("cleric runtime = %+v ok=%v", cleric, ok)
 	}
 	corporateBranch, ok := runtime.Unit("UNIT_CORPORATE_BRANCH")
-	if !ok || !runtimeUnitHasEffectValue(corporateBranch, "special_create_franchise", 75) {
+	if !ok || !runtimeUnitHasEffectValue(corporateBranch, "special_create_franchise", 75) || !runtimeUnitHasEffect(corporateBranch, "cant_capture_city") {
 		t.Fatalf("corporate branch runtime = %+v ok=%v", corporateBranch, ok)
 	}
 	cyberNinja, ok := runtime.Unit("UNIT_CYBER_NINJA")

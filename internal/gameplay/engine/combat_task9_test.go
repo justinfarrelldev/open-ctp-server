@@ -86,6 +86,27 @@ func TestRetailCityOffenseBuildingEffectsModifyAttackersByDefenderDomain(t *test
 	}
 }
 
+func TestRetailCantCaptureCityPreventsCityCapture(t *testing.T) {
+	state := combatState()
+	state.Units = []Unit{
+		{ID: "attacker", OwnerID: "player-a", TileID: "a", ArmyID: "attackers", Attack: 100, Defense: 1, Strength: 10, Armor: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "cant-capture", Kind: EffectCantCaptureCity}}},
+		{ID: "defender", OwnerID: "player-b", TileID: "b", ArmyID: "defenders", Attack: 0, Defense: 1, Strength: 1, Armor: 1, Health: 1, MaxHealth: 1},
+	}
+	state.Armies = []Army{{ID: "attackers", OwnerID: "player-a", UnitIDs: []string{"attacker"}}, {ID: "defenders", OwnerID: "player-b", UnitIDs: []string{"defender"}}}
+
+	next, _, result, err := Apply(state, combatCommand(), state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Combat.CapturedCityID != "" || next.Cities[0].OwnerID != "player-b" {
+		t.Fatalf("city captured by non-capturing unit: result=%+v city=%+v", result.Combat, next.Cities[0])
+	}
+	attacker, ok := unitByID(next, "attacker")
+	if !ok || attacker.TileID != "a" {
+		t.Fatalf("non-capturing attacker moved into city: %+v ok=%v", attacker, ok)
+	}
+}
+
 func TestCombatVectorsResolveAtomicallyWithSourceOrderAndCapture(t *testing.T) {
 	state := combatState()
 	next, events, result, err := Apply(state, combatCommand(), state.Rules, fixtureSources())

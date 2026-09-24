@@ -100,8 +100,10 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 		result.Outcome = CombatOutcomeDefenderHeld
 	} else if _, ok := armyByID(state, defenders.ID); !ok {
 		result.Outcome = CombatOutcomeAttackerWon
-		moveArmyToTile(state, attackers.ID, targetTileID)
-		result.CapturedCityID = captureCityAt(state, command.ActorPlayerID, targetTileID)
+		if armyCanCaptureTargetCity(*state, *attackers, targetTileID) {
+			moveArmyToTile(state, attackers.ID, targetTileID)
+			result.CapturedCityID = captureCityAt(state, command.ActorPlayerID, targetTileID)
+		}
 	} else {
 		result.Outcome = CombatOutcomeRetreated
 	}
@@ -110,6 +112,25 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 		return nil, nil, err
 	}
 	return result, eventPayload, nil
+}
+
+func armyCanCaptureTargetCity(state State, attackers Army, targetTileID string) bool {
+	hasCity := false
+	for _, city := range state.Cities {
+		if city.TileID == targetTileID {
+			hasCity = true
+			break
+		}
+	}
+	if !hasCity {
+		return true
+	}
+	for _, unit := range combatArmyUnits(state, attackers) {
+		if !hasEffect(unit.Effects, EffectCantCaptureCity) {
+			return true
+		}
+	}
+	return false
 }
 
 func canArmyFight(state State, attackers, defenders []*Unit) bool {
