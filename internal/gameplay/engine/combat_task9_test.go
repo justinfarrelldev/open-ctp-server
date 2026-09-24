@@ -30,6 +30,23 @@ func combatCommand() Command {
 	return Command{SchemaVersion: CommandSchemaV1, ID: "combat-1", ActorPlayerID: "player-a", Type: CommandCombat, Payload: payload}
 }
 
+func TestRetailProtectFromBarbariansBlocksBarbarianCombat(t *testing.T) {
+	state := combatState()
+	state.Players = []Player{{ID: "barbarian", NationID: "CIVILIZATION_BARBARIAN", Lifecycle: PlayerActive, Controller: ControllerAI}, {ID: "player-b", NationID: "nation-b", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"barbarian", "player-b"}
+	state.Phase.ActivePlayerIndex = 0
+	state.Nations = []Nation{{ID: "CIVILIZATION_BARBARIAN"}, {ID: "nation-b"}}
+	state.Units[0].OwnerID, state.Units[1].OwnerID = "barbarian", "barbarian"
+	state.Armies[0].OwnerID = "barbarian"
+	state.Fog = []FogObservation{{PlayerID: "barbarian", TileID: "a", Turn: 1}, {PlayerID: "barbarian", TileID: "b", Turn: 1}}
+	state.Wonders = []Wonder{{ID: "WONDER_LABYRINTH", OwnerID: "player-b", CityID: "city-b", Effects: []Effect{{ID: "barbarians", Kind: EffectProtectFromBarbarians}}}}
+	payload, _ := json.Marshal(map[string]string{"attacker_army_id": "attackers", "defender_army_id": "defenders"})
+	_, _, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "barbarian-attack", ActorPlayerID: "barbarian", Type: CommandCombat, Payload: payload}, state.Rules, fixtureSources())
+	if err == nil || !strings.Contains(err.Error(), "combat target") {
+		t.Fatalf("barbarian combat was not blocked err=%v", err)
+	}
+}
+
 func TestRetailCityDefenseBuildingEffectsModifyDefenders(t *testing.T) {
 	state := combatState()
 	state.Cities[0].Effects = nil

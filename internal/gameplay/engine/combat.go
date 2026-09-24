@@ -62,7 +62,7 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 			return nil, nil, errors.New("combat unit is invalid")
 		}
 	}
-	if !canArmyFight(*state, attackerUnits, defenderUnits) {
+	if !canArmyFight(*state, attackerUnits, defenderUnits) || barbarianAttackBlocked(*state, attackers.OwnerID, defenders.OwnerID) {
 		return nil, nil, errors.New("combat target is unavailable")
 	}
 
@@ -117,6 +117,21 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 		return nil, nil, err
 	}
 	return result, eventPayload, nil
+}
+
+func barbarianAttackBlocked(state State, attackerID, defenderID string) bool {
+	return isBarbarianPlayer(state, attackerID) && HasActiveWonderEffect(state, defenderID, EffectProtectFromBarbarians)
+}
+
+func isBarbarianPlayer(state State, playerID string) bool {
+	if playerID == "barbarian" || playerID == "vandals" || playerID == "PLAYER_INDEX_VANDALS" {
+		return true
+	}
+	player, ok := playerByIDValue(state, playerID)
+	if !ok {
+		return false
+	}
+	return player.NationID == "CIVILIZATION_BARBARIAN" || player.NationID == "nation-barbarian" || player.NationID == "barbarian" || player.NationID == "vandals"
 }
 
 func armyCanCaptureTargetCity(state State, attackers Army, targetTileID string) bool {
