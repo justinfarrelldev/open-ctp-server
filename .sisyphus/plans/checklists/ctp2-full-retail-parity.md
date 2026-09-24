@@ -105,6 +105,7 @@
 - [x] Task 154: Retail government war-discontent and empire-distance fields are preserved in runtime definitions.
 - [x] Task 155: Retail too-many-cities government penalties reduce city happiness.
 - [x] Task 156: Retail empire-distance government settings reduce city happiness with DecreaseEmpireSize support.
+- [x] Task 157: Retail workday/wages/rations government coefficients affect city happiness.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

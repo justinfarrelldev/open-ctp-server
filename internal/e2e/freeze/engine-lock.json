@@ -43,7 +43,7 @@
     },
     {
       "path": "internal/gameplay/engine/cities.go",
-      "sha256": "18dac6676de1414aed9e80825eac50ff2085abb351052e2a93c33400c8e53aca"
+      "sha256": "3d1bbfd2b8bdf2d37886d2b1b8dff674af010e5270ee59cb3d856fdfccdb754b"
     },
     {
       "path": "internal/gameplay/engine/combat.go",
@@ -55,11 +55,11 @@
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "96a6d483680359fc51360dcac7ea44fcbd27964f97898468a278ff7ff5f8db7c"
+      "sha256": "81725948535b87254741130afe68ed40c0c788324d325259c04400b8714c2e82"
     },
     {
       "path": "internal/gameplay/engine/government.go",
-      "sha256": "0fbb91f64a3470432303a932dc77c571519042778ede415def8f374d27c58c4a"
+      "sha256": "93ef534aac224af0494d38b75c9f807004c548e0ca191d529a4df4a4554f7c17"
     },
     {
       "path": "internal/gameplay/engine/lifecycle.go",

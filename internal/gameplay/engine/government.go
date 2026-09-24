@@ -117,7 +117,38 @@ func upsertGovernmentEffects(nation *Nation, government rules.RuntimeGovernmentD
 	if government.MaxEmpireDistance > 0 {
 		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":max-empire-distance", Kind: EffectMaxEmpireDistance, Value: government.MaxEmpireDistance})
 	}
+	appendGovernmentSocialEffects(nation, government)
 	if government.PublicWorksBonus > 0 {
 		nation.PublicWorks += government.PublicWorksBonus
+	}
+}
+
+func appendGovernmentSocialEffects(nation *Nation, government rules.RuntimeGovernmentDefinition) {
+	if government.WorkdayExpectation != 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":workday-expectation", Kind: EffectWorkdayExpectation, Value: government.WorkdayExpectation})
+	}
+	if government.PositiveWorkdayCoef != 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":positive-workday-coef", Kind: EffectPositiveWorkdayCoef, Value: int(government.PositiveWorkdayCoef*100 + 0.5)})
+	}
+	if government.NegativeWorkdayCoef != 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":negative-workday-coef", Kind: EffectNegativeWorkdayCoef, Value: int(government.NegativeWorkdayCoef*100 + 0.5)})
+	}
+	if government.WagesExpectation != 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":wages-expectation", Kind: EffectWagesExpectation, Value: government.WagesExpectation})
+	}
+	if government.PositiveWagesCoef != 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":positive-wages-coef", Kind: EffectPositiveWagesCoef, Value: int(government.PositiveWagesCoef*100 + 0.5)})
+	}
+	if government.NegativeWagesCoef != 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":negative-wages-coef", Kind: EffectNegativeWagesCoef, Value: int(government.NegativeWagesCoef*100 + 0.5)})
+	}
+	if government.RationsExpectation != 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":rations-expectation", Kind: EffectRationsExpectation, Value: government.RationsExpectation})
+	}
+	if government.PositiveRationsCoef != 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":positive-rations-coef", Kind: EffectPositiveRationsCoef, Value: int(government.PositiveRationsCoef*100 + 0.5)})
+	}
+	if government.NegativeRationsCoef != 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":negative-rations-coef", Kind: EffectNegativeRationsCoef, Value: int(government.NegativeRationsCoef*100 + 0.5)})
 	}
 }
