@@ -1121,6 +1121,9 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 		yield.Production -= yield.Production * crimePercent / 100
 		yield.Gold -= yield.Gold * crimePercent / 100
 	}
+	if franchisePercent := cityFranchiseProductionPercent(city); franchisePercent > 0 && yield.Production > 0 {
+		yield.Production -= (yield.Production*franchisePercent + 99) / 100
+	}
 	if yield.Production < 0 {
 		yield.Production = 0
 	}
@@ -1128,6 +1131,15 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 		yield.Gold = 0
 	}
 	return yield, nil
+}
+
+func cityFranchiseProductionPercent(city City) int {
+	for _, effect := range city.Effects {
+		if effect.Kind == EffectFranchise && effect.ID != "franchise:"+city.OwnerID {
+			return 10
+		}
+	}
+	return 0
 }
 
 func brokerageGoldPercentBonus(state State, city City) int {

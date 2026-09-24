@@ -32,6 +32,19 @@ func task10Apply(t *testing.T, state State, actor, kind string, payload any) Sta
 	return next
 }
 
+func TestRetailFranchiseStealsProductionFromTargetCity(t *testing.T) {
+	state := fixtureState()
+	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-b", TileID: "tile-a", Effects: []Effect{{ID: "factory", Kind: EffectYieldProduction, Value: 8}, {ID: "franchise:player-a", Kind: EffectFranchise}}}}
+	yield, err := cityYield(state, state.Cities[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if yield.Production != 9 {
+		t.Fatalf("franchised city production = %d, want 9", yield.Production)
+	}
+}
+
 func TestRetailIncreaseBrokeragesAmplifiesBrokerageCommerce(t *testing.T) {
 	state := fixtureState()
 	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}}
