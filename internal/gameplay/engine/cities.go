@@ -766,10 +766,28 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 			yield.Gold -= building.Upkeep
 		}
 	}
+	crimePercent := cityCrimeLossPercent(city)
+	if crimePercent > 0 {
+		yield.Production -= yield.Production * crimePercent / 100
+		yield.Gold -= yield.Gold * crimePercent / 100
+	}
+	if yield.Production < 0 {
+		yield.Production = 0
+	}
 	if yield.Gold < 0 {
 		yield.Gold = 0
 	}
 	return yield, nil
+}
+
+func cityCrimeLossPercent(city City) int {
+	if city.CrimePercent <= 0 {
+		return 0
+	}
+	if city.CrimePercent > 100 {
+		return 100
+	}
+	return city.CrimePercent
 }
 
 func positivePopulation(population int) int {
