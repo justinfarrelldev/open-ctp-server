@@ -39,6 +39,28 @@ func projectionHasUnit(projection Projection, unitID string) bool {
 	return false
 }
 
+func TestRetailStealthProjectionRequiresStealthDetection(t *testing.T) {
+	state := fixtureState()
+	state.Cities = []engine.City{{ID: "home", OwnerID: "a", TileID: "0,0"}}
+	state.Units = []engine.Unit{{ID: "spy", OwnerID: "b", TileID: "1,0", Effects: []engine.Effect{{ID: "stealth", Kind: engine.EffectStealth}}}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if projectionHasUnit(projection, "spy") {
+		t.Fatalf("stealth unit leaked without detector: %#v", projection.Units)
+	}
+
+	state.Units = append(state.Units, engine.Unit{ID: "detector", OwnerID: "a", TileID: "0,0", VisibilityRange: 2, Effects: []engine.Effect{{ID: "see-stealth", Kind: engine.EffectCanSeeStealth}}})
+	projection, err = Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !projectionHasUnit(projection, "spy") {
+		t.Fatalf("stealth unit was hidden from stealth detector: %#v", projection.Units)
+	}
+}
+
 func TestRetailSubmarineProjectionRequiresUnderwaterDetection(t *testing.T) {
 	state := fixtureState()
 	state.Cities = []engine.City{{ID: "home", OwnerID: "a", TileID: "0,0"}}
@@ -512,6 +534,49 @@ func TestTask12ProjectEventExposesStableEnvelopeOnly(t *testing.T) {
 	}
 	if err := json.Unmarshal(event, &decoded); err != nil || decoded.Type != engine.EventCombatResolved || decoded.Sequence != 4 || decoded.Revision != 3 || decoded.Ordinal != 2 {
 		t.Fatalf("event projection = %#v err=%v raw=%s", decoded, err, event)
+	}
+}
+
+func TestRetailUnitTargetActionsUsePublicTargetMarkers(t *testing.T) {
+	state := fixtureState()
+	state.Tiles = []engine.Tile{{ID: "a", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "b", X: 1, Y: 0, Terrain: engine.TerrainPlains, Open: true}}
+	state.Cities = nil
+	state.Units = []engine.Unit{
+		{ID: "lawyer", OwnerID: "a", TileID: "a", Movement: 1, Effects: []engine.Effect{{ID: "sue", Kind: engine.EffectSpecialSue}, {ID: "expel", Kind: engine.EffectSpecialExpel}}},
+		{ID: "guard", OwnerID: "b", TileID: "b"},
+	}
+	state.Phase.ActivePlayerOrder = []string{"a", "b"}
+	state.Phase.ActivePlayerIndex = 0
+	state, err := Update(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasAction(projection.LegalActions, engine.CommandSue) || hasAction(projection.LegalActions, engine.CommandExpel) {
+		t.Fatalf("unit target action leaked without target markers: %#v", projection.LegalActions)
+	}
+
+	state.Units[1].Effects = []engine.Effect{{ID: "sued", Kind: engine.EffectCanBeSued}, {ID: "expelled", Kind: engine.EffectCanBeExpelled}}
+	state, err = Update(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projection, err = Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasAction(projection.LegalActions, engine.CommandSue) || !hasAction(projection.LegalActions, engine.CommandExpel) {
+		t.Fatalf("unit target actions missing with public markers: %#v", projection.LegalActions)
+	}
+	encoded, err := json.Marshal(projection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(encoded, []byte("can_be_sued")) || !bytes.Contains(encoded, []byte("can_be_expelled")) {
+		t.Fatalf("public target markers not projected: %s", encoded)
 	}
 }
 

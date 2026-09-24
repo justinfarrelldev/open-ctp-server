@@ -369,6 +369,12 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "IsSubmarine") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("submarine"), Kind: "submarine"})
 	}
+	if retailUnitFieldHasValue(unit.RawFields, "VisionClass", "Stealth") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("stealth"), Kind: "stealth"})
+	}
+	if retailUnitFieldHasValue(unit.RawFields, "CanSee", "Stealth") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_see_stealth"), Kind: "can_see_stealth"})
+	}
 	for _, target := range retailUnitCanAttackEffects(unit.RawFields) {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID(target), Kind: target})
 	}
@@ -440,6 +446,20 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 		return effects[i].ID < effects[j].ID
 	})
 	return effects
+}
+
+func retailUnitFieldHasValue(fields []RetailRawField, key, value string) bool {
+	for _, field := range fields {
+		if field.Key != key {
+			continue
+		}
+		for _, candidate := range field.Values {
+			if candidate == value {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func retailUnitCanAttackEffects(fields []RetailRawField) []string {

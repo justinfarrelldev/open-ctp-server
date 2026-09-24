@@ -243,6 +243,9 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	for _, unit := range state.Units {
 		if unitVisibleToPlayer(state, playerID, visible, unit) {
 			projected := UnitProjection{ID: unit.ID, OwnerID: unit.OwnerID, TileID: unit.TileID, TransportID: unit.TransportID, ArmyID: unit.ArmyID, Fortified: unit.Fortified}
+			if unit.OwnerID != playerID {
+				projected.Effects = publicTargetEffects(unit.Effects)
+			}
 			if unit.OwnerID == playerID {
 				projected.Domain, projected.Movement, projected.MaxMovement = unit.Domain, unit.Movement, unit.MaxMovement
 				projected.CargoCapacity = unit.CargoCapacity
@@ -646,11 +649,23 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 		actions = append(actions, combatActions(projection, tiles, unit)...)
 		actions = append(actions, bombardActions(projection, tiles, unit)...)
 		actions = append(actions, expelActions(projection, tiles, unit)...)
+		actions = append(actions, sueUnitActions(projection, tiles, unit)...)
 		actions = append(actions, specialActions(projection, tiles, cities, unit, playerID)...)
 		actions = append(actions, terrainActions(projection, tiles, unit)...)
 		actions = append(actions, createParkActions(projection, tiles, unit)...)
 	}
 	return actions
+}
+
+func publicTargetEffects(effects []engine.Effect) []engine.Effect {
+	projected := make([]engine.Effect, 0, 2)
+	for _, effect := range effects {
+		switch effect.Kind {
+		case engine.EffectCanBeSued, engine.EffectCanBeExpelled:
+			projected = append(projected, engine.Effect{ID: effect.ID, Kind: effect.Kind})
+		}
+	}
+	return projected
 }
 
 func expelActions(projection Projection, tiles map[string]TileProjection, unit UnitProjection) []ActionProjection {
@@ -663,7 +678,7 @@ func expelActions(projection Projection, tiles map[string]TileProjection, unit U
 	}
 	actions := make([]ActionProjection, 0)
 	for _, target := range projection.Units {
-		if target.OwnerID == unit.OwnerID || target.TileID == "" || target.TransportID != "" {
+		if target.OwnerID == unit.OwnerID || target.TileID == "" || target.TransportID != "" || !hasEffect(target.Effects, engine.EffectCanBeExpelled) {
 			continue
 		}
 		targetTile, ok := tiles[target.TileID]
@@ -671,6 +686,30 @@ func expelActions(projection Projection, tiles map[string]TileProjection, unit U
 			continue
 		}
 		actions = append(actions, action(engine.CommandExpel, "expel", unit.ID, target.ID, map[string]string{"unit_id": unit.ID, "target_unit_id": target.ID}, []string{"unit_id", "target_unit_id"}))
+	}
+	return actions
+}
+
+func sueUnitActions(projection Projection, tiles map[string]TileProjection, unit UnitProjection) []ActionProjection {
+	if unit.TileID == "" || unit.Movement < 1 || !hasEffect(unit.Effects, engine.EffectSpecialSue) {
+		return nil
+	}
+	origin, ok := tiles[unit.TileID]
+	if !ok {
+		return nil
+	}
+	actions := make([]ActionProjection, 0)
+	seenTiles := map[string]bool{}
+	for _, target := range projection.Units {
+		if target.OwnerID == unit.OwnerID || target.TileID == "" || target.TransportID != "" || !hasEffect(target.Effects, engine.EffectCanBeSued) || seenTiles[target.TileID] {
+			continue
+		}
+		targetTile, ok := tiles[target.TileID]
+		if !ok || targetTile.Stale || !(target.TileID == unit.TileID || adjacentProjection(origin, targetTile)) {
+			continue
+		}
+		seenTiles[target.TileID] = true
+		actions = append(actions, action(engine.CommandSue, "sue", unit.ID, target.ID, map[string]string{"unit_id": unit.ID, "target_unit_id": target.ID}, []string{"unit_id", "target_unit_id"}))
 	}
 	return actions
 }
@@ -824,19 +863,24 @@ func unitVisibleToPlayer(state engine.State, playerID string, visible map[string
 	if !visible[unit.TileID] {
 		return false
 	}
-	if !effectHasKind(unit.Effects, engine.EffectSubmarine) {
+	submarine := effectHasKind(unit.Effects, engine.EffectSubmarine)
+	stealth := effectHasKind(unit.Effects, engine.EffectStealth)
+	if !submarine && !stealth {
 		return true
 	}
-	return submarineDetectedByPlayer(state, playerID, unit.TileID)
+	if submarine && unitDetectedByPlayer(state, playerID, unit.TileID, engine.EffectCanAttackUnderwater) {
+		return true
+	}
+	return stealth && unitDetectedByPlayer(state, playerID, unit.TileID, engine.EffectCanSeeStealth)
 }
 
-func submarineDetectedByPlayer(state engine.State, playerID, tileID string) bool {
+func unitDetectedByPlayer(state engine.State, playerID, tileID string, detectorEffect string) bool {
 	target, ok := tileByID(state.Tiles, tileID)
 	if !ok {
 		return false
 	}
 	for _, unit := range state.Units {
-		if unit.OwnerID != playerID || unit.TileID == "" || unit.TransportID != "" || !effectHasKind(unit.Effects, engine.EffectCanAttackUnderwater) {
+		if unit.OwnerID != playerID || unit.TileID == "" || unit.TransportID != "" || !effectHasKind(unit.Effects, detectorEffect) {
 			continue
 		}
 		origin, ok := tileByID(state.Tiles, unit.TileID)
