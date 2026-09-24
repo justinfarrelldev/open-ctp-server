@@ -222,6 +222,49 @@ func retailWonderRuntimeEffects(wonder RetailWonder, buildingEffects map[string]
 	if value := wonder.IntValues["DecCrimePercent"]; value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":dec-crime-percent", Kind: "crime_percent", Value: -value})
 	}
+	for _, numeric := range []struct {
+		field string
+		kind  string
+	}{
+		{"IncreaseBoatMovement", "increase_boat_movement"},
+		{"IncreaseHp", "increase_hp"},
+		{"IncreaseRegard", "increase_regard"},
+		{"IncreaseBrokerages", "increase_brokerages"},
+		{"IncreaseScientists", "increase_scientists"},
+		{"ReduceReadinessCost", "reduce_readiness_cost"},
+		{"TemporaryFullHappiness", "temporary_full_happiness"},
+		{"GoldPerWaterTradeRoute", "gold_per_water_trade_route"},
+		{"GoldPerInternationalTradeRoute", "gold_per_international_trade_route"},
+		{"GoldPerTelevision", "gold_per_television"},
+		{"DecEmpireSize", "decrease_empire_size"},
+	} {
+		if value := wonder.IntValues[numeric.field]; value > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":" + numeric.kind, Kind: numeric.kind, Value: value})
+		}
+	}
+	for _, marker := range []struct {
+		field string
+		kind  string
+	}{
+		{"CloseEmbassies", "close_embassies"},
+		{"EliminateNukes", "eliminate_nukes"},
+		{"EmbassiesEverywhereEvenAtWar", "embassies_everywhere"},
+		{"EnableParkRangers", "enable_park_rangers"},
+		{"FreeSlaves", "free_slaves"},
+		{"GlobalRadar", "global_radar"},
+		{"PollutersToParks", "polluters_to_parks"},
+		{"PreventConversion", "prevent_conversion_empire"},
+		{"ProhibitSlavers", "prohibit_slavers"},
+		{"ProtectFromBarbarians", "protect_from_barbarians"},
+		{"ReformCities", "reform_cities"},
+		{"RevoltingCitiesJoinPlayer", "revolting_cities_join_player"},
+		{"SpiesEverywhere", "spies_everywhere"},
+		{"StartGaiaController", "start_gaia_controller"},
+	} {
+		if retailContainsString(wonder.Flags, marker.field) || len(retailFieldValues(wonder.RawFields, marker.field)) > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":" + marker.kind, Kind: marker.kind})
+		}
+	}
 	for _, buildingID := range append(retailFieldValues(wonder.RawFields, "BuildingEverywhere"), retailFieldValues(wonder.RawFields, "ActualBuildingEverywhere")...) {
 		for _, effect := range buildingEffects[buildingID] {
 			effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":" + effect.ID, Kind: effect.Kind, Value: effect.Value})

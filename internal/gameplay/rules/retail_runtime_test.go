@@ -147,6 +147,18 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeProductionHasEffectValue(zeroCrime, "crime_percent", -60) {
 		t.Fatalf("Zero Crime Bill effects = %+v ok=%v", zeroCrime, ok)
 	}
+	naniteDefuser, ok := runtime.ProductionDefinition("WONDER_NANITE_DEFUSER")
+	if !ok || !runtimeProductionHasEffect(naniteDefuser, "eliminate_nukes") {
+		t.Fatalf("Nanite Defuser effects = %+v ok=%v", naniteDefuser, ok)
+	}
+	agency, ok := runtime.ProductionDefinition("WONDER_THE_AGENCY")
+	if !ok || !runtimeProductionHasEffect(agency, "spies_everywhere") {
+		t.Fatalf("Agency effects = %+v ok=%v", agency, ok)
+	}
+	eastIndia, ok := runtime.ProductionDefinition("WONDER_EAST_INDIA_COMPANY")
+	if !ok || !runtimeProductionHasEffectValue(eastIndia, "increase_boat_movement", 100) {
+		t.Fatalf("East India effects = %+v ok=%v", eastIndia, ok)
+	}
 	factory, ok := runtime.ProductionDefinition("IMPROVE_FACTORY")
 	if !ok || !runtimeProductionHasEffectValue(factory, "yield_production_percent", 15) || !runtimeProductionHasEffect(factory, "allow_grunts") {
 		t.Fatalf("factory production effects = %+v ok=%v", factory, ok)
