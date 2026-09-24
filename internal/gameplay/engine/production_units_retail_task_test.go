@@ -9,11 +9,25 @@ import (
 func TestProductionCompletionCopiesRuntimeRangedStats(t *testing.T) {
 	state := State{Phase: PhaseState{Turn: 7}}
 	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_RANGED", Domain: DomainLand, Movement: 1, Attack: 3, Defense: 2, Ranged: 9, BombardRange: 2, BombRounds: 4, Strength: 3, Armor: 1, Health: 10}}}
-	if err := completeUnitProduction(&state, City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}, ProductionItem{ID: "UNIT_RANGED", Kind: ProductionUnit}, runtime); err != nil {
+	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}
+	if err := completeUnitProduction(&state, &city, ProductionItem{ID: "UNIT_RANGED", Kind: ProductionUnit}, runtime); err != nil {
 		t.Fatalf("completeUnitProduction() error = %v", err)
 	}
 	if len(state.Units) != 1 || state.Units[0].Ranged != 9 {
 		t.Fatalf("produced ranged unit = %#v", state.Units)
+	}
+}
+
+func TestRetailPopulationRemovingUnitsReduceCityPopulation(t *testing.T) {
+	state := State{Phase: PhaseState{Turn: 7}}
+	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Population: 2}
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "pop", Kind: EffectBuildingRemovesPopulation}}}}}
+
+	if err := completeUnitProduction(&state, &city, ProductionItem{ID: "UNIT_SETTLER", Kind: ProductionUnit}, runtime); err != nil {
+		t.Fatalf("completeUnitProduction() error = %v", err)
+	}
+	if got := city.Population; got != 1 {
+		t.Fatalf("city population after settler = %d, want 1", got)
 	}
 }
 

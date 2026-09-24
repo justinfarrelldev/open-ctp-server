@@ -152,7 +152,7 @@ func unitCanFortify(unit Unit) bool {
 func unitHasRetailCapabilityMetadata(unit Unit) bool {
 	for _, effect := range unit.Effects {
 		switch effect.Kind {
-		case EffectCantCaptureCity, EffectNoFuelThenCrash, EffectCanPillage, EffectIgnoreZOC, EffectCanAttackLand, EffectCanAttackSea, EffectCanAttackAir, EffectCanAttackSpace, EffectCanAttackUnderwater, EffectSubmarine, EffectWoodenShip,
+		case EffectCantCaptureCity, EffectNoFuelThenCrash, EffectCanPillage, EffectBuildingRemovesPopulation, EffectIgnoreZOC, EffectCanAttackLand, EffectCanAttackSea, EffectCanAttackAir, EffectCanAttackSpace, EffectCanAttackUnderwater, EffectSubmarine, EffectWoodenShip,
 			EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns,
 			EffectSpecialConvertCity, EffectSpecialCreateFranchise, EffectSpecialInvestigateCity, EffectSpecialPlantNuke, EffectSpecialBioTerror, EffectSpecialNanoTerror, EffectSpecialPlague,
 			EffectSpecialAssassinateRuler, EffectSpecialSlaveRaid, EffectSpecialSettlerSlaveRaid, EffectSpecialUndergroundRailway, EffectSpecialInjoin, EffectSpecialReform,
