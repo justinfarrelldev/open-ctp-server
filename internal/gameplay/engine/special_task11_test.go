@@ -300,6 +300,17 @@ func TestRetailSlaveRaidsReducePopulationAndHonorProtection(t *testing.T) {
 
 			state = task11State()
 			state.Cities[0].Population = 3
+			state.Units[0].Effects = []Effect{{ID: tc.name, Kind: tc.effect, Value: 10}}
+			next, events, err = task11Apply(t, state, tc.kind, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if next.Cities[0].Population != 3 || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventSlaveRaidFailed {
+				t.Fatalf("chance-failed slave raid outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
+			}
+
+			state = task11State()
+			state.Cities[0].Population = 3
 			state.Cities[0].Effects = append(state.Cities[0].Effects, Effect{ID: "anti-slave", Kind: EffectPreventSlavery, Value: 100})
 			state.Units[0].Effects = []Effect{{ID: tc.name, Kind: tc.effect}}
 			next, events, err = task11Apply(t, state, tc.kind, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})

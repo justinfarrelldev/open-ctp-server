@@ -580,6 +580,17 @@ func slaveRaid(state *State, unit *Unit, city *City, commandType string, sources
 	if protectedByCityEffect(state, city, EffectPreventSlavery, sources) {
 		return EventSlaveRaidFailed, json.RawMessage(`{"disclosed":true}`), nil
 	}
+	chance := effectValue(unit.Effects, requiredEffect)
+	if chance <= 0 {
+		chance = 100
+	}
+	if chance < 100 {
+		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+		setRNG(state, RNGDomainSpecialAction, next)
+		if int(roll%100) >= chance {
+			return EventSlaveRaidFailed, json.RawMessage(`{"disclosed":true}`), nil
+		}
+	}
 	if city.Population > 1 {
 		city.Population--
 	}
