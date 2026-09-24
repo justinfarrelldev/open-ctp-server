@@ -607,6 +607,17 @@ func cityTerror(state *State, unit *Unit, city *City, commandType string, source
 	if protectionEffect != "" && protectedByCityEffect(state, city, protectionEffect, sources) {
 		return EventTerrorFailed, json.RawMessage(`{"disclosed":true}`), nil
 	}
+	chance := effectValue(unit.Effects, requiredEffect)
+	if chance <= 0 {
+		chance = 100
+	}
+	if chance < 100 {
+		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+		setRNG(state, RNGDomainSpecialAction, next)
+		if int(roll%100) >= chance {
+			return EventTerrorFailed, json.RawMessage(`{"disclosed":true}`), nil
+		}
+	}
 	if city.Population > 1 {
 		city.Population--
 	}

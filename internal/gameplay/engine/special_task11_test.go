@@ -337,6 +337,17 @@ func TestRetailBioNanoAndPlagueSpecialsAffectCityPopulation(t *testing.T) {
 				t.Fatalf("terror outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
 			}
 
+			state = task11State()
+			state.Cities[0].Population = 5
+			state.Units[0].Effects = []Effect{{ID: tc.name, Kind: tc.effectKind, Value: 10}}
+			next, events, err = task11Apply(t, state, tc.command, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if next.Cities[0].Population != 5 || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventTerrorFailed {
+				t.Fatalf("chance-failed terror outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
+			}
+
 			if tc.protection == "" {
 				return
 			}
