@@ -739,6 +739,9 @@ func specialActions(projection Projection, tiles map[string]TileProjection, citi
 		if hasEffect(unit.Effects, engine.EffectSpecialSoothsaying) {
 			actions = append(actions, action(engine.CommandSoothsaying, "soothsaying", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
 		}
+		if hasEffect(unit.Effects, engine.EffectSpecialConvertCity) {
+			actions = append(actions, action(engine.CommandConvertCity, "convert-city", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
+		}
 		if hasEffect(unit.Effects, engine.EffectSpecialSteal) || hasEffect(unit.Effects, engine.EffectSpecialCapture) {
 			actions = append(actions, action(engine.CommandStealTechnology, "steal-technology", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
 		}

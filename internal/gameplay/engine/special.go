@@ -62,7 +62,7 @@ type CancelTerraformPayload struct {
 
 func isSpecialCommand(kind string) bool {
 	switch kind {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
 		return true
 	default:
 		return false
@@ -74,7 +74,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		return "", nil, err
 	}
 	switch command.Type {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity:
 		var payload SpecialActionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", nil, err
@@ -107,8 +107,10 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			}
 			city.Effects = append(city.Effects, Effect{ID: "soothsaying:" + unit.ID, Kind: EffectSoothsaying})
 			return EventSoothsayingApplied, json.RawMessage(`{"disclosed":true}`), nil
-		default:
+		case CommandStealTechnology:
 			return stealTechnology(state, unit, actorNation, targetNation, sources)
+		default:
+			return convertCity(state, unit, city, sources)
 		}
 	case CommandPillage:
 		var payload PillagePayload
@@ -256,6 +258,25 @@ func specialTarget(state *State, actorID string, payload SpecialActionPayload) (
 		return nil, nil, nil, nil, errors.New("special action target is unavailable")
 	}
 	return unit, city, actorNation, targetNation, nil
+}
+
+func convertCity(state *State, unit *Unit, city *City, sources Sources) (string, json.RawMessage, error) {
+	if !hasEffect(unit.Effects, EffectSpecialConvertCity) {
+		return "", nil, errors.New("special action is not authorized")
+	}
+	if err := spendSpecialMove(unit); err != nil {
+		return "", nil, err
+	}
+	protection := effectValue(city.Effects, EffectPreventConversion)
+	if protection > 0 {
+		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+		setRNG(state, RNGDomainSpecialAction, next)
+		if int(roll%100) < protection {
+			return EventCityConversionFailed, json.RawMessage(`{"disclosed":true}`), nil
+		}
+	}
+	city.OwnerID = unit.OwnerID
+	return EventCityConverted, json.RawMessage(`{"disclosed":true}`), nil
 }
 
 func stealTechnology(state *State, unit *Unit, actor, target *Nation, sources Sources) (string, json.RawMessage, error) {

@@ -46,6 +46,33 @@ func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
 	}
 }
 
+func TestRetailConvertCityHonorsProtectionAndDisclosure(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = append(state.Units[0].Effects, Effect{ID: "convert", Kind: EffectSpecialConvertCity})
+
+	next, events, err := task11Apply(t, state, CommandConvertCity, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Cities[0].OwnerID != "player-a" || next.Units[0].Movement != 3 {
+		t.Fatalf("conversion outcome city=%+v unit=%+v", next.Cities[0], next.Units[0])
+	}
+	if len(events) != 1 || events[0].Type != EventCityConverted || strings.Contains(string(events[0].Payload), "target-city") {
+		t.Fatalf("unsafe conversion event=%+v", events)
+	}
+
+	state = task11State()
+	state.Units[0].Effects = append(state.Units[0].Effects, Effect{ID: "convert", Kind: EffectSpecialConvertCity})
+	state.Cities[0].Effects = append(state.Cities[0].Effects, Effect{ID: "walls", Kind: EffectPreventConversion, Value: 100})
+	next, events, err = task11Apply(t, state, CommandConvertCity, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Cities[0].OwnerID != "player-b" || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventCityConversionFailed {
+		t.Fatalf("protected conversion outcome city=%+v unit=%+v events=%+v", next.Cities[0], next.Units[0], events)
+	}
+}
+
 func TestTask11EmbassySoothsayingAndDisclosureVectors(t *testing.T) {
 	state := task11State()
 	next, events, err := task11Apply(t, state, CommandEstablishEmbassy, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
