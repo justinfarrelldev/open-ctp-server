@@ -29,6 +29,9 @@ const (
 	EffectMartialLawThreshold             = "martial_law_threshold"
 	EffectTooManyCitiesThreshold          = "too_many_cities_threshold"
 	EffectTooManyCitiesCoefficient        = "too_many_cities_coefficient"
+	EffectEmpireDistanceScale             = "empire_distance_scale"
+	EffectMinEmpireDistance               = "min_empire_distance"
+	EffectMaxEmpireDistance               = "max_empire_distance"
 	EffectCrimePercent                    = "crime_percent"
 	EffectMaxPopulation                   = "max_population"
 	EffectOvercrowdingLevel               = "overcrowding_level"
@@ -629,10 +632,88 @@ func cityHappiness(state State, city City) int {
 		happiness = martial
 	}
 	happiness -= tooManyCitiesHappinessPenalty(state, city)
+	happiness -= empireDistanceHappinessPenalty(state, city)
 	if cityHasTemporaryFullHappiness(city) && happiness < 100 {
 		return 100
 	}
 	return happiness
+}
+
+func empireDistanceHappinessPenalty(state State, city City) int {
+	scalePPM, minDistance, maxDistance := 0, 0, 0
+	for _, nation := range state.Nations {
+		if nation.ID != nationForPlayer(state, city.OwnerID) {
+			continue
+		}
+		for _, nationEffect := range nation.Effects {
+			switch nationEffect.Kind {
+			case EffectEmpireDistanceScale:
+				scalePPM = max(scalePPM, nationEffect.Value)
+			case EffectMinEmpireDistance:
+				minDistance = max(minDistance, nationEffect.Value)
+			case EffectMaxEmpireDistance:
+				maxDistance = max(maxDistance, nationEffect.Value)
+			}
+		}
+		break
+	}
+	if scalePPM <= 0 {
+		return 0
+	}
+	capital, ok := capitalCity(state, city.OwnerID)
+	if !ok || capital.ID == city.ID {
+		return 0
+	}
+	distance := manhattanTileDistance(state, capital.TileID, city.TileID) * 100
+	if maxDistance > 0 && distance > maxDistance {
+		distance = maxDistance
+	}
+	if distance <= minDistance {
+		return 0
+	}
+	penalty := ((distance-minDistance)*scalePPM + 999999) / 1000000
+	if modifier := ownerWonderEffectSum(state, city.OwnerID, EffectDecreaseEmpireSize); modifier > 0 {
+		if modifier >= 100 {
+			return 0
+		}
+		penalty -= penalty * modifier / 100
+	}
+	return penalty
+}
+
+func capitalCity(state State, ownerID string) (City, bool) {
+	var fallback City
+	for _, city := range state.Cities {
+		if city.OwnerID != ownerID {
+			continue
+		}
+		if fallback.ID == "" {
+			fallback = city
+		}
+		if hasEffect(cityEffects(state, city), EffectCapitol) {
+			return city, true
+		}
+	}
+	if fallback.ID != "" {
+		return fallback, true
+	}
+	return City{}, false
+}
+
+func manhattanTileDistance(state State, leftID, rightID string) int {
+	left, leftOK := tileByID(state, leftID)
+	right, rightOK := tileByID(state, rightID)
+	if !leftOK || !rightOK {
+		return 0
+	}
+	return abs(left.X-right.X) + abs(left.Y-right.Y)
+}
+
+func abs(value int) int {
+	if value < 0 {
+		return -value
+	}
+	return value
 }
 
 func tooManyCitiesHappinessPenalty(state State, city City) int {
@@ -1520,7 +1601,7 @@ func validateEffects(effects []Effect) error {
 			continue
 		}
 		switch effect.Kind {
-		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldGoldPerPopulation, EffectHappiness, EffectExertsMartialLaw, EffectMartialLawMaxUnits, EffectMartialLawEffect, EffectMartialLawThreshold, EffectTooManyCitiesThreshold, EffectTooManyCitiesCoefficient, EffectCrimePercent, EffectMaxPopulation, EffectOvercrowdingLevel, EffectStarvationProtection, EffectAirport, EffectMounted, EffectNoFuelThenCrash, EffectCantCaptureCity, EffectCanBeSued, EffectCanBeExpelled, EffectCanEntrench, EffectCanPillage, EffectBuildingRemovesPopulation, EffectIgnoreZOC, EffectCombatDefenseVsMountedPercent, EffectCombatDefenseVsAirPercent, EffectWoodenShip, EffectSubmarine, EffectStealth, EffectCanSeeStealth, EffectCanAttackLand, EffectCanAttackSea, EffectCanAttackAir, EffectCanAttackSpace, EffectCanAttackUnderwater, EffectCombatAttackVsWoodenShipPercent, EffectCityWalls, EffectIgnoreCityWalls, EffectProtectFromNukes, EffectProtectFromBioAgents, EffectProtectFromNanoVirus, EffectPreventConversion, EffectPreventSlavery, EffectForceField, EffectFoodVatPercent, EffectAllowGrunts, EffectBrokerage, EffectCapitol, EffectCathedral, EffectDoubleTelevangelists, EffectIsReligious, EffectLowerPeaceMovementPercent, EffectNuclearPlant, EffectTelevision, EffectEliminateNukes, EffectCloseEmbassies, EffectEmbassiesEverywhere, EffectEnableParkRangers, EffectFreeSlaves, EffectGlobalRadar, EffectIncreaseBoatMovement, EffectIncreaseHP, EffectIncreaseBrokerages, EffectIncreaseRegard, EffectIncreaseScientists, EffectPreventConversionEmpire, EffectProhibitSlavers, EffectProtectFromBarbarians, EffectReduceReadinessCost, EffectReformCities, EffectRevoltingCitiesJoinPlayer, EffectSpiesEverywhere, EffectStartGaiaController, EffectTemporaryFullHappiness, EffectPollutersToParks, EffectGoldPerWaterTradeRoute, EffectGoldPerInternationalTradeRoute, EffectGoldPerTelevision, EffectDecreaseEmpireSize, EffectPollutionPercent, EffectPollutionPopulationPercent, EffectPollutionProductionPercent, EffectPollution, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectResearchPercent, EffectMaxSciencePercent, EffectBonus, EffectCombatAttack, EffectCombatAttackLand, EffectCombatAttackSea, EffectCombatAttackAir, EffectCombatDefense, EffectSoothsaying, EffectFranchise, EffectRulerAssassinated, EffectFreedPopulation, EffectInjunction, EffectLawsuit, EffectWatchful, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns, EffectSpecialConvertCity, EffectSpecialCreateFranchise, EffectSpecialInvestigateCity, EffectSpecialPlantNuke, EffectSpecialBioTerror, EffectSpecialNanoTerror, EffectSpecialPlague, EffectSpecialAssassinateRuler, EffectSpecialSlaveRaid, EffectSpecialSettlerSlaveRaid, EffectSpecialUndergroundRailway, EffectSpecialInjoin, EffectSpecialReform, EffectSpecialCreatePark, EffectSpecialExpel, EffectSpecialSue, EffectSpecialConvertCityDeathChance, EffectSpecialCreateFranchiseDeathChance, EffectSpecialInvestigateCityDeathChance, EffectSpecialPlantNukeDeathChance, EffectSpecialPlantNukeEscapeChance, EffectSpecialBioTerrorDeathChance, EffectSpecialNanoTerrorDeathChance, EffectSpecialPlagueDeathChance, EffectSpecialAssassinateRulerDeathChance, EffectSpecialSlaveRaidDeathChance, EffectSpecialSettlerSlaveRaidDeathChance, EffectSpecialUndergroundRailwayDeathChance:
+		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldGoldPerPopulation, EffectHappiness, EffectExertsMartialLaw, EffectMartialLawMaxUnits, EffectMartialLawEffect, EffectMartialLawThreshold, EffectTooManyCitiesThreshold, EffectTooManyCitiesCoefficient, EffectEmpireDistanceScale, EffectMinEmpireDistance, EffectMaxEmpireDistance, EffectCrimePercent, EffectMaxPopulation, EffectOvercrowdingLevel, EffectStarvationProtection, EffectAirport, EffectMounted, EffectNoFuelThenCrash, EffectCantCaptureCity, EffectCanBeSued, EffectCanBeExpelled, EffectCanEntrench, EffectCanPillage, EffectBuildingRemovesPopulation, EffectIgnoreZOC, EffectCombatDefenseVsMountedPercent, EffectCombatDefenseVsAirPercent, EffectWoodenShip, EffectSubmarine, EffectStealth, EffectCanSeeStealth, EffectCanAttackLand, EffectCanAttackSea, EffectCanAttackAir, EffectCanAttackSpace, EffectCanAttackUnderwater, EffectCombatAttackVsWoodenShipPercent, EffectCityWalls, EffectIgnoreCityWalls, EffectProtectFromNukes, EffectProtectFromBioAgents, EffectProtectFromNanoVirus, EffectPreventConversion, EffectPreventSlavery, EffectForceField, EffectFoodVatPercent, EffectAllowGrunts, EffectBrokerage, EffectCapitol, EffectCathedral, EffectDoubleTelevangelists, EffectIsReligious, EffectLowerPeaceMovementPercent, EffectNuclearPlant, EffectTelevision, EffectEliminateNukes, EffectCloseEmbassies, EffectEmbassiesEverywhere, EffectEnableParkRangers, EffectFreeSlaves, EffectGlobalRadar, EffectIncreaseBoatMovement, EffectIncreaseHP, EffectIncreaseBrokerages, EffectIncreaseRegard, EffectIncreaseScientists, EffectPreventConversionEmpire, EffectProhibitSlavers, EffectProtectFromBarbarians, EffectReduceReadinessCost, EffectReformCities, EffectRevoltingCitiesJoinPlayer, EffectSpiesEverywhere, EffectStartGaiaController, EffectTemporaryFullHappiness, EffectPollutersToParks, EffectGoldPerWaterTradeRoute, EffectGoldPerInternationalTradeRoute, EffectGoldPerTelevision, EffectDecreaseEmpireSize, EffectPollutionPercent, EffectPollutionPopulationPercent, EffectPollutionProductionPercent, EffectPollution, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectResearchPercent, EffectMaxSciencePercent, EffectBonus, EffectCombatAttack, EffectCombatAttackLand, EffectCombatAttackSea, EffectCombatAttackAir, EffectCombatDefense, EffectSoothsaying, EffectFranchise, EffectRulerAssassinated, EffectFreedPopulation, EffectInjunction, EffectLawsuit, EffectWatchful, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns, EffectSpecialConvertCity, EffectSpecialCreateFranchise, EffectSpecialInvestigateCity, EffectSpecialPlantNuke, EffectSpecialBioTerror, EffectSpecialNanoTerror, EffectSpecialPlague, EffectSpecialAssassinateRuler, EffectSpecialSlaveRaid, EffectSpecialSettlerSlaveRaid, EffectSpecialUndergroundRailway, EffectSpecialInjoin, EffectSpecialReform, EffectSpecialCreatePark, EffectSpecialExpel, EffectSpecialSue, EffectSpecialConvertCityDeathChance, EffectSpecialCreateFranchiseDeathChance, EffectSpecialInvestigateCityDeathChance, EffectSpecialPlantNukeDeathChance, EffectSpecialPlantNukeEscapeChance, EffectSpecialBioTerrorDeathChance, EffectSpecialNanoTerrorDeathChance, EffectSpecialPlagueDeathChance, EffectSpecialAssassinateRulerDeathChance, EffectSpecialSlaveRaidDeathChance, EffectSpecialSettlerSlaveRaidDeathChance, EffectSpecialUndergroundRailwayDeathChance:
 		default:
 			return fmt.Errorf("unsupported effect kind %q", effect.Kind)
 		}

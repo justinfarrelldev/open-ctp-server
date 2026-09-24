@@ -108,6 +108,15 @@ func upsertGovernmentEffects(nation *Nation, government rules.RuntimeGovernmentD
 	if government.TooManyCitiesCoefficient > 0 {
 		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":too-many-cities-coefficient", Kind: EffectTooManyCitiesCoefficient, Value: int(government.TooManyCitiesCoefficient*100 + 0.5)})
 	}
+	if government.EmpireDistanceScale > 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":empire-distance-scale", Kind: EffectEmpireDistanceScale, Value: int(government.EmpireDistanceScale*1000000 + 0.5)})
+	}
+	if government.MinEmpireDistance > 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":min-empire-distance", Kind: EffectMinEmpireDistance, Value: government.MinEmpireDistance})
+	}
+	if government.MaxEmpireDistance > 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":max-empire-distance", Kind: EffectMaxEmpireDistance, Value: government.MaxEmpireDistance})
+	}
 	if government.PublicWorksBonus > 0 {
 		nation.PublicWorks += government.PublicWorksBonus
 	}
