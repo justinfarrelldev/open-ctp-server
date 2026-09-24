@@ -54,6 +54,7 @@
 - [x] Task 103: Retail embassy wonder effects close protected embassies and project effective global embassies.
 - [x] Task 104: Retail free-slaves/prohibit-slavers effects remove slavers and block future slaver use.
 - [x] Task 105: Retail polluters-to-parks wonder effects convert the highest-pollution cities to parks.
+- [x] Task 106: Retail temporary-full-happiness wonder effects add expiring full-happiness city markers.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
