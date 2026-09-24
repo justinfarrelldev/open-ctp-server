@@ -42,6 +42,7 @@
 - [x] Task 91: Retail injoin special actions block target city production.
 - [x] Task 92: Retail reform special actions remove injunction and city crime.
 - [x] Task 93: Retail underground-railway special actions free population.
+- [x] Task 94: Retail sue special actions apply lawsuit disruption.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
