@@ -115,6 +115,9 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 	if value := building.IntValues["RaiseMaxPopulation"]; value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":max-population", Kind: "max_population", Value: value})
 	}
+	if value := retailPercentFieldPoints(building.FloatValues["DefendersPercent"]); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":defenders-percent", Kind: "combat_defense", Value: value})
+	}
 	if value, ok := signedPercentPoints(building.FloatValues["PopulationPollutionPercent"]); ok {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":population-pollution-percent", Kind: "pollution_population_percent", Value: value})
 	}
@@ -167,6 +170,16 @@ func signedPercentPoints(value float64) (int, bool) {
 		return 0, false
 	}
 	return int(math.Round(value * 100)), true
+}
+
+func retailPercentFieldPoints(value float64) int {
+	if value <= 0 {
+		return 0
+	}
+	if value <= 1 {
+		return int(math.Round(value * 100))
+	}
+	return int(math.Round(value))
 }
 
 func percentPoints(value float64) int {

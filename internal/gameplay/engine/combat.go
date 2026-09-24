@@ -211,7 +211,7 @@ func combatModifier(state State, unit Unit, attack bool) int {
 		}
 		for _, city := range state.Cities {
 			if city.TileID == unit.TileID {
-				modifier += effectsModifier(city.Effects, false)
+				modifier += effectsModifier(cityEffects(state, city), false)
 			}
 		}
 	}

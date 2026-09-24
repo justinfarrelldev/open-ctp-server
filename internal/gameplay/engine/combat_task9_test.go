@@ -30,6 +30,16 @@ func combatCommand() Command {
 	return Command{SchemaVersion: CommandSchemaV1, ID: "combat-1", ActorPlayerID: "player-a", Type: CommandCombat, Payload: payload}
 }
 
+func TestRetailCityDefenseBuildingEffectsModifyDefenders(t *testing.T) {
+	state := combatState()
+	state.Cities[0].Effects = nil
+	state.Cities[0].Buildings = []Building{{ID: "IMPROVE_CITY_WALLS", Effects: []Effect{{ID: "city-walls", Kind: EffectCombatDefense, Value: 15}}}}
+	defender := state.Units[2]
+	if got := combatModifier(state, defender, false); got != 17 { // fortified + forest + city walls
+		t.Fatalf("defender combat modifier = %d, want fortified + forest + city walls", got)
+	}
+}
+
 func TestCombatVectorsResolveAtomicallyWithSourceOrderAndCapture(t *testing.T) {
 	state := combatState()
 	next, events, result, err := Apply(state, combatCommand(), state.Rules, fixtureSources())
