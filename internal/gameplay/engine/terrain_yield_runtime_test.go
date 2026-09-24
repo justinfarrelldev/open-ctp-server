@@ -83,17 +83,27 @@ func TestRetailOvercrowdingEffectsAccumulateFromBuildings(t *testing.T) {
 	}
 }
 
+func TestRetailFoodVatReducesFoodConsumption(t *testing.T) {
+	city := City{Population: 4, Yields: Yield{Food: 4}, Effects: []Effect{{ID: "vat", Kind: EffectFoodVatPercent, Value: 50}}}
+
+	advanceCityFood(&city, 0, 0, foodVatPercent(city))
+
+	if city.Population != 4 || city.StoredFood != 0 {
+		t.Fatalf("food vat city = %+v", city)
+	}
+}
+
 func TestRetailStarvationProtectionDelaysPopulationLoss(t *testing.T) {
 	city := City{ID: "city-a", Population: 2, Yields: Yield{Food: 0}}
-	advanceCityFood(&city, 0, 2)
+	advanceCityFood(&city, 0, 2, 0)
 	if city.Population != 2 || city.StarvationTurns != 1 {
 		t.Fatalf("after first starvation city = %+v, want protected with one starvation turn recorded", city)
 	}
-	advanceCityFood(&city, 0, 2)
+	advanceCityFood(&city, 0, 2, 0)
 	if city.Population != 2 || city.StarvationTurns != 2 {
 		t.Fatalf("after second starvation city = %+v, want protection limit reached", city)
 	}
-	advanceCityFood(&city, 0, 2)
+	advanceCityFood(&city, 0, 2, 0)
 	if city.Population != 1 {
 		t.Fatalf("after third starvation population = %d, want 1", city.Population)
 	}

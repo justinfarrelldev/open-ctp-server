@@ -379,7 +379,7 @@ func RecalculateRound(state State) (State, error) {
 		city.Happiness = cityHappiness(next, *city)
 		city.CrimePercent = cityCrimePercent(next, *city)
 		city.OvercrowdingLevel = cityOvercrowdingLevel(next, *city)
-		advanceCityFood(city, cityMaxPopulation(next, *city), cityStarvationProtection(next, *city))
+		advanceCityFood(city, cityMaxPopulation(next, *city), cityStarvationProtection(next, *city), foodVatPercent(*city))
 		if cityPollutionEnabled(runtime) {
 			applyCityPollution(&next, *city, runtimePollutionModel(runtime))
 		}
@@ -472,11 +472,18 @@ func signedPercentDelta(value, percent int) int {
 	return value * percent / 100
 }
 
-func advanceCityFood(city *City, maxPopulation int, starvationProtection int) {
+func advanceCityFood(city *City, maxPopulation int, starvationProtection int, foodVatPercent int) {
 	if city.Population < 1 {
 		city.Population = 1
 	}
-	surplus := city.Yields.Food - cityFoodConsumption(city.Population)
+	consumption := cityFoodConsumption(city.Population)
+	if foodVatPercent > 0 {
+		consumption -= consumption * foodVatPercent / 100
+		if consumption < 0 {
+			consumption = 0
+		}
+	}
+	surplus := city.Yields.Food - consumption
 	city.StoredFood += surplus
 	if city.StoredFood < 0 {
 		if starvationProtection > 0 {
@@ -500,6 +507,19 @@ func advanceCityFood(city *City, maxPopulation int, starvationProtection int) {
 		city.StoredFood -= cityFoodGrowthThreshold(city.Population)
 		city.Population++
 	}
+}
+
+func foodVatPercent(city City) int {
+	percent := 0
+	for _, effect := range city.Effects {
+		if effect.Kind == EffectFoodVatPercent && effect.Value > percent {
+			percent = effect.Value
+		}
+	}
+	if percent > 100 {
+		return 100
+	}
+	return percent
 }
 
 func cityHappiness(state State, city City) int {
