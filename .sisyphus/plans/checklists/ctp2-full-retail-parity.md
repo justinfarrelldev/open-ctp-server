@@ -27,6 +27,7 @@
 - [x] Task 76: Population-consuming unit production requires spare population.
 - [x] Task 77: Retail bombard range/round stats are preserved on produced units and owner projections.
 - [x] Task 78: Retail ranged units can execute deterministic bombard actions against visible targets.
+- [x] Task 79: Retail convert-city special actions execute with conversion protection checks.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
