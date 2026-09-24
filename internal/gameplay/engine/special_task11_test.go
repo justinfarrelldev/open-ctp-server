@@ -92,7 +92,7 @@ func TestRetailPlantNukeDamagesCityAndHonorsProtection(t *testing.T) {
 
 	state = task11State()
 	state.Cities[0].Population = 8
-	state.Cities[0].Effects = append(state.Cities[0].Effects, Effect{ID: "sdi", Kind: EffectProtectFromNukes})
+	state.Cities[0].Effects = append(state.Cities[0].Effects, Effect{ID: "force", Kind: EffectForceField})
 	state.Units[0].Effects = []Effect{{ID: "nuke", Kind: EffectSpecialPlantNuke}}
 	next, events, err = task11Apply(t, state, CommandPlantNuke, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
 	if err != nil {

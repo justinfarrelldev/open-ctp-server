@@ -334,7 +334,7 @@ func plantNuke(state *State, unit *Unit, city *City, targetNation *Nation) (stri
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
 	}
-	if hasEffect(city.Effects, EffectProtectFromNukes) || hasEffect(targetNation.Effects, EffectEliminateNukes) {
+	if hasEffect(city.Effects, EffectProtectFromNukes) || hasEffect(city.Effects, EffectForceField) || hasEffect(targetNation.Effects, EffectEliminateNukes) {
 		return EventNukeFailed, json.RawMessage(`{"disclosed":true}`), nil
 	}
 	if city.Population > 1 {
