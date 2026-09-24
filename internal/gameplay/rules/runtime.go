@@ -36,9 +36,10 @@ type RuntimeRules struct {
 // RuntimeAdvanceDefinition is the bounded synthetic technology model. It keeps
 // CTP2's prerequisite/cost shape without copying the retail tree.
 type RuntimeAdvanceDefinition struct {
-	ID            string   `json:"id"`
-	Cost          int      `json:"cost"`
-	Prerequisites []string `json:"prerequisites,omitempty"`
+	ID              string   `json:"id"`
+	Cost            int      `json:"cost"`
+	Prerequisites   []string `json:"prerequisites,omitempty"`
+	AllowsPlantNuke bool     `json:"allows_plant_nuke,omitempty"`
 }
 
 // RuntimeUnitDefinition is the bounded, client-safe unit capability model compiled
@@ -733,7 +734,11 @@ func compileAdvanceDefinition(record Record) (RuntimeAdvanceDefinition, error) {
 	if err != nil {
 		return RuntimeAdvanceDefinition{}, err
 	}
-	return RuntimeAdvanceDefinition{ID: record.ID, Cost: cost, Prerequisites: prerequisites}, nil
+	allowsPlantNuke, err := optionalBool(record, "AllowsPlantNuke", false)
+	if err != nil {
+		return RuntimeAdvanceDefinition{}, err
+	}
+	return RuntimeAdvanceDefinition{ID: record.ID, Cost: cost, Prerequisites: prerequisites, AllowsPlantNuke: allowsPlantNuke}, nil
 }
 
 func compileTerrainImprovementDefinition(record Record) (RuntimeTerrainImprovementDefinition, error) {

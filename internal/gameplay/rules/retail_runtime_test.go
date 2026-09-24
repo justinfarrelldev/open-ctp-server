@@ -53,6 +53,11 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("runtime AI building lists = %+v", runtime.AI.BuildingBuildLists)
 	}
 
+	nuclearPower, ok := runtime.Advance("ADVANCE_NUCLEAR_POWER")
+	if !ok || !nuclearPower.AllowsPlantNuke {
+		t.Fatalf("nuclear power advance = %+v ok=%v", nuclearPower, ok)
+	}
+
 	settler, ok := runtime.Unit("UNIT_SETTLER")
 	if !ok {
 		t.Fatalf("UNIT_SETTLER missing")

@@ -146,7 +146,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		case CommandInvestigateCity:
 			return investigateCity(state, unit, city, actorNation, state.Phase.Turn, sources)
 		case CommandPlantNuke:
-			return plantNuke(state, unit, city, targetNation, sources)
+			return plantNuke(state, unit, city, actorNation, targetNation, sources, runtime)
 		case CommandAssassinateRuler:
 			return assassinateRuler(state, unit, targetNation, sources)
 		case CommandInjoin:
@@ -597,8 +597,22 @@ func parkForTile(state State, tileID string) *TileOverlay {
 	return nil
 }
 
-func plantNuke(state *State, unit *Unit, city *City, targetNation *Nation, sources Sources) (string, json.RawMessage, error) {
-	if !hasEffect(unit.Effects, EffectSpecialPlantNuke) {
+func nationCanPlantNuke(nation Nation, runtime *rules.RuntimeRules) bool {
+	if runtime == nil {
+		return true
+	}
+	nukeAdvanceID := ""
+	for _, advance := range runtime.Advances {
+		if advance.AllowsPlantNuke {
+			nukeAdvanceID = advance.ID
+			break
+		}
+	}
+	return nukeAdvanceID == "" || containsString(nation.Advances, nukeAdvanceID)
+}
+
+func plantNuke(state *State, unit *Unit, city *City, actorNation *Nation, targetNation *Nation, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
+	if !hasEffect(unit.Effects, EffectSpecialPlantNuke) || !nationCanPlantNuke(*actorNation, runtime) {
 		return "", nil, errors.New("special action is not authorized")
 	}
 	if err := spendSpecialMove(unit); err != nil {

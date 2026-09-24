@@ -342,6 +342,26 @@ func TestRetailCreateParkCleansPollutedAdjacentTile(t *testing.T) {
 	}
 }
 
+func TestRetailPlantNukeRequiresNuclearAdvanceWhenRuntimeDeclaresIt(t *testing.T) {
+	state := task11State()
+	state.Cities[0].Population = 8
+	state.Units[0].Effects = []Effect{{ID: "nuke", Kind: EffectSpecialPlantNuke}}
+	runtime := rules.RuntimeRules{Advances: []rules.RuntimeAdvanceDefinition{{ID: "ADVANCE_NUCLEAR_POWER", Cost: 1, AllowsPlantNuke: true}}}
+	_, _, err := plantNuke(&state, &state.Units[0], &state.Cities[0], &state.Nations[0], &state.Nations[1], fixtureSources(), &runtime)
+	if err == nil || !strings.Contains(err.Error(), "special action") {
+		t.Fatalf("plant nuke without advance err=%v", err)
+	}
+
+	state.Nations[0].Advances = []string{"ADVANCE_NUCLEAR_POWER"}
+	eventType, _, err := plantNuke(&state, &state.Units[0], &state.Cities[0], &state.Nations[0], &state.Nations[1], fixtureSources(), &runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.Cities[0].Population != 4 || eventType != EventNukePlanted {
+		t.Fatalf("plant nuke with advance outcome city=%+v event=%s", state.Cities[0], eventType)
+	}
+}
+
 func TestRetailPlantNukeDamagesCityAndHonorsProtection(t *testing.T) {
 	state := task11State()
 	state.Cities[0].Population = 8

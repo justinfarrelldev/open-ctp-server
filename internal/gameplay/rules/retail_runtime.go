@@ -20,7 +20,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		PollutionModel:       projectRetailPollutionModel(db.PollutionModel),
 	}
 	for _, advance := range db.Advances {
-		runtime.Advances = append(runtime.Advances, RuntimeAdvanceDefinition{ID: advance.ID, Cost: advance.Cost, Prerequisites: append([]string(nil), advance.Prerequisites...)})
+		runtime.Advances = append(runtime.Advances, RuntimeAdvanceDefinition{ID: advance.ID, Cost: advance.Cost, Prerequisites: append([]string(nil), advance.Prerequisites...), AllowsPlantNuke: retailContainsString(advance.Flags, "PlantNuke")})
 	}
 	for _, unit := range db.Units {
 		projected := projectRetailUnit(unit)
