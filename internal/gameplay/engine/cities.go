@@ -265,6 +265,9 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if payload.Item.Kind == ProductionUnit && HasActiveWonderEffect(*state, actor, EffectProhibitSlavers) && productionHasSlaverEffect(payload.Item, runtime) {
 		return errors.New("production prerequisite is not met")
 	}
+	if payload.Item.Kind == ProductionUnit && productionHasCreateParkEffect(payload.Item, runtime) && !HasActiveWonderEffect(*state, actor, EffectEnableParkRangers) {
+		return errors.New("production prerequisite is not met")
+	}
 	if payload.Item.Kind == ProductionBuilding && cityHasBuilding(*city, payload.Item.ID) {
 		return errors.New("building already exists")
 	}
@@ -278,6 +281,22 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	}
 	city.Queue = append(city.Queue, payload.Item)
 	return nil
+}
+
+func productionHasCreateParkEffect(item ProductionItem, runtime *rules.RuntimeRules) bool {
+	if item.Kind != ProductionUnit || runtime == nil {
+		return hasEffect(item.Effects, EffectSpecialCreatePark)
+	}
+	unit, ok := runtime.Unit(item.ID)
+	if !ok {
+		return hasEffect(item.Effects, EffectSpecialCreatePark)
+	}
+	for _, effect := range unit.Effects {
+		if effect.Kind == EffectSpecialCreatePark {
+			return true
+		}
+	}
+	return false
 }
 
 func productionHasSlaverEffect(item ProductionItem, runtime *rules.RuntimeRules) bool {

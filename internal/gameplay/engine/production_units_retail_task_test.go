@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
@@ -165,6 +166,24 @@ func TestRetailFreeSlavesWonderRemovesSlaverUnitsEverywhere(t *testing.T) {
 	}
 	if len(state.Units) != 1 || state.Units[0].ID != "guard" {
 		t.Fatalf("units after free-slaves wonder = %#v", state.Units)
+	}
+}
+
+func TestRetailParkRangerProductionRequiresEnablingWonder(t *testing.T) {
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a"}},
+		Tiles:   []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Population: 2}},
+	}
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_PARK_RANGER", Effects: []rules.RuntimeStarterEffect{{ID: "park", Kind: EffectSpecialCreatePark}}}}, Production: []rules.RuntimeProduction{{ID: "UNIT_PARK_RANGER", Kind: ProductionUnit, Cost: 10}}}
+	err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_PARK_RANGER", Kind: ProductionUnit, Cost: 10}}, runtime)
+	if err == nil || !strings.Contains(err.Error(), "production prerequisite") {
+		t.Fatalf("park ranger production without wonder err=%v", err)
+	}
+	state.Wonders = []Wonder{{ID: "WONDER_EDEN_PROJECT", OwnerID: "player-a", CityID: "city-a", Scope: "nation", Effects: []Effect{{ID: "parks", Kind: EffectEnableParkRangers}}}}
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_PARK_RANGER", Kind: ProductionUnit, Cost: 10}}, runtime); err != nil {
+		t.Fatalf("park ranger production with wonder err=%v", err)
 	}
 }
 
