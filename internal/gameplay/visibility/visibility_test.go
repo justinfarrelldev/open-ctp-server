@@ -30,6 +30,38 @@ func fixtureState() engine.State {
 	}
 }
 
+func TestRetailGlobalRadarRevealsAllTilesAndUnits(t *testing.T) {
+	state := fixtureState()
+	state.Cities = append(state.Cities, engine.City{ID: "radar-city", OwnerID: "a", TileID: "0,0"})
+	state.Wonders = []engine.Wonder{{ID: "WONDER_RADAR", OwnerID: "a", CityID: "radar-city", Scope: "nation", Effects: []engine.Effect{{ID: "radar", Kind: engine.EffectGlobalRadar}}}}
+
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(projection.Tiles) != len(state.Tiles) || !projectionHasUnit(projection, "HIDDEN_UNIT_TOKEN") || !projectionHasCity(projection, "HIDDEN_CITY_TOKEN") {
+		t.Fatalf("global radar projection = %+v", projection)
+	}
+}
+
+func projectionHasUnit(projection Projection, id string) bool {
+	for _, unit := range projection.Units {
+		if unit.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
+func projectionHasCity(projection Projection, id string) bool {
+	for _, city := range projection.Cities {
+		if city.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
 func TestObservationMemoryProjectionAndRawLeakBoundaries(t *testing.T) {
 	state, err := Update(fixtureState())
 	if err != nil {
