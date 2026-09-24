@@ -13,6 +13,9 @@
 - [x] Task 62: Retail city protection effects are projected and preserved on completed buildings.
 - [x] Task 63: Retail overcrowding-level effects are projected and accumulated on cities.
 - [x] Task 64: Remaining retail building marker fields are projected and preserved.
+- [x] Task 65: Remaining retail wonder marker fields are projected and preserved.
+- [x] Task 66: Retail special-action unit capabilities are projected and preserved.
+- [x] Task 67: Retail no-fuel crash units are projected and removed when stranded.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
