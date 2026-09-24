@@ -1099,6 +1099,7 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 	if hasTelevision && goldPerTelevision > 0 {
 		yield.Gold += goldPerTelevision
 	}
+	yield.Gold += tradeRouteWonderGold(state, city)
 	for _, building := range city.Buildings {
 		if !isObsolete(city.Obsolete, building.ObsoletedBy) {
 			yield.Gold -= building.Upkeep
@@ -1116,6 +1117,28 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 		yield.Gold = 0
 	}
 	return yield, nil
+}
+
+func tradeRouteWonderGold(state State, city City) int {
+	waterGold := ownerWonderEffectSum(state, city.OwnerID, EffectGoldPerWaterTradeRoute)
+	internationalGold := ownerWonderEffectSum(state, city.OwnerID, EffectGoldPerInternationalTradeRoute)
+	if waterGold == 0 && internationalGold == 0 {
+		return 0
+	}
+	gold := 0
+	for _, route := range state.TradeRoutes {
+		if route.SourceCityID != city.ID {
+			continue
+		}
+		if route.CrossesWater {
+			gold += waterGold
+		}
+		destination, ok := cityByID(state, route.DestinationCityID)
+		if ok && destination.OwnerID != city.OwnerID {
+			gold += internationalGold
+		}
+	}
+	return gold
 }
 
 func cityCrimeLossPercent(city City) int {

@@ -285,6 +285,13 @@ type DiplomaticProposal struct {
 	CreatedTurn  int    `json:"created_turn"`
 }
 
+type TradeRoute struct {
+	ID                string `json:"id"`
+	SourceCityID      string `json:"source_city_id"`
+	DestinationCityID string `json:"destination_city_id"`
+	CrossesWater      bool   `json:"crosses_water,omitempty"`
+}
+
 type Player struct {
 	ID              string `json:"id"`
 	NationID        string `json:"nation_id"`
@@ -401,6 +408,7 @@ type State struct {
 	Wonders          []Wonder             `json:"wonders,omitempty"`
 	Pollution        *PollutionState      `json:"pollution,omitempty"`
 	Diplomacy        []DiplomaticRelation `json:"diplomacy,omitempty"`
+	TradeRoutes      []TradeRoute         `json:"trade_routes,omitempty"`
 	Proposals        []DiplomaticProposal `json:"diplomatic_proposals,omitempty"`
 	Players          []Player             `json:"players"`
 	Phase            PhaseState           `json:"phase"`
@@ -779,10 +787,16 @@ func ValidateState(state State) error {
 	if err := uniqueIDs("diplomatic relation", relationIDs(state.Diplomacy)); err != nil {
 		return err
 	}
+	if err := uniqueIDs("trade route", tradeRouteIDs(state.TradeRoutes)); err != nil {
+		return err
+	}
 	if err := uniqueIDs("diplomatic proposal", proposalIDs(state.Proposals)); err != nil {
 		return err
 	}
 	if err := validateDiplomacyState(state); err != nil {
+		return err
+	}
+	if err := validateTradeRoutes(state); err != nil {
 		return err
 	}
 	if err := uniqueIDs("deadline", deadlineIDs(state.Deadlines)); err != nil {
@@ -839,6 +853,19 @@ func ValidateState(state State) error {
 	}
 	if state.Terminal.Ended != (state.Terminal.Reason != "" && state.Terminal.WinningPlayerID != "") {
 		return errors.New("terminal state must have complete metadata exactly when ended")
+	}
+	return nil
+}
+
+func validateTradeRoutes(state State) error {
+	cities := makeIDSet(cityIDs(state.Cities))
+	for _, route := range state.TradeRoutes {
+		if route.ID == "" || route.SourceCityID == "" || route.DestinationCityID == "" || route.SourceCityID == route.DestinationCityID {
+			return errors.New("trade route is invalid")
+		}
+		if len(state.Cities) > 0 && (!cities[route.SourceCityID] || !cities[route.DestinationCityID]) {
+			return errors.New("trade route city does not exist")
+		}
 	}
 	return nil
 }
@@ -1050,6 +1077,7 @@ func cloneStateForNormalization(state State) State {
 		state.Wonders[index].Effects = append([]Effect(nil), state.Wonders[index].Effects...)
 	}
 	state.Diplomacy = append([]DiplomaticRelation(nil), state.Diplomacy...)
+	state.TradeRoutes = append([]TradeRoute(nil), state.TradeRoutes...)
 	state.Proposals = append([]DiplomaticProposal(nil), state.Proposals...)
 	state.Players = append([]Player(nil), state.Players...)
 	state.Phase.ActivePlayerOrder = append([]string(nil), state.Phase.ActivePlayerOrder...)
@@ -1082,6 +1110,7 @@ func normalizeState(state *State) {
 	sort.Slice(state.Nations, func(i, j int) bool { return state.Nations[i].ID < state.Nations[j].ID })
 	sort.Slice(state.Wonders, func(i, j int) bool { return state.Wonders[i].ID < state.Wonders[j].ID })
 	sort.Slice(state.Diplomacy, func(i, j int) bool { return state.Diplomacy[i].ID < state.Diplomacy[j].ID })
+	sort.Slice(state.TradeRoutes, func(i, j int) bool { return state.TradeRoutes[i].ID < state.TradeRoutes[j].ID })
 	sort.Slice(state.Proposals, func(i, j int) bool { return state.Proposals[i].ID < state.Proposals[j].ID })
 	sort.Slice(state.Players, func(i, j int) bool { return state.Players[i].ID < state.Players[j].ID })
 	sort.Slice(state.Fog, func(i, j int) bool {
@@ -1325,6 +1354,14 @@ func playerIDs(items []Player) []string {
 	return ids
 }
 func relationIDs(items []DiplomaticRelation) []string {
+	ids := make([]string, len(items))
+	for i := range items {
+		ids[i] = items[i].ID
+	}
+	return ids
+}
+
+func tradeRouteIDs(items []TradeRoute) []string {
 	ids := make([]string, len(items))
 	for i := range items {
 		ids[i] = items[i].ID

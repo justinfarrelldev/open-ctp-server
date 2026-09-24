@@ -83,6 +83,25 @@ func TestRetailOvercrowdingEffectsAccumulateFromBuildings(t *testing.T) {
 	}
 }
 
+func TestRetailTradeRouteWonderGoldAppliesToSourceCityRoutes(t *testing.T) {
+	state := State{
+		Players:     []Player{{ID: "player-a", NationID: "nation-a"}, {ID: "player-b", NationID: "nation-b"}},
+		Nations:     []Nation{{ID: "nation-a"}, {ID: "nation-b"}},
+		Tiles:       []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS", Open: true}, {ID: "tile-b", Terrain: "TERRAIN_PLAINS", Open: true}},
+		Cities:      []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}, {ID: "city-b", OwnerID: "player-b", TileID: "tile-b"}},
+		Wonders:     []Wonder{{ID: "WONDER_EAST_INDIA_COMPANY", OwnerID: "player-a", Scope: "nation", Effects: []Effect{{ID: "water", Kind: EffectGoldPerWaterTradeRoute, Value: 15}, {ID: "international", Kind: EffectGoldPerInternationalTradeRoute, Value: 25}}}},
+		TradeRoutes: []TradeRoute{{ID: "route-a-b", SourceCityID: "city-a", DestinationCityID: "city-b", CrossesWater: true}},
+	}
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_PLAINS", Cost: 100, Domains: []string{DomainLand}, Gold: 3}}}}
+	yield, err := cityYieldWithRuntime(state, state.Cities[0], runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if yield.Gold != 43 {
+		t.Fatalf("trade route wonder gold = %d, want base 3 + water 15 + international 25", yield.Gold)
+	}
+}
+
 func TestRetailWonderGoldPerTelevisionUsesCityTelevision(t *testing.T) {
 	state := State{Players: []Player{{ID: "player-a", NationID: "nation-a"}}, Nations: []Nation{{ID: "nation-a"}}, Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS", Open: true}}, Cities: []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Buildings: []Building{{ID: "IMPROVE_TELEVISION", Effects: []Effect{{ID: "tv", Kind: EffectTelevision}}}}}}, Wonders: []Wonder{{ID: "WONDER_MEDIA", OwnerID: "player-a", Scope: "owner", Effects: []Effect{{ID: "tv-gold", Kind: EffectGoldPerTelevision, Value: 7}}}}}
 	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_PLAINS", Cost: 100, Domains: []string{DomainLand}, Gold: 3}}}}
