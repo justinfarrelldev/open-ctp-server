@@ -762,11 +762,11 @@ func cityYieldWithRuntime(state State, city City, runtime *rules.RuntimeRules) (
 	}
 	for _, building := range city.Buildings {
 		if !isObsolete(city.Obsolete, building.ObsoletedBy) {
-			yield.Production -= building.Upkeep
+			yield.Gold -= building.Upkeep
 		}
 	}
-	if yield.Production < 0 {
-		yield.Production = 0
+	if yield.Gold < 0 {
+		yield.Gold = 0
 	}
 	return yield, nil
 }

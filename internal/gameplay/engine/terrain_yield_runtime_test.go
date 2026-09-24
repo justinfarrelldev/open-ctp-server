@@ -83,6 +83,19 @@ func TestRetailOvercrowdingEffectsAccumulateFromBuildings(t *testing.T) {
 	}
 }
 
+func TestRetailBuildingUpkeepReducesGoldNotProduction(t *testing.T) {
+	state := State{Players: []Player{{ID: "player-a", NationID: "nation-a"}}, Nations: []Nation{{ID: "nation-a"}}, Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS", Open: true}}, Cities: []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Buildings: []Building{{ID: "IMPROVE_FACTORY", Upkeep: 3}}}}}
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_PLAINS", Cost: 100, Domains: []string{DomainLand}, Production: 5, Gold: 5}}}}
+
+	yield, err := cityYieldWithRuntime(state, state.Cities[0], runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if yield.Production != 5 || yield.Gold != 2 {
+		t.Fatalf("yield = %+v, want upkeep to reduce gold only", yield)
+	}
+}
+
 func TestRetailFoodVatReducesFoodConsumption(t *testing.T) {
 	city := City{Population: 4, Yields: Yield{Food: 4}, Effects: []Effect{{ID: "vat", Kind: EffectFoodVatPercent, Value: 50}}}
 
