@@ -40,6 +40,21 @@ func TestRetailCityDefenseBuildingEffectsModifyDefenders(t *testing.T) {
 	}
 }
 
+func TestRetailIgnoreCityWallsRemovesOnlyWallDefense(t *testing.T) {
+	state := combatState()
+	state.Cities[0].Effects = nil
+	state.Cities[0].Buildings = []Building{{ID: "IMPROVE_CITY_WALLS", Effects: []Effect{{ID: "city-walls-defense", Kind: EffectCombatDefense, Value: 15}, {ID: "city-walls", Kind: EffectCityWalls, Value: 15}}}, {ID: "IMPROVE_BUNKER", Effects: []Effect{{ID: "bunker", Kind: EffectCombatDefense, Value: 4}}}}
+	attacker := state.Units[0]
+	defender := state.Units[2]
+	if got := combatDefenseModifier(state, defender, attacker); got != 21 { // fortified + forest + city walls + bunker
+		t.Fatalf("defender modifier without ignore = %d, want 21", got)
+	}
+	attacker.Effects = []Effect{{ID: "ignore-walls", Kind: EffectIgnoreCityWalls}}
+	if got := combatDefenseModifier(state, defender, attacker); got != 6 { // fortified + forest + bunker only
+		t.Fatalf("defender modifier with ignore = %d, want 6", got)
+	}
+}
+
 func TestRetailMountedDefenseBonusModifiesDefenderAgainstMountedAttackers(t *testing.T) {
 	state := combatState()
 	attacker := state.Units[0]

@@ -202,7 +202,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("courthouse effects = %+v ok=%v", courthouse, ok)
 	}
 	cityWalls, ok := runtime.ProductionDefinition("IMPROVE_CITY_WALLS")
-	if !ok || !runtimeProductionHasEffectValue(cityWalls, "combat_defense", 15) {
+	if !ok || !runtimeProductionHasEffectValue(cityWalls, "combat_defense", 15) || !runtimeProductionHasEffectValue(cityWalls, "city_walls", 15) {
 		t.Fatalf("city walls effects = %+v ok=%v", cityWalls, ok)
 	}
 	ballista, ok := runtime.ProductionDefinition("IMPROVE_BALLISTA_TOWERS")

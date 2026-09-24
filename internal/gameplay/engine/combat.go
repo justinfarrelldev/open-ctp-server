@@ -202,10 +202,22 @@ func livingCombatUnits(units []*Unit) []*Unit {
 
 func combatDefenseModifier(state State, unit Unit, attacker Unit) int {
 	modifier := combatModifier(state, unit, false)
+	if hasEffect(attacker.Effects, EffectIgnoreCityWalls) {
+		modifier -= cityWallDefenseAt(state, unit.TileID)
+	}
 	if hasEffect(attacker.Effects, EffectMounted) {
 		modifier += unit.Defense * effectValue(unit.Effects, EffectCombatDefenseVsMountedPercent) / 100
 	}
 	return modifier
+}
+
+func cityWallDefenseAt(state State, tileID string) int {
+	for _, city := range state.Cities {
+		if city.TileID == tileID {
+			return effectValue(cityLocalEffects(state, city), EffectCityWalls)
+		}
+	}
+	return 0
 }
 
 func combatAttackModifier(state State, unit Unit, target Unit) int {

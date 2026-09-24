@@ -129,6 +129,9 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 	}
 	if value := retailPercentFieldPoints(building.FloatValues["DefendersPercent"]); value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":defenders-percent", Kind: "combat_defense", Value: value})
+		if retailContainsString(building.Flags, "CityWalls") {
+			effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":city-walls", Kind: "city_walls", Value: value})
+		}
 	}
 	if value := retailPercentFieldPoints(building.FloatValues["OffenseBonusLand"]); value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":offense-land", Kind: "combat_attack_land", Value: value})
@@ -247,6 +250,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 		if value := percentPoints(firstRetailUnitFloat(unit, "MountedBonus")); value > 0 {
 			effects = append(effects, RuntimeStarterEffect{ID: effectID("combat_defense_vs_mounted"), Kind: "combat_defense_vs_mounted_percent", Value: value})
 		}
+	}
+	if retailContainsString(unit.Flags, "IgnoreCityWalls") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("ignore_city_walls"), Kind: "ignore_city_walls"})
 	}
 	if retailContainsString(unit.Flags, "EstablishEmbassy") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_embassy"), Kind: "special_embassy"})
