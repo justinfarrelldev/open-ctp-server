@@ -1405,7 +1405,7 @@ func visibleTiles(state engine.State) map[string]map[string]bool {
 
 func playerHasGlobalRadar(state engine.State, playerID string) bool {
 	for _, wonder := range state.Wonders {
-		if wonder.Destroyed || (wonder.OwnerID != playerID && wonder.Scope != "global") {
+		if !wonderActiveForPlayer(state, wonder, playerID) {
 			continue
 		}
 		for _, effect := range wonder.Effects {
@@ -1415,6 +1415,31 @@ func playerHasGlobalRadar(state engine.State, playerID string) bool {
 		}
 	}
 	return false
+}
+
+func wonderActiveForPlayer(state engine.State, wonder engine.Wonder, playerID string) bool {
+	if wonder.Destroyed || (wonder.OwnerID != playerID && wonder.Scope != "global") {
+		return false
+	}
+	if wonder.ObsoletedBy == "" {
+		return true
+	}
+	ownerNationID := ""
+	for _, player := range state.Players {
+		if player.ID == wonder.OwnerID {
+			ownerNationID = player.NationID
+			break
+		}
+	}
+	if ownerNationID == "" {
+		return true
+	}
+	for _, nation := range state.Nations {
+		if nation.ID == ownerNationID {
+			return !containsString(nation.Advances, wonder.ObsoletedBy)
+		}
+	}
+	return true
 }
 func addSight(visible map[string]bool, state engine.State, origin string, radius int) {
 	from, ok := tileByID(state.Tiles, origin)

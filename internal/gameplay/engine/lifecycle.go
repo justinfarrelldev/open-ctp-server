@@ -344,7 +344,7 @@ func refreshedUnitMovement(state State, unit Unit, fallback int) int {
 func boatMovementBonus(state State, ownerID string) int {
 	bonus := 0
 	for _, wonder := range state.Wonders {
-		if wonder.Destroyed || (wonder.OwnerID != ownerID && wonder.Scope != "global") {
+		if !wonderAppliesToPlayer(state, wonder, ownerID) {
 			continue
 		}
 		for _, effect := range wonder.Effects {

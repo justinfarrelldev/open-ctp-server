@@ -30,6 +30,30 @@ func fixtureState() engine.State {
 	}
 }
 
+func projectionHasTile(projection Projection, tileID string) bool {
+	for _, tile := range projection.Tiles {
+		if tile.ID == tileID {
+			return true
+		}
+	}
+	return false
+}
+
+func TestRetailObsoleteGlobalRadarWonderDoesNotRevealAllTiles(t *testing.T) {
+	state := fixtureState()
+	state.Nations = []engine.Nation{{ID: "a", Advances: []string{"ADVANCE_COUNTER"}}, {ID: "b"}}
+	state.Tiles = append(state.Tiles, engine.Tile{ID: "5,0", X: 5, Y: 0, Terrain: engine.TerrainPlains, Open: true})
+	state.Cities = append(state.Cities, engine.City{ID: "home", OwnerID: "a", TileID: "0,0"})
+	state.Wonders = []engine.Wonder{{ID: "WONDER_RADAR", OwnerID: "a", CityID: "home", Scope: "nation", ObsoletedBy: "ADVANCE_COUNTER", Effects: []engine.Effect{{ID: "radar", Kind: engine.EffectGlobalRadar}}}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if projectionHasTile(projection, "5,0") {
+		t.Fatalf("obsolete global radar revealed hidden tile: %#v", projection.Tiles)
+	}
+}
+
 func TestRetailTradeRouteProjectionDoesNotLeakHiddenDestinations(t *testing.T) {
 	state := fixtureState()
 	state.Tiles = append(state.Tiles, engine.Tile{ID: "5,0", X: 5, Y: 0, Terrain: engine.TerrainPlains, Open: true})

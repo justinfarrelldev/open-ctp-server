@@ -63,7 +63,7 @@
     },
     {
       "path": "internal/gameplay/engine/lifecycle.go",
-      "sha256": "4ff9aeecb3cffee49623510a32d8eca49165c47bcb32fa69a1873f83bb52e150"
+      "sha256": "aa7d37a1958e4fa81ce316f35f6a9d73f13f43147f4313e72c56bd2800f98064"
     },
     {
       "path": "internal/gameplay/engine/policy_state.go",
@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "0811e6dc2a3d7fa44905c4a8ee49491f446ff873955aafce9c380731e165f9dc"
+      "sha256": "7fdfe7e4b44e8087222c3752396f05fc79f1ccb11f526a46379d751b233574f9"
     },
     {
       "path": "internal/runtime/runtime.go",
