@@ -52,7 +52,28 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 	}
 	for _, government := range db.Governments {
 		maxSciencePercent := percentPoints(government.MaxScienceRate)
-		runtime.Governments = append(runtime.Governments, RuntimeGovernmentDefinition{ID: government.ID, EnableAdvanceID: government.EnableAdvance, ResearchPercent: signedCoefficientPercentPoints(government.FloatValues["KnowledgeCoef"]), FoodPercent: signedCoefficientPercentPoints(government.FloatValues["FoodCoef"]), ProductionPercent: signedCoefficientPercentPoints(government.FloatValues["ProductionCoef"]), GoldPercent: signedCoefficientPercentPoints(government.FloatValues["GoldCoef"]), PollutionPercent: signedCoefficientPercentPoints(government.PollutionCoef), MartialLawMaxUnits: government.IntValues["MaxMartialLawUnits"], MartialLawEffect: int(government.FloatValues["MartialLawEffect"]), MartialLawThreshold: government.IntValues["MartialLawThreshold"], MaxSciencePercent: &maxSciencePercent})
+		runtime.Governments = append(runtime.Governments, RuntimeGovernmentDefinition{
+			ID:                  government.ID,
+			EnableAdvanceID:     government.EnableAdvance,
+			ResearchPercent:     signedCoefficientPercentPoints(government.FloatValues["KnowledgeCoef"]),
+			FoodPercent:         signedCoefficientPercentPoints(government.FloatValues["FoodCoef"]),
+			ProductionPercent:   signedCoefficientPercentPoints(government.FloatValues["ProductionCoef"]),
+			GoldPercent:         signedCoefficientPercentPoints(government.FloatValues["GoldCoef"]),
+			PollutionPercent:    signedCoefficientPercentPoints(government.PollutionCoef),
+			WorkdayExpectation:  government.IntValues["WorkdayExpectation"],
+			PositiveWorkdayCoef: government.FloatValues["PositiveWorkdayCoef"],
+			NegativeWorkdayCoef: government.FloatValues["NegativeWorkdayCoef"],
+			WagesExpectation:    government.IntValues["WagesExpectation"],
+			PositiveWagesCoef:   government.FloatValues["PositiveWagesCoef"],
+			NegativeWagesCoef:   government.FloatValues["NegativeWagesCoef"],
+			RationsExpectation:  government.IntValues["RationsExpectation"],
+			PositiveRationsCoef: government.FloatValues["PositiveRationsCoef"],
+			NegativeRationsCoef: government.FloatValues["NegativeRationsCoef"],
+			MartialLawMaxUnits:  government.IntValues["MaxMartialLawUnits"],
+			MartialLawEffect:    int(government.FloatValues["MartialLawEffect"]),
+			MartialLawThreshold: government.IntValues["MartialLawThreshold"],
+			MaxSciencePercent:   &maxSciencePercent,
+		})
 	}
 	for _, trigger := range db.PollutionTriggerLists {
 		runtime.PollutionTriggers = append(runtime.PollutionTriggers, RuntimePollutionTriggerDefinition{ID: trigger.ID, TriggerLevels: append([]int64(nil), trigger.TriggerLevels...), DisasterTypes: append([]string(nil), trigger.DisasterTypes...)})

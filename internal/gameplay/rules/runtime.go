@@ -107,19 +107,28 @@ type RuntimePollutionModel struct {
 }
 
 type RuntimeGovernmentDefinition struct {
-	ID                  string `json:"id"`
-	EnableAdvanceID     string `json:"enable_advance_id,omitempty"`
-	ResearchBonus       int    `json:"research_bonus,omitempty"`
-	ResearchPercent     int    `json:"research_percent,omitempty"`
-	PublicWorksBonus    int    `json:"public_works_bonus,omitempty"`
-	FoodPercent         int    `json:"food_percent,omitempty"`
-	ProductionPercent   int    `json:"production_percent,omitempty"`
-	GoldPercent         int    `json:"gold_percent,omitempty"`
-	PollutionPercent    int    `json:"pollution_percent,omitempty"`
-	MartialLawMaxUnits  int    `json:"martial_law_max_units,omitempty"`
-	MartialLawEffect    int    `json:"martial_law_effect,omitempty"`
-	MartialLawThreshold int    `json:"martial_law_threshold,omitempty"`
-	MaxSciencePercent   *int   `json:"max_science_percent,omitempty"`
+	ID                  string  `json:"id"`
+	EnableAdvanceID     string  `json:"enable_advance_id,omitempty"`
+	ResearchBonus       int     `json:"research_bonus,omitempty"`
+	ResearchPercent     int     `json:"research_percent,omitempty"`
+	PublicWorksBonus    int     `json:"public_works_bonus,omitempty"`
+	FoodPercent         int     `json:"food_percent,omitempty"`
+	ProductionPercent   int     `json:"production_percent,omitempty"`
+	GoldPercent         int     `json:"gold_percent,omitempty"`
+	PollutionPercent    int     `json:"pollution_percent,omitempty"`
+	WorkdayExpectation  int     `json:"workday_expectation,omitempty"`
+	PositiveWorkdayCoef float64 `json:"positive_workday_coef,omitempty"`
+	NegativeWorkdayCoef float64 `json:"negative_workday_coef,omitempty"`
+	WagesExpectation    int     `json:"wages_expectation,omitempty"`
+	PositiveWagesCoef   float64 `json:"positive_wages_coef,omitempty"`
+	NegativeWagesCoef   float64 `json:"negative_wages_coef,omitempty"`
+	RationsExpectation  int     `json:"rations_expectation,omitempty"`
+	PositiveRationsCoef float64 `json:"positive_rations_coef,omitempty"`
+	NegativeRationsCoef float64 `json:"negative_rations_coef,omitempty"`
+	MartialLawMaxUnits  int     `json:"martial_law_max_units,omitempty"`
+	MartialLawEffect    int     `json:"martial_law_effect,omitempty"`
+	MartialLawThreshold int     `json:"martial_law_threshold,omitempty"`
+	MaxSciencePercent   *int    `json:"max_science_percent,omitempty"`
 }
 
 type RuntimeMovement struct {
@@ -829,10 +838,56 @@ func compileGovernmentDefinition(record Record) (RuntimeGovernmentDefinition, er
 	if err != nil {
 		return RuntimeGovernmentDefinition{}, err
 	}
+	definition, err := compileGovernmentSocialFields(record)
+	if err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
 	if researchBonus < 0 || publicWorksBonus < 0 {
 		return RuntimeGovernmentDefinition{}, fmt.Errorf("rules definition record %q has invalid government bonus", record.ID)
 	}
-	return RuntimeGovernmentDefinition{ID: record.ID, EnableAdvanceID: record.Tags["EnableAdvanceID"], ResearchBonus: researchBonus, ResearchPercent: researchPercent, PublicWorksBonus: publicWorksBonus, FoodPercent: foodPercent, ProductionPercent: productionPercent, GoldPercent: goldPercent, PollutionPercent: pollutionPercent}, nil
+	definition.ID = record.ID
+	definition.EnableAdvanceID = record.Tags["EnableAdvanceID"]
+	definition.ResearchBonus = researchBonus
+	definition.ResearchPercent = researchPercent
+	definition.PublicWorksBonus = publicWorksBonus
+	definition.FoodPercent = foodPercent
+	definition.ProductionPercent = productionPercent
+	definition.GoldPercent = goldPercent
+	definition.PollutionPercent = pollutionPercent
+	return definition, nil
+}
+
+func compileGovernmentSocialFields(record Record) (RuntimeGovernmentDefinition, error) {
+	var definition RuntimeGovernmentDefinition
+	var err error
+	if definition.WorkdayExpectation, err = optionalInteger(record, "WorkdayExpectation", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.PositiveWorkdayCoef, err = optionalFloat(record, "PositiveWorkdayCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.NegativeWorkdayCoef, err = optionalFloat(record, "NegativeWorkdayCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.WagesExpectation, err = optionalInteger(record, "WagesExpectation", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.PositiveWagesCoef, err = optionalFloat(record, "PositiveWagesCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.NegativeWagesCoef, err = optionalFloat(record, "NegativeWagesCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.RationsExpectation, err = optionalInteger(record, "RationsExpectation", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.PositiveRationsCoef, err = optionalFloat(record, "PositiveRationsCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.NegativeRationsCoef, err = optionalFloat(record, "NegativeRationsCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	return definition, nil
 }
 
 func validateRuntimeAdvances(advances []RuntimeAdvanceDefinition) error {
@@ -1130,6 +1185,18 @@ func optionalInteger(record Record, tag string, fallback int) (int, error) {
 		return fallback, nil
 	}
 	parsed, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, fmt.Errorf("rules definition record %q has invalid %s", record.ID, tag)
+	}
+	return parsed, nil
+}
+
+func optionalFloat(record Record, tag string, fallback float64) (float64, error) {
+	value, ok := record.Tags[tag]
+	if !ok {
+		return fallback, nil
+	}
+	parsed, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		return 0, fmt.Errorf("rules definition record %q has invalid %s", record.ID, tag)
 	}
