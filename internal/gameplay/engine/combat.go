@@ -159,6 +159,40 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 	if len(targets) == 0 || attackerHasCanAttackMetadata(*unit) && !attackerCanAttackTarget(*unit, *targets[0]) {
 		return "", nil, errors.New("bombard target is unavailable")
 	}
+	activeDefenseHits := 0
+	interceptors := activeDefenseInterceptors(*state, command.ActorPlayerID, targets[0].OwnerID, targetTile)
+	if len(interceptors) > 0 {
+		interceptor := interceptors[0]
+		defense := unit.Defense + combatDefenseModifier(*state, *unit, *interceptor)
+		if defense < 0 {
+			defense = 0
+		}
+		roll := combatRoll(state, sources)
+		if int(roll%1000) < interceptor.Ranged*1000/(interceptor.Ranged+defense) {
+			armor := unit.Armor
+			if armor < 1 {
+				armor = 1
+			}
+			damage := interceptor.Strength / armor
+			if damage < 1 {
+				damage = 1
+			}
+			unit.Health -= damage
+			activeDefenseHits++
+		}
+	}
+	if unit.Health <= 0 {
+		unit.Movement--
+		removeUnitAndCargo(state, unit.ID)
+		payloadJSON, _ := json.Marshal(struct {
+			UnitID            string `json:"unit_id"`
+			TargetTileID      string `json:"target_tile_id"`
+			Hits              int    `json:"hits"`
+			Destroyed         int    `json:"destroyed"`
+			ActiveDefenseHits int    `json:"active_defense_hits,omitempty"`
+		}{UnitID: payload.UnitID, TargetTileID: payload.TargetTileID, ActiveDefenseHits: activeDefenseHits})
+		return EventBombarded, payloadJSON, nil
+	}
 	hits := 0
 	for round := 0; round < unit.BombRounds && len(targets) > 0; round++ {
 		target := targets[0]
@@ -168,7 +202,11 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 		}
 		roll := combatRoll(state, sources)
 		if int(roll%1000) < unit.Ranged*1000/(unit.Ranged+defense) {
-			damage := unit.Strength / target.Armor
+			armor := target.Armor
+			if armor < 1 {
+				armor = 1
+			}
+			damage := unit.Strength / armor
 			if damage < 1 {
 				damage = 1
 			}
@@ -186,11 +224,12 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 		}
 	}
 	payloadJSON, _ := json.Marshal(struct {
-		UnitID       string `json:"unit_id"`
-		TargetTileID string `json:"target_tile_id"`
-		Hits         int    `json:"hits"`
-		Destroyed    int    `json:"destroyed"`
-	}{UnitID: unit.ID, TargetTileID: payload.TargetTileID, Hits: hits, Destroyed: destroyed})
+		UnitID            string `json:"unit_id"`
+		TargetTileID      string `json:"target_tile_id"`
+		Hits              int    `json:"hits"`
+		Destroyed         int    `json:"destroyed"`
+		ActiveDefenseHits int    `json:"active_defense_hits,omitempty"`
+	}{UnitID: unit.ID, TargetTileID: payload.TargetTileID, Hits: hits, Destroyed: destroyed, ActiveDefenseHits: activeDefenseHits})
 	return EventBombarded, payloadJSON, nil
 }
 
@@ -204,6 +243,23 @@ func tileDistance(left, right Tile) int {
 		dy = -dy
 	}
 	return dx + dy
+}
+
+func activeDefenseInterceptors(state State, actorID, protectedOwnerID string, targetTile Tile) []*Unit {
+	interceptors := make([]*Unit, 0)
+	for i := range state.Units {
+		unit := &state.Units[i]
+		if unit.OwnerID == actorID || unit.OwnerID != protectedOwnerID || unit.TransportID != "" || unit.ActiveDefenseRange < 1 || unit.Ranged < 1 || unit.Health <= 0 {
+			continue
+		}
+		tile, ok := tileByID(state, unit.TileID)
+		if !ok || tileDistance(tile, targetTile) > unit.ActiveDefenseRange {
+			continue
+		}
+		interceptors = append(interceptors, unit)
+	}
+	sort.Slice(interceptors, func(i, j int) bool { return interceptors[i].ID < interceptors[j].ID })
+	return interceptors
 }
 
 func bombardTargets(state State, actorID, tileID string) []*Unit {
