@@ -57,6 +57,30 @@ func TestRetailCityDefenseBuildingEffectsModifyDefenders(t *testing.T) {
 	}
 }
 
+func TestRetailMultipleActiveDefensesCanInterceptBombardment(t *testing.T) {
+	state := combatState()
+	state.Units = []Unit{
+		{ID: "bombarder", OwnerID: "player-a", TileID: "a", Movement: 1, Ranged: 100, BombardRange: 2, BombRounds: 1, Strength: 4, Armor: 1, Health: 2, MaxHealth: 2},
+		{ID: "target", OwnerID: "player-b", TileID: "retreat", Domain: DomainLand, Defense: 1, Strength: 1, Armor: 2, Health: 4, MaxHealth: 4},
+		{ID: "guardian-a", OwnerID: "player-b", TileID: "b", Domain: DomainLand, Ranged: 100, ActiveDefenseRange: 1, Strength: 1, Armor: 1, Health: 4, MaxHealth: 4},
+		{ID: "guardian-b", OwnerID: "player-b", TileID: "b", Domain: DomainLand, Ranged: 100, ActiveDefenseRange: 1, Strength: 1, Armor: 1, Health: 4, MaxHealth: 4},
+	}
+	state.Armies = nil
+	state.Fog = append(state.Fog, FogObservation{PlayerID: "player-a", TileID: "retreat", Turn: 1})
+	payload, _ := json.Marshal(map[string]string{"unit_id": "bombarder", "target_tile_id": "retreat"})
+
+	next, events, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "multi-active-defense", ActorPlayerID: "player-a", Type: CommandBombard, Payload: payload}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := unitByID(next, "bombarder"); ok {
+		t.Fatalf("multiple active defenses did not destroy bombarder: %+v events=%+v", next.Units, events)
+	}
+	if target, ok := unitByID(next, "target"); !ok || target.Health != 4 {
+		t.Fatalf("bombard continued after multiple interceptions: target=%+v ok=%v", target, ok)
+	}
+}
+
 func TestRetailActiveDefenseInterceptsBombardment(t *testing.T) {
 	state := combatState()
 	state.Units = []Unit{

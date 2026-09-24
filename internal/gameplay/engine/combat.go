@@ -176,8 +176,7 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 	}
 	activeDefenseHits := 0
 	interceptors := activeDefenseInterceptors(*state, command.ActorPlayerID, targets[0].OwnerID, targetTile)
-	if len(interceptors) > 0 {
-		interceptor := interceptors[0]
+	for _, interceptor := range interceptors {
 		defense := unit.Defense + combatDefenseModifier(*state, *unit, *interceptor)
 		if defense < 0 {
 			defense = 0
@@ -194,6 +193,9 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 			}
 			unit.Health -= damage
 			activeDefenseHits++
+		}
+		if unit.Health <= 0 {
+			break
 		}
 	}
 	if unit.Health <= 0 {
