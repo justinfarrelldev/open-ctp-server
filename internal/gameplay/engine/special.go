@@ -131,7 +131,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		case CommandInvestigateCity:
 			return investigateCity(unit, city, actorNation, state.Phase.Turn)
 		case CommandPlantNuke:
-			return plantNuke(state, unit, city, targetNation)
+			return plantNuke(state, unit, city, targetNation, sources)
 		case CommandAssassinateRuler:
 			return assassinateRuler(unit, targetNation)
 		case CommandInjoin:
@@ -491,7 +491,7 @@ func parkForTile(state State, tileID string) *TileOverlay {
 	return nil
 }
 
-func plantNuke(state *State, unit *Unit, city *City, targetNation *Nation) (string, json.RawMessage, error) {
+func plantNuke(state *State, unit *Unit, city *City, targetNation *Nation, sources Sources) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialPlantNuke) {
 		return "", nil, errors.New("special action is not authorized")
 	}
@@ -501,6 +501,17 @@ func plantNuke(state *State, unit *Unit, city *City, targetNation *Nation) (stri
 	cityEffects := cityEffects(*state, *city)
 	if hasEffect(cityEffects, EffectProtectFromNukes) || hasEffect(cityEffects, EffectForceField) || hasEffect(targetNation.Effects, EffectEliminateNukes) {
 		return EventNukeFailed, json.RawMessage(`{"disclosed":true}`), nil
+	}
+	chance := effectValue(unit.Effects, EffectSpecialPlantNuke)
+	if chance <= 0 {
+		chance = 100
+	}
+	if chance < 100 {
+		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+		setRNG(state, RNGDomainSpecialAction, next)
+		if int(roll%100) >= chance {
+			return EventNukeFailed, json.RawMessage(`{"disclosed":true}`), nil
+		}
 	}
 	if city.Population > 1 {
 		city.Population /= 2
