@@ -62,6 +62,7 @@
 - [x] Task 111: Retail trade-route wonder gold applies to water and international trade routes.
 - [x] Task 112: Retail active-defense bombard interception resolves multiple eligible interceptors deterministically.
 - [x] Task 113: Retail trade-route projections are visible only through safe owner/visibility boundaries.
+- [x] Task 114: Round recalculation survives city-removing wonder effects without stale slice indexes.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
