@@ -79,6 +79,15 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("starter = %+v, want retail settler", runtime.Starter)
 	}
 
+	cavalry, ok := runtime.Unit("UNIT_CAVALRY")
+	if !ok || !runtimeUnitHasEffect(cavalry, "mounted") {
+		t.Fatalf("cavalry runtime = %+v ok=%v", cavalry, ok)
+	}
+	pikemen, ok := runtime.Unit("UNIT_PIKEMEN")
+	if !ok || !runtimeUnitHasEffectValue(pikemen, "combat_defense_vs_mounted_percent", 50) {
+		t.Fatalf("pikemen runtime = %+v ok=%v", pikemen, ok)
+	}
+
 	carrier, ok := runtime.Unit("UNIT_AIRCRAFT_CARRIER")
 	if !ok {
 		t.Fatalf("UNIT_AIRCRAFT_CARRIER missing")

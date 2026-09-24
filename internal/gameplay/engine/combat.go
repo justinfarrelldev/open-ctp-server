@@ -153,7 +153,7 @@ func combatStrike(state *State, sources Sources, attackers, defenders []*Unit, r
 			attack = attacker.Ranged
 		}
 		attack += combatAttackModifier(*state, *attacker, *target)
-		defense := target.Defense + combatModifier(*state, *target, false)
+		defense := target.Defense + combatDefenseModifier(*state, *target, *attacker)
 		if attack <= 0 || defense < 0 {
 			continue
 		}
@@ -198,6 +198,14 @@ func livingCombatUnits(units []*Unit) []*Unit {
 		}
 	}
 	return living
+}
+
+func combatDefenseModifier(state State, unit Unit, attacker Unit) int {
+	modifier := combatModifier(state, unit, false)
+	if hasEffect(attacker.Effects, EffectMounted) {
+		modifier += unit.Defense * effectValue(unit.Effects, EffectCombatDefenseVsMountedPercent) / 100
+	}
+	return modifier
 }
 
 func combatAttackModifier(state State, unit Unit, target Unit) int {

@@ -228,6 +228,14 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 			effects = append(effects, RuntimeStarterEffect{ID: buildingID, Kind: "settle_building"})
 		}
 	}
+	if retailContainsString(unit.Flags, "IsMounted") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("mounted"), Kind: "mounted"})
+	}
+	if retailContainsString(unit.Flags, "BonusAgainstMounted") {
+		if value := percentPoints(firstRetailUnitFloat(unit, "MountedBonus")); value > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: effectID("combat_defense_vs_mounted"), Kind: "combat_defense_vs_mounted_percent", Value: value})
+		}
+	}
 	if retailContainsString(unit.Flags, "EstablishEmbassy") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_embassy"), Kind: "special_embassy"})
 	}
@@ -263,6 +271,18 @@ func retailRawFieldFloat(field RetailRawField, key string) float64 {
 		return 0
 	}
 	return parsed
+}
+
+func firstRetailUnitFloat(unit RetailUnit, key string) float64 {
+	values := retailFieldValues(unit.RawFields, key)
+	if len(values) == 0 {
+		return 0
+	}
+	value, err := strconv.ParseFloat(values[0], 64)
+	if err != nil {
+		return 0
+	}
+	return value
 }
 
 func firstRetailUnitInt(unit RetailUnit, key string) int {

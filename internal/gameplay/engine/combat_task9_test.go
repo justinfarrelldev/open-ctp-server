@@ -40,6 +40,22 @@ func TestRetailCityDefenseBuildingEffectsModifyDefenders(t *testing.T) {
 	}
 }
 
+func TestRetailMountedDefenseBonusModifiesDefenderAgainstMountedAttackers(t *testing.T) {
+	state := combatState()
+	attacker := state.Units[0]
+	attacker.Effects = []Effect{{ID: "mounted", Kind: EffectMounted}}
+	defender := state.Units[2]
+	defender.Defense = 10
+	defender.Effects = []Effect{{ID: "pike", Kind: EffectCombatDefenseVsMountedPercent, Value: 50}}
+	if got := combatDefenseModifier(state, defender, attacker); got != 8 { // fortified + forest + city wall + 50% of defense
+		t.Fatalf("mounted defense modifier = %d, want terrain/city plus mounted bonus", got)
+	}
+	attacker.Effects = nil
+	if got := combatDefenseModifier(state, defender, attacker); got != 3 {
+		t.Fatalf("non-mounted defense modifier = %d, want only terrain/city", got)
+	}
+}
+
 func TestRetailCityOffenseBuildingEffectsModifyAttackersByDefenderDomain(t *testing.T) {
 	state := combatState()
 	state.Cities = append(state.Cities, City{ID: "city-a", OwnerID: "player-a", TileID: "a", Buildings: []Building{{ID: "IMPROVE_BALLISTA_TOWERS", Effects: []Effect{{ID: "ballista", Kind: EffectCombatAttackLand, Value: 20}}}}})
