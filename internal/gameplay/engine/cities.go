@@ -757,6 +757,8 @@ func applyWonderCompletionEffects(state *State, wonder Wonder) {
 		case EffectCloseEmbassies:
 			closeForeignEmbassiesWithOwner(state, wonder.OwnerID)
 			removeWarsWithPlayer(state, wonder.OwnerID)
+		case EffectEliminateNukes:
+			eliminateNukes(state)
 		case EffectFreeSlaves:
 			removeSlaverUnits(state)
 		case EffectPollutersToParks:
@@ -768,6 +770,21 @@ func applyWonderCompletionEffects(state *State, wonder Wonder) {
 		case EffectEmbassiesEverywhere:
 			removeWarsWithPlayer(state, wonder.OwnerID)
 		}
+	}
+}
+
+func eliminateNukes(state *State) {
+	for index := range state.Nations {
+		upsertNationEffect(&state.Nations[index], EffectEliminateNukes, 1)
+	}
+	removed := make([]string, 0)
+	for _, unit := range state.Units {
+		if hasEffect(unit.Effects, EffectSpecialPlantNuke) {
+			removed = append(removed, unit.ID)
+		}
+	}
+	for _, id := range removed {
+		removeUnitAndCargo(state, id)
 	}
 }
 

@@ -6,6 +6,32 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
+func TestRetailEliminateNukesWonderDisarmsNationsAndRemovesNukeUnits(t *testing.T) {
+	state := State{
+		Tiles:   []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}},
+		Nations: []Nation{{ID: "nation-a"}, {ID: "nation-b"}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", StoredProduction: 1, Queue: []ProductionItem{{ID: "WONDER_NANITE_DEFUSER", Kind: ProductionWonder, Cost: 1, Effects: []Effect{{ID: "defuse", Kind: EffectEliminateNukes}}}}}},
+		Units: []Unit{
+			{ID: "suitcase", OwnerID: "player-b", TileID: "tile-a", Effects: []Effect{{ID: "nuke", Kind: EffectSpecialPlantNuke}}},
+			{ID: "guard", OwnerID: "player-b", TileID: "tile-a"},
+		},
+	}
+	if err := completeProduction(&state, &state.Cities[0], nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := unitByID(state, "suitcase"); ok {
+		t.Fatalf("nuke unit survived eliminate-nukes wonder: %#v", state.Units)
+	}
+	if _, ok := unitByID(state, "guard"); !ok {
+		t.Fatalf("non-nuke unit removed by eliminate-nukes wonder: %#v", state.Units)
+	}
+	for _, nation := range state.Nations {
+		if !hasEffect(nation.Effects, EffectEliminateNukes) {
+			t.Fatalf("nation missing eliminate-nukes marker: %#v", state.Nations)
+		}
+	}
+}
+
 func TestRetailReformCitiesWonderClearsOwnerCityCrimeAndInjunctions(t *testing.T) {
 	state := State{
 		Tiles: []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}, {ID: "tile-b", Terrain: TerrainPlains, Open: true}},
