@@ -100,6 +100,15 @@ func TestRetailHappinessEffectsAccumulateFromBuildingsAndWonders(t *testing.T) {
 	}
 }
 
+func TestRetailCrimeEffectsAccumulateFromBuildingsAndWonders(t *testing.T) {
+	state := State{Players: []Player{{ID: "player-a", NationID: "nation-a"}}, Nations: []Nation{{ID: "nation-a"}}}
+	city := City{ID: "city-a", OwnerID: "player-a", Buildings: []Building{{ID: "IMPROVE_COURTHOUSE", Effects: []Effect{{ID: "courthouse", Kind: EffectCrimePercent, Value: -10}}}}}
+	state.Wonders = []Wonder{{ID: "WONDER_ZERO_CRIME_BILL", OwnerID: "player-a", Scope: "owner", Effects: []Effect{{ID: "zero-crime", Kind: EffectCrimePercent, Value: -60}}}}
+	if got := cityCrimePercent(state, city); got != -70 {
+		t.Fatalf("city crime percent = %d, want building + wonder reducers", got)
+	}
+}
+
 func TestRetailRuntimeTerrainYieldsDriveCityYield(t *testing.T) {
 	state := State{Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS"}}}
 	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}

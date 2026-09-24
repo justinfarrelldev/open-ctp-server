@@ -143,6 +143,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeProductionHasEffectValue(gutenberg, "happiness", 2) {
 		t.Fatalf("Gutenberg effects = %+v ok=%v", gutenberg, ok)
 	}
+	zeroCrime, ok := runtime.ProductionDefinition("WONDER_ZERO_CRIME_BILL")
+	if !ok || !runtimeProductionHasEffectValue(zeroCrime, "crime_percent", -60) {
+		t.Fatalf("Zero Crime Bill effects = %+v ok=%v", zeroCrime, ok)
+	}
 	factory, ok := runtime.ProductionDefinition("IMPROVE_FACTORY")
 	if !ok || len(factory.Effects) != 1 || factory.Effects[0].Kind != "yield_production_percent" || factory.Effects[0].Value != 15 {
 		t.Fatalf("factory production effects = %+v ok=%v", factory, ok)
@@ -188,6 +192,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	arena, ok := runtime.ProductionDefinition("IMPROVE_ARENA")
 	if !ok || !runtimeProductionHasEffectValue(arena, "happiness", 2) {
 		t.Fatalf("arena effects = %+v ok=%v", arena, ok)
+	}
+	courthouse, ok := runtime.ProductionDefinition("IMPROVE_COURTHOUSE")
+	if !ok || !runtimeProductionHasEffectValue(courthouse, "crime_percent", -10) {
+		t.Fatalf("courthouse effects = %+v ok=%v", courthouse, ok)
 	}
 	cityWalls, ok := runtime.ProductionDefinition("IMPROVE_CITY_WALLS")
 	if !ok || !runtimeProductionHasEffectValue(cityWalls, "combat_defense", 15) {
