@@ -125,6 +125,16 @@ type RuntimeGovernmentDefinition struct {
 	RationsExpectation  int     `json:"rations_expectation,omitempty"`
 	PositiveRationsCoef float64 `json:"positive_rations_coef,omitempty"`
 	NegativeRationsCoef float64 `json:"negative_rations_coef,omitempty"`
+	SupportCoef         float64 `json:"support_coef,omitempty"`
+	DefenseCoef         float64 `json:"defense_coef,omitempty"`
+	ProfessionalUnits   int     `json:"professional_units,omitempty"`
+	TurnsToNewReadiness int     `json:"turns_to_new_readiness,omitempty"`
+	ReadyPeaceCoef      float64 `json:"ready_peace_coef,omitempty"`
+	ReadyPeaceHP        float64 `json:"ready_peace_hp,omitempty"`
+	ReadyAlertCoef      float64 `json:"ready_alert_coef,omitempty"`
+	ReadyAlertHP        float64 `json:"ready_alert_hp,omitempty"`
+	ReadyWarCoef        float64 `json:"ready_war_coef,omitempty"`
+	ReadyWarHP          float64 `json:"ready_war_hp,omitempty"`
 	MartialLawMaxUnits  int     `json:"martial_law_max_units,omitempty"`
 	MartialLawEffect    int     `json:"martial_law_effect,omitempty"`
 	MartialLawThreshold int     `json:"martial_law_threshold,omitempty"`
@@ -842,6 +852,20 @@ func compileGovernmentDefinition(record Record) (RuntimeGovernmentDefinition, er
 	if err != nil {
 		return RuntimeGovernmentDefinition{}, err
 	}
+	readiness, err := compileGovernmentReadinessFields(record)
+	if err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	definition.SupportCoef = readiness.SupportCoef
+	definition.DefenseCoef = readiness.DefenseCoef
+	definition.ProfessionalUnits = readiness.ProfessionalUnits
+	definition.TurnsToNewReadiness = readiness.TurnsToNewReadiness
+	definition.ReadyPeaceCoef = readiness.ReadyPeaceCoef
+	definition.ReadyPeaceHP = readiness.ReadyPeaceHP
+	definition.ReadyAlertCoef = readiness.ReadyAlertCoef
+	definition.ReadyAlertHP = readiness.ReadyAlertHP
+	definition.ReadyWarCoef = readiness.ReadyWarCoef
+	definition.ReadyWarHP = readiness.ReadyWarHP
 	if researchBonus < 0 || publicWorksBonus < 0 {
 		return RuntimeGovernmentDefinition{}, fmt.Errorf("rules definition record %q has invalid government bonus", record.ID)
 	}
@@ -885,6 +909,42 @@ func compileGovernmentSocialFields(record Record) (RuntimeGovernmentDefinition, 
 		return RuntimeGovernmentDefinition{}, err
 	}
 	if definition.NegativeRationsCoef, err = optionalFloat(record, "NegativeRationsCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	return definition, nil
+}
+
+func compileGovernmentReadinessFields(record Record) (RuntimeGovernmentDefinition, error) {
+	var definition RuntimeGovernmentDefinition
+	var err error
+	if definition.SupportCoef, err = optionalFloat(record, "SupportCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.DefenseCoef, err = optionalFloat(record, "DefenseCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.ProfessionalUnits, err = optionalInteger(record, "ProfessionalUnits", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.TurnsToNewReadiness, err = optionalInteger(record, "TurnsToNewReadiness", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.ReadyPeaceCoef, err = optionalFloat(record, "ReadyPeaceCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.ReadyPeaceHP, err = optionalFloat(record, "ReadyPeaceHP", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.ReadyAlertCoef, err = optionalFloat(record, "ReadyAlertCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.ReadyAlertHP, err = optionalFloat(record, "ReadyAlertHP", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.ReadyWarCoef, err = optionalFloat(record, "ReadyWarCoef", 0); err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	if definition.ReadyWarHP, err = optionalFloat(record, "ReadyWarHP", 0); err != nil {
 		return RuntimeGovernmentDefinition{}, err
 	}
 	return definition, nil

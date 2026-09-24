@@ -163,6 +163,9 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if democracy.WagesExpectation != 1 || democracy.WorkdayExpectation != 0 || democracy.RationsExpectation != 0 || democracy.PositiveWagesCoef != 1 || democracy.NegativeWorkdayCoef != 1 || democracy.PositiveRationsCoef != 1 {
 		t.Fatalf("democracy social slider fields = %+v", democracy)
 	}
+	if democracy.SupportCoef != 1.5 || democracy.DefenseCoef != 1.15 || democracy.TurnsToNewReadiness != 10 || democracy.ReadyPeaceCoef != 0.5 || democracy.ReadyAlertHP != 0.8 || democracy.ReadyWarHP != 1 {
+		t.Fatalf("democracy readiness fields = %+v", democracy)
+	}
 	anarchy, ok := runtime.Government("GOVERNMENT_ANARCHY")
 	if !ok || anarchy.ResearchPercent != -90 || anarchy.FoodPercent != -25 || anarchy.ProductionPercent != -25 || anarchy.GoldPercent != -25 {
 		t.Fatalf("anarchy government = %+v ok=%v", anarchy, ok)

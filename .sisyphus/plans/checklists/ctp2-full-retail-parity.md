@@ -101,6 +101,7 @@
 - [x] Task 150: Set-science-rate command persists explicit slider values and projects safe legal actions.
 - [x] Task 151: AI consumes projected science-rate actions without redundant default-100 actions.
 - [x] Task 152: Retail government workday/wages/rations fields are preserved in runtime definitions.
+- [x] Task 153: Retail government readiness/support fields are preserved in runtime definitions.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
