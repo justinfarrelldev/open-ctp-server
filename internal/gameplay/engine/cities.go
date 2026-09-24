@@ -21,6 +21,7 @@ const (
 	EffectYieldProduction            = "yield_production"
 	EffectYieldGold                  = "yield_gold"
 	EffectYieldGoldPerPopulation     = "yield_gold_per_population"
+	EffectMaxPopulation              = "max_population"
 	EffectPollutionPercent           = "pollution_percent"
 	EffectPollutionPopulationPercent = "pollution_population_percent"
 	EffectPollutionProductionPercent = "pollution_production_percent"
@@ -288,7 +289,7 @@ func RecalculateRound(state State) (State, error) {
 		if err != nil {
 			return State{}, err
 		}
-		advanceCityFood(city)
+		advanceCityFood(city, cityMaxPopulation(next, *city))
 		if cityPollutionEnabled(runtime) {
 			applyCityPollution(&next, *city, runtimePollutionModel(runtime))
 		}
@@ -381,7 +382,7 @@ func signedPercentDelta(value, percent int) int {
 	return value * percent / 100
 }
 
-func advanceCityFood(city *City) {
+func advanceCityFood(city *City, maxPopulation int) {
 	if city.Population < 1 {
 		city.Population = 1
 	}
@@ -395,9 +396,22 @@ func advanceCityFood(city *City) {
 		return
 	}
 	for city.StoredFood >= cityFoodGrowthThreshold(city.Population) {
+		if maxPopulation > 0 && city.Population >= maxPopulation {
+			return
+		}
 		city.StoredFood -= cityFoodGrowthThreshold(city.Population)
 		city.Population++
 	}
+}
+
+func cityMaxPopulation(state State, city City) int {
+	maxPopulation := 0
+	for _, effect := range cityEffects(state, city) {
+		if effect.Kind == EffectMaxPopulation && effect.Value > maxPopulation {
+			maxPopulation = effect.Value
+		}
+	}
+	return maxPopulation
 }
 
 func cityFoodConsumption(population int) int {
@@ -762,7 +776,7 @@ func validateEffects(effects []Effect) error {
 			return errors.New("effect id is required")
 		}
 		switch effect.Kind {
-		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldGoldPerPopulation, EffectPollutionPercent, EffectPollutionPopulationPercent, EffectPollutionProductionPercent, EffectPollution, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectResearchPercent, EffectBonus, EffectCombatAttack, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
+		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldGoldPerPopulation, EffectMaxPopulation, EffectPollutionPercent, EffectPollutionPopulationPercent, EffectPollutionProductionPercent, EffectPollution, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectResearchPercent, EffectBonus, EffectCombatAttack, EffectCombatDefense, EffectSoothsaying, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns:
 		default:
 			return fmt.Errorf("unsupported effect kind %q", effect.Kind)
 		}

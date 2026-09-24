@@ -112,6 +112,9 @@ func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffec
 	if value := building.IntValues["GoldPerCitizen"]; value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":gold-per-citizen", Kind: "yield_gold_per_population", Value: value})
 	}
+	if value := building.IntValues["RaiseMaxPopulation"]; value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":max-population", Kind: "max_population", Value: value})
+	}
 	if value, ok := signedPercentPoints(building.FloatValues["PopulationPollutionPercent"]); ok {
 		effects = append(effects, RuntimeStarterEffect{ID: building.ID + ":population-pollution-percent", Kind: "pollution_population_percent", Value: value})
 	}
