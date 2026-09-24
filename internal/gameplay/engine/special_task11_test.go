@@ -46,6 +46,31 @@ func TestRetailPillageRemovesCompletedEnemyTileImprovements(t *testing.T) {
 	}
 }
 
+func TestRetailPlantNukeDamagesCityAndHonorsProtection(t *testing.T) {
+	state := task11State()
+	state.Cities[0].Population = 8
+	state.Units[0].Effects = []Effect{{ID: "nuke", Kind: EffectSpecialPlantNuke}}
+	next, events, err := task11Apply(t, state, CommandPlantNuke, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Cities[0].Population != 4 || next.Tiles[1].Pollution == 0 || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventNukePlanted || strings.Contains(string(events[0].Payload), "target-city") {
+		t.Fatalf("nuke outcome city=%+v tile=%+v unit=%+v events=%+v", next.Cities[0], next.Tiles[1], next.Units[0], events)
+	}
+
+	state = task11State()
+	state.Cities[0].Population = 8
+	state.Cities[0].Effects = append(state.Cities[0].Effects, Effect{ID: "sdi", Kind: EffectProtectFromNukes})
+	state.Units[0].Effects = []Effect{{ID: "nuke", Kind: EffectSpecialPlantNuke}}
+	next, events, err = task11Apply(t, state, CommandPlantNuke, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Cities[0].Population != 8 || next.Tiles[1].Pollution != 0 || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventNukeFailed {
+		t.Fatalf("protected nuke outcome city=%+v tile=%+v unit=%+v events=%+v", next.Cities[0], next.Tiles[1], next.Units[0], events)
+	}
+}
+
 func TestRetailInvestigateCityStoresPrivateCityReport(t *testing.T) {
 	state := task11State()
 	state.Cities[0].Population = 6

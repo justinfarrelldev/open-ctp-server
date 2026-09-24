@@ -63,7 +63,7 @@ type CancelTerraformPayload struct {
 
 func isSpecialCommand(kind string) bool {
 	switch kind {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
 		return true
 	default:
 		return false
@@ -75,7 +75,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		return "", nil, err
 	}
 	switch command.Type {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke:
 		var payload SpecialActionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", nil, err
@@ -116,6 +116,8 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			return createFranchise(unit, city)
 		case CommandInvestigateCity:
 			return investigateCity(unit, city, actorNation, state.Phase.Turn)
+		case CommandPlantNuke:
+			return plantNuke(state, unit, city, targetNation)
 		case CommandBioTerror, CommandNanoTerror, CommandPlague:
 			return cityTerror(state, unit, city, command.Type, sources)
 		default:
@@ -267,6 +269,37 @@ func specialTarget(state *State, actorID string, payload SpecialActionPayload) (
 		return nil, nil, nil, nil, errors.New("special action target is unavailable")
 	}
 	return unit, city, actorNation, targetNation, nil
+}
+
+func plantNuke(state *State, unit *Unit, city *City, targetNation *Nation) (string, json.RawMessage, error) {
+	if !hasEffect(unit.Effects, EffectSpecialPlantNuke) {
+		return "", nil, errors.New("special action is not authorized")
+	}
+	if err := spendSpecialMove(unit); err != nil {
+		return "", nil, err
+	}
+	if hasEffect(city.Effects, EffectProtectFromNukes) || hasEffect(targetNation.Effects, EffectEliminateNukes) {
+		return EventNukeFailed, json.RawMessage(`{"disclosed":true}`), nil
+	}
+	if city.Population > 1 {
+		city.Population /= 2
+		if city.Population < 1 {
+			city.Population = 1
+		}
+	}
+	if tile := tilePointer(state, city.TileID); tile != nil {
+		tile.Pollution += 10
+	}
+	return EventNukePlanted, json.RawMessage(`{"disclosed":true}`), nil
+}
+
+func tilePointer(state *State, tileID string) *Tile {
+	for index := range state.Tiles {
+		if state.Tiles[index].ID == tileID {
+			return &state.Tiles[index]
+		}
+	}
+	return nil
 }
 
 func investigateCity(unit *Unit, city *City, actorNation *Nation, turn int) (string, json.RawMessage, error) {
