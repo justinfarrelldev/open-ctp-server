@@ -6,6 +6,34 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
+func TestRetailIncreaseHPWonderRaisesExistingAndFutureUnitHealth(t *testing.T) {
+	state := State{
+		Phase:   PhaseState{Turn: 1},
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a"}},
+		Tiles:   []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", StoredProduction: 1, Queue: []ProductionItem{{ID: "WONDER_HP", Kind: ProductionWonder, Cost: 1, Scope: "nation", Effects: []Effect{{ID: "hp", Kind: EffectIncreaseHP, Value: 3}}}}}},
+		Units:   []Unit{{ID: "veteran", OwnerID: "player-a", TileID: "tile-a", Domain: DomainLand, Health: 8, MaxHealth: 10}},
+	}
+	if err := completeProduction(&state, &state.Cities[0], nil); err != nil {
+		t.Fatal(err)
+	}
+	if state.Units[0].Health != 11 || state.Units[0].MaxHealth != 13 {
+		t.Fatalf("existing unit health = %d/%d, want 11/13", state.Units[0].Health, state.Units[0].MaxHealth)
+	}
+
+	state.Cities[0].StoredProduction = 1
+	state.Cities[0].Queue = []ProductionItem{{ID: "UNIT_INFANTRY", Kind: ProductionUnit, Cost: 1}}
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_INFANTRY", Domain: DomainLand, Movement: 1, Health: 10}}}
+	if err := completeProduction(&state, &state.Cities[0], runtime); err != nil {
+		t.Fatal(err)
+	}
+	produced, ok := unitByID(state, "unit:city-a:UNIT_INFANTRY:1")
+	if !ok || produced.Health != 13 || produced.MaxHealth != 13 {
+		t.Fatalf("produced unit health = %#v, want 13/13", produced)
+	}
+}
+
 func TestProductionCompletionCopiesRuntimeRangedStats(t *testing.T) {
 	state := State{Phase: PhaseState{Turn: 7}}
 	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_RANGED", Domain: DomainLand, Movement: 1, Attack: 3, Defense: 2, Ranged: 9, BombardRange: 2, BombRounds: 4, ActiveDefenseRange: 3, Strength: 3, Armor: 1, Health: 10, Upkeep: 4}}}

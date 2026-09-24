@@ -624,9 +624,46 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 			return nil
 		}
 		state.Wonders = append(state.Wonders, Wonder{ID: item.ID, OwnerID: city.OwnerID, CityID: city.ID, Scope: item.Scope, ObsoletedBy: item.ObsoletedBy, Effects: item.Effects})
+		applyWonderCompletionEffects(state, state.Wonders[len(state.Wonders)-1])
 		return nil
 	default:
 		return errors.New("unsupported production kind")
+	}
+}
+
+func ownerWonderEffectSum(state State, ownerID, kind string) int {
+	total := 0
+	for _, wonder := range state.Wonders {
+		if wonder.Destroyed || (wonder.OwnerID != ownerID && wonder.Scope != "global") {
+			continue
+		}
+		for _, effect := range wonder.Effects {
+			if effect.Kind == kind {
+				total += effect.Value
+			}
+		}
+	}
+	return total
+}
+
+func applyWonderCompletionEffects(state *State, wonder Wonder) {
+	if wonder.Destroyed {
+		return
+	}
+	for _, effect := range wonder.Effects {
+		switch effect.Kind {
+		case EffectIncreaseHP:
+			if effect.Value <= 0 {
+				continue
+			}
+			for index := range state.Units {
+				if state.Units[index].OwnerID != wonder.OwnerID {
+					continue
+				}
+				state.Units[index].Health += effect.Value
+				state.Units[index].MaxHealth += effect.Value
+			}
+		}
 	}
 }
 
@@ -637,6 +674,10 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 	definition, ok := runtime.Unit(item.ID)
 	if !ok {
 		return nil
+	}
+	health := definition.Health + ownerWonderEffectSum(*state, city.OwnerID, EffectIncreaseHP)
+	if health < 1 {
+		health = 1
 	}
 	unit := Unit{
 		ID:                 producedUnitID(*state, city.ID, item.ID),
@@ -660,8 +701,8 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 		ActiveDefenseRange: definition.ActiveDefenseRange,
 		Strength:           definition.Strength,
 		Armor:              definition.Armor,
-		Health:             definition.Health,
-		MaxHealth:          definition.Health,
+		Health:             health,
+		MaxHealth:          health,
 		VisibilityRange:    definition.VisibilityRange,
 	}
 	state.Units = append(state.Units, unit)
