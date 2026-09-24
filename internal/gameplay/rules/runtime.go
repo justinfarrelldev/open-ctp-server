@@ -115,6 +115,7 @@ type RuntimeGovernmentDefinition struct {
 	ProductionPercent int    `json:"production_percent,omitempty"`
 	GoldPercent       int    `json:"gold_percent,omitempty"`
 	PollutionPercent  int    `json:"pollution_percent,omitempty"`
+	MaxSciencePercent *int   `json:"max_science_percent,omitempty"`
 }
 
 type RuntimeMovement struct {
@@ -1007,7 +1008,7 @@ func unitEffects(record Record) ([]RuntimeStarterEffect, error) {
 
 func validUnitEffectKind(kind string) bool {
 	switch kind {
-	case "settler", "special_embassy", "special_soothsaying", "special_steal", "special_capture", "special_terraform", "special_terraform_turns", "special_convert_city_death_chance", "special_create_franchise_death_chance", "special_investigate_city_death_chance", "special_plant_nuke_death_chance", "special_bio_terror_death_chance", "special_nano_terror_death_chance", "special_plague_death_chance", "special_assassinate_ruler_death_chance", "special_slave_raid_death_chance", "special_settler_slave_raid_death_chance", "special_underground_railway_death_chance":
+	case "settler", "special_embassy", "special_soothsaying", "special_steal", "special_capture", "special_terraform", "special_terraform_turns", "max_science_percent", "special_convert_city_death_chance", "special_create_franchise_death_chance", "special_investigate_city_death_chance", "special_plant_nuke_death_chance", "special_bio_terror_death_chance", "special_nano_terror_death_chance", "special_plague_death_chance", "special_assassinate_ruler_death_chance", "special_slave_raid_death_chance", "special_settler_slave_raid_death_chance", "special_underground_railway_death_chance":
 		return true
 	default:
 		return false

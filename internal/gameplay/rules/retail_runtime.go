@@ -51,7 +51,8 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		runtime.TerrainImprovements = append(runtime.TerrainImprovements, projectRetailTerrainImprovement(improvement))
 	}
 	for _, government := range db.Governments {
-		runtime.Governments = append(runtime.Governments, RuntimeGovernmentDefinition{ID: government.ID, EnableAdvanceID: government.EnableAdvance, ResearchPercent: signedCoefficientPercentPoints(government.FloatValues["KnowledgeCoef"]), FoodPercent: signedCoefficientPercentPoints(government.FloatValues["FoodCoef"]), ProductionPercent: signedCoefficientPercentPoints(government.FloatValues["ProductionCoef"]), GoldPercent: signedCoefficientPercentPoints(government.FloatValues["GoldCoef"]), PollutionPercent: signedCoefficientPercentPoints(government.PollutionCoef)})
+		maxSciencePercent := percentPoints(government.MaxScienceRate)
+		runtime.Governments = append(runtime.Governments, RuntimeGovernmentDefinition{ID: government.ID, EnableAdvanceID: government.EnableAdvance, ResearchPercent: signedCoefficientPercentPoints(government.FloatValues["KnowledgeCoef"]), FoodPercent: signedCoefficientPercentPoints(government.FloatValues["FoodCoef"]), ProductionPercent: signedCoefficientPercentPoints(government.FloatValues["ProductionCoef"]), GoldPercent: signedCoefficientPercentPoints(government.FloatValues["GoldCoef"]), PollutionPercent: signedCoefficientPercentPoints(government.PollutionCoef), MaxSciencePercent: &maxSciencePercent})
 	}
 	for _, trigger := range db.PollutionTriggerLists {
 		runtime.PollutionTriggers = append(runtime.PollutionTriggers, RuntimePollutionTriggerDefinition{ID: trigger.ID, TriggerLevels: append([]int64(nil), trigger.TriggerLevels...), DisasterTypes: append([]string(nil), trigger.DisasterTypes...)})

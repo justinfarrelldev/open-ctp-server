@@ -395,12 +395,15 @@ func researchRate(state State, nation Nation) int {
 	rate := 1
 	nationResearchFlat := 0
 	nationResearchPercent := 0
+	maxSciencePercent := -1
 	for _, effect := range nation.Effects {
 		switch effect.Kind {
 		case EffectResearch:
 			nationResearchFlat += effect.Value
 		case EffectResearchPercent:
 			nationResearchPercent += effect.Value
+		case EffectMaxSciencePercent:
+			maxSciencePercent = effect.Value
 		}
 	}
 	cityResearch := 0
@@ -408,7 +411,17 @@ func researchRate(state State, nation Nation) int {
 		if nationForPlayer(state, city.OwnerID) != nation.ID {
 			continue
 		}
-		cityRate := city.Yields.Gold + ownerWonderEffectSum(state, city.OwnerID, EffectIncreaseScientists)
+		cityGoldResearch := city.Yields.Gold
+		if maxSciencePercent >= 0 {
+			if maxSciencePercent < 0 {
+				maxSciencePercent = 0
+			}
+			if maxSciencePercent > 100 {
+				maxSciencePercent = 100
+			}
+			cityGoldResearch = cityGoldResearch * maxSciencePercent / 100
+		}
+		cityRate := cityGoldResearch + ownerWonderEffectSum(state, city.OwnerID, EffectIncreaseScientists)
 		cityResearchFlat := 0
 		cityResearchPercent := 0
 		for _, effect := range cityResearchEffects(state, city) {

@@ -47,6 +47,23 @@ func TestRetailResearchRateSubtractsUnitUpkeep(t *testing.T) {
 	}
 }
 
+func TestRetailResearchRateHonorsGovernmentMaxScienceRate(t *testing.T) {
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", Effects: []Effect{{ID: "government:democracy:max-science", Kind: EffectMaxSciencePercent, Value: 80}}}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", Yields: Yield{Gold: 10}}},
+	}
+	if got, want := researchRate(state, state.Nations[0]), 9; got != want {
+		t.Fatalf("research rate = %d, want base 1 + city trade capped to 8 by government = %d", got, want)
+	}
+
+	state.Nations[0].Effects[0].Value = 0
+	state.Cities[0].Buildings = []Building{{ID: "IMPROVE_ACADEMY", Effects: []Effect{{ID: "academy-science", Kind: EffectResearch, Value: 3}}}}
+	if got, want := researchRate(state, state.Nations[0]), 4; got != want {
+		t.Fatalf("research rate = %d, want max science cap to leave flat city research uncapped = %d", got, want)
+	}
+}
+
 func TestRetailResearchRateUsesGovernmentKnowledgeCoefficient(t *testing.T) {
 	state := State{
 		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
