@@ -6,6 +6,14 @@
 - [x] Field coverage inventory created for all retail catalogs.
 - [x] AI-vs-AI 100-turn harness created and recording artifact generated.
 
+## Recent Completed Increments
+- [x] Task 59: Retail building prerequisite improvements are projected and enforced.
+- [x] Task 60: Retail sea/coastal building placement constraints are projected and enforced.
+- [x] Task 61: Retail city-wall metadata and wall-ignore combat behavior are implemented.
+- [x] Task 62: Retail city protection effects are projected and preserved on completed buildings.
+- [x] Task 63: Retail overcrowding-level effects are projected and accumulated on cities.
+- [x] Task 64: Remaining retail building marker fields are projected and preserved.
+
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
 - [ ] Building catalog behavior field coverage complete.
