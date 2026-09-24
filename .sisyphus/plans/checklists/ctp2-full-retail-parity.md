@@ -103,6 +103,7 @@
 - [x] Task 152: Retail government workday/wages/rations fields are preserved in runtime definitions.
 - [x] Task 153: Retail government readiness/support fields are preserved in runtime definitions.
 - [x] Task 154: Retail government war-discontent and empire-distance fields are preserved in runtime definitions.
+- [x] Task 155: Retail too-many-cities government penalties reduce city happiness.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

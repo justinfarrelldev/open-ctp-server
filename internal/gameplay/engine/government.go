@@ -102,6 +102,12 @@ func upsertGovernmentEffects(nation *Nation, government rules.RuntimeGovernmentD
 	if government.MartialLawThreshold > 0 {
 		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":martial-law-threshold", Kind: EffectMartialLawThreshold, Value: government.MartialLawThreshold})
 	}
+	if government.TooManyCitiesThreshold > 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":too-many-cities-threshold", Kind: EffectTooManyCitiesThreshold, Value: government.TooManyCitiesThreshold})
+	}
+	if government.TooManyCitiesCoefficient > 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":too-many-cities-coefficient", Kind: EffectTooManyCitiesCoefficient, Value: int(government.TooManyCitiesCoefficient*100 + 0.5)})
+	}
 	if government.PublicWorksBonus > 0 {
 		nation.PublicWorks += government.PublicWorksBonus
 	}

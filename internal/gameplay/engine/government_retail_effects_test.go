@@ -9,8 +9,8 @@ import (
 
 func TestGovernmentRuntimeYieldPercentEffects(t *testing.T) {
 	nation := Nation{ID: "nation-a", Effects: []Effect{{ID: "manual", Kind: EffectYieldFood, Value: 1}}}
-	upsertGovernmentEffects(&nation, rules.RuntimeGovernmentDefinition{ID: "GOVERNMENT_RETAIL", ResearchPercent: 100, FoodPercent: 25, ProductionPercent: 15, GoldPercent: 25, PollutionPercent: -20})
-	if !hasEffect(nation.Effects, EffectResearchPercent) || !hasEffect(nation.Effects, EffectYieldFoodPercent) || !hasEffect(nation.Effects, EffectYieldProductionPercent) || !hasEffect(nation.Effects, EffectYieldGoldPercent) || !hasEffect(nation.Effects, EffectPollutionPercent) || !hasEffect(nation.Effects, EffectYieldFood) {
+	upsertGovernmentEffects(&nation, rules.RuntimeGovernmentDefinition{ID: "GOVERNMENT_RETAIL", ResearchPercent: 100, FoodPercent: 25, ProductionPercent: 15, GoldPercent: 25, PollutionPercent: -20, TooManyCitiesThreshold: 2, TooManyCitiesCoefficient: 1.5})
+	if !hasEffect(nation.Effects, EffectResearchPercent) || !hasEffect(nation.Effects, EffectYieldFoodPercent) || !hasEffect(nation.Effects, EffectYieldProductionPercent) || !hasEffect(nation.Effects, EffectYieldGoldPercent) || !hasEffect(nation.Effects, EffectPollutionPercent) || !hasEffect(nation.Effects, EffectTooManyCitiesThreshold) || !hasEffect(nation.Effects, EffectTooManyCitiesCoefficient) || !hasEffect(nation.Effects, EffectYieldFood) {
 		t.Fatalf("government effects = %#v", nation.Effects)
 	}
 }
@@ -27,6 +27,21 @@ func TestRetailSetScienceRateCommandPersistsExplicitZero(t *testing.T) {
 	}
 	if next.Nations[0].SciencePercent == nil || *next.Nations[0].SciencePercent != 0 || len(events) != 1 || events[0].Type != EventScienceRateChanged {
 		t.Fatalf("science rate command failed: nation=%+v events=%+v", next.Nations[0], events)
+	}
+}
+
+func TestRetailTooManyCitiesGovernmentPenaltyReducesHappiness(t *testing.T) {
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", Effects: []Effect{{ID: "threshold", Kind: EffectTooManyCitiesThreshold, Value: 1}, {ID: "coefficient", Kind: EffectTooManyCitiesCoefficient, Value: 200}}}},
+		Cities: []City{
+			{ID: "a", OwnerID: "player-a", Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 80}}},
+			{ID: "b", OwnerID: "player-a", Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 80}}},
+			{ID: "c", OwnerID: "player-a", Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 80}}},
+		},
+	}
+	if got, want := cityHappiness(state, state.Cities[0]), 76; got != want {
+		t.Fatalf("happiness = %d, want base minus 2*(3-1) penalty = %d", got, want)
 	}
 }
 
