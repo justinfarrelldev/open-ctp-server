@@ -130,6 +130,7 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 	for _, unitID := range crashedUnits {
 		removeUnitAndCargo(state, unitID)
 	}
+	advanceTreasury(state)
 	advanceResearch(state, runtime)
 }
 
@@ -391,19 +392,47 @@ func advanceResearch(state *State, runtime *rules.RuntimeRules) {
 	}
 }
 
+func advanceTreasury(state *State) {
+	for index := range state.Nations {
+		nation := &state.Nations[index]
+		sciencePercent := nationSciencePercent(*nation, maxSciencePercentForNation(*nation))
+		income := 0
+		for _, city := range state.Cities {
+			if nationForPlayer(*state, city.OwnerID) != nation.ID {
+				continue
+			}
+			if city.Yields.Gold <= 0 {
+				continue
+			}
+			income += city.Yields.Gold - city.Yields.Gold*sciencePercent/100
+		}
+		if income > 0 {
+			nation.Gold += income
+		}
+	}
+}
+
+func maxSciencePercentForNation(nation Nation) int {
+	maxSciencePercent := -1
+	for _, effect := range nation.Effects {
+		if effect.Kind == EffectMaxSciencePercent {
+			maxSciencePercent = effect.Value
+		}
+	}
+	return maxSciencePercent
+}
+
 func researchRate(state State, nation Nation) int {
 	rate := 1
 	nationResearchFlat := 0
 	nationResearchPercent := 0
-	maxSciencePercent := -1
+	maxSciencePercent := maxSciencePercentForNation(nation)
 	for _, effect := range nation.Effects {
 		switch effect.Kind {
 		case EffectResearch:
 			nationResearchFlat += effect.Value
 		case EffectResearchPercent:
 			nationResearchPercent += effect.Value
-		case EffectMaxSciencePercent:
-			maxSciencePercent = effect.Value
 		}
 	}
 	sciencePercent := nationSciencePercent(nation, maxSciencePercent)

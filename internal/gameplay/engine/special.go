@@ -1022,7 +1022,7 @@ func filterCompletedOneShotImprovements(overlays []TileOverlay) []TileOverlay {
 
 func validateSpecialState(state State) error {
 	for _, nation := range state.Nations {
-		if nation.ID == "" || nation.PublicWorks < 0 || uniqueStrings(nation.Advances) || uniqueStrings(nation.Embassies) || invalidCityReports(nation.CityReports) {
+		if nation.ID == "" || nation.PublicWorks < 0 || nation.Gold < 0 || uniqueStrings(nation.Advances) || uniqueStrings(nation.Embassies) || invalidCityReports(nation.CityReports) {
 			return errors.New("nation special state is invalid")
 		}
 	}

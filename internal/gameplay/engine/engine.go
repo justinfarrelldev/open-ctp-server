@@ -255,6 +255,7 @@ type Nation struct {
 	Embassies           []string     `json:"embassies,omitempty"`
 	CityReports         []CityReport `json:"city_reports,omitempty"`
 	PublicWorks         int          `json:"public_works,omitempty"`
+	Gold                int          `json:"gold,omitempty"`
 	FranchiseProduction int          `json:"franchise_production,omitempty"`
 	SciencePercent      *int         `json:"science_percent,omitempty"`
 	Workday             *int         `json:"workday,omitempty"`

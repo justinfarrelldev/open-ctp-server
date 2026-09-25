@@ -47,6 +47,19 @@ func TestRetailResearchRateSubtractsUnitUpkeep(t *testing.T) {
 	}
 }
 
+func TestRetailTreasuryAccruesNonScienceCityGold(t *testing.T) {
+	science := 40
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", Gold: 5, SciencePercent: &science}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", Yields: Yield{Gold: 10}}},
+	}
+	advanceTreasury(&state)
+	if got, want := state.Nations[0].Gold, 11; got != want {
+		t.Fatalf("nation gold = %d, want old 5 + non-science 60%% of 10 = %d", got, want)
+	}
+}
+
 func TestRetailResearchRateUsesNationSciencePercent(t *testing.T) {
 	science := 50
 	state := State{

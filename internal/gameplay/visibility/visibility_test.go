@@ -39,6 +39,25 @@ func projectionHasUnit(projection Projection, unitID string) bool {
 	return false
 }
 
+func TestTreasuryGoldProjectsOnlyToOwner(t *testing.T) {
+	state := fixtureState()
+	state.Nations = []engine.Nation{{ID: "a", Gold: 42}, {ID: "b", Gold: 99}}
+	owner, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if owner.Diplomacy == nil || owner.Diplomacy.Gold != 42 {
+		t.Fatalf("owner diplomacy gold = %#v", owner.Diplomacy)
+	}
+	viewer, err := Project(state, "b")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if viewer.Diplomacy == nil || viewer.Diplomacy.Gold != 99 {
+		t.Fatalf("viewer saw wrong treasury gold = %#v", viewer.Diplomacy)
+	}
+}
+
 func TestSocialPolicyProjectsOwnSliderValuesAndLegalAction(t *testing.T) {
 	workday, wages, rations := 1, -1, 0
 	projection := Projection{Rules: &RulesProjection{}, Diplomacy: &DiplomacyProjection{Workday: &workday, Wages: &wages, Rations: &rations}}

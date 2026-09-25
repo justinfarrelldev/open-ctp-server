@@ -116,6 +116,7 @@ type DiplomacyProposalProjection struct {
 type DiplomacyProjection struct {
 	GovernmentID   string                        `json:"government_id,omitempty"`
 	PublicWorks    int                           `json:"public_works,omitempty"`
+	Gold           int                           `json:"gold,omitempty"`
 	SciencePercent *int                          `json:"science_percent,omitempty"`
 	Workday        *int                          `json:"workday,omitempty"`
 	Wages          *int                          `json:"wages,omitempty"`
@@ -295,7 +296,7 @@ func tradeRouteProjection(state engine.State, playerID string, visible map[strin
 }
 
 func diplomacyProjection(state engine.State, playerID string, nation engine.Nation) *DiplomacyProjection {
-	projection := &DiplomacyProjection{GovernmentID: nation.GovernmentID, PublicWorks: nation.PublicWorks}
+	projection := &DiplomacyProjection{GovernmentID: nation.GovernmentID, PublicWorks: nation.PublicWorks, Gold: nation.Gold}
 	if nation.SciencePercent != nil {
 		science := *nation.SciencePercent
 		projection.SciencePercent = &science
@@ -331,7 +332,7 @@ func diplomacyProjection(state engine.State, playerID string, nation engine.Nati
 		return projection.Relations[i].TargetPlayerID < projection.Relations[j].TargetPlayerID
 	})
 	sort.Slice(projection.Proposals, func(i, j int) bool { return projection.Proposals[i].ID < projection.Proposals[j].ID })
-	if projection.GovernmentID == "" && projection.PublicWorks == 0 && projection.SciencePercent == nil && projection.Workday == nil && projection.Wages == nil && projection.Rations == nil && len(projection.Relations) == 0 && len(projection.Proposals) == 0 {
+	if projection.GovernmentID == "" && projection.PublicWorks == 0 && projection.Gold == 0 && projection.SciencePercent == nil && projection.Workday == nil && projection.Wages == nil && projection.Rations == nil && len(projection.Relations) == 0 && len(projection.Proposals) == 0 {
 		return nil
 	}
 	return projection
