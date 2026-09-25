@@ -125,6 +125,7 @@
 - [x] Task 174: Retail city specialists persist safely and contribute food, production, gold, science, and happiness.
 - [x] Task 175: Specialist assignments can be changed through validated command, HTTP route, owner projection, and legal action metadata.
 - [x] Task 176: Low-happiness cities can riot and lose production/gold/science yields for the turn.
+- [x] Task 177: AI uses projected specialist legal actions to add entertainers in low-happiness owned cities.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -124,6 +125,26 @@ func TestPlannerUsesProjectedScienceRateAction(t *testing.T) {
 		}
 	}
 	t.Fatalf("science-rate candidate missing: %#v", candidates)
+}
+
+func TestPlannerUsesProjectedSpecialistActionForUnhappyCity(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		Cities:       []visibility.CityProjection{{ID: "city-a", OwnerID: "ai", Population: 2, Happiness: 60, Specialists: map[string]int{"POP_SCIENTIST": 1}}},
+		LegalActions: []visibility.ActionProjection{{Command: engine.CommandSetSpecialists, Route: "set-specialists", EntityID: "city-a", TargetID: "city-a", Payload: json.RawMessage(`{"city_id":"city-a","specialists":{"POP_SCIENTIST":1}}`)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandSetSpecialists && candidate.EntityID == "city-a" && bytes.Contains(candidate.Payload, []byte(`"POP_ENTERTAINER":1`)) {
+			return
+		}
+	}
+	t.Fatalf("specialist candidate missing: %#v", candidates)
 }
 
 func TestPlannerUsesProjectedReadinessWarAction(t *testing.T) {

@@ -191,6 +191,7 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 	candidates = append(candidates, governmentCandidates(projection, playerID)...)
 	candidates = append(candidates, projectedScienceRateCandidates(projection)...)
 	candidates = append(candidates, projectedReadinessCandidates(projection)...)
+	candidates = append(candidates, projectedSpecialistCandidates(projection, playerID)...)
 	candidates = append(candidates, diplomacyCandidates(projection, playerID)...)
 	candidates = append(candidates, projectedUnitSpecialTargetCandidates(projection)...)
 	candidates = append(candidates, combatCandidates(projection, playerID)...)
@@ -341,6 +342,44 @@ func projectedScienceRateCandidates(projection visibility.Projection) []Candidat
 			continue
 		}
 		candidates = append(candidates, Candidate{Type: engine.CommandSetScienceRate, EntityID: action.EntityID, TargetID: action.TargetID, Score: 755, Payload: append(json.RawMessage(nil), action.Payload...)})
+	}
+	return candidates
+}
+
+func projectedSpecialistCandidates(projection visibility.Projection, playerID string) []Candidate {
+	legalCities := make(map[string]visibility.ActionProjection)
+	for _, action := range projection.LegalActions {
+		if action.Command == engine.CommandSetSpecialists && action.EntityID != "" {
+			legalCities[action.EntityID] = action
+		}
+	}
+	if len(legalCities) == 0 {
+		return nil
+	}
+	candidates := make([]Candidate, 0)
+	for _, city := range projection.Cities {
+		action, ok := legalCities[city.ID]
+		if !ok || city.OwnerID != playerID || city.Happiness <= 0 || city.Happiness >= 73 || city.Population <= 0 {
+			continue
+		}
+		specialists := make(map[string]int, len(city.Specialists)+1)
+		total := 0
+		for kind, count := range city.Specialists {
+			if count <= 0 {
+				continue
+			}
+			specialists[kind] = count
+			total += count
+		}
+		if total >= city.Population {
+			continue
+		}
+		specialists["POP_ENTERTAINER"]++
+		payload, err := json.Marshal(map[string]any{"city_id": city.ID, "specialists": specialists})
+		if err != nil {
+			continue
+		}
+		candidates = append(candidates, Candidate{Type: engine.CommandSetSpecialists, EntityID: action.EntityID, TargetID: action.TargetID, Score: 753, Payload: payload})
 	}
 	return candidates
 }
