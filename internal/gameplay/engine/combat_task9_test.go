@@ -40,6 +40,40 @@ func TestRetailFirepowerScalesCombatDamage(t *testing.T) {
 	}
 }
 
+func TestRetailActiveDefenseHonorsDefendDomains(t *testing.T) {
+	base := combatState()
+	base.Units = []Unit{
+		{ID: "bombarder", OwnerID: "player-a", TileID: "a", Domain: DomainLand, Movement: 1, Ranged: 100, BombardRange: 2, BombRounds: 1, Strength: 1, Armor: 1, Health: 10, MaxHealth: 10},
+		{ID: "target", OwnerID: "player-b", TileID: "retreat", Defense: 1, Strength: 1, Armor: 1, Health: 10, MaxHealth: 10},
+	}
+	base.Armies = nil
+	base.Cities = nil
+	base.Fog = append(base.Fog, FogObservation{PlayerID: "player-a", TileID: "retreat", Turn: 1})
+	payload, _ := json.Marshal(map[string]string{"unit_id": "bombarder", "target_tile_id": "retreat"})
+
+	airOnly := base
+	airOnly.Units = append(append([]Unit(nil), base.Units...), Unit{ID: "air-defense", OwnerID: "player-b", TileID: "retreat", Domain: DomainLand, Ranged: 100, ActiveDefenseRange: 3, Strength: 3, Armor: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "air", Kind: EffectDefendAir}}})
+	next, _, _, err := Apply(airOnly, Command{SchemaVersion: CommandSchemaV1, ID: "air-defense", ActorPlayerID: "player-a", Type: CommandBombard, Payload: payload}, airOnly.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	bombarder, _ := unitByID(next, "bombarder")
+	if bombarder.Health != 10 {
+		t.Fatalf("air-only active defense hit land bombarder: %+v", bombarder)
+	}
+
+	landDefense := base
+	landDefense.Units = append(append([]Unit(nil), base.Units...), Unit{ID: "land-defense", OwnerID: "player-b", TileID: "retreat", Domain: DomainLand, Ranged: 100, ActiveDefenseRange: 3, Strength: 3, Armor: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "land", Kind: EffectDefendLand}}})
+	next, _, _, err = Apply(landDefense, Command{SchemaVersion: CommandSchemaV1, ID: "land-defense", ActorPlayerID: "player-a", Type: CommandBombard, Payload: payload}, landDefense.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	bombarder, _ = unitByID(next, "bombarder")
+	if bombarder.Health >= 10 {
+		t.Fatalf("land active defense did not hit land bombarder: %+v", bombarder)
+	}
+}
+
 func TestRetailFirepowerScalesBombardDamage(t *testing.T) {
 	state := combatState()
 	state.Units = []Unit{

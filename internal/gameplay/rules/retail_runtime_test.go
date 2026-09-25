@@ -105,6 +105,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || battleship.Firepower != 4 {
 		t.Fatalf("battleship firepower = %+v ok=%v, want 4", battleship, ok)
 	}
+	mobileSAM, ok := runtime.Unit("UNIT_MOBILE_SAM")
+	if !ok || !runtimeUnitHasEffect(mobileSAM, "defend_air") {
+		t.Fatalf("mobile SAM defend effects = %+v ok=%v", mobileSAM, ok)
+	}
 
 	cavalry, ok := runtime.Unit("UNIT_CAVALRY")
 	if !ok || !runtimeUnitHasEffect(cavalry, "mounted") {

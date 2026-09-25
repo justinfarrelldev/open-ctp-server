@@ -249,7 +249,7 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 		return "", nil, errors.New("bombard target is unavailable")
 	}
 	activeDefenseHits := 0
-	interceptors := activeDefenseInterceptors(*state, command.ActorPlayerID, targets[0].OwnerID, targetTile)
+	interceptors := activeDefenseInterceptors(*state, command.ActorPlayerID, targets[0].OwnerID, *unit, targetTile)
 	for _, interceptor := range interceptors {
 		defense := unit.Defense + combatDefenseModifier(*state, *unit, *interceptor)
 		if defense < 0 {
@@ -320,7 +320,7 @@ func tileDistance(left, right Tile) int {
 	return dx + dy
 }
 
-func activeDefenseInterceptors(state State, actorID, protectedOwnerID string, targetTile Tile) []*Unit {
+func activeDefenseInterceptors(state State, actorID, protectedOwnerID string, attacker Unit, targetTile Tile) []*Unit {
 	interceptors := make([]*Unit, 0)
 	for i := range state.Units {
 		unit := &state.Units[i]
@@ -328,13 +328,37 @@ func activeDefenseInterceptors(state State, actorID, protectedOwnerID string, ta
 			continue
 		}
 		tile, ok := tileByID(state, unit.TileID)
-		if !ok || tileDistance(tile, targetTile) > unit.ActiveDefenseRange {
+		if !ok || tileDistance(tile, targetTile) > unit.ActiveDefenseRange || !activeDefenseCanDefend(*unit, attacker) {
 			continue
 		}
 		interceptors = append(interceptors, unit)
 	}
 	sort.Slice(interceptors, func(i, j int) bool { return interceptors[i].ID < interceptors[j].ID })
 	return interceptors
+}
+
+func activeDefenseCanDefend(interceptor, attacker Unit) bool {
+	if !interceptorHasDefendMetadata(interceptor) {
+		return true
+	}
+	switch attacker.Domain {
+	case DomainLand:
+		return hasEffect(interceptor.Effects, EffectDefendLand)
+	case DomainSea:
+		return hasEffect(interceptor.Effects, EffectDefendSea)
+	case DomainAir:
+		return hasEffect(interceptor.Effects, EffectDefendAir)
+	case DomainSpace:
+		return hasEffect(interceptor.Effects, EffectDefendSpace)
+	case DomainAmphibious:
+		return hasEffect(interceptor.Effects, EffectDefendLand) || hasEffect(interceptor.Effects, EffectDefendSea)
+	default:
+		return true
+	}
+}
+
+func interceptorHasDefendMetadata(interceptor Unit) bool {
+	return hasEffect(interceptor.Effects, EffectDefendLand) || hasEffect(interceptor.Effects, EffectDefendSea) || hasEffect(interceptor.Effects, EffectDefendAir) || hasEffect(interceptor.Effects, EffectDefendSpace) || hasEffect(interceptor.Effects, EffectDefendUnderwater)
 }
 
 func bombardTargets(state State, actorID, tileID string) []*Unit {

@@ -431,6 +431,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	for _, target := range retailUnitCanAttackEffects(unit.RawFields) {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID(target), Kind: target})
 	}
+	for _, target := range retailUnitDefendEffects(unit.RawFields) {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID(target), Kind: target})
+	}
 	if retailContainsString(unit.Flags, "AttackWoodenShipBonus") {
 		if value := percentPoints(firstRetailUnitFloat(unit, "WoodenShipBonus")); value > 0 {
 			effects = append(effects, RuntimeStarterEffect{ID: effectID("combat_attack_vs_wooden_ship"), Kind: "combat_attack_vs_wooden_ship_percent", Value: value})
@@ -523,6 +526,31 @@ func retailUnitFieldHasValue(fields []RetailRawField, key, value string) bool {
 		}
 	}
 	return false
+}
+
+func retailUnitDefendEffects(fields []RetailRawField) []string {
+	seen := map[string]bool{}
+	result := make([]string, 0)
+	for _, value := range retailFieldValues(fields, "Defend") {
+		kind := ""
+		switch value {
+		case "Land", "Mountain":
+			kind = "defend_land"
+		case "Sea", "Water", "ShallowWater":
+			kind = "defend_sea"
+		case "Air":
+			kind = "defend_air"
+		case "Space":
+			kind = "defend_space"
+		case "Underwater":
+			kind = "defend_underwater"
+		}
+		if kind != "" && !seen[kind] {
+			seen[kind] = true
+			result = append(result, kind)
+		}
+	}
+	return result
 }
 
 func retailUnitCanAttackEffects(fields []RetailRawField) []string {
