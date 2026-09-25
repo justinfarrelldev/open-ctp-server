@@ -257,15 +257,7 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 		}
 		roll := combatRoll(state, sources)
 		if int(roll%1000) < interceptor.Ranged*1000/(interceptor.Ranged+defense) {
-			armor := unit.Armor
-			if armor < 1 {
-				armor = 1
-			}
-			damage := interceptor.Strength / armor
-			if damage < 1 {
-				damage = 1
-			}
-			unit.Health -= damage
+			unit.Health -= combatDamage(*interceptor, *unit)
 			activeDefenseHits++
 		}
 		if unit.Health <= 0 {
@@ -293,15 +285,7 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 		}
 		roll := combatRoll(state, sources)
 		if int(roll%1000) < unit.Ranged*1000/(unit.Ranged+defense) {
-			armor := target.Armor
-			if armor < 1 {
-				armor = 1
-			}
-			damage := unit.Strength / armor
-			if damage < 1 {
-				damage = 1
-			}
-			target.Health -= damage
+			target.Health -= combatDamage(*unit, *target)
 			hits++
 		}
 		targets = livingCombatUnits(targets)
@@ -455,18 +439,26 @@ func combatStrike(state *State, sources Sources, attackers, defenders []*Unit, r
 		}
 		roll := combatRoll(state, sources)
 		if int(roll%1000) < attack*1000/(attack+defense) {
-			damage := attacker.Strength / target.Armor
-			if damage < 1 {
-				damage = 1
-			}
-			firepower := attacker.Firepower
-			if firepower < 1 {
-				firepower = 1
-			}
-			damage *= firepower
+			damage := combatDamage(*attacker, *target)
 			target.Health -= readinessAdjustedCombatDamage(*state, *target, damage)
 		}
 	}
+}
+
+func combatDamage(attacker, target Unit) int {
+	armor := target.Armor
+	if armor < 1 {
+		armor = 1
+	}
+	damage := attacker.Strength / armor
+	if damage < 1 {
+		damage = 1
+	}
+	firepower := attacker.Firepower
+	if firepower < 1 {
+		firepower = 1
+	}
+	return damage * firepower
 }
 
 func readinessAdjustedCombatDamage(state State, target Unit, baseDamage int) int {

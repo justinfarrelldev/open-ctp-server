@@ -40,6 +40,26 @@ func TestRetailFirepowerScalesCombatDamage(t *testing.T) {
 	}
 }
 
+func TestRetailFirepowerScalesBombardDamage(t *testing.T) {
+	state := combatState()
+	state.Units = []Unit{
+		{ID: "bombarder", OwnerID: "player-a", TileID: "a", Movement: 1, Ranged: 100, BombardRange: 2, BombRounds: 1, Strength: 2, Armor: 1, Firepower: 3, Health: 10, MaxHealth: 10},
+		{ID: "target", OwnerID: "player-b", TileID: "retreat", Defense: 0, Strength: 1, Armor: 2, Health: 10, MaxHealth: 10},
+	}
+	state.Armies = nil
+	state.Cities = nil
+	state.Fog = append(state.Fog, FogObservation{PlayerID: "player-a", TileID: "retreat", Turn: 1})
+	payload, _ := json.Marshal(map[string]string{"unit_id": "bombarder", "target_tile_id": "retreat"})
+	next, _, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "bombard-firepower", ActorPlayerID: "player-a", Type: CommandBombard, Payload: payload}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	target, ok := unitByID(next, "target")
+	if !ok || target.Health != 7 {
+		t.Fatalf("target after firepower bombard = %+v ok=%v, want health 7", target, ok)
+	}
+}
+
 func TestRetailCombatPromotesSurvivingWinnersToVeteran(t *testing.T) {
 	state := combatState()
 	state.Units = []Unit{

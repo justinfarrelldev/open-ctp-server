@@ -142,6 +142,7 @@
 - [x] Task 191: Peace-movement defeat pressure decays with government coefficients and resets turn losses.
 - [x] Task 192: Home/overseas defeat state contributes signed retail peace-movement happiness.
 - [x] Task 193: Retail unit firepower imports into runtime/units and scales combat damage.
+- [x] Task 194: Firepower-aware damage applies to bombardment and active-defense interception.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
