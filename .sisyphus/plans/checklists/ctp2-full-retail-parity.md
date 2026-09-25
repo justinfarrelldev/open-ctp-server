@@ -130,6 +130,7 @@
 - [x] Task 179: Visible city pairs project safe create-trade-route legal actions and HTTP routing supports the command.
 - [x] Task 180: AI consumes projected create-trade-route actions without hidden-state synthesis.
 - [x] Task 181: NoPollutionUnhappiness wonder markers suppress government pollution unhappiness.
+- [x] Task 182: War-discontent military unit counts exempt owned completed fortifications.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

@@ -189,6 +189,26 @@ func TestRetailWarDiscontentReducesCityHappiness(t *testing.T) {
 	}
 }
 
+func TestRetailWarDiscontentExemptsOwnedFortifiedTiles(t *testing.T) {
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", Effects: []Effect{{ID: "max", Kind: EffectWarDiscontentMaxUnits, Value: 1}, {ID: "per", Kind: EffectWarDiscontentPerUnit, Value: 100}}}},
+		Tiles:   []Tile{{ID: "city-tile", OwnerID: "player-a"}, {ID: "fort-a", OwnerID: "player-a"}, {ID: "field-b"}, {ID: "field-c"}},
+		Cities:  []City{{ID: "city", OwnerID: "player-a", TileID: "city-tile", Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 80}}}},
+		Overlays: []TileOverlay{
+			{ID: "fort", TileID: "fort-a", Kind: "improvement", OwnerID: "player-a", ImprovementID: "TILEIMP_FORTIFICATIONS"},
+		},
+		Units: []Unit{
+			{ID: "unit-a", OwnerID: "player-a", TileID: "fort-a", Attack: 1},
+			{ID: "unit-b", OwnerID: "player-a", TileID: "field-b", Attack: 1},
+			{ID: "unit-c", OwnerID: "player-a", TileID: "field-c", Attack: 1},
+		},
+	}
+	if got, want := cityHappiness(state, state.Cities[0]), 79; got != want {
+		t.Fatalf("happiness = %d, want owned fort exemption penalty to %d", got, want)
+	}
+}
+
 func TestRetailNoPollutionUnhappinessWonderSuppressesPenalty(t *testing.T) {
 	state := State{
 		Players: []Player{{ID: "player-a", NationID: "nation-a"}},

@@ -1066,7 +1066,7 @@ func warDiscontentHappinessPenalty(state State, city City) int {
 		}
 	}
 	for _, unit := range state.Units {
-		if unit.OwnerID == city.OwnerID && unit.Attack > 0 && !cityTiles[unit.TileID] {
+		if unit.OwnerID == city.OwnerID && unit.Attack > 0 && !cityTiles[unit.TileID] && !tileHasOwnedFortification(state, unit.TileID, city.OwnerID) {
 			outOfCity++
 		}
 	}
@@ -1075,6 +1075,19 @@ func warDiscontentHappinessPenalty(state State, city City) int {
 	}
 	totalCentis := (outOfCity - maxUnits) * perUnitCentis
 	return (totalCentis + cityCount*100 - 1) / (cityCount * 100)
+}
+
+func tileHasOwnedFortification(state State, tileID, ownerID string) bool {
+	tile, ok := tileByID(state, tileID)
+	if !ok || tile.OwnerID != ownerID {
+		return false
+	}
+	for _, overlay := range state.Overlays {
+		if overlay.TileID == tileID && overlay.Kind == "improvement" && overlay.Remaining == 0 && overlay.OwnerID == ownerID && overlay.ImprovementID == "TILEIMP_FORTIFICATIONS" {
+			return true
+		}
+	}
+	return false
 }
 
 func pollutionUnhappinessPenalty(state State, city City) int {
