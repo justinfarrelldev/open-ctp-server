@@ -46,6 +46,9 @@ func TestInitialGameplayStateDerivesEntitiesFromSnapshot(t *testing.T) {
 	if len(first.Players) != 2 || len(first.Nations) != 2 || len(first.Units) != 4 {
 		t.Fatalf("entities players=%d nations=%d units=%d", len(first.Players), len(first.Nations), len(first.Units))
 	}
+	if first.Nations[0].Gold != 75 || first.Nations[1].Gold != 75 {
+		t.Fatalf("starting treasury gold = %d/%d, want 75", first.Nations[0].Gold, first.Nations[1].Gold)
+	}
 	if first.Units[0].Strength < 1 || first.Units[0].Armor < 1 || !hasStarterEffect(first.Units[0].Effects, engine.EffectSpecialEmbassy) || !hasStarterEffect(first.Units[0].Effects, engine.EffectSpecialSteal) {
 		t.Fatalf("starter capabilities = %#v", first.Units[0])
 	}

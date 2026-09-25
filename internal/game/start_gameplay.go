@@ -152,7 +152,7 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 		}
 		state.Phase.ActivePlayerOrder = append(state.Phase.ActivePlayerOrder, playerID)
 		state.Players = append(state.Players, engine.Player{ID: playerID, NationID: "nation-" + playerID, Lifecycle: engine.PlayerActive, Controller: controller})
-		state.Nations = append(state.Nations, engine.Nation{ID: "nation-" + playerID, PublicWorks: snapshot.Config.StartingGold})
+		state.Nations = append(state.Nations, engine.Nation{ID: "nation-" + playerID, PublicWorks: snapshot.Config.StartingGold, Gold: snapshot.Config.StartingGold})
 	}
 	for _, player := range players {
 		playerID := fmt.Sprintf("account-%d", player.AccountID)

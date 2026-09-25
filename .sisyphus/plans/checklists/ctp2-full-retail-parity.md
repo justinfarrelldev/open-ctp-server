@@ -110,6 +110,7 @@
 - [x] Task 159: Retail government crime coefficients and offsets import and compute happiness-derived crime.
 - [x] Task 160: Retail pollution-unhappiness government coefficients reduce city happiness.
 - [x] Task 161: Nation treasuries accrue non-science city gold and project safely to owners.
+- [x] Task 162: Starting gold initializes nation treasury gold at gameplay startup.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
