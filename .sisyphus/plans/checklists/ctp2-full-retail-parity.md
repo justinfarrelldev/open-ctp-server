@@ -111,6 +111,7 @@
 - [x] Task 160: Retail pollution-unhappiness government coefficients reduce city happiness.
 - [x] Task 161: Nation treasuries accrue non-science city gold and project safely to owners.
 - [x] Task 162: Starting gold initializes nation treasury gold at gameplay startup.
+- [x] Task 163: Unit gold upkeep debits treasury instead of directly reducing research.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

@@ -406,8 +406,10 @@ func advanceTreasury(state *State) {
 			}
 			income += city.Yields.Gold - city.Yields.Gold*sciencePercent/100
 		}
-		if income > 0 {
-			nation.Gold += income
+		income -= unitUpkeepForNation(*state, nation.ID)
+		nation.Gold += income
+		if nation.Gold < 0 {
+			nation.Gold = 0
 		}
 	}
 }
@@ -458,10 +460,6 @@ func researchRate(state State, nation Nation) int {
 		if cityRate > 0 {
 			cityResearch += cityRate
 		}
-	}
-	cityResearch -= unitUpkeepForNation(state, nation.ID)
-	if cityResearch < 0 {
-		cityResearch = 0
 	}
 	rate += cityResearch + signedYieldPercentDelta(cityResearch, nationResearchPercent) + nationResearchFlat
 	if rate < 0 {

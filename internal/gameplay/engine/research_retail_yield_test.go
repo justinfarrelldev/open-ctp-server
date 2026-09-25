@@ -35,15 +35,20 @@ func TestRetailResearchRateUsesCitySciencePercentEffect(t *testing.T) {
 	}
 }
 
-func TestRetailResearchRateSubtractsUnitUpkeep(t *testing.T) {
+func TestRetailUnitUpkeepDebitsTreasuryNotResearch(t *testing.T) {
+	science := 100
 	state := State{
 		Players: []Player{{ID: "player-a", NationID: "nation-a"}, {ID: "player-b", NationID: "nation-b"}},
-		Nations: []Nation{{ID: "nation-a"}, {ID: "nation-b"}},
+		Nations: []Nation{{ID: "nation-a", Gold: 5, SciencePercent: &science}, {ID: "nation-b"}},
 		Cities:  []City{{ID: "city-a", OwnerID: "player-a", Yields: Yield{Gold: 10}}},
 		Units:   []Unit{{ID: "unit-a", OwnerID: "player-a", Upkeep: 3}, {ID: "unit-b", OwnerID: "player-b", Upkeep: 5}},
 	}
-	if got, want := researchRate(state, state.Nations[0]), 8; got != want {
-		t.Fatalf("research rate = %d, want base 1 + city gold 10 - unit upkeep 3", got)
+	if got, want := researchRate(state, state.Nations[0]), 11; got != want {
+		t.Fatalf("research rate = %d, want base 1 + science gold 10 without unit-upkeep subtraction = %d", got, want)
+	}
+	advanceTreasury(&state)
+	if got, want := state.Nations[0].Gold, 2; got != want {
+		t.Fatalf("treasury gold = %d, want old 5 - unit upkeep 3 = %d", got, want)
 	}
 }
 
