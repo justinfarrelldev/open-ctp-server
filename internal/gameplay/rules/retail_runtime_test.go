@@ -2,6 +2,16 @@ package rules
 
 import "testing"
 
+func TestRetailWonderNoPollutionUnhappinessProjectsMarker(t *testing.T) {
+	effects := retailWonderRuntimeEffects(RetailWonder{ID: "WONDER_TEST", Flags: []string{"NoPollutionUnhappiness"}}, nil)
+	for _, effect := range effects {
+		if effect.Kind == "no_pollution_unhappiness" {
+			return
+		}
+	}
+	t.Fatalf("effects = %#v, want no_pollution_unhappiness marker", effects)
+}
+
 func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 	root := localRetailGameDataRoot(t)
 	db, err := LoadRetailRulesFromDirectory(root)

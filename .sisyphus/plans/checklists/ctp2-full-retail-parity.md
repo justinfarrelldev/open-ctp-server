@@ -129,6 +129,7 @@
 - [x] Task 178: Trade routes can be created through validated canonical command and event path.
 - [x] Task 179: Visible city pairs project safe create-trade-route legal actions and HTTP routing supports the command.
 - [x] Task 180: AI consumes projected create-trade-route actions without hidden-state synthesis.
+- [x] Task 181: NoPollutionUnhappiness wonder markers suppress government pollution unhappiness.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

@@ -189,6 +189,19 @@ func TestRetailWarDiscontentReducesCityHappiness(t *testing.T) {
 	}
 }
 
+func TestRetailNoPollutionUnhappinessWonderSuppressesPenalty(t *testing.T) {
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", Effects: []Effect{{ID: "pollution-unhappy", Kind: EffectPollutionUnhappyCoef, Value: 4}}}},
+		Tiles:   []Tile{{ID: "city-tile", Pollution: 50}},
+		Cities:  []City{{ID: "city", OwnerID: "player-a", TileID: "city-tile", Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 80}}}},
+		Wonders: []Wonder{{ID: "wonder", OwnerID: "player-a", CityID: "city", Effects: []Effect{{ID: "no-pollution", Kind: EffectNoPollutionUnhappiness}}}},
+	}
+	if got, want := cityHappiness(state, state.Cities[0]), 80; got != want {
+		t.Fatalf("happiness = %d, want no pollution unhappiness penalty = %d", got, want)
+	}
+}
+
 func TestRetailPollutionUnhappyCoefReducesHappiness(t *testing.T) {
 	state := State{
 		Players: []Player{{ID: "player-a", NationID: "nation-a"}},

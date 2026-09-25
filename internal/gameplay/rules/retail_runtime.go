@@ -302,6 +302,7 @@ func retailWonderRuntimeEffects(wonder RetailWonder, buildingEffects map[string]
 		{"EnableParkRangers", "enable_park_rangers"},
 		{"FreeSlaves", "free_slaves"},
 		{"GlobalRadar", "global_radar"},
+		{"NoPollutionUnhappiness", "no_pollution_unhappiness"},
 		{"PollutersToParks", "polluters_to_parks"},
 		{"PreventConversion", "prevent_conversion_empire"},
 		{"ProhibitSlavers", "prohibit_slavers"},
