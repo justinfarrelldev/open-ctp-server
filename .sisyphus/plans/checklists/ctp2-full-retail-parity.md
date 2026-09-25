@@ -131,6 +131,8 @@
 - [x] Task 180: AI consumes projected create-trade-route actions without hidden-state synthesis.
 - [x] Task 181: NoPollutionUnhappiness wonder markers suppress government pollution unhappiness.
 - [x] Task 182: War-discontent military unit counts exempt owned completed fortifications.
+- [x] Task 183: Overseas peace-movement deployment penalties use at-home radius and nearest owned city distance.
+- [x] Task 184: LowerPeaceMovement city effects scale combined peace-movement penalties.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

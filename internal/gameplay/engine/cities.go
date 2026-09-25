@@ -33,6 +33,8 @@ const (
 	EffectEmpireDistanceScale             = "empire_distance_scale"
 	EffectMinEmpireDistance               = "min_empire_distance"
 	EffectMaxEmpireDistance               = "max_empire_distance"
+	EffectAtHomeRadius                    = "at_home_radius"
+	EffectOverseasCoef                    = "overseas_coef"
 	EffectWorkdayExpectation              = "workday_expectation"
 	EffectPositiveWorkdayCoef             = "positive_workday_coef"
 	EffectNegativeWorkdayCoef             = "negative_workday_coef"
@@ -984,7 +986,7 @@ func cityHappiness(state State, city City) int {
 		happiness = martial
 	}
 	happiness += socialSliderHappinessDelta(state, city)
-	happiness -= warDiscontentHappinessPenalty(state, city)
+	happiness -= peaceMovementHappinessPenalty(state, city)
 	happiness -= pollutionUnhappinessPenalty(state, city)
 	happiness -= tooManyCitiesHappinessPenalty(state, city)
 	happiness -= empireDistanceHappinessPenalty(state, city)
@@ -1027,7 +1029,30 @@ func advanceConquestDistress(city *City, nation Nation) {
 	city.ConquestDistress -= city.ConquestDistress * decayCentis / 100
 }
 
-func warDiscontentHappinessPenalty(state State, city City) int {
+func peaceMovementHappinessPenalty(state State, city City) int {
+	penaltyCentis := warDiscontentHappinessPenaltyCentis(state, city) + overseasHappinessPenaltyCentis(state, city)
+	if penaltyCentis <= 0 {
+		return 0
+	}
+	factorPercent := 100 + lowerPeaceMovementPercent(state, city)
+	if factorPercent <= 0 {
+		return 0
+	}
+	penaltyCentis = (penaltyCentis*factorPercent + 99) / 100
+	return (penaltyCentis + 99) / 100
+}
+
+func lowerPeaceMovementPercent(state State, city City) int {
+	percent := 0
+	for _, effect := range cityEffects(state, city) {
+		if effect.Kind == EffectLowerPeaceMovementPercent {
+			percent += effect.Value
+		}
+	}
+	return percent
+}
+
+func warDiscontentHappinessPenaltyCentis(state State, city City) int {
 	nation := nationForID(&state, nationForPlayer(state, city.OwnerID))
 	if nation == nil {
 		return 0
@@ -1074,7 +1099,63 @@ func warDiscontentHappinessPenalty(state State, city City) int {
 		return 0
 	}
 	totalCentis := (outOfCity - maxUnits) * perUnitCentis
-	return (totalCentis + cityCount*100 - 1) / (cityCount * 100)
+	return (totalCentis + cityCount - 1) / cityCount
+}
+
+func overseasHappinessPenaltyCentis(state State, city City) int {
+	nation := nationForID(&state, nationForPlayer(state, city.OwnerID))
+	if nation == nil {
+		return 0
+	}
+	radius, coefCentis := -1, 0
+	for _, effect := range nation.Effects {
+		switch effect.Kind {
+		case EffectAtHomeRadius:
+			if effect.Value > radius {
+				radius = effect.Value
+			}
+		case EffectOverseasCoef:
+			if effect.Value > coefCentis {
+				coefCentis = effect.Value
+			}
+		}
+	}
+	if radius < 0 || coefCentis <= 0 {
+		return 0
+	}
+	ownedCityTiles := make([]Tile, 0)
+	for _, candidate := range state.Cities {
+		if candidate.OwnerID != city.OwnerID {
+			continue
+		}
+		if tile, ok := tileByID(state, candidate.TileID); ok {
+			ownedCityTiles = append(ownedCityTiles, tile)
+		}
+	}
+	if len(ownedCityTiles) == 0 {
+		return 0
+	}
+	totalCentis := 0
+	for _, unit := range state.Units {
+		if unit.OwnerID != city.OwnerID || unit.TileID == "" || unit.TransportID != "" {
+			continue
+		}
+		unitTile, ok := tileByID(state, unit.TileID)
+		if !ok {
+			continue
+		}
+		nearest := -1
+		for _, cityTile := range ownedCityTiles {
+			distance := tileDistance(unitTile, cityTile)
+			if nearest < 0 || distance < nearest {
+				nearest = distance
+			}
+		}
+		if nearest > radius {
+			totalCentis += (nearest - radius) * coefCentis
+		}
+	}
+	return (totalCentis + len(ownedCityTiles) - 1) / len(ownedCityTiles)
 }
 
 func tileHasOwnedFortification(state State, tileID, ownerID string) bool {
@@ -2276,7 +2357,7 @@ func validateEffects(effects []Effect) error {
 			continue
 		}
 		switch effect.Kind {
-		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldGoldPerPopulation, EffectHappiness, EffectExertsMartialLaw, EffectMartialLawMaxUnits, EffectMartialLawEffect, EffectMartialLawThreshold, EffectTooManyCitiesThreshold, EffectTooManyCitiesCoefficient, EffectEmpireDistanceScale, EffectMinEmpireDistance, EffectMaxEmpireDistance, EffectWorkdayExpectation, EffectPositiveWorkdayCoef, EffectNegativeWorkdayCoef, EffectWagesExpectation, EffectPositiveWagesCoef, EffectNegativeWagesCoef, EffectRationsExpectation, EffectPositiveRationsCoef, EffectNegativeRationsCoef, EffectWarDiscontentMaxUnits, EffectWarDiscontentPerUnit, EffectConquestDistress, EffectConquestDistressDecay, EffectReadyPeaceHP, EffectReadyAlertHP, EffectReadyWarHP, EffectCrimePercent, EffectCrimeCoef, EffectCrimeOffset, EffectMaxPopulation, EffectOvercrowdingLevel, EffectStarvationProtection, EffectAirport, EffectMounted, EffectNoFuelThenCrash, EffectCantCaptureCity, EffectCanBeSued, EffectCanBeExpelled, EffectCanEntrench, EffectCanPillage, EffectBuildingRemovesPopulation, EffectIgnoreZOC, EffectCombatDefenseVsMountedPercent, EffectCombatDefenseVsAirPercent, EffectWoodenShip, EffectSubmarine, EffectStealth, EffectCanSeeStealth, EffectCanAttackLand, EffectCanAttackSea, EffectCanAttackAir, EffectCanAttackSpace, EffectCanAttackUnderwater, EffectCombatAttackVsWoodenShipPercent, EffectCityWalls, EffectIgnoreCityWalls, EffectProtectFromNukes, EffectProtectFromBioAgents, EffectProtectFromNanoVirus, EffectPreventConversion, EffectPreventSlavery, EffectForceField, EffectFoodVatPercent, EffectAllowGrunts, EffectBrokerage, EffectCapitol, EffectCathedral, EffectDoubleTelevangelists, EffectIsReligious, EffectLowerPeaceMovementPercent, EffectNuclearPlant, EffectTelevision, EffectEliminateNukes, EffectCloseEmbassies, EffectEmbassiesEverywhere, EffectEnableParkRangers, EffectFreeSlaves, EffectGlobalRadar, EffectIncreaseBoatMovement, EffectIncreaseHP, EffectIncreaseBrokerages, EffectIncreaseRegard, EffectIncreaseScientists, EffectPreventConversionEmpire, EffectProhibitSlavers, EffectProtectFromBarbarians, EffectReduceReadinessCost, EffectReformCities, EffectRevoltingCitiesJoinPlayer, EffectSpiesEverywhere, EffectStartGaiaController, EffectTemporaryFullHappiness, EffectPollutersToParks, EffectNoPollutionUnhappiness, EffectGoldPerWaterTradeRoute, EffectGoldPerInternationalTradeRoute, EffectGoldPerTelevision, EffectDecreaseEmpireSize, EffectPollutionPercent, EffectPollutionUnhappyCoef, EffectPollutionPopulationPercent, EffectPollutionProductionPercent, EffectPollution, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectResearchPercent, EffectMaxSciencePercent, EffectBonus, EffectCombatAttack, EffectCombatAttackLand, EffectCombatAttackSea, EffectCombatAttackAir, EffectCombatDefense, EffectSoothsaying, EffectFranchise, EffectRulerAssassinated, EffectFreedPopulation, EffectInjunction, EffectLawsuit, EffectWatchful, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns, EffectSpecialConvertCity, EffectSpecialCreateFranchise, EffectSpecialInvestigateCity, EffectSpecialPlantNuke, EffectSpecialBioTerror, EffectSpecialNanoTerror, EffectSpecialPlague, EffectSpecialAssassinateRuler, EffectSpecialSlaveRaid, EffectSpecialSettlerSlaveRaid, EffectSpecialUndergroundRailway, EffectSpecialInjoin, EffectSpecialReform, EffectSpecialCreatePark, EffectSpecialExpel, EffectSpecialSue, EffectSpecialConvertCityDeathChance, EffectSpecialCreateFranchiseDeathChance, EffectSpecialInvestigateCityDeathChance, EffectSpecialPlantNukeDeathChance, EffectSpecialPlantNukeEscapeChance, EffectSpecialBioTerrorDeathChance, EffectSpecialNanoTerrorDeathChance, EffectSpecialPlagueDeathChance, EffectSpecialAssassinateRulerDeathChance, EffectSpecialSlaveRaidDeathChance, EffectSpecialSettlerSlaveRaidDeathChance, EffectSpecialUndergroundRailwayDeathChance:
+		case EffectSettler, EffectSettleSize, EffectSettleBuilding, EffectYieldFood, EffectYieldProduction, EffectYieldGold, EffectYieldGoldPerPopulation, EffectHappiness, EffectExertsMartialLaw, EffectMartialLawMaxUnits, EffectMartialLawEffect, EffectMartialLawThreshold, EffectTooManyCitiesThreshold, EffectTooManyCitiesCoefficient, EffectEmpireDistanceScale, EffectMinEmpireDistance, EffectMaxEmpireDistance, EffectAtHomeRadius, EffectOverseasCoef, EffectWorkdayExpectation, EffectPositiveWorkdayCoef, EffectNegativeWorkdayCoef, EffectWagesExpectation, EffectPositiveWagesCoef, EffectNegativeWagesCoef, EffectRationsExpectation, EffectPositiveRationsCoef, EffectNegativeRationsCoef, EffectWarDiscontentMaxUnits, EffectWarDiscontentPerUnit, EffectConquestDistress, EffectConquestDistressDecay, EffectReadyPeaceHP, EffectReadyAlertHP, EffectReadyWarHP, EffectCrimePercent, EffectCrimeCoef, EffectCrimeOffset, EffectMaxPopulation, EffectOvercrowdingLevel, EffectStarvationProtection, EffectAirport, EffectMounted, EffectNoFuelThenCrash, EffectCantCaptureCity, EffectCanBeSued, EffectCanBeExpelled, EffectCanEntrench, EffectCanPillage, EffectBuildingRemovesPopulation, EffectIgnoreZOC, EffectCombatDefenseVsMountedPercent, EffectCombatDefenseVsAirPercent, EffectWoodenShip, EffectSubmarine, EffectStealth, EffectCanSeeStealth, EffectCanAttackLand, EffectCanAttackSea, EffectCanAttackAir, EffectCanAttackSpace, EffectCanAttackUnderwater, EffectCombatAttackVsWoodenShipPercent, EffectCityWalls, EffectIgnoreCityWalls, EffectProtectFromNukes, EffectProtectFromBioAgents, EffectProtectFromNanoVirus, EffectPreventConversion, EffectPreventSlavery, EffectForceField, EffectFoodVatPercent, EffectAllowGrunts, EffectBrokerage, EffectCapitol, EffectCathedral, EffectDoubleTelevangelists, EffectIsReligious, EffectLowerPeaceMovementPercent, EffectNuclearPlant, EffectTelevision, EffectEliminateNukes, EffectCloseEmbassies, EffectEmbassiesEverywhere, EffectEnableParkRangers, EffectFreeSlaves, EffectGlobalRadar, EffectIncreaseBoatMovement, EffectIncreaseHP, EffectIncreaseBrokerages, EffectIncreaseRegard, EffectIncreaseScientists, EffectPreventConversionEmpire, EffectProhibitSlavers, EffectProtectFromBarbarians, EffectReduceReadinessCost, EffectReformCities, EffectRevoltingCitiesJoinPlayer, EffectSpiesEverywhere, EffectStartGaiaController, EffectTemporaryFullHappiness, EffectPollutersToParks, EffectNoPollutionUnhappiness, EffectGoldPerWaterTradeRoute, EffectGoldPerInternationalTradeRoute, EffectGoldPerTelevision, EffectDecreaseEmpireSize, EffectPollutionPercent, EffectPollutionUnhappyCoef, EffectPollutionPopulationPercent, EffectPollutionProductionPercent, EffectPollution, EffectYieldFoodPercent, EffectYieldProductionPercent, EffectYieldGoldPercent, EffectCombat, EffectVision, EffectProduction, EffectVictory, EffectResearch, EffectResearchPercent, EffectMaxSciencePercent, EffectBonus, EffectCombatAttack, EffectCombatAttackLand, EffectCombatAttackSea, EffectCombatAttackAir, EffectCombatDefense, EffectSoothsaying, EffectFranchise, EffectRulerAssassinated, EffectFreedPopulation, EffectInjunction, EffectLawsuit, EffectWatchful, EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns, EffectSpecialConvertCity, EffectSpecialCreateFranchise, EffectSpecialInvestigateCity, EffectSpecialPlantNuke, EffectSpecialBioTerror, EffectSpecialNanoTerror, EffectSpecialPlague, EffectSpecialAssassinateRuler, EffectSpecialSlaveRaid, EffectSpecialSettlerSlaveRaid, EffectSpecialUndergroundRailway, EffectSpecialInjoin, EffectSpecialReform, EffectSpecialCreatePark, EffectSpecialExpel, EffectSpecialSue, EffectSpecialConvertCityDeathChance, EffectSpecialCreateFranchiseDeathChance, EffectSpecialInvestigateCityDeathChance, EffectSpecialPlantNukeDeathChance, EffectSpecialPlantNukeEscapeChance, EffectSpecialBioTerrorDeathChance, EffectSpecialNanoTerrorDeathChance, EffectSpecialPlagueDeathChance, EffectSpecialAssassinateRulerDeathChance, EffectSpecialSlaveRaidDeathChance, EffectSpecialSettlerSlaveRaidDeathChance, EffectSpecialUndergroundRailwayDeathChance:
 		default:
 			return fmt.Errorf("unsupported effect kind %q", effect.Kind)
 		}

@@ -190,6 +190,12 @@ func upsertGovernmentEffects(nation *Nation, government rules.RuntimeGovernmentD
 	if government.MaxEmpireDistance > 0 {
 		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":max-empire-distance", Kind: EffectMaxEmpireDistance, Value: government.MaxEmpireDistance})
 	}
+	if government.AtHomeRadius > 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":at-home-radius", Kind: EffectAtHomeRadius, Value: government.AtHomeRadius})
+	}
+	if government.OverseasCoef > 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":overseas-coef", Kind: EffectOverseasCoef, Value: int(government.OverseasCoef*100 + 0.5)})
+	}
 	appendGovernmentSocialEffects(nation, government)
 	if government.WarDiscontentMaxUnits > 0 {
 		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":war-discontent-max-units", Kind: EffectWarDiscontentMaxUnits, Value: government.WarDiscontentMaxUnits})
