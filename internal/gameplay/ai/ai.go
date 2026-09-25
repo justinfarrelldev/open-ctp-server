@@ -190,6 +190,7 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 	candidates = append(candidates, researchCandidates(projection, playerID)...)
 	candidates = append(candidates, governmentCandidates(projection, playerID)...)
 	candidates = append(candidates, projectedScienceRateCandidates(projection)...)
+	candidates = append(candidates, projectedReadinessCandidates(projection)...)
 	candidates = append(candidates, diplomacyCandidates(projection, playerID)...)
 	candidates = append(candidates, projectedUnitSpecialTargetCandidates(projection)...)
 	candidates = append(candidates, combatCandidates(projection, playerID)...)
@@ -340,6 +341,23 @@ func projectedScienceRateCandidates(projection visibility.Projection) []Candidat
 			continue
 		}
 		candidates = append(candidates, Candidate{Type: engine.CommandSetScienceRate, EntityID: action.EntityID, TargetID: action.TargetID, Score: 755, Payload: append(json.RawMessage(nil), action.Payload...)})
+	}
+	return candidates
+}
+
+func projectedReadinessCandidates(projection visibility.Projection) []Candidate {
+	candidates := make([]Candidate, 0)
+	for _, action := range projection.LegalActions {
+		if action.Command != engine.CommandSetReadiness || len(action.Payload) == 0 {
+			continue
+		}
+		var payload struct {
+			Readiness string `json:"readiness"`
+		}
+		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.Readiness != "war" {
+			continue
+		}
+		candidates = append(candidates, Candidate{Type: engine.CommandSetReadiness, EntityID: action.EntityID, TargetID: action.TargetID, Score: 754, Payload: append(json.RawMessage(nil), action.Payload...)})
 	}
 	return candidates
 }

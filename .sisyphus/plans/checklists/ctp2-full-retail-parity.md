@@ -114,6 +114,8 @@
 - [x] Task 163: Unit gold upkeep debits treasury instead of directly reducing research.
 - [x] Task 164: Retail unit support fields (`ShieldHunger`, `NeedsNoSupport`, `IsSpecialForces`) import, produce, and project safely.
 - [x] Task 165: Readiness support cost reduces city production using retail support/readiness coefficients and franchise offsets.
+- [x] Task 166: Readiness support over-budget handling disbands highest-cost supported units before production tax.
+- [x] Task 167: Readiness level can be changed via safe command/projection/HTTP path and conservative AI projected-action consumption.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

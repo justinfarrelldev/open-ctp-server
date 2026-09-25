@@ -124,6 +124,7 @@ type DiplomacyProjection struct {
 	Workday        *int                          `json:"workday,omitempty"`
 	Wages          *int                          `json:"wages,omitempty"`
 	Rations        *int                          `json:"rations,omitempty"`
+	Readiness      string                        `json:"readiness,omitempty"`
 	Relations      []DiplomacyRelationProjection `json:"relations,omitempty"`
 	Proposals      []DiplomacyProposalProjection `json:"proposals,omitempty"`
 }
@@ -302,7 +303,7 @@ func tradeRouteProjection(state engine.State, playerID string, visible map[strin
 }
 
 func diplomacyProjection(state engine.State, playerID string, nation engine.Nation) *DiplomacyProjection {
-	projection := &DiplomacyProjection{GovernmentID: nation.GovernmentID, PublicWorks: nation.PublicWorks, Gold: nation.Gold}
+	projection := &DiplomacyProjection{GovernmentID: nation.GovernmentID, PublicWorks: nation.PublicWorks, Gold: nation.Gold, Readiness: nation.Readiness}
 	if nation.SciencePercent != nil {
 		science := *nation.SciencePercent
 		projection.SciencePercent = &science
@@ -338,7 +339,7 @@ func diplomacyProjection(state engine.State, playerID string, nation engine.Nati
 		return projection.Relations[i].TargetPlayerID < projection.Relations[j].TargetPlayerID
 	})
 	sort.Slice(projection.Proposals, func(i, j int) bool { return projection.Proposals[i].ID < projection.Proposals[j].ID })
-	if projection.GovernmentID == "" && projection.PublicWorks == 0 && projection.Gold == 0 && projection.SciencePercent == nil && projection.Workday == nil && projection.Wages == nil && projection.Rations == nil && len(projection.Relations) == 0 && len(projection.Proposals) == 0 {
+	if projection.GovernmentID == "" && projection.PublicWorks == 0 && projection.Gold == 0 && projection.SciencePercent == nil && projection.Workday == nil && projection.Wages == nil && projection.Rations == nil && projection.Readiness == "" && len(projection.Relations) == 0 && len(projection.Proposals) == 0 {
 		return nil
 	}
 	return projection
@@ -543,6 +544,16 @@ func governmentActions(projection Projection, playerID string) []ActionProjectio
 		rations = *projection.Diplomacy.Rations
 	}
 	actions = append(actions, action(engine.CommandSetSocialPolicy, "set-social-policy", playerID, "social-policy", map[string]int{"workday": workday, "wages": wages, "rations": rations}, []string{"workday", "wages", "rations"}))
+	currentReadiness := projection.Diplomacy.Readiness
+	if currentReadiness == "" {
+		currentReadiness = "war"
+	}
+	for _, readiness := range []string{"peace", "alert", "war"} {
+		if readiness == currentReadiness {
+			continue
+		}
+		actions = append(actions, action(engine.CommandSetReadiness, "set-readiness", playerID, readiness, map[string]string{"readiness": readiness}, []string{"readiness"}))
+	}
 	for _, government := range projection.Rules.Governments {
 		if government.ID == "" || government.ID == projection.Diplomacy.GovernmentID || !advanceSatisfied(known, government.EnableAdvanceID) {
 			continue

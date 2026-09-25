@@ -7,6 +7,27 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
+func TestReadinessSupportDisbandsHighestCostUnitsOverProductionBudget(t *testing.T) {
+	runtime := &rules.RuntimeRules{Governments: []rules.RuntimeGovernmentDefinition{{ID: "GOVERNMENT_TEST", SupportCoef: 1, ReadyWarCoef: 1}}}
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", GovernmentID: "GOVERNMENT_TEST"}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", Yields: Yield{Production: 2}}},
+		Armies:  []Army{{ID: "army-a", OwnerID: "player-a", UnitIDs: []string{"unit-a", "unit-b"}}},
+		Units: []Unit{
+			{ID: "unit-a", OwnerID: "player-a", ShieldHunger: 5, ArmyID: "army-a"},
+			{ID: "unit-b", OwnerID: "player-a", ShieldHunger: 1, ArmyID: "army-a"},
+		},
+	}
+	applyReadinessSupportTax(&state, runtime)
+	if len(state.Units) != 1 || state.Units[0].ID != "unit-b" {
+		t.Fatalf("surviving units = %#v, want only unit-b", state.Units)
+	}
+	if got, want := state.Cities[0].Yields.Production, 1; got != want {
+		t.Fatalf("city production after surviving support = %d, want %d", got, want)
+	}
+}
+
 func TestReadinessSupportReducesCityProduction(t *testing.T) {
 	runtime := &rules.RuntimeRules{Governments: []rules.RuntimeGovernmentDefinition{{ID: "GOVERNMENT_TEST", SupportCoef: 1, ReadyWarCoef: 1}}}
 	state := State{
@@ -27,6 +48,35 @@ func TestReadinessSupportReducesCityProduction(t *testing.T) {
 	}
 	if got, want := state.Cities[1].Yields.Production, 4; got != want {
 		t.Fatalf("city-b production = %d, want %d", got, want)
+	}
+}
+
+func TestSetReadinessCommandChangesNationReadiness(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Nations = []Nation{{ID: "nation-a", Readiness: "peace"}}
+	body, _ := json.Marshal(map[string]string{"readiness": "war"})
+	next, events, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "ready", ActorPlayerID: "player-a", Type: CommandSetReadiness, Payload: body}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatalf("Apply() error = %v", err)
+	}
+	if got, want := next.Nations[0].Readiness, "war"; got != want {
+		t.Fatalf("readiness = %q, want %q", got, want)
+	}
+	if len(events) != 1 || events[0].Type != EventReadinessChanged {
+		t.Fatalf("events = %#v, want readiness changed", events)
+	}
+}
+
+func TestSetReadinessRejectsUnsupportedLevel(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Nations = []Nation{{ID: "nation-a"}}
+	_, _, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "bad-ready", ActorPlayerID: "player-a", Type: CommandSetReadiness, Payload: json.RawMessage(`{"readiness":"panic"}`)}, state.Rules, fixtureSources())
+	if err == nil {
+		t.Fatal("unsupported readiness should fail")
 	}
 }
 

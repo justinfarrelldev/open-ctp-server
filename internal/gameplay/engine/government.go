@@ -21,12 +21,19 @@ type setSocialPolicyPayload struct {
 	Rations int `json:"rations"`
 }
 
+type setReadinessPayload struct {
+	Readiness string `json:"readiness"`
+}
+
 func applyGovernmentCommand(state *State, command Command, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if command.Type == CommandSetScienceRate {
 		return applyScienceRateCommand(state, command)
 	}
 	if command.Type == CommandSetSocialPolicy {
 		return applySocialPolicyCommand(state, command)
+	}
+	if command.Type == CommandSetReadiness {
+		return applyReadinessCommand(state, command)
 	}
 	var payload setGovernmentPayload
 	if err := json.Unmarshal(command.Payload, &payload); err != nil || payload.GovernmentID == "" {
@@ -51,6 +58,33 @@ func applyGovernmentCommand(state *State, command Command, runtime *rules.Runtim
 	upsertGovernmentEffects(nation, government)
 	encoded, _ := json.Marshal(payload)
 	return EventGovernmentChanged, encoded, nil
+}
+
+func applyReadinessCommand(state *State, command Command) (string, json.RawMessage, error) {
+	var payload setReadinessPayload
+	if err := json.Unmarshal(command.Payload, &payload); err != nil || !supportedReadiness(payload.Readiness) {
+		return "", nil, errors.New("readiness payload is invalid")
+	}
+	player, ok := playerByID(state, command.ActorPlayerID)
+	if !ok {
+		return "", nil, errors.New("owner is not a game player")
+	}
+	nation := nationForID(state, player.NationID)
+	if nation == nil {
+		return "", nil, errors.New("government is unavailable")
+	}
+	nation.Readiness = payload.Readiness
+	encoded, _ := json.Marshal(payload)
+	return EventReadinessChanged, encoded, nil
+}
+
+func supportedReadiness(readiness string) bool {
+	switch readiness {
+	case "peace", "alert", "war":
+		return true
+	default:
+		return false
+	}
 }
 
 func applySocialPolicyCommand(state *State, command Command) (string, json.RawMessage, error) {

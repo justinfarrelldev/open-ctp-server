@@ -508,6 +508,10 @@ func applyReadinessSupportTax(state *State, runtime *rules.RuntimeRules) {
 		if cost <= 0 {
 			continue
 		}
+		if budget := totalProduction + nation.FranchiseProduction; cost > budget {
+			killReadinessOverBudgetUnits(state, *nation, ownerIDs, runtime, budget)
+			cost = readinessSupportCost(*state, *nation, ownerIDs, runtime)
+		}
 		cost -= nation.FranchiseProduction
 		if cost <= 0 {
 			continue
@@ -554,36 +558,82 @@ func playerIDsForNation(state State, nationID string) map[string]bool {
 }
 
 func readinessSupportCost(state State, nation Nation, ownerIDs map[string]bool, runtime *rules.RuntimeRules) int {
+	total := 0
+	for _, candidate := range readinessSupportCandidates(state, nation, ownerIDs, runtime) {
+		total += candidate.cost
+	}
+	return total
+}
+
+type readinessSupportCandidate struct {
+	unitID string
+	cost   int
+}
+
+func readinessSupportCandidates(state State, nation Nation, ownerIDs map[string]bool, runtime *rules.RuntimeRules) []readinessSupportCandidate {
 	government, hasGovernment := readinessGovernment(nation, runtime)
-	total := 0.0
+	reduction := readinessCostReduction(state, ownerIDs)
+	candidates := make([]readinessSupportCandidate, 0)
 	for _, unit := range state.Units {
 		if !ownerIDs[unit.OwnerID] || unit.ShieldHunger <= 0 || unit.NeedsNoSupport {
 			continue
 		}
-		unitCost := float64(unit.ShieldHunger)
-		if unit.IsSpecialForces {
-			unitCost *= government.ReadyWarCoef
-		} else {
-			unitCost *= readinessSupportModifier(nation.Readiness, government, hasGovernment)
-		}
-		if hasGovernment {
-			unitCost *= government.SupportCoef
-		}
-		if reduction := readinessCostReduction(state, ownerIDs); reduction > 0 {
-			if reduction >= 100 {
-				unitCost = 0
-			} else {
-				unitCost -= unitCost * float64(reduction) / 100.0
-			}
-		}
-		if unitCost > 0 {
-			total += unitCost
+		cost := readinessSupportCostForUnit(unit, nation, government, hasGovernment, reduction)
+		if cost > 0 {
+			candidates = append(candidates, readinessSupportCandidate{unitID: unit.ID, cost: cost})
 		}
 	}
-	if total <= 0 {
+	return candidates
+}
+
+func readinessSupportCostForUnit(unit Unit, nation Nation, government rules.RuntimeGovernmentDefinition, hasGovernment bool, reduction int) int {
+	unitCost := float64(unit.ShieldHunger)
+	if unit.IsSpecialForces {
+		unitCost *= government.ReadyWarCoef
+	} else {
+		unitCost *= readinessSupportModifier(nation.Readiness, government, hasGovernment)
+	}
+	if hasGovernment {
+		unitCost *= government.SupportCoef
+	}
+	if reduction > 0 {
+		if reduction >= 100 {
+			unitCost = 0
+		} else {
+			unitCost -= unitCost * float64(reduction) / 100.0
+		}
+	}
+	if unitCost <= 0 {
 		return 0
 	}
-	return int(total + 0.000001)
+	return int(unitCost + 0.000001)
+}
+
+func killReadinessOverBudgetUnits(state *State, nation Nation, ownerIDs map[string]bool, runtime *rules.RuntimeRules, budget int) {
+	candidates := readinessSupportCandidates(*state, nation, ownerIDs, runtime)
+	if len(candidates) == 0 {
+		return
+	}
+	total := 0
+	for _, candidate := range candidates {
+		total += candidate.cost
+	}
+	if total <= budget {
+		return
+	}
+	sort.Slice(candidates, func(i, j int) bool {
+		if candidates[i].cost == candidates[j].cost {
+			return candidates[i].unitID < candidates[j].unitID
+		}
+		return candidates[i].cost > candidates[j].cost
+	})
+	for _, candidate := range candidates {
+		if total <= budget {
+			break
+		}
+		removeUnitAndCargo(state, candidate.unitID)
+		total -= candidate.cost
+	}
 }
 
 func readinessGovernment(nation Nation, runtime *rules.RuntimeRules) (rules.RuntimeGovernmentDefinition, bool) {

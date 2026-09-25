@@ -73,6 +73,22 @@ func TestSocialPolicyProjectsOwnSliderValuesAndLegalAction(t *testing.T) {
 	t.Fatalf("social policy action missing: %#v", actions)
 }
 
+func TestReadinessProjectsOwnValueAndLegalActions(t *testing.T) {
+	projection := Projection{Rules: &RulesProjection{}, Diplomacy: &DiplomacyProjection{Readiness: "peace"}}
+	actions := governmentActions(projection, "a")
+	if !hasAction(actions, engine.CommandSetReadiness) {
+		t.Fatalf("readiness action missing: %#v", actions)
+	}
+	for _, action := range actions {
+		if action.Command == engine.CommandSetReadiness && action.TargetID == "peace" {
+			t.Fatalf("current readiness was projected redundantly: %#v", actions)
+		}
+		if action.Command == engine.CommandSetReadiness && action.TargetID == "war" && !bytes.Contains(action.Payload, []byte(`"readiness":"war"`)) {
+			t.Fatalf("readiness payload = %s", action.Payload)
+		}
+	}
+}
+
 func TestScienceRateLegalActionsTreatUnsetAsDefaultHundred(t *testing.T) {
 	projection := Projection{Rules: &RulesProjection{}, Diplomacy: &DiplomacyProjection{}}
 	actions := governmentActions(projection, "a")

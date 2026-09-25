@@ -126,6 +126,25 @@ func TestPlannerUsesProjectedScienceRateAction(t *testing.T) {
 	t.Fatalf("science-rate candidate missing: %#v", candidates)
 }
 
+func TestPlannerUsesProjectedReadinessWarAction(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		LegalActions: []visibility.ActionProjection{{Command: engine.CommandSetReadiness, Route: "set-readiness", EntityID: "ai", TargetID: "war", Payload: json.RawMessage(`{"readiness":"war"}`)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandSetReadiness && candidate.EntityID == "ai" && candidate.TargetID == "war" {
+			return
+		}
+	}
+	t.Fatalf("readiness candidate missing: %#v", candidates)
+}
+
 func TestPlannerUsesProjectedCitySpecialActions(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		LegalActions: []visibility.ActionProjection{{Command: engine.CommandCreateFranchise, Route: "create-franchise", EntityID: "branch", TargetID: "city", Payload: json.RawMessage(`{"unit_id":"branch","city_id":"city"}`)}},

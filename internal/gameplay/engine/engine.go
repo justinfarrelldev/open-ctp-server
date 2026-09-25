@@ -32,6 +32,7 @@ const (
 	CommandSetGovernment      = "set-government"
 	CommandSetScienceRate     = "set-science-rate"
 	CommandSetSocialPolicy    = "set-social-policy"
+	CommandSetReadiness       = "set-readiness"
 	CommandPass               = "pass"
 	CommandMoveUnit           = "move-unit"
 	CommandDisband            = "disband-unit"
@@ -82,6 +83,7 @@ const (
 	EventGovernmentChanged        = "government.changed"
 	EventScienceRateChanged       = "government.science_rate_changed"
 	EventSocialPolicyChanged      = "government.social_policy_changed"
+	EventReadinessChanged         = "government.readiness_changed"
 	EventUnitMoved                = "unit.moved"
 	EventCombatResolved           = "combat.resolved"
 	EventBombarded                = "bombard.resolved"
@@ -544,7 +546,7 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 	switch command.Type {
 	case CommandSetWar, CommandEstablishContact, CommandProposeAgreement, CommandRespondAgreement:
 		eventType, eventPayload, err = applyDiplomacyCommand(state, command)
-	case CommandSetGovernment, CommandSetScienceRate, CommandSetSocialPolicy:
+	case CommandSetGovernment, CommandSetScienceRate, CommandSetSocialPolicy, CommandSetReadiness:
 		eventType, eventPayload, err = applyGovernmentCommand(state, command, runtime)
 	case CommandSetResearch, CommandRoundComplete, CommandEndGame, CommandLeaveGame, CommandTakeoverAI:
 		eventType, eventPayload, err = applyLifecycleCommand(state, command, runtime)
@@ -857,6 +859,9 @@ func ValidateState(state State) error {
 	for _, nation := range state.Nations {
 		if nation.GaiaCompletionTurn < 0 || nation.ResearchProgress < 0 {
 			return errors.New("nation counters must be nonnegative")
+		}
+		if nation.Readiness != "" && !supportedReadiness(nation.Readiness) {
+			return errors.New("nation readiness is unsupported")
 		}
 	}
 	if err := validateUnitState(state); err != nil {
