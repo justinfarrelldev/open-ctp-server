@@ -116,6 +116,7 @@
 - [x] Task 165: Readiness support cost reduces city production using retail support/readiness coefficients and franchise offsets.
 - [x] Task 166: Readiness support over-budget handling disbands highest-cost supported units before production tax.
 - [x] Task 167: Readiness level can be changed via safe command/projection/HTTP path and conservative AI projected-action consumption.
+- [x] Task 168: Social policy sliders now affect production, wages/gold, and food consumption in addition to happiness.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

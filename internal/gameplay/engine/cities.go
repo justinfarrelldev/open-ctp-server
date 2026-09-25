@@ -469,7 +469,7 @@ func RecalculateRound(state State) (State, error) {
 		advanceTemporaryCityEffects(city)
 		city.CrimePercent = cityCrimePercent(next, *city)
 		city.OvercrowdingLevel = cityOvercrowdingLevel(next, *city)
-		advanceCityFood(city, cityMaxPopulation(next, *city), cityStarvationProtection(next, *city), foodVatPercent(*city))
+		advanceCityFoodWithConsumption(city, cityMaxPopulation(next, *city), cityStarvationProtection(next, *city), foodVatPercent(*city), cityFoodConsumptionForNation(next, *city))
 		if cityPollutionEnabled(runtime) {
 			applyCityPollution(&next, *city, runtimePollutionModel(runtime))
 		}
@@ -781,10 +781,16 @@ func signedPercentDelta(value, percent int) int {
 }
 
 func advanceCityFood(city *City, maxPopulation int, starvationProtection int, foodVatPercent int) {
+	advanceCityFoodWithConsumption(city, maxPopulation, starvationProtection, foodVatPercent, cityFoodConsumption(city.Population))
+}
+
+func advanceCityFoodWithConsumption(city *City, maxPopulation int, starvationProtection int, foodVatPercent int, consumption int) {
 	if city.Population < 1 {
 		city.Population = 1
 	}
-	consumption := cityFoodConsumption(city.Population)
+	if consumption < 0 {
+		consumption = 0
+	}
 	if foodVatPercent > 0 {
 		consumption -= consumption * foodVatPercent / 100
 		if consumption < 0 {
@@ -1185,11 +1191,48 @@ func cityMaxPopulation(state State, city City) int {
 	return maxPopulation
 }
 
+func applySocialPolicyEconomy(state State, city City, yield *Yield) {
+	if yield == nil {
+		return
+	}
+	nation := nationForID(&state, nationForPlayer(state, city.OwnerID))
+	if nation == nil {
+		return
+	}
+	if nation.Workday != nil && yield.Production > 0 {
+		percent := 100 - (*nation.Workday * 15)
+		if percent < 0 {
+			percent = 0
+		}
+		yield.Production = (yield.Production*percent + 99) / 100
+	}
+	if nation.Wages != nil && yield.Gold > 0 {
+		wagePerCitizen := 4 + *nation.Wages
+		if wagePerCitizen < 0 {
+			wagePerCitizen = 0
+		}
+		yield.Gold -= positivePopulation(city.Population) * wagePerCitizen
+	}
+}
+
 func cityFoodConsumption(population int) int {
 	if population < 1 {
 		population = 1
 	}
 	return population * 2
+}
+
+func cityFoodConsumptionForNation(state State, city City) int {
+	population := positivePopulation(city.Population)
+	nation := nationForID(&state, nationForPlayer(state, city.OwnerID))
+	if nation == nil || nation.Rations == nil {
+		return cityFoodConsumption(population)
+	}
+	centsPerCitizen := 200 + (*nation.Rations * 50)
+	if centsPerCitizen < 0 {
+		centsPerCitizen = 0
+	}
+	return (population*centsPerCitizen + 99) / 100
 }
 
 func cityFoodGrowthThreshold(population int) int {
@@ -1666,6 +1709,7 @@ func cityYieldAndFranchiseLossWithRuntime(state State, city City, runtime *rules
 		yield.Gold += goldPerTelevision
 	}
 	yield.Gold += tradeRouteWonderGold(state, city)
+	applySocialPolicyEconomy(state, city, &yield)
 	for _, building := range city.Buildings {
 		if !isObsolete(city.Obsolete, building.ObsoletedBy) {
 			yield.Gold -= building.Upkeep

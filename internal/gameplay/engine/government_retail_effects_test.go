@@ -80,6 +80,28 @@ func TestSetReadinessRejectsUnsupportedLevel(t *testing.T) {
 	}
 }
 
+func TestSocialPolicyChangesProductionGoldAndFoodConsumption(t *testing.T) {
+	workday, wages, rations := -1, 1, 2
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a"}}
+	state.Nations = []Nation{{ID: "nation-a", Workday: &workday, Wages: &wages, Rations: &rations}}
+	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Population: 2, Effects: []Effect{{ID: "production", Kind: EffectYieldProduction, Value: 97}, {ID: "gold", Kind: EffectYieldGold, Value: 19}}}}
+	yield, err := cityYield(state, state.Cities[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := yield.Production, 115; got != want {
+		t.Fatalf("workday production = %d, want %d", got, want)
+	}
+	if got, want := yield.Gold, 10; got != want {
+		t.Fatalf("wage-adjusted gold = %d, want %d", got, want)
+	}
+	if got, want := cityFoodConsumptionForNation(state, state.Cities[0]), 6; got != want {
+		t.Fatalf("rations food consumption = %d, want %d", got, want)
+	}
+}
+
 func TestGovernmentRuntimeYieldPercentEffects(t *testing.T) {
 	nation := Nation{ID: "nation-a", Effects: []Effect{{ID: "manual", Kind: EffectYieldFood, Value: 1}}}
 	upsertGovernmentEffects(&nation, rules.RuntimeGovernmentDefinition{ID: "GOVERNMENT_RETAIL", ResearchPercent: 100, FoodPercent: 25, ProductionPercent: 15, GoldPercent: 25, PollutionPercent: -20, PollutionUnhappyCoef: 0.04, CrimeCoef: 1, CrimeOffset: 95, TooManyCitiesThreshold: 2, TooManyCitiesCoefficient: 1.5, EmpireDistanceScale: 0.001, MinEmpireDistance: 500, MaxEmpireDistance: 2000, PositiveWorkdayCoef: 1, NegativeWorkdayCoef: 1, PositiveWagesCoef: 1, NegativeWagesCoef: 1, PositiveRationsCoef: 1, NegativeRationsCoef: 1})
