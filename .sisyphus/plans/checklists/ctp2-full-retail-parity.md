@@ -137,6 +137,7 @@
 - [x] Task 186: Low-happiness riots use retail riot-level/chance rolls with canonical RNG.
 - [x] Task 187: Empire-distance happiness uses runtime terrain path costs with deterministic fallback.
 - [x] Task 188: Professional unit flags are support-free and safely projected for visible units.
+- [x] Task 189: Visible diplomacy relations project derived retail-style regard.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

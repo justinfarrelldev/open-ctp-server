@@ -110,6 +110,7 @@ type DiplomacyRelationProjection struct {
 	TargetPlayerID string `json:"target_player_id"`
 	Treaty         string `json:"treaty,omitempty"`
 	Trade          bool   `json:"trade,omitempty"`
+	Regard         string `json:"regard,omitempty"`
 }
 
 type DiplomacyProposalProjection struct {
@@ -332,7 +333,7 @@ func diplomacyProjection(state engine.State, playerID string, nation engine.Nati
 		if target == playerID {
 			target = relation.PlayerBID
 		}
-		projection.Relations = append(projection.Relations, DiplomacyRelationProjection{TargetPlayerID: target, Treaty: relation.Treaty, Trade: relation.Trade})
+		projection.Relations = append(projection.Relations, DiplomacyRelationProjection{TargetPlayerID: target, Treaty: relation.Treaty, Trade: relation.Trade, Regard: diplomaticRegard(state, playerID, target, relation)})
 	}
 	for _, proposal := range state.Proposals {
 		if proposal.FromPlayerID == playerID || proposal.ToPlayerID == playerID {
@@ -347,6 +348,22 @@ func diplomacyProjection(state engine.State, playerID string, nation engine.Nati
 		return nil
 	}
 	return projection
+}
+
+func diplomaticRegard(state engine.State, playerID, target string, relation engine.DiplomaticRelation) string {
+	left, right := playerID, target
+	if right < left {
+		left, right = right, left
+	}
+	for _, war := range state.Policy.Wars {
+		if war.A == left && war.B == right {
+			return "hotwar"
+		}
+	}
+	if relation.Treaty == "union" {
+		return "love"
+	}
+	return "neutral"
 }
 
 func projectCity(city engine.City, playerID string, observed int) CityProjection {

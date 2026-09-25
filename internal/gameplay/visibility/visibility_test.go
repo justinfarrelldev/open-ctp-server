@@ -320,6 +320,27 @@ func TestObservationMemoryProjectionAndRawLeakBoundaries(t *testing.T) {
 	}
 }
 
+func TestDiplomacyProjectionIncludesRetailRegard(t *testing.T) {
+	state := fixtureState()
+	state.Players = []engine.Player{{ID: "a", NationID: "nation-a", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}, {ID: "b", NationID: "nation-b", Lifecycle: engine.PlayerActive, Controller: engine.ControllerAI}, {ID: "c", NationID: "nation-c", Lifecycle: engine.PlayerActive, Controller: engine.ControllerAI}}
+	state.Nations = []engine.Nation{{ID: "nation-a"}, {ID: "nation-b"}, {ID: "nation-c"}}
+	state.Diplomacy = []engine.DiplomaticRelation{{ID: "a:b", PlayerAID: "a", PlayerBID: "b", Contact: true, Treaty: "union"}, {ID: "a:c", PlayerAID: "a", PlayerBID: "c", Contact: true}}
+	state.Policy.Wars = []engine.TurnPolicyWar{{A: "a", B: "c"}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if projection.Diplomacy == nil || len(projection.Diplomacy.Relations) != 2 {
+		t.Fatalf("relations = %#v", projection.Diplomacy)
+	}
+	if projection.Diplomacy.Relations[0].TargetPlayerID != "b" || projection.Diplomacy.Relations[0].Regard != "love" {
+		t.Fatalf("union relation = %#v, want love regard", projection.Diplomacy.Relations[0])
+	}
+	if projection.Diplomacy.Relations[1].TargetPlayerID != "c" || projection.Diplomacy.Relations[1].Regard != "hotwar" {
+		t.Fatalf("war relation = %#v, want hotwar regard", projection.Diplomacy.Relations[1])
+	}
+}
+
 func TestTask9ProjectionExposesOnlyViewerDiplomacy(t *testing.T) {
 	state := fixtureState()
 	state.Nations = []engine.Nation{{ID: "a", GovernmentID: "GOVERNMENT_SYNTHETIC_REPUBLIC"}, {ID: "b"}}
