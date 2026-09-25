@@ -122,6 +122,7 @@
 - [x] Task 171: Government war-discontent settings reduce city happiness for attack-capable units outside cities.
 - [x] Task 172: Captured cities receive government conquest distress and decay it over turns.
 - [x] Task 173: Government readiness HP modifiers now scale combat damage by owner readiness level.
+- [x] Task 174: Retail city specialists persist safely and contribute food, production, gold, science, and happiness.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

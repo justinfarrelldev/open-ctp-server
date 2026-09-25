@@ -147,6 +147,7 @@ type Yield struct {
 	Food       int `json:"food,omitempty"`
 	Production int `json:"production,omitempty"`
 	Gold       int `json:"gold,omitempty"`
+	Science    int `json:"science,omitempty"`
 	Combat     int `json:"combat,omitempty"`
 	Vision     int `json:"vision,omitempty"`
 	Victory    int `json:"victory,omitempty"`
@@ -853,6 +854,7 @@ func cityHappiness(state State, city City) int {
 			happiness += effect.Value
 		}
 	}
+	happiness += city.Specialists["POP_ENTERTAINER"] * 2
 	if martial := martialLawHappiness(state, city, happiness); martial > happiness {
 		happiness = martial
 	}
@@ -1271,6 +1273,15 @@ func cityMaxPopulation(state State, city City) int {
 		}
 	}
 	return maxPopulation
+}
+
+func specialistYield(city City) Yield {
+	return Yield{
+		Food:       city.Specialists["POP_FARMER"] * 3,
+		Production: city.Specialists["POP_LABORER"] * 3,
+		Gold:       city.Specialists["POP_MERCHANT"] * 2,
+		Science:    city.Specialists["POP_SCIENTIST"] * 3,
+	}
 }
 
 func cityBuildingMaintenanceDeficit(state State, city City) int {
@@ -1779,6 +1790,7 @@ func cityYieldAndFranchiseLossWithRuntime(state State, city City, runtime *rules
 		}
 		yield = addYield(yield, worked)
 	}
+	yield = addYield(yield, specialistYield(city))
 	effects := cityEffects(state, city)
 	hasTelevision := false
 	goldPerTelevision := 0
@@ -2023,10 +2035,20 @@ func addYield(a, b Yield) Yield {
 	a.Food += b.Food
 	a.Production += b.Production
 	a.Gold += b.Gold
+	a.Science += b.Science
 	a.Combat += b.Combat
 	a.Vision += b.Vision
 	a.Victory += b.Victory
 	return a
+}
+
+func supportedSpecialist(kind string) bool {
+	switch kind {
+	case "POP_ENTERTAINER", "POP_FARMER", "POP_LABORER", "POP_MERCHANT", "POP_SCIENTIST":
+		return true
+	default:
+		return false
+	}
 }
 
 func validateProductionItem(item ProductionItem) error {
@@ -2054,6 +2076,16 @@ func validateCityState(state State) error {
 		}
 		if err := validateEffects(city.Effects); err != nil {
 			return err
+		}
+		specialistTotal := 0
+		for kind, count := range city.Specialists {
+			if !supportedSpecialist(kind) || count < 0 {
+				return errors.New("city specialist assignment is invalid")
+			}
+			specialistTotal += count
+		}
+		if specialistTotal > positivePopulation(city.Population) {
+			return errors.New("city specialist assignment is invalid")
 		}
 		for _, building := range city.Buildings {
 			if building.ID == "" || building.Upkeep < 0 || validateEffects(building.Effects) != nil {

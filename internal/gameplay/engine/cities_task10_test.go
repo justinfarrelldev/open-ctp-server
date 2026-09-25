@@ -32,6 +32,29 @@ func task10Apply(t *testing.T, state State, actor, kind string, payload any) Sta
 	return next
 }
 
+func TestRetailSpecialistsContributeYieldsHappinessAndResearch(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Nations = []Nation{{ID: "nation-a"}}
+	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Population: 5, Specialists: map[string]int{"POP_FARMER": 1, "POP_LABORER": 1, "POP_MERCHANT": 1, "POP_SCIENTIST": 1, "POP_ENTERTAINER": 1}, Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 80}}}}
+	yield, err := cityYield(state, state.Cities[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := yield, (Yield{Food: 5, Production: 6, Gold: 3, Science: 3}); got != want {
+		t.Fatalf("specialist yield = %#v, want %#v", got, want)
+	}
+	if got, want := cityHappiness(state, state.Cities[0]), 82; got != want {
+		t.Fatalf("specialist happiness = %d, want %d", got, want)
+	}
+	state.Cities[0].Yields = yield
+	if got, want := researchRate(state, state.Nations[0]), 7; got != want {
+		t.Fatalf("research rate = %d, want %d", got, want)
+	}
+}
+
 func TestRetailFranchiseStealsProductionFromTargetCity(t *testing.T) {
 	state := fixtureState()
 	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}}

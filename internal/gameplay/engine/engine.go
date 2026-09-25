@@ -237,6 +237,7 @@ type City struct {
 	CrimePercent      int              `json:"crime_percent,omitempty"`
 	OvercrowdingLevel int              `json:"overcrowding_level,omitempty"`
 	ConquestDistress  int              `json:"conquest_distress,omitempty"`
+	Specialists       map[string]int   `json:"specialists,omitempty"`
 	WorkedTileIDs     []string         `json:"worked_tile_ids,omitempty"`
 	StoredFood        int              `json:"stored_food,omitempty"`
 	StarvationTurns   int              `json:"starvation_turns,omitempty"`
@@ -1061,6 +1062,17 @@ func canonicalClone(state State) (State, error) {
 	return cloned, nil
 }
 
+func cloneIntMap(input map[string]int) map[string]int {
+	if input == nil {
+		return nil
+	}
+	output := make(map[string]int, len(input))
+	for key, value := range input {
+		output[key] = value
+	}
+	return output
+}
+
 func cloneStateForNormalization(state State) State {
 	state.Overlays = append([]TileOverlay(nil), state.Overlays...)
 	state.Tiles = append([]Tile(nil), state.Tiles...)
@@ -1071,6 +1083,9 @@ func cloneStateForNormalization(state State) State {
 	}
 	state.Cities = append([]City(nil), state.Cities...)
 	for index := range state.Cities {
+		if state.Cities[index].Specialists != nil {
+			state.Cities[index].Specialists = cloneIntMap(state.Cities[index].Specialists)
+		}
 		state.Cities[index].WorkedTileIDs = append([]string(nil), state.Cities[index].WorkedTileIDs...)
 		state.Cities[index].Queue = append([]ProductionItem(nil), state.Cities[index].Queue...)
 		state.Cities[index].Buildings = append([]Building(nil), state.Cities[index].Buildings...)

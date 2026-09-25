@@ -501,7 +501,7 @@ func researchRate(state State, nation Nation) int {
 			continue
 		}
 		cityGoldResearch := city.Yields.Gold * sciencePercent / 100
-		cityRate := cityGoldResearch + ownerWonderEffectSum(state, city.OwnerID, EffectIncreaseScientists)
+		cityRate := cityGoldResearch + city.Yields.Science + ownerWonderEffectSum(state, city.OwnerID, EffectIncreaseScientists)
 		cityResearchFlat := 0
 		cityResearchPercent := 0
 		for _, effect := range cityResearchEffects(state, city) {
