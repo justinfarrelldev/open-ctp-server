@@ -45,6 +45,7 @@ const (
 	CommandFoundCity          = "found-city"
 	CommandQueueProduction    = "queue-production"
 	CommandCancelProduction   = "cancel-production"
+	CommandSetSpecialists     = "set-specialists"
 	CommandSetResearch        = "set-research"
 	CommandCombat             = "combat"
 	CommandBombard            = "bombard"
@@ -116,6 +117,7 @@ const (
 	EventUndergroundRailwayFailed = "city.underground_railway_failed"
 	EventCitySued                 = "city.sued"
 	EventUnitsSued                = "unit.sued"
+	EventSpecialistsChanged       = "city.specialists_changed"
 	EventTechnologyCapture        = "technology.capture"
 	EventPillaged                 = "pillage.applied"
 	EventTerraformQueued          = "terraform.queued"
@@ -557,7 +559,7 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 		eventType = EventCombatResolved
 	case CommandBombard:
 		eventType, eventPayload, err = applyBombard(state, command, sources)
-	case CommandFoundCity, CommandQueueProduction, CommandCancelProduction:
+	case CommandFoundCity, CommandQueueProduction, CommandCancelProduction, CommandSetSpecialists:
 		eventType, err = applyCityCommand(state, command, runtime)
 	default:
 		if isSpecialCommand(command.Type) {

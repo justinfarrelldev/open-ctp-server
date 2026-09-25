@@ -480,6 +480,7 @@ func legalActions(state engine.State, projection Projection, playerID string) []
 	actions = append(actions, researchActions(projection, playerID)...)
 	actions = append(actions, governmentActions(projection, playerID)...)
 	actions = append(actions, diplomacyActions(projection, playerID)...)
+	actions = append(actions, specialistActions(projection, playerID)...)
 	actions = append(actions, productionActions(projection, playerID)...)
 	actions = append(actions, unitActions(projection, playerID)...)
 	sort.Slice(actions, func(i, j int) bool {
@@ -644,6 +645,21 @@ func projectedUnitCanFortify(effects []engine.Effect) bool {
 		}
 	}
 	return true
+}
+
+func specialistActions(projection Projection, playerID string) []ActionProjection {
+	actions := make([]ActionProjection, 0)
+	for _, city := range projection.Cities {
+		if city.OwnerID != playerID || city.Population <= 0 {
+			continue
+		}
+		specialists := make(map[string]int, len(city.Specialists))
+		for kind, count := range city.Specialists {
+			specialists[kind] = count
+		}
+		actions = append(actions, action(engine.CommandSetSpecialists, "set-specialists", city.ID, city.ID, map[string]any{"city_id": city.ID, "specialists": specialists}, []string{"city_id", "specialists"}))
+	}
+	return actions
 }
 
 func productionActions(projection Projection, playerID string) []ActionProjection {

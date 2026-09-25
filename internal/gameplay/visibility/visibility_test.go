@@ -73,6 +73,14 @@ func TestSocialPolicyProjectsOwnSliderValuesAndLegalAction(t *testing.T) {
 	t.Fatalf("social policy action missing: %#v", actions)
 }
 
+func TestSpecialistsProjectOwnerAssignmentsAndLegalAction(t *testing.T) {
+	projection := Projection{Cities: []CityProjection{{ID: "city-a", OwnerID: "a", Population: 2, Specialists: map[string]int{"POP_SCIENTIST": 1}}}}
+	actions := specialistActions(projection, "a")
+	if len(actions) != 1 || actions[0].Command != engine.CommandSetSpecialists || !bytes.Contains(actions[0].Payload, []byte(`"POP_SCIENTIST":1`)) {
+		t.Fatalf("specialist actions = %#v", actions)
+	}
+}
+
 func TestReadinessProjectsOwnValueAndLegalActions(t *testing.T) {
 	projection := Projection{Rules: &RulesProjection{}, Diplomacy: &DiplomacyProjection{Readiness: "peace"}}
 	actions := governmentActions(projection, "a")

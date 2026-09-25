@@ -197,6 +197,11 @@ type CancelProductionPayload struct {
 	ItemID string `json:"item_id"`
 }
 
+type SetSpecialistsPayload struct {
+	CityID      string         `json:"city_id"`
+	Specialists map[string]int `json:"specialists"`
+}
+
 func applyCityCommand(state *State, command Command, runtime *rules.RuntimeRules) (string, error) {
 	if err := activeActor(*state, command.ActorPlayerID); err != nil {
 		return "", err
@@ -220,9 +225,46 @@ func applyCityCommand(state *State, command Command, runtime *rules.RuntimeRules
 			return "", err
 		}
 		return "production.cancelled", cancelProduction(state, command.ActorPlayerID, payload)
+	case CommandSetSpecialists:
+		var payload SetSpecialistsPayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", err
+		}
+		return EventSpecialistsChanged, setSpecialists(state, command.ActorPlayerID, payload)
 	default:
 		return "", fmt.Errorf("unsupported command type %q", command.Type)
 	}
+}
+
+func setSpecialists(state *State, actor string, payload SetSpecialistsPayload) error {
+	if payload.CityID == "" {
+		return errors.New("specialist payload is invalid")
+	}
+	city, ok := cityByID(*state, payload.CityID)
+	if !ok || city.OwnerID != actor {
+		return errors.New("city is unavailable")
+	}
+	total := 0
+	next := make(map[string]int, len(payload.Specialists))
+	for kind, count := range payload.Specialists {
+		if !supportedSpecialist(kind) || count < 0 {
+			return errors.New("specialist payload is invalid")
+		}
+		if count == 0 {
+			continue
+		}
+		next[kind] = count
+		total += count
+	}
+	if total > positivePopulation(city.Population) {
+		return errors.New("specialist payload is invalid")
+	}
+	if len(next) == 0 {
+		city.Specialists = nil
+	} else {
+		city.Specialists = next
+	}
+	return nil
 }
 
 func foundCity(state *State, actor string, payload FoundCityPayload) error {

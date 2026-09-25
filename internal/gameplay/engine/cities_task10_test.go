@@ -32,6 +32,35 @@ func task10Apply(t *testing.T, state State, actor, kind string, payload any) Sta
 	return next
 }
 
+func TestSetSpecialistsCommandPersistsValidAssignments(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Nations = []Nation{{ID: "nation-a"}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Population: 2}}
+	body, _ := json.Marshal(map[string]any{"city_id": "city-a", "specialists": map[string]int{"POP_SCIENTIST": 1, "POP_ENTERTAINER": 1}})
+	next, events, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "specialists", ActorPlayerID: "player-a", Type: CommandSetSpecialists, Payload: body}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatalf("Apply() error = %v", err)
+	}
+	if got := next.Cities[0].Specialists; got["POP_SCIENTIST"] != 1 || got["POP_ENTERTAINER"] != 1 || len(events) != 1 || events[0].Type != EventSpecialistsChanged {
+		t.Fatalf("specialists command failed: city=%+v events=%+v", next.Cities[0], events)
+	}
+}
+
+func TestSetSpecialistsRejectsOverAssignedPopulation(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Nations = []Nation{{ID: "nation-a"}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Population: 1}}
+	body, _ := json.Marshal(map[string]any{"city_id": "city-a", "specialists": map[string]int{"POP_SCIENTIST": 2}})
+	_, _, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "bad-specialists", ActorPlayerID: "player-a", Type: CommandSetSpecialists, Payload: body}, state.Rules, fixtureSources())
+	if err == nil {
+		t.Fatal("over-assigned specialists should fail")
+	}
+}
+
 func TestRetailSpecialistsContributeYieldsHappinessAndResearch(t *testing.T) {
 	state := fixtureState()
 	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
