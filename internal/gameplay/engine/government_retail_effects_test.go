@@ -7,6 +7,29 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
+func TestReadinessSupportReducesCityProduction(t *testing.T) {
+	runtime := &rules.RuntimeRules{Governments: []rules.RuntimeGovernmentDefinition{{ID: "GOVERNMENT_TEST", SupportCoef: 1, ReadyWarCoef: 1}}}
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", GovernmentID: "GOVERNMENT_TEST"}},
+		Cities: []City{
+			{ID: "city-a", OwnerID: "player-a", Yields: Yield{Production: 10}},
+			{ID: "city-b", OwnerID: "player-a", Yields: Yield{Production: 5}},
+		},
+		Units: []Unit{
+			{ID: "unit-a", OwnerID: "player-a", ShieldHunger: 3},
+			{ID: "unit-b", OwnerID: "player-a", ShieldHunger: 50, NeedsNoSupport: true},
+		},
+	}
+	applyReadinessSupportTax(&state, runtime)
+	if got, want := state.Cities[0].Yields.Production, 8; got != want {
+		t.Fatalf("city-a production = %d, want %d", got, want)
+	}
+	if got, want := state.Cities[1].Yields.Production, 4; got != want {
+		t.Fatalf("city-b production = %d, want %d", got, want)
+	}
+}
+
 func TestGovernmentRuntimeYieldPercentEffects(t *testing.T) {
 	nation := Nation{ID: "nation-a", Effects: []Effect{{ID: "manual", Kind: EffectYieldFood, Value: 1}}}
 	upsertGovernmentEffects(&nation, rules.RuntimeGovernmentDefinition{ID: "GOVERNMENT_RETAIL", ResearchPercent: 100, FoodPercent: 25, ProductionPercent: 15, GoldPercent: 25, PollutionPercent: -20, PollutionUnhappyCoef: 0.04, CrimeCoef: 1, CrimeOffset: 95, TooManyCitiesThreshold: 2, TooManyCitiesCoefficient: 1.5, EmpireDistanceScale: 0.001, MinEmpireDistance: 500, MaxEmpireDistance: 2000, PositiveWorkdayCoef: 1, NegativeWorkdayCoef: 1, PositiveWagesCoef: 1, NegativeWagesCoef: 1, PositiveRationsCoef: 1, NegativeRationsCoef: 1})

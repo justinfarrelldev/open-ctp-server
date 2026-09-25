@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -473,8 +474,154 @@ func RecalculateRound(state State) (State, error) {
 			applyCityPollution(&next, *city, runtimePollutionModel(runtime))
 		}
 	}
+	applyReadinessSupportTax(&next, runtime)
 	next.RecalculatedTurn = next.Phase.Turn
 	return next, nil
+}
+
+func applyReadinessSupportTax(state *State, runtime *rules.RuntimeRules) {
+	if state == nil {
+		return
+	}
+	cityOrder := cityIDs(state.Cities)
+	sort.Strings(cityOrder)
+	for nationIndex := range state.Nations {
+		nation := &state.Nations[nationIndex]
+		ownerIDs := playerIDsForNation(*state, nation.ID)
+		if len(ownerIDs) == 0 {
+			continue
+		}
+		totalProduction := 0
+		ownedCityIDs := make([]string, 0, len(cityOrder))
+		for _, cityID := range cityOrder {
+			city, ok := cityByID(*state, cityID)
+			if !ok || !ownerIDs[city.OwnerID] || city.Yields.Production <= 0 {
+				continue
+			}
+			ownedCityIDs = append(ownedCityIDs, cityID)
+			totalProduction += city.Yields.Production
+		}
+		if totalProduction <= 0 || len(ownedCityIDs) == 0 {
+			continue
+		}
+		cost := readinessSupportCost(*state, *nation, ownerIDs, runtime)
+		if cost <= 0 {
+			continue
+		}
+		cost -= nation.FranchiseProduction
+		if cost <= 0 {
+			continue
+		}
+		if cost > totalProduction {
+			cost = totalProduction
+		}
+		percent := float64(cost) / float64(totalProduction)
+		paidTotal := 0
+		for index, cityID := range ownedCityIDs {
+			city, ok := cityByID(*state, cityID)
+			if !ok {
+				continue
+			}
+			paid := 0
+			if index == len(ownedCityIDs)-1 {
+				paid = cost - paidTotal
+			} else {
+				paid = int(math.Ceil(float64(city.Yields.Production) * percent))
+				if paid > cost-paidTotal {
+					paid = cost - paidTotal
+				}
+			}
+			if paid < 0 {
+				paid = 0
+			}
+			if paid > city.Yields.Production {
+				paid = city.Yields.Production
+			}
+			city.Yields.Production -= paid
+			paidTotal += paid
+		}
+	}
+}
+
+func playerIDsForNation(state State, nationID string) map[string]bool {
+	ids := make(map[string]bool)
+	for _, player := range state.Players {
+		if player.NationID == nationID {
+			ids[player.ID] = true
+		}
+	}
+	return ids
+}
+
+func readinessSupportCost(state State, nation Nation, ownerIDs map[string]bool, runtime *rules.RuntimeRules) int {
+	government, hasGovernment := readinessGovernment(nation, runtime)
+	total := 0.0
+	for _, unit := range state.Units {
+		if !ownerIDs[unit.OwnerID] || unit.ShieldHunger <= 0 || unit.NeedsNoSupport {
+			continue
+		}
+		unitCost := float64(unit.ShieldHunger)
+		if unit.IsSpecialForces {
+			unitCost *= government.ReadyWarCoef
+		} else {
+			unitCost *= readinessSupportModifier(nation.Readiness, government, hasGovernment)
+		}
+		if hasGovernment {
+			unitCost *= government.SupportCoef
+		}
+		if reduction := readinessCostReduction(state, ownerIDs); reduction > 0 {
+			if reduction >= 100 {
+				unitCost = 0
+			} else {
+				unitCost -= unitCost * float64(reduction) / 100.0
+			}
+		}
+		if unitCost > 0 {
+			total += unitCost
+		}
+	}
+	if total <= 0 {
+		return 0
+	}
+	return int(total + 0.000001)
+}
+
+func readinessGovernment(nation Nation, runtime *rules.RuntimeRules) (rules.RuntimeGovernmentDefinition, bool) {
+	if runtime == nil || nation.GovernmentID == "" {
+		return rules.RuntimeGovernmentDefinition{SupportCoef: 1, ReadyPeaceCoef: 1, ReadyAlertCoef: 1, ReadyWarCoef: 1}, false
+	}
+	government, ok := runtime.Government(nation.GovernmentID)
+	if !ok {
+		return rules.RuntimeGovernmentDefinition{SupportCoef: 1, ReadyPeaceCoef: 1, ReadyAlertCoef: 1, ReadyWarCoef: 1}, false
+	}
+	return government, true
+}
+
+func readinessSupportModifier(readiness string, government rules.RuntimeGovernmentDefinition, hasGovernment bool) float64 {
+	if !hasGovernment {
+		return 1
+	}
+	switch strings.ToLower(readiness) {
+	case "peace":
+		return government.ReadyPeaceCoef
+	case "alert":
+		return government.ReadyAlertCoef
+	case "war", "":
+		return government.ReadyWarCoef
+	default:
+		return government.ReadyWarCoef
+	}
+}
+
+func readinessCostReduction(state State, ownerIDs map[string]bool) int {
+	reduction := 0
+	for playerID := range ownerIDs {
+		reduction += ownerWonderEffectSum(state, playerID, EffectReduceReadinessCost)
+	}
+	if reduction > 100 {
+		return 100
+	}
+	return reduction
 }
 
 func resetFranchiseProduction(state *State) {
@@ -1336,6 +1483,9 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 		CargoCapacity:      definition.TransportCapacity,
 		CargoDomains:       append([]string(nil), definition.CargoDomains...),
 		Upkeep:             definition.Upkeep,
+		ShieldHunger:       definition.ShieldHunger,
+		NeedsNoSupport:     definition.NeedsNoSupport,
+		IsSpecialForces:    definition.IsSpecialForces,
 		ZOC:                definition.ZOC,
 		Effects:            runtimeUnitEffects(definition),
 		Attack:             definition.Attack,

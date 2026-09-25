@@ -66,6 +66,9 @@ type RuntimeUnitDefinition struct {
 	CargoDomains       []string               `json:"cargo_domains,omitempty"`
 	ProductionCost     int                    `json:"production_cost,omitempty"`
 	Upkeep             int                    `json:"upkeep,omitempty"`
+	ShieldHunger       int                    `json:"shield_hunger,omitempty"`
+	NeedsNoSupport     bool                   `json:"needs_no_support,omitempty"`
+	IsSpecialForces    bool                   `json:"is_special_forces,omitempty"`
 	Prerequisites      []string               `json:"prerequisites,omitempty"`
 	ObsoleteBy         []string               `json:"obsolete_by,omitempty"`
 	VisibilityRange    int                    `json:"visibility_range,omitempty"`
@@ -1193,7 +1196,19 @@ func compileUnitDefinition(record Record) (RuntimeUnitDefinition, error) {
 	if err != nil {
 		return RuntimeUnitDefinition{}, err
 	}
-	return RuntimeUnitDefinition{ID: record.ID, Role: record.Tags["Role"], Domain: domain, Movement: movement, Attack: attack, Defense: defense, Ranged: ranged, BombardRange: bombardRange, BombRounds: bombRounds, Strength: strength, Armor: armor, Health: health, MaxFuel: maxFuel, ZOC: zoc, TransportCapacity: transportCapacity, CargoDomains: cargoDomains, ProductionCost: productionCost, Upkeep: upkeep, Prerequisites: prerequisites, ObsoleteBy: obsoleteBy, VisibilityRange: visibilityRange, Effects: effects}, nil
+	shieldHunger, err := optionalNonNegativeInteger(record, "ShieldHunger", 0)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	needsNoSupport, err := optionalBool(record, "NeedsNoSupport", false)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	isSpecialForces, err := optionalBool(record, "IsSpecialForces", false)
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	return RuntimeUnitDefinition{ID: record.ID, Role: record.Tags["Role"], Domain: domain, Movement: movement, Attack: attack, Defense: defense, Ranged: ranged, BombardRange: bombardRange, BombRounds: bombRounds, Strength: strength, Armor: armor, Health: health, MaxFuel: maxFuel, ZOC: zoc, TransportCapacity: transportCapacity, CargoDomains: cargoDomains, ProductionCost: productionCost, Upkeep: upkeep, ShieldHunger: shieldHunger, NeedsNoSupport: needsNoSupport, IsSpecialForces: isSpecialForces, Prerequisites: prerequisites, ObsoleteBy: obsoleteBy, VisibilityRange: visibilityRange, Effects: effects}, nil
 }
 
 func unitEffects(record Record) ([]RuntimeStarterEffect, error) {

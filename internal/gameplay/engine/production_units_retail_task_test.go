@@ -253,12 +253,12 @@ func TestRetailIncreaseHPWonderRaisesExistingAndFutureUnitHealth(t *testing.T) {
 
 func TestProductionCompletionCopiesRuntimeRangedStats(t *testing.T) {
 	state := State{Phase: PhaseState{Turn: 7}}
-	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_RANGED", Domain: DomainLand, Movement: 1, Attack: 3, Defense: 2, Ranged: 9, BombardRange: 2, BombRounds: 4, ActiveDefenseRange: 3, Strength: 3, Armor: 1, Health: 10, Upkeep: 4}}}
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_RANGED", Domain: DomainLand, Movement: 1, Attack: 3, Defense: 2, Ranged: 9, BombardRange: 2, BombRounds: 4, ActiveDefenseRange: 3, Strength: 3, Armor: 1, Health: 10, Upkeep: 4, ShieldHunger: 5, NeedsNoSupport: true, IsSpecialForces: true}}}
 	city := City{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}
 	if err := completeUnitProduction(&state, &city, ProductionItem{ID: "UNIT_RANGED", Kind: ProductionUnit}, runtime); err != nil {
 		t.Fatalf("completeUnitProduction() error = %v", err)
 	}
-	if len(state.Units) != 1 || state.Units[0].Movement != 1 || state.Units[0].MaxMovement != 1 || state.Units[0].Ranged != 9 || state.Units[0].BombardRange != 2 || state.Units[0].BombRounds != 4 || state.Units[0].ActiveDefenseRange != 3 || state.Units[0].Upkeep != 4 {
+	if len(state.Units) != 1 || state.Units[0].Movement != 1 || state.Units[0].MaxMovement != 1 || state.Units[0].Ranged != 9 || state.Units[0].BombardRange != 2 || state.Units[0].BombRounds != 4 || state.Units[0].ActiveDefenseRange != 3 || state.Units[0].Upkeep != 4 || state.Units[0].ShieldHunger != 5 || !state.Units[0].NeedsNoSupport || !state.Units[0].IsSpecialForces {
 		t.Fatalf("produced ranged unit = %#v", state.Units)
 	}
 }

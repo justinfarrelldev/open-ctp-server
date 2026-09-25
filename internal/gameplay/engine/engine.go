@@ -205,6 +205,9 @@ type Unit struct {
 	CargoCapacity      int      `json:"cargo_capacity,omitempty"`
 	CargoDomains       []string `json:"cargo_domains,omitempty"`
 	Upkeep             int      `json:"upkeep,omitempty"`
+	ShieldHunger       int      `json:"shield_hunger,omitempty"`
+	NeedsNoSupport     bool     `json:"needs_no_support,omitempty"`
+	IsSpecialForces    bool     `json:"is_special_forces,omitempty"`
 	ZOC                bool     `json:"zoc,omitempty"`
 	Fortified          bool     `json:"fortified,omitempty"`
 	Veteran            bool     `json:"veteran,omitempty"`
@@ -261,6 +264,7 @@ type Nation struct {
 	Workday             *int         `json:"workday,omitempty"`
 	Wages               *int         `json:"wages,omitempty"`
 	Rations             *int         `json:"rations,omitempty"`
+	Readiness           string       `json:"readiness,omitempty"`
 	GovernmentID        string       `json:"government_id,omitempty"`
 	ResearchTargetID    string       `json:"research_target_id,omitempty"`
 	ResearchProgress    int          `json:"research_progress,omitempty"`
