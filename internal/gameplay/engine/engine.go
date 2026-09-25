@@ -239,6 +239,7 @@ type City struct {
 	CrimePercent      int              `json:"crime_percent,omitempty"`
 	OvercrowdingLevel int              `json:"overcrowding_level,omitempty"`
 	ConquestDistress  int              `json:"conquest_distress,omitempty"`
+	Rioting           bool             `json:"rioting,omitempty"`
 	Specialists       map[string]int   `json:"specialists,omitempty"`
 	WorkedTileIDs     []string         `json:"worked_tile_ids,omitempty"`
 	StoredFood        int              `json:"stored_food,omitempty"`

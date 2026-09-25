@@ -79,6 +79,7 @@ type CityProjection struct {
 	Happiness         int                     `json:"happiness,omitempty"`
 	CrimePercent      int                     `json:"crime_percent,omitempty"`
 	OvercrowdingLevel int                     `json:"overcrowding_level,omitempty"`
+	Rioting           bool                    `json:"rioting,omitempty"`
 	Specialists       map[string]int          `json:"specialists,omitempty"`
 	Effects           []engine.Effect         `json:"effects,omitempty"`
 	StoredFood        int                     `json:"stored_food,omitempty"`
@@ -353,6 +354,7 @@ func projectCity(city engine.City, playerID string, observed int) CityProjection
 		projection.Happiness = city.Happiness
 		projection.CrimePercent = city.CrimePercent
 		projection.OvercrowdingLevel = city.OvercrowdingLevel
+		projection.Rioting = city.Rioting
 		if city.Specialists != nil {
 			projection.Specialists = make(map[string]int, len(city.Specialists))
 			for kind, count := range city.Specialists {

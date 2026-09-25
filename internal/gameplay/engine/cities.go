@@ -516,6 +516,7 @@ func RecalculateRound(state State) (State, error) {
 			addFranchiseProduction(&next, franchiseOwnerID, franchiseLoss)
 		}
 		city.Happiness = cityHappiness(next, *city)
+		applyCityRiotState(city)
 		advanceTemporaryCityEffects(city)
 		city.CrimePercent = cityCrimePercent(next, *city)
 		city.OvercrowdingLevel = cityOvercrowdingLevel(next, *city)
@@ -910,6 +911,18 @@ func cityHappiness(state State, city City) int {
 		return 100
 	}
 	return happiness
+}
+
+func applyCityRiotState(city *City) {
+	if city == nil {
+		return
+	}
+	city.Rioting = city.Happiness > 0 && city.Happiness < 73
+	if city.Rioting {
+		city.Yields.Production = 0
+		city.Yields.Gold = 0
+		city.Yields.Science = 0
+	}
 }
 
 func advanceConquestDistress(city *City, nation Nation) {
