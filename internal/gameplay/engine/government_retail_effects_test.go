@@ -165,6 +165,44 @@ func TestRetailReadinessHPModifierChangesCombatDamage(t *testing.T) {
 	}
 }
 
+func TestPeaceMovementDefeatStateAdjustsHappiness(t *testing.T) {
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}},
+		Nations: []Nation{{ID: "nation-a", PeaceMovement: &PeaceMovementState{RawOverseasDefeat: 250, RawHomeDefeat: 100}}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}},
+	}
+	if got, want := cityHappiness(state, state.Cities[0]), 73; got != want {
+		t.Fatalf("happiness with overseas/home defeat = %d, want %d", got, want)
+	}
+}
+
+func TestCombatLossesClassifyPeaceMovementHomeAndOverseas(t *testing.T) {
+	state := State{
+		Tiles:   []Tile{{ID: "home", X: 0, Y: 0}, {ID: "front", X: 4, Y: 0}},
+		Players: []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}},
+		Nations: []Nation{{ID: "nation-a", Effects: []Effect{{ID: "radius", Kind: EffectAtHomeRadius, Value: 1}}}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", TileID: "home"}},
+	}
+	recordUnitLossForPeaceMovement(&state, Unit{ID: "home-loss", OwnerID: "player-a", TileID: "home"})
+	recordUnitLossForPeaceMovement(&state, Unit{ID: "overseas-loss", OwnerID: "player-a", TileID: "front"})
+	got := state.Nations[0].PeaceMovement
+	if got == nil || got.UnitsLostHome != 1 || got.UnitsLostOverseas != 1 {
+		t.Fatalf("loss counters = %#v, want one home and one overseas", got)
+	}
+}
+
+func TestAdvancePeaceMovementAppliesDefeatDecayAndResetsLossCounters(t *testing.T) {
+	state := State{
+		Nations: []Nation{{ID: "nation-a", GovernmentID: "GOVERNMENT_TEST", PeaceMovement: &PeaceMovementState{RawOverseasDefeat: 100, RawHomeDefeat: 100, UnitsLostOverseas: 2, UnitsLostHome: 1}}},
+	}
+	runtime := &rules.RuntimeRules{Governments: []rules.RuntimeGovernmentDefinition{{ID: "GOVERNMENT_TEST", OverseasDefeatDecay: 0.25, OverseasDefeatCoef: 1, HomeDefeatDecay: 0.5, HomeDefeatCoef: 1}}}
+	advancePeaceMovement(&state, runtime)
+	got := state.Nations[0].PeaceMovement
+	if got == nil || got.RawOverseasDefeat != 275 || got.RawHomeDefeat != 150 || got.UnitsLostOverseas != 0 || got.UnitsLostHome != 0 {
+		t.Fatalf("peace movement = %#v, want decayed defeat state with reset losses", got)
+	}
+}
+
 func TestRetailConquestDistressAppliesToCapturedCityAndDecays(t *testing.T) {
 	state := State{
 		Players: []Player{{ID: "player-a", NationID: "nation-a"}, {ID: "player-b", NationID: "nation-b"}},

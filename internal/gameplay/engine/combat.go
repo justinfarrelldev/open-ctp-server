@@ -91,12 +91,14 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 	}
 	for _, unit := range combatArmyUnits(*state, *attackers) {
 		if unit.Health <= 0 {
+			recordUnitLossForPeaceMovement(state, *unit)
 			removeUnitAndCargo(state, unit.ID)
 			result.AttackerCasualties++
 		}
 	}
 	for _, unit := range combatArmyUnits(*state, *defenders) {
 		if unit.Health <= 0 {
+			recordUnitLossForPeaceMovement(state, *unit)
 			removeUnitAndCargo(state, unit.ID)
 			result.DefenderCasualties++
 		}
@@ -119,6 +121,60 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 		return nil, nil, err
 	}
 	return result, eventPayload, nil
+}
+
+func recordUnitLossForPeaceMovement(state *State, unit Unit) {
+	if state == nil || unit.OwnerID == "" {
+		return
+	}
+	nation := nationForID(state, nationForPlayer(*state, unit.OwnerID))
+	if nation == nil {
+		return
+	}
+	if nation.PeaceMovement == nil {
+		nation.PeaceMovement = &PeaceMovementState{}
+	}
+	if unitLostAtHome(*state, unit, *nation) {
+		nation.PeaceMovement.UnitsLostHome++
+	} else {
+		nation.PeaceMovement.UnitsLostOverseas++
+	}
+}
+
+func unitLostAtHome(state State, unit Unit, nation Nation) bool {
+	unitTile, ok := tileByID(state, unit.TileID)
+	if !ok {
+		return true
+	}
+	radius := atHomeRadiusForNation(nation)
+	nearest := -1
+	for _, city := range state.Cities {
+		if city.OwnerID != unit.OwnerID {
+			continue
+		}
+		cityTile, ok := tileByID(state, city.TileID)
+		if !ok {
+			continue
+		}
+		distance := tileDistance(unitTile, cityTile)
+		if nearest < 0 || distance < nearest {
+			nearest = distance
+		}
+	}
+	if nearest < 0 {
+		return true
+	}
+	return nearest <= radius
+}
+
+func atHomeRadiusForNation(nation Nation) int {
+	radius := 0
+	for _, effect := range nation.Effects {
+		if effect.Kind == EffectAtHomeRadius && effect.Value > radius {
+			radius = effect.Value
+		}
+	}
+	return radius
 }
 
 func promoteArmyVeterans(state *State, armyID string) {

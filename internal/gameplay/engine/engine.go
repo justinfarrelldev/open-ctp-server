@@ -262,24 +262,32 @@ type Army struct {
 	UnitIDs []string `json:"unit_ids"`
 }
 
+type PeaceMovementState struct {
+	RawOverseasDefeat int `json:"raw_overseas_defeat,omitempty"`
+	RawHomeDefeat     int `json:"raw_home_defeat,omitempty"`
+	UnitsLostOverseas int `json:"units_lost_overseas,omitempty"`
+	UnitsLostHome     int `json:"units_lost_home,omitempty"`
+}
+
 type Nation struct {
-	ID                  string       `json:"id"`
-	Effects             []Effect     `json:"effects,omitempty"`
-	Advances            []string     `json:"advances,omitempty"`
-	Embassies           []string     `json:"embassies,omitempty"`
-	CityReports         []CityReport `json:"city_reports,omitempty"`
-	PublicWorks         int          `json:"public_works,omitempty"`
-	Gold                int          `json:"gold,omitempty"`
-	FranchiseProduction int          `json:"franchise_production,omitempty"`
-	SciencePercent      *int         `json:"science_percent,omitempty"`
-	Workday             *int         `json:"workday,omitempty"`
-	Wages               *int         `json:"wages,omitempty"`
-	Rations             *int         `json:"rations,omitempty"`
-	Readiness           string       `json:"readiness,omitempty"`
-	GovernmentID        string       `json:"government_id,omitempty"`
-	ResearchTargetID    string       `json:"research_target_id,omitempty"`
-	ResearchProgress    int          `json:"research_progress,omitempty"`
-	GaiaCompletionTurn  int          `json:"gaia_completion_turn,omitempty"`
+	ID                  string              `json:"id"`
+	Effects             []Effect            `json:"effects,omitempty"`
+	Advances            []string            `json:"advances,omitempty"`
+	Embassies           []string            `json:"embassies,omitempty"`
+	CityReports         []CityReport        `json:"city_reports,omitempty"`
+	PublicWorks         int                 `json:"public_works,omitempty"`
+	Gold                int                 `json:"gold,omitempty"`
+	FranchiseProduction int                 `json:"franchise_production,omitempty"`
+	SciencePercent      *int                `json:"science_percent,omitempty"`
+	Workday             *int                `json:"workday,omitempty"`
+	Wages               *int                `json:"wages,omitempty"`
+	Rations             *int                `json:"rations,omitempty"`
+	Readiness           string              `json:"readiness,omitempty"`
+	GovernmentID        string              `json:"government_id,omitempty"`
+	ResearchTargetID    string              `json:"research_target_id,omitempty"`
+	ResearchProgress    int                 `json:"research_progress,omitempty"`
+	GaiaCompletionTurn  int                 `json:"gaia_completion_turn,omitempty"`
+	PeaceMovement       *PeaceMovementState `json:"peace_movement,omitempty"`
 }
 
 type CityReport struct {
@@ -869,6 +877,9 @@ func ValidateState(state State) error {
 		if nation.GaiaCompletionTurn < 0 || nation.ResearchProgress < 0 {
 			return errors.New("nation counters must be nonnegative")
 		}
+		if nation.PeaceMovement != nil && (nation.PeaceMovement.RawOverseasDefeat < 0 || nation.PeaceMovement.RawHomeDefeat < 0 || nation.PeaceMovement.UnitsLostOverseas < 0 || nation.PeaceMovement.UnitsLostHome < 0) {
+			return errors.New("nation counters must be nonnegative")
+		}
 		if nation.Readiness != "" && !supportedReadiness(nation.Readiness) {
 			return errors.New("nation readiness is unsupported")
 		}
@@ -1114,6 +1125,10 @@ func cloneStateForNormalization(state State) State {
 		state.Nations[index].Effects = append([]Effect(nil), state.Nations[index].Effects...)
 		state.Nations[index].Advances = append([]string(nil), state.Nations[index].Advances...)
 		state.Nations[index].Embassies = append([]string(nil), state.Nations[index].Embassies...)
+		if state.Nations[index].PeaceMovement != nil {
+			peaceMovement := *state.Nations[index].PeaceMovement
+			state.Nations[index].PeaceMovement = &peaceMovement
+		}
 		state.Nations[index].CityReports = append([]CityReport(nil), state.Nations[index].CityReports...)
 		for report := range state.Nations[index].CityReports {
 			state.Nations[index].CityReports[report].Buildings = append([]string(nil), state.Nations[index].CityReports[report].Buildings...)

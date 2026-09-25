@@ -580,6 +580,7 @@ func RecalculateRound(state State) (State, error) {
 	}
 	advanceTerraform(&next)
 	resetFranchiseProduction(&next)
+	advancePeaceMovement(&next, runtime)
 	cityOrder := cityIDs(next.Cities)
 	sort.Strings(cityOrder)
 	for _, cityID := range cityOrder {
@@ -995,7 +996,7 @@ func cityHappiness(state State, city City) int {
 		happiness = martial
 	}
 	happiness += socialSliderHappinessDelta(state, city)
-	happiness -= peaceMovementHappinessPenalty(state, city)
+	happiness += peaceMovementHappinessAdjustment(state, city)
 	happiness -= pollutionUnhappinessPenalty(state, city)
 	happiness -= tooManyCitiesHappinessPenalty(state, city)
 	happiness -= empireDistanceHappinessPenalty(state, city)
@@ -1054,17 +1055,102 @@ func advanceConquestDistress(city *City, nation Nation) {
 	city.ConquestDistress -= city.ConquestDistress * decayCentis / 100
 }
 
-func peaceMovementHappinessPenalty(state State, city City) int {
-	penaltyCentis := warDiscontentHappinessPenaltyCentis(state, city) + overseasHappinessPenaltyCentis(state, city)
-	if penaltyCentis <= 0 {
+func advancePeaceMovement(state *State, runtime *rules.RuntimeRules) {
+	if state == nil {
+		return
+	}
+	for index := range state.Nations {
+		nation := &state.Nations[index]
+		if nation.PeaceMovement == nil {
+			continue
+		}
+		government, _ := peaceMovementGovernment(*nation, runtime)
+		pm := nation.PeaceMovement
+		pm.RawOverseasDefeat = decayedPeaceMovementValue(pm.RawOverseasDefeat, government.OverseasDefeatDecay, pm.UnitsLostOverseas, government.OverseasDefeatCoef)
+		pm.RawHomeDefeat = decayedPeaceMovementValue(pm.RawHomeDefeat, government.HomeDefeatDecay, pm.UnitsLostHome, government.HomeDefeatCoef)
+		pm.UnitsLostOverseas = 0
+		pm.UnitsLostHome = 0
+		if *pm == (PeaceMovementState{}) {
+			nation.PeaceMovement = nil
+		}
+	}
+}
+
+func peaceMovementGovernment(nation Nation, runtime *rules.RuntimeRules) (rules.RuntimeGovernmentDefinition, bool) {
+	if runtime == nil || nation.GovernmentID == "" {
+		return rules.RuntimeGovernmentDefinition{OverseasDefeatCoef: 1, HomeDefeatCoef: 1}, false
+	}
+	government, ok := runtime.Government(nation.GovernmentID)
+	if !ok {
+		return rules.RuntimeGovernmentDefinition{OverseasDefeatCoef: 1, HomeDefeatCoef: 1}, false
+	}
+	return government, true
+}
+
+func decayedPeaceMovementValue(rawCentis int, decay float64, lostUnits int, coefficient float64) int {
+	if decay < 0 {
+		decay = 0
+	}
+	if decay > 1 {
+		decay = 1
+	}
+	value := float64(rawCentis)*(1-decay) + float64(lostUnits)*coefficient*100
+	if value <= 0 {
+		return 0
+	}
+	return int(math.Round(value))
+}
+
+func peaceMovementHappinessAdjustment(state State, city City) int {
+	adjustmentCentis := peaceMovementDefeatCentis(state, city) - warDiscontentHappinessPenaltyCentis(state, city) - overseasHappinessPenaltyCentis(state, city)
+	if adjustmentCentis == 0 {
 		return 0
 	}
 	factorPercent := 100 + lowerPeaceMovementPercent(state, city)
 	if factorPercent <= 0 {
 		return 0
 	}
-	penaltyCentis = (penaltyCentis*factorPercent + 99) / 100
-	return (penaltyCentis + 99) / 100
+	adjustmentCentis = signedScaleCentis(adjustmentCentis, factorPercent)
+	return signedCentisToHappiness(adjustmentCentis)
+}
+
+func peaceMovementDefeatCentis(state State, city City) int {
+	nation := nationForID(&state, nationForPlayer(state, city.OwnerID))
+	if nation == nil {
+		return 0
+	}
+	cityCount := ownedCityCount(state, city.OwnerID)
+	if cityCount <= 0 {
+		cityCount = 1
+	}
+	if nation.PeaceMovement == nil {
+		return 0
+	}
+	return (nation.PeaceMovement.RawHomeDefeat - nation.PeaceMovement.RawOverseasDefeat) / cityCount
+}
+
+func ownedCityCount(state State, ownerID string) int {
+	count := 0
+	for _, city := range state.Cities {
+		if city.OwnerID == ownerID {
+			count++
+		}
+	}
+	return count
+}
+
+func signedScaleCentis(value, factorPercent int) int {
+	if value >= 0 {
+		return value * factorPercent / 100
+	}
+	return -(((-value) * factorPercent) / 100)
+}
+
+func signedCentisToHappiness(value int) int {
+	if value >= 0 {
+		return value / 100
+	}
+	return -((-value + 99) / 100)
 }
 
 func lowerPeaceMovementPercent(state State, city City) int {

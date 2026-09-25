@@ -138,6 +138,9 @@
 - [x] Task 187: Empire-distance happiness uses runtime terrain path costs with deterministic fallback.
 - [x] Task 188: Professional unit flags are support-free and safely projected for visible units.
 - [x] Task 189: Visible diplomacy relations project derived retail-style regard.
+- [x] Task 190: Combat casualties record home/overseas peace-movement loss counters.
+- [x] Task 191: Peace-movement defeat pressure decays with government coefficients and resets turn losses.
+- [x] Task 192: Home/overseas defeat state contributes signed retail peace-movement happiness.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
