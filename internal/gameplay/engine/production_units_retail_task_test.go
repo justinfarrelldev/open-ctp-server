@@ -81,7 +81,7 @@ func TestRetailTemporaryFullHappinessWonderAddsExpiringCityMarkers(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if third.Cities[0].Happiness != 0 || third.Cities[1].Happiness != 0 {
+	if third.Cities[0].Happiness != 75 || third.Cities[1].Happiness != 75 {
 		t.Fatalf("expired full-happiness cities = %#v", third.Cities)
 	}
 }

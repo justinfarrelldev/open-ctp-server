@@ -64,13 +64,23 @@ func TestCreateTradeRouteRejectsDuplicatePair(t *testing.T) {
 	}
 }
 
+func TestRetailCityHappinessDefaultsToBaseContentment(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a"}}
+	state.Nations = []Nation{{ID: "nation-a"}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a"}}
+	if got, want := cityHappiness(state, state.Cities[0]), 75; got != want {
+		t.Fatalf("happiness = %d, want retail base contentment %d", got, want)
+	}
+}
+
 func TestRetailLowHappinessCityRiotsAndLosesProductionGold(t *testing.T) {
 	state := fixtureState()
 	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
 	state.Phase.ActivePlayerOrder = []string{"player-a"}
 	state.Nations = []Nation{{ID: "nation-a"}}
 	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}}
-	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Effects: []Effect{{ID: "sad", Kind: EffectHappiness, Value: 72}, {ID: "gold", Kind: EffectYieldGold, Value: 5}, {ID: "production", Kind: EffectYieldProduction, Value: 5}}}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 72}, {ID: "gold", Kind: EffectYieldGold, Value: 5}, {ID: "production", Kind: EffectYieldProduction, Value: 5}}}}
 	next, err := RecalculateRound(state)
 	if err != nil {
 		t.Fatal(err)

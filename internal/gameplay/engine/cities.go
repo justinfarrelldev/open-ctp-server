@@ -16,6 +16,8 @@ const (
 	ProductionBuilding = "building"
 	ProductionWonder   = "wonder"
 
+	retailBaseContentment = 75
+
 	EffectSettler                         = "settler"
 	EffectSettleSize                      = "settle_size"
 	EffectSettleBuilding                  = "settle_building"
@@ -975,11 +977,16 @@ func foodVatPercent(city City) int {
 }
 
 func cityHappiness(state State, city City) int {
-	happiness := 0
+	happiness := retailBaseContentment
 	for _, effect := range cityEffects(state, city) {
-		if effect.Kind == EffectHappiness {
-			happiness += effect.Value
+		if effect.Kind != EffectHappiness {
+			continue
 		}
+		if effect.ID == "base" {
+			happiness = effect.Value
+			continue
+		}
+		happiness += effect.Value
 	}
 	happiness += city.Specialists["POP_ENTERTAINER"] * 2
 	if martial := martialLawHappiness(state, city, happiness); martial > happiness {

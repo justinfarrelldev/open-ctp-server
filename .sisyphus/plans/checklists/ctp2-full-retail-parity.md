@@ -133,6 +133,7 @@
 - [x] Task 182: War-discontent military unit counts exempt owned completed fortifications.
 - [x] Task 183: Overseas peace-movement deployment penalties use at-home radius and nearest owned city distance.
 - [x] Task 184: LowerPeaceMovement city effects scale combined peace-movement penalties.
+- [x] Task 185: City happiness defaults to retail DiffDB base contentment.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
