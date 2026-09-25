@@ -52,6 +52,45 @@ func TestRetailUnitUpkeepDebitsTreasuryNotResearch(t *testing.T) {
 	}
 }
 
+func TestRetailBuildingMaintenanceDeficitDebitsTreasury(t *testing.T) {
+	science := 100
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Nations = []Nation{{ID: "nation-a", Gold: 5, SciencePercent: &science}}
+	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Buildings: []Building{{ID: "expensive", Upkeep: 8}}, Effects: []Effect{{ID: "gold", Kind: EffectYieldGold, Value: 2}}}}
+	next, err := RecalculateRound(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	advanceTreasury(&next)
+	if got, want := next.Nations[0].Gold, 0; got != want {
+		t.Fatalf("treasury gold = %d, want old 5 - maintenance deficit 5 = %d", got, want)
+	}
+}
+
+func TestRetailTreasuryShortfallSellsHighestUpkeepBuilding(t *testing.T) {
+	science := 100
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Nations = []Nation{{ID: "nation-a", Gold: 2, SciencePercent: &science}}
+	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Buildings: []Building{{ID: "cheap", Upkeep: 1}, {ID: "expensive", Upkeep: 8}}, Effects: []Effect{{ID: "gold", Kind: EffectYieldGold, Value: 2}}}}
+	next, err := RecalculateRound(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	advanceTreasury(&next)
+	if got, want := next.Nations[0].Gold, 0; got != want {
+		t.Fatalf("treasury gold = %d, want %d", got, want)
+	}
+	if len(next.Cities[0].Buildings) != 1 || next.Cities[0].Buildings[0].ID != "cheap" {
+		t.Fatalf("buildings after shortfall = %#v, want only cheap", next.Cities[0].Buildings)
+	}
+}
+
 func TestRetailTreasuryAccruesNonScienceCityGold(t *testing.T) {
 	science := 40
 	state := State{

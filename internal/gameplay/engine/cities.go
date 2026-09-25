@@ -1191,6 +1191,32 @@ func cityMaxPopulation(state State, city City) int {
 	return maxPopulation
 }
 
+func cityBuildingMaintenanceDeficit(state State, city City) int {
+	upkeep := 0
+	withoutUpkeep := city
+	withoutUpkeep.Buildings = append([]Building(nil), city.Buildings...)
+	for index, building := range withoutUpkeep.Buildings {
+		if isObsolete(city.Obsolete, building.ObsoletedBy) || building.Upkeep <= 0 {
+			withoutUpkeep.Buildings[index].Upkeep = 0
+			continue
+		}
+		upkeep += building.Upkeep
+		withoutUpkeep.Buildings[index].Upkeep = 0
+	}
+	if upkeep <= 0 {
+		return 0
+	}
+	yield, err := cityYield(state, withoutUpkeep)
+	if err != nil {
+		return 0
+	}
+	deficit := upkeep - yield.Gold
+	if deficit < 0 {
+		return 0
+	}
+	return deficit
+}
+
 func applySocialPolicyEconomy(state State, city City, yield *Yield) {
 	if yield == nil {
 		return

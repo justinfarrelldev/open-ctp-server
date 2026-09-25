@@ -401,17 +401,74 @@ func advanceTreasury(state *State) {
 			if nationForPlayer(*state, city.OwnerID) != nation.ID {
 				continue
 			}
-			if city.Yields.Gold <= 0 {
-				continue
+			if city.Yields.Gold > 0 {
+				income += city.Yields.Gold - city.Yields.Gold*sciencePercent/100
 			}
-			income += city.Yields.Gold - city.Yields.Gold*sciencePercent/100
+			income -= cityBuildingMaintenanceDeficit(*state, city)
 		}
 		income -= unitUpkeepForNation(*state, nation.ID)
 		nation.Gold += income
 		if nation.Gold < 0 {
+			sellHighestUpkeepBuildingsForShortfall(state, nation.ID, -nation.Gold)
 			nation.Gold = 0
 		}
 	}
+}
+
+type buildingUpkeepCandidate struct {
+	cityID     string
+	buildingID string
+	upkeep     int
+}
+
+func sellHighestUpkeepBuildingsForShortfall(state *State, nationID string, shortfall int) {
+	if state == nil || shortfall <= 0 {
+		return
+	}
+	candidates := make([]buildingUpkeepCandidate, 0)
+	for _, city := range state.Cities {
+		if nationForPlayer(*state, city.OwnerID) != nationID {
+			continue
+		}
+		for _, building := range city.Buildings {
+			if building.Upkeep <= 0 || isObsolete(city.Obsolete, building.ObsoletedBy) {
+				continue
+			}
+			candidates = append(candidates, buildingUpkeepCandidate{cityID: city.ID, buildingID: building.ID, upkeep: building.Upkeep})
+		}
+	}
+	sort.Slice(candidates, func(i, j int) bool {
+		if candidates[i].upkeep == candidates[j].upkeep {
+			if candidates[i].cityID == candidates[j].cityID {
+				return candidates[i].buildingID < candidates[j].buildingID
+			}
+			return candidates[i].cityID < candidates[j].cityID
+		}
+		return candidates[i].upkeep > candidates[j].upkeep
+	})
+	for _, candidate := range candidates {
+		if shortfall <= 0 {
+			return
+		}
+		city, ok := cityByID(*state, candidate.cityID)
+		if !ok {
+			continue
+		}
+		if removeBuildingByID(city, candidate.buildingID) {
+			shortfall -= candidate.upkeep
+		}
+	}
+}
+
+func removeBuildingByID(city *City, buildingID string) bool {
+	for index := range city.Buildings {
+		if city.Buildings[index].ID != buildingID {
+			continue
+		}
+		city.Buildings = append(city.Buildings[:index], city.Buildings[index+1:]...)
+		return true
+	}
+	return false
 }
 
 func maxSciencePercentForNation(nation Nation) int {

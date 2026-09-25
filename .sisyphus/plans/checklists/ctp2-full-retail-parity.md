@@ -117,6 +117,8 @@
 - [x] Task 166: Readiness support over-budget handling disbands highest-cost supported units before production tax.
 - [x] Task 167: Readiness level can be changed via safe command/projection/HTTP path and conservative AI projected-action consumption.
 - [x] Task 168: Social policy sliders now affect production, wages/gold, and food consumption in addition to happiness.
+- [x] Task 169: Building maintenance deficits debit nation treasury after city gold is exhausted.
+- [x] Task 170: Treasury shortfalls sell highest-upkeep owned buildings deterministically before clamping gold.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
