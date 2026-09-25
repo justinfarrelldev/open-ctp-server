@@ -293,6 +293,34 @@ func TestRetailSocialSliderGovernmentCoefficientsAffectHappiness(t *testing.T) {
 	}
 }
 
+func TestRetailEmpireDistanceUsesTerrainPathCosts(t *testing.T) {
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: DomainLand, Movement: 1, Health: 1}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainLand, Movement: 1, Health: 1}}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}, Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: TerrainPlains, Cost: 100, Domains: []string{DomainLand}}, {ID: "TERRAIN_MOUNTAIN", Cost: 900, Domains: []string{DomainLand}}}}}
+	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := State{
+		Rules:   RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: contentHash, Definitions: definitions},
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", Effects: []Effect{{ID: "scale", Kind: EffectEmpireDistanceScale, Value: 10000}, {ID: "max", Kind: EffectMaxEmpireDistance, Value: 5000}}}},
+		Tiles: []Tile{
+			{ID: "capital-tile", X: 0, Y: 0, Terrain: TerrainPlains},
+			{ID: "mountain", X: 1, Y: 0, Terrain: "TERRAIN_MOUNTAIN"},
+			{ID: "remote-tile", X: 2, Y: 0, Terrain: TerrainPlains},
+			{ID: "south-a", X: 0, Y: 1, Terrain: TerrainPlains},
+			{ID: "south-b", X: 1, Y: 1, Terrain: TerrainPlains},
+			{ID: "south-c", X: 2, Y: 1, Terrain: TerrainPlains},
+		},
+		Cities: []City{
+			{ID: "capital", OwnerID: "player-a", TileID: "capital-tile", Buildings: []Building{{ID: "palace", Effects: []Effect{{ID: "capital", Kind: EffectCapitol}}}}, Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 80}}},
+			{ID: "remote", OwnerID: "player-a", TileID: "remote-tile", Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 80}}},
+		},
+	}
+	if got, want := cityHappiness(state, state.Cities[1]), 75; got != want {
+		t.Fatalf("happiness = %d, want path-cost empire-distance penalty to %d", got, want)
+	}
+}
+
 func TestRetailEmpireDistanceGovernmentPenaltyReducesHappiness(t *testing.T) {
 	state := State{
 		Players: []Player{{ID: "player-a", NationID: "nation-a"}},

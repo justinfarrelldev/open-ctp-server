@@ -1322,7 +1322,7 @@ func empireDistanceHappinessPenalty(state State, city City) int {
 	if !ok || capital.ID == city.ID {
 		return 0
 	}
-	distance := manhattanTileDistance(state, capital.TileID, city.TileID) * 100
+	distance := empireDistanceCost(state, capital.TileID, city.TileID)
 	if maxDistance > 0 && distance > maxDistance {
 		distance = maxDistance
 	}
@@ -1356,6 +1356,71 @@ func capitalCity(state State, ownerID string) (City, bool) {
 		return fallback, true
 	}
 	return City{}, false
+}
+
+func empireDistanceCost(state State, leftID, rightID string) int {
+	fallback := manhattanTileDistance(state, leftID, rightID) * 100
+	runtime, err := runtimeRulesForState(state)
+	if err != nil || runtime == nil || !runtime.Movement.Configured {
+		return fallback
+	}
+	if cost, ok := terrainPathCost(state, runtime, leftID, rightID); ok {
+		return cost
+	}
+	return fallback
+}
+
+func terrainPathCost(state State, runtime *rules.RuntimeRules, leftID, rightID string) (int, bool) {
+	if leftID == "" || rightID == "" {
+		return 0, false
+	}
+	tilesByID := make(map[string]Tile, len(state.Tiles))
+	for _, tile := range state.Tiles {
+		tilesByID[tile.ID] = tile
+	}
+	if _, ok := tilesByID[leftID]; !ok {
+		return 0, false
+	}
+	if _, ok := tilesByID[rightID]; !ok {
+		return 0, false
+	}
+	startCost, ok := terrainCost(state, runtime, leftID)
+	if !ok {
+		return 0, false
+	}
+	const maxInt = int(^uint(0) >> 1)
+	distances := map[string]int{leftID: startCost}
+	visited := make(map[string]bool, len(state.Tiles))
+	for len(visited) < len(state.Tiles) {
+		currentID, currentDistance := "", maxInt
+		for id, distance := range distances {
+			if !visited[id] && distance < currentDistance {
+				currentID, currentDistance = id, distance
+			}
+		}
+		if currentID == "" {
+			break
+		}
+		if currentID == rightID {
+			return currentDistance, true
+		}
+		visited[currentID] = true
+		currentTile := tilesByID[currentID]
+		for _, candidate := range state.Tiles {
+			if visited[candidate.ID] || tileDistance(currentTile, candidate) != 1 {
+				continue
+			}
+			cost, ok := terrainCost(state, runtime, candidate.ID)
+			if !ok {
+				continue
+			}
+			nextDistance := currentDistance + cost
+			if previous, ok := distances[candidate.ID]; !ok || nextDistance < previous {
+				distances[candidate.ID] = nextDistance
+			}
+		}
+	}
+	return 0, false
 }
 
 func manhattanTileDistance(state State, leftID, rightID string) int {
