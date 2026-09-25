@@ -73,6 +73,26 @@ func TestSocialPolicyProjectsOwnSliderValuesAndLegalAction(t *testing.T) {
 	t.Fatalf("social policy action missing: %#v", actions)
 }
 
+func TestVisibleCitiesProjectCreateTradeRouteAction(t *testing.T) {
+	state := fixtureState()
+	state.Players = []engine.Player{{ID: "a", NationID: "na", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}, {ID: "b", NationID: "nb", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"a", "b"}
+	state.Nations = []engine.Nation{{ID: "na"}, {ID: "nb"}}
+	state.Tiles = []engine.Tile{{ID: "0,0", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "1,0", X: 1, Y: 0, Terrain: engine.TerrainPlains, Open: true}}
+	state.Units = nil
+	state.Cities = []engine.City{{ID: "home", OwnerID: "a", TileID: "0,0"}, {ID: "foreign", OwnerID: "b", TileID: "1,0"}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, action := range projection.LegalActions {
+		if action.Command == engine.CommandCreateTradeRoute && action.EntityID == "home" && action.TargetID == "foreign" && bytes.Contains(action.Payload, []byte(`"source_city_id":"home"`)) {
+			return
+		}
+	}
+	t.Fatalf("trade route action missing: %#v", projection.LegalActions)
+}
+
 func TestSpecialistsProjectOwnerAssignmentsAndLegalAction(t *testing.T) {
 	projection := Projection{Cities: []CityProjection{{ID: "city-a", OwnerID: "a", Population: 2, Specialists: map[string]int{"POP_SCIENTIST": 1}}}}
 	actions := specialistActions(projection, "a")

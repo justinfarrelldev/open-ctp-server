@@ -482,6 +482,7 @@ func legalActions(state engine.State, projection Projection, playerID string) []
 	actions = append(actions, researchActions(projection, playerID)...)
 	actions = append(actions, governmentActions(projection, playerID)...)
 	actions = append(actions, diplomacyActions(projection, playerID)...)
+	actions = append(actions, tradeRouteActions(state, projection, playerID)...)
 	actions = append(actions, specialistActions(projection, playerID)...)
 	actions = append(actions, productionActions(projection, playerID)...)
 	actions = append(actions, unitActions(projection, playerID)...)
@@ -647,6 +648,37 @@ func projectedUnitCanFortify(effects []engine.Effect) bool {
 		}
 	}
 	return true
+}
+
+func tradeRouteActions(state engine.State, projection Projection, playerID string) []ActionProjection {
+	existing := make(map[string]bool, len(state.TradeRoutes))
+	for _, route := range state.TradeRoutes {
+		source, ok := cityByID(state.Cities, route.SourceCityID)
+		if ok && source.OwnerID == playerID {
+			existing[route.SourceCityID+"\x00"+route.DestinationCityID] = true
+		}
+	}
+	owned := make([]CityProjection, 0)
+	destinations := make([]CityProjection, 0)
+	for _, city := range projection.Cities {
+		if city.ID == "" {
+			continue
+		}
+		if city.OwnerID == playerID {
+			owned = append(owned, city)
+		}
+		destinations = append(destinations, city)
+	}
+	actions := make([]ActionProjection, 0)
+	for _, source := range owned {
+		for _, destination := range destinations {
+			if source.ID == destination.ID || existing[source.ID+"\x00"+destination.ID] {
+				continue
+			}
+			actions = append(actions, action(engine.CommandCreateTradeRoute, "create-trade-route", source.ID, destination.ID, map[string]string{"source_city_id": source.ID, "destination_city_id": destination.ID}, []string{"source_city_id", "destination_city_id"}))
+		}
+	}
+	return actions
 }
 
 func specialistActions(projection Projection, playerID string) []ActionProjection {

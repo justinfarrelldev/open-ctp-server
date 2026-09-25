@@ -202,6 +202,11 @@ type SetSpecialistsPayload struct {
 	Specialists map[string]int `json:"specialists"`
 }
 
+type CreateTradeRoutePayload struct {
+	SourceCityID      string `json:"source_city_id"`
+	DestinationCityID string `json:"destination_city_id"`
+}
+
 func applyCityCommand(state *State, command Command, runtime *rules.RuntimeRules) (string, error) {
 	if err := activeActor(*state, command.ActorPlayerID); err != nil {
 		return "", err
@@ -231,8 +236,84 @@ func applyCityCommand(state *State, command Command, runtime *rules.RuntimeRules
 			return "", err
 		}
 		return EventSpecialistsChanged, setSpecialists(state, command.ActorPlayerID, payload)
+	case CommandCreateTradeRoute:
+		var payload CreateTradeRoutePayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", err
+		}
+		return EventTradeRouteCreated, createTradeRoute(state, command.ActorPlayerID, payload)
 	default:
 		return "", fmt.Errorf("unsupported command type %q", command.Type)
+	}
+}
+
+func createTradeRoute(state *State, actor string, payload CreateTradeRoutePayload) error {
+	if payload.SourceCityID == "" || payload.DestinationCityID == "" || payload.SourceCityID == payload.DestinationCityID {
+		return errors.New("trade route payload is invalid")
+	}
+	source, ok := cityByID(*state, payload.SourceCityID)
+	if !ok || source.OwnerID != actor {
+		return errors.New("trade route source is unavailable")
+	}
+	destination, ok := cityByID(*state, payload.DestinationCityID)
+	if !ok {
+		return errors.New("trade route destination is unavailable")
+	}
+	for _, route := range state.TradeRoutes {
+		if route.SourceCityID == source.ID && route.DestinationCityID == destination.ID {
+			return errors.New("trade route already exists")
+		}
+	}
+	routeID := "trade:" + source.ID + ":" + destination.ID
+	if tradeRouteIDExists(*state, routeID) {
+		return errors.New("trade route already exists")
+	}
+	state.TradeRoutes = append(state.TradeRoutes, TradeRoute{ID: routeID, SourceCityID: source.ID, DestinationCityID: destination.ID, CrossesWater: tradeRouteCrossesWater(*state, *source, *destination)})
+	return nil
+}
+
+func tradeRouteIDExists(state State, routeID string) bool {
+	for _, route := range state.TradeRoutes {
+		if route.ID == routeID {
+			return true
+		}
+	}
+	return false
+}
+
+func tradeRouteCrossesWater(state State, source, destination City) bool {
+	sourceTile, sourceOK := tileByID(state, source.TileID)
+	destinationTile, destinationOK := tileByID(state, destination.TileID)
+	if !sourceOK || !destinationOK {
+		return false
+	}
+	if isWaterTerrain(sourceTile.Terrain) || isWaterTerrain(destinationTile.Terrain) {
+		return true
+	}
+	if sourceTile.X == destinationTile.X || sourceTile.Y == destinationTile.Y {
+		minX, maxX := sourceTile.X, destinationTile.X
+		if minX > maxX {
+			minX, maxX = maxX, minX
+		}
+		minY, maxY := sourceTile.Y, destinationTile.Y
+		if minY > maxY {
+			minY, maxY = maxY, minY
+		}
+		for _, tile := range state.Tiles {
+			if tile.X >= minX && tile.X <= maxX && tile.Y >= minY && tile.Y <= maxY && isWaterTerrain(tile.Terrain) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isWaterTerrain(terrain string) bool {
+	switch terrain {
+	case TerrainOcean, "TERRAIN_WATER_SHALLOW", "TERRAIN_WATER_DEEP", "TERRAIN_WATER_SHELF", "TERRAIN_WATER_BEACH", "TERRAIN_WATER_KELP", "TERRAIN_WATER_REEF":
+		return true
+	default:
+		return false
 	}
 }
 

@@ -32,6 +32,38 @@ func task10Apply(t *testing.T, state State, actor, kind string, payload any) Sta
 	return next
 }
 
+func TestCreateTradeRouteCommandAddsCanonicalRoute(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}, {ID: "player-b", NationID: "nation-b", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a", "player-b"}
+	state.Nations = []Nation{{ID: "nation-a"}, {ID: "nation-b"}}
+	state.Tiles = []Tile{{ID: "tile-a", X: 0, Y: 0, Terrain: TerrainPlains, Open: true}, {ID: "tile-b", X: 2, Y: 0, Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}, {ID: "city-b", OwnerID: "player-b", TileID: "tile-b"}}
+	body, _ := json.Marshal(map[string]string{"source_city_id": "city-a", "destination_city_id": "city-b"})
+	next, events, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "route", ActorPlayerID: "player-a", Type: CommandCreateTradeRoute, Payload: body}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatalf("Apply() error = %v", err)
+	}
+	if len(next.TradeRoutes) != 1 || next.TradeRoutes[0].SourceCityID != "city-a" || next.TradeRoutes[0].DestinationCityID != "city-b" || len(events) != 1 || events[0].Type != EventTradeRouteCreated {
+		t.Fatalf("trade route command failed: routes=%#v events=%#v", next.TradeRoutes, events)
+	}
+}
+
+func TestCreateTradeRouteRejectsDuplicatePair(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}, {ID: "player-b", NationID: "nation-b", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a", "player-b"}
+	state.Nations = []Nation{{ID: "nation-a"}, {ID: "nation-b"}}
+	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}, {ID: "tile-b", Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}, {ID: "city-b", OwnerID: "player-b", TileID: "tile-b"}}
+	state.TradeRoutes = []TradeRoute{{ID: "trade:city-a:city-b", SourceCityID: "city-a", DestinationCityID: "city-b"}}
+	body, _ := json.Marshal(map[string]string{"source_city_id": "city-a", "destination_city_id": "city-b"})
+	_, _, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "route", ActorPlayerID: "player-a", Type: CommandCreateTradeRoute, Payload: body}, state.Rules, fixtureSources())
+	if err == nil {
+		t.Fatal("duplicate trade route should fail")
+	}
+}
+
 func TestRetailLowHappinessCityRiotsAndLosesProductionGold(t *testing.T) {
 	state := fixtureState()
 	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
