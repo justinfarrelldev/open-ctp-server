@@ -140,6 +140,44 @@ func TestRetailSetScienceRateCommandPersistsExplicitZero(t *testing.T) {
 	}
 }
 
+func TestRetailConquestDistressAppliesToCapturedCityAndDecays(t *testing.T) {
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}, {ID: "player-b", NationID: "nation-b"}},
+		Nations: []Nation{{ID: "nation-a", Effects: []Effect{{ID: "distress", Kind: EffectConquestDistress, Value: -5}, {ID: "decay", Kind: EffectConquestDistressDecay, Value: 20}}}, {ID: "nation-b"}},
+		Cities:  []City{{ID: "city", OwnerID: "player-b", TileID: "city-tile", Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 80}}}},
+	}
+	if got := captureCityAt(&state, "player-a", "city-tile"); got != "city" {
+		t.Fatalf("captured city = %q", got)
+	}
+	if got, want := state.Cities[0].ConquestDistress, -5; got != want {
+		t.Fatalf("conquest distress = %d, want %d", got, want)
+	}
+	if got, want := cityHappiness(state, state.Cities[0]), 75; got != want {
+		t.Fatalf("happiness = %d, want conquest distress penalty to %d", got, want)
+	}
+	advanceConquestDistress(&state.Cities[0], state.Nations[0])
+	if got, want := state.Cities[0].ConquestDistress, -4; got != want {
+		t.Fatalf("decayed conquest distress = %d, want %d", got, want)
+	}
+}
+
+func TestRetailWarDiscontentReducesCityHappiness(t *testing.T) {
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", Effects: []Effect{{ID: "max", Kind: EffectWarDiscontentMaxUnits, Value: 1}, {ID: "per", Kind: EffectWarDiscontentPerUnit, Value: 100}}}},
+		Tiles:   []Tile{{ID: "city-tile"}, {ID: "field-a"}, {ID: "field-b"}, {ID: "field-c"}},
+		Cities:  []City{{ID: "city", OwnerID: "player-a", TileID: "city-tile", Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 80}}}},
+		Units: []Unit{
+			{ID: "unit-a", OwnerID: "player-a", TileID: "field-a", Attack: 1},
+			{ID: "unit-b", OwnerID: "player-a", TileID: "field-b", Attack: 1},
+			{ID: "unit-c", OwnerID: "player-a", TileID: "field-c", Attack: 1},
+		},
+	}
+	if got, want := cityHappiness(state, state.Cities[0]), 78; got != want {
+		t.Fatalf("happiness = %d, want war discontent penalty to %d", got, want)
+	}
+}
+
 func TestRetailPollutionUnhappyCoefReducesHappiness(t *testing.T) {
 	state := State{
 		Players: []Player{{ID: "player-a", NationID: "nation-a"}},

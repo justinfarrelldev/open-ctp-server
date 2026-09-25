@@ -119,6 +119,8 @@
 - [x] Task 168: Social policy sliders now affect production, wages/gold, and food consumption in addition to happiness.
 - [x] Task 169: Building maintenance deficits debit nation treasury after city gold is exhausted.
 - [x] Task 170: Treasury shortfalls sell highest-upkeep owned buildings deterministically before clamping gold.
+- [x] Task 171: Government war-discontent settings reduce city happiness for attack-capable units outside cities.
+- [x] Task 172: Captured cities receive government conquest distress and decay it over turns.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

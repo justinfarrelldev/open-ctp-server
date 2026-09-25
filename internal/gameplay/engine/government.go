@@ -191,6 +191,18 @@ func upsertGovernmentEffects(nation *Nation, government rules.RuntimeGovernmentD
 		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":max-empire-distance", Kind: EffectMaxEmpireDistance, Value: government.MaxEmpireDistance})
 	}
 	appendGovernmentSocialEffects(nation, government)
+	if government.WarDiscontentMaxUnits > 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":war-discontent-max-units", Kind: EffectWarDiscontentMaxUnits, Value: government.WarDiscontentMaxUnits})
+	}
+	if government.WarDiscontentPerUnit > 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":war-discontent-per-unit", Kind: EffectWarDiscontentPerUnit, Value: int(government.WarDiscontentPerUnit*100 + 0.5)})
+	}
+	if government.ConquestDistress != 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":conquest-distress", Kind: EffectConquestDistress, Value: int(government.ConquestDistress)})
+	}
+	if government.ConquestDistressDecay > 0 {
+		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":conquest-distress-decay", Kind: EffectConquestDistressDecay, Value: int(government.ConquestDistressDecay*100 + 0.5)})
+	}
 	if government.PublicWorksBonus > 0 {
 		nation.PublicWorks += government.PublicWorksBonus
 	}

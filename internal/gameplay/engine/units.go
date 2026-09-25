@@ -231,10 +231,25 @@ func captureCityAt(state *State, actorID, tileID string) string {
 	for i := range state.Cities {
 		if state.Cities[i].TileID == tileID && state.Cities[i].OwnerID != actorID {
 			state.Cities[i].OwnerID = actorID
+			state.Cities[i].ConquestDistress = conquestDistressForOwner(*state, actorID)
 			return state.Cities[i].ID
 		}
 	}
 	return ""
+}
+
+func conquestDistressForOwner(state State, ownerID string) int {
+	nation := nationForID(&state, nationForPlayer(state, ownerID))
+	if nation == nil {
+		return 0
+	}
+	distress := 0
+	for _, effect := range nation.Effects {
+		if effect.Kind == EffectConquestDistress {
+			distress += effect.Value
+		}
+	}
+	return distress
 }
 
 func embark(state *State, actorID string, payload embarkPayload) error {
