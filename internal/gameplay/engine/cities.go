@@ -717,7 +717,7 @@ func readinessSupportCandidates(state State, nation Nation, ownerIDs map[string]
 	reduction := readinessCostReduction(state, ownerIDs)
 	candidates := make([]readinessSupportCandidate, 0)
 	for _, unit := range state.Units {
-		if !ownerIDs[unit.OwnerID] || unit.ShieldHunger <= 0 || unit.NeedsNoSupport {
+		if !ownerIDs[unit.OwnerID] || unit.ShieldHunger <= 0 || unit.NeedsNoSupport || unit.IsProfessional {
 			continue
 		}
 		cost := readinessSupportCostForUnit(unit, nation, government, hasGovernment, reduction)

@@ -55,6 +55,7 @@ type UnitProjection struct {
 	Upkeep             int             `json:"upkeep,omitempty"`
 	ShieldHunger       int             `json:"shield_hunger,omitempty"`
 	NeedsNoSupport     bool            `json:"needs_no_support,omitempty"`
+	IsProfessional     bool            `json:"is_professional,omitempty"`
 	IsSpecialForces    bool            `json:"is_special_forces,omitempty"`
 	ZOC                bool            `json:"zoc,omitempty"`
 	Attack             int             `json:"attack,omitempty"`
@@ -266,6 +267,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 				projected.Upkeep = unit.Upkeep
 				projected.ShieldHunger = unit.ShieldHunger
 				projected.NeedsNoSupport = unit.NeedsNoSupport
+				projected.IsProfessional = unit.IsProfessional
 				projected.IsSpecialForces = unit.IsSpecialForces
 				projected.ZOC = unit.ZOC
 				projected.Attack, projected.Defense, projected.Ranged, projected.BombardRange, projected.BombRounds, projected.ActiveDefenseRange, projected.Strength, projected.Armor = unit.Attack, unit.Defense, unit.Ranged, unit.BombardRange, unit.BombRounds, unit.ActiveDefenseRange, unit.Strength, unit.Armor

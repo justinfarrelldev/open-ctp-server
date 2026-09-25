@@ -214,6 +214,7 @@ type Unit struct {
 	Upkeep             int      `json:"upkeep,omitempty"`
 	ShieldHunger       int      `json:"shield_hunger,omitempty"`
 	NeedsNoSupport     bool     `json:"needs_no_support,omitempty"`
+	IsProfessional     bool     `json:"is_professional,omitempty"`
 	IsSpecialForces    bool     `json:"is_special_forces,omitempty"`
 	ZOC                bool     `json:"zoc,omitempty"`
 	Fortified          bool     `json:"fortified,omitempty"`

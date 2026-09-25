@@ -136,6 +136,7 @@
 - [x] Task 185: City happiness defaults to retail DiffDB base contentment.
 - [x] Task 186: Low-happiness riots use retail riot-level/chance rolls with canonical RNG.
 - [x] Task 187: Empire-distance happiness uses runtime terrain path costs with deterministic fallback.
+- [x] Task 188: Professional unit flags are support-free and safely projected for visible units.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

@@ -28,6 +28,20 @@ func TestReadinessSupportDisbandsHighestCostUnitsOverProductionBudget(t *testing
 	}
 }
 
+func TestReadinessSupportIgnoresProfessionalUnits(t *testing.T) {
+	runtime := &rules.RuntimeRules{Governments: []rules.RuntimeGovernmentDefinition{{ID: "GOVERNMENT_TEST", SupportCoef: 1, ReadyWarCoef: 1}}}
+	state := State{
+		Players: []Player{{ID: "player-a", NationID: "nation-a"}},
+		Nations: []Nation{{ID: "nation-a", GovernmentID: "GOVERNMENT_TEST", Readiness: "war"}},
+		Cities:  []City{{ID: "city-a", OwnerID: "player-a", Yields: Yield{Production: 4}}},
+		Units:   []Unit{{ID: "unit-a", OwnerID: "player-a", ShieldHunger: 3, IsProfessional: true}},
+	}
+	applyReadinessSupportTax(&state, runtime)
+	if got, want := state.Cities[0].Yields.Production, 4; got != want {
+		t.Fatalf("production = %d, want professional unit to be support-free with %d", got, want)
+	}
+}
+
 func TestReadinessSupportReducesCityProduction(t *testing.T) {
 	runtime := &rules.RuntimeRules{Governments: []rules.RuntimeGovernmentDefinition{{ID: "GOVERNMENT_TEST", SupportCoef: 1, ReadyWarCoef: 1}}}
 	state := State{
