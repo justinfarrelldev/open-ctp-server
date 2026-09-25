@@ -140,6 +140,17 @@ func TestRetailSetScienceRateCommandPersistsExplicitZero(t *testing.T) {
 	}
 }
 
+func TestRetailReadinessHPModifierChangesCombatDamage(t *testing.T) {
+	state := State{
+		Players: []Player{{ID: "player-b", NationID: "nation-b"}},
+		Nations: []Nation{{ID: "nation-b", Readiness: "peace", Effects: []Effect{{ID: "peace-hp", Kind: EffectReadyPeaceHP, Value: 50}}}},
+	}
+	target := Unit{ID: "target", OwnerID: "player-b"}
+	if got, want := readinessAdjustedCombatDamage(state, target, 1), 2; got != want {
+		t.Fatalf("readiness-adjusted damage = %d, want %d", got, want)
+	}
+}
+
 func TestRetailConquestDistressAppliesToCapturedCityAndDecays(t *testing.T) {
 	state := State{
 		Players: []Player{{ID: "player-a", NationID: "nation-a"}, {ID: "player-b", NationID: "nation-b"}},

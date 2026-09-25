@@ -403,9 +403,50 @@ func combatStrike(state *State, sources Sources, attackers, defenders []*Unit, r
 			if damage < 1 {
 				damage = 1
 			}
-			target.Health -= damage
+			target.Health -= readinessAdjustedCombatDamage(*state, *target, damage)
 		}
 	}
+}
+
+func readinessAdjustedCombatDamage(state State, target Unit, baseDamage int) int {
+	if baseDamage < 1 {
+		baseDamage = 1
+	}
+	modifierCentis := readinessHPModifierCentis(state, target.OwnerID)
+	if modifierCentis <= 0 {
+		modifierCentis = 100
+	}
+	damage := (baseDamage*100 + modifierCentis - 1) / modifierCentis
+	if damage < 1 {
+		return 1
+	}
+	return damage
+}
+
+func readinessHPModifierCentis(state State, ownerID string) int {
+	nation := nationForID(&state, nationForPlayer(state, ownerID))
+	if nation == nil {
+		return 100
+	}
+	kind := EffectReadyWarHP
+	switch nation.Readiness {
+	case "peace":
+		kind = EffectReadyPeaceHP
+	case "alert":
+		kind = EffectReadyAlertHP
+	case "war", "":
+		kind = EffectReadyWarHP
+	}
+	modifier := 0
+	for _, effect := range nation.Effects {
+		if effect.Kind == kind && effect.Value > modifier {
+			modifier = effect.Value
+		}
+	}
+	if modifier <= 0 {
+		return 100
+	}
+	return modifier
 }
 
 func combatRoll(state *State, sources Sources) uint64 {

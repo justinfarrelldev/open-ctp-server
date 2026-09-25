@@ -203,9 +203,19 @@ func upsertGovernmentEffects(nation *Nation, government rules.RuntimeGovernmentD
 	if government.ConquestDistressDecay > 0 {
 		nation.Effects = append(nation.Effects, Effect{ID: "government:" + government.ID + ":conquest-distress-decay", Kind: EffectConquestDistressDecay, Value: int(government.ConquestDistressDecay*100 + 0.5)})
 	}
+	appendReadinessHPEffect(nation, government.ID, "peace", EffectReadyPeaceHP, government.ReadyPeaceHP)
+	appendReadinessHPEffect(nation, government.ID, "alert", EffectReadyAlertHP, government.ReadyAlertHP)
+	appendReadinessHPEffect(nation, government.ID, "war", EffectReadyWarHP, government.ReadyWarHP)
 	if government.PublicWorksBonus > 0 {
 		nation.PublicWorks += government.PublicWorksBonus
 	}
+}
+
+func appendReadinessHPEffect(nation *Nation, governmentID, level, kind string, modifier float64) {
+	if modifier <= 0 {
+		return
+	}
+	nation.Effects = append(nation.Effects, Effect{ID: "government:" + governmentID + ":ready-" + level + "-hp", Kind: kind, Value: int(modifier*100 + 0.5)})
 }
 
 func appendGovernmentSocialEffects(nation *Nation, government rules.RuntimeGovernmentDefinition) {

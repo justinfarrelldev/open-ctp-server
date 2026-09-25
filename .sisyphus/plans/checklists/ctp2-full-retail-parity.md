@@ -121,6 +121,7 @@
 - [x] Task 170: Treasury shortfalls sell highest-upkeep owned buildings deterministically before clamping gold.
 - [x] Task 171: Government war-discontent settings reduce city happiness for attack-capable units outside cities.
 - [x] Task 172: Captured cities receive government conquest distress and decay it over turns.
+- [x] Task 173: Government readiness HP modifiers now scale combat damage by owner readiness level.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
