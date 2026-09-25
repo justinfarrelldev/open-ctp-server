@@ -16,7 +16,9 @@ const (
 	ProductionBuilding = "building"
 	ProductionWonder   = "wonder"
 
-	retailBaseContentment = 75
+	retailBaseContentment    = 75
+	retailRiotLevel          = 73
+	retailRiotChancePerPoint = 10
 
 	EffectSettler                         = "settler"
 	EffectSettleSize                      = "settle_size"
@@ -602,7 +604,7 @@ func RecalculateRound(state State) (State, error) {
 			addFranchiseProduction(&next, franchiseOwnerID, franchiseLoss)
 		}
 		city.Happiness = cityHappiness(next, *city)
-		applyCityRiotState(city)
+		applyCityRiotState(&next, city)
 		advanceTemporaryCityEffects(city)
 		city.CrimePercent = cityCrimePercent(next, *city)
 		city.OvercrowdingLevel = cityOvercrowdingLevel(next, *city)
@@ -1004,16 +1006,32 @@ func cityHappiness(state State, city City) int {
 	return happiness
 }
 
-func applyCityRiotState(city *City) {
-	if city == nil {
+func applyCityRiotState(state *State, city *City) {
+	if state == nil || city == nil {
 		return
 	}
-	city.Rioting = city.Happiness > 0 && city.Happiness < 73
-	if city.Rioting {
-		city.Yields.Production = 0
-		city.Yields.Gold = 0
-		city.Yields.Science = 0
+	city.Rioting = false
+	if city.Happiness <= 0 || city.Happiness >= retailRiotLevel {
+		return
 	}
+	chance := (retailRiotLevel - city.Happiness) * retailRiotChancePerPoint
+	if chance > 100 {
+		chance = 100
+	}
+	if nextRiotRoll(state) >= chance {
+		return
+	}
+	city.Rioting = true
+	city.Yields.Production = 0
+	city.Yields.Gold = 0
+	city.Yields.Science = 0
+}
+
+func nextRiotRoll(state *State) int {
+	current := rngValue(*state, RNGDomainRiot)
+	next := current*6364136223846793005 + 1
+	setRNG(state, RNGDomainRiot, next)
+	return int(next % 100)
 }
 
 func advanceConquestDistress(city *City, nation Nation) {

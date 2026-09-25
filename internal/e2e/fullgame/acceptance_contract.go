@@ -279,7 +279,7 @@ func RowOneConquestAcceptance() AcceptanceConfig {
 		Restart:            AcceptanceRestartPlan{Point: AcceptanceRestartAfterDurableRound},
 		ExpectedWinner:     "account-1",
 		ExpectedReason:     "bloodlust_conquest",
-		ExpectedStateHash:  "a6550c5ca3bfc42c16eb0804bd2c00dae71340389afb6da7d80713c1d9ade444",
+		ExpectedStateHash:  "4c6df89b1cf28880dd114cbfc6a0212b4883d9a3a92ebca88b5c960855046fdc",
 		ExpectedEventHash:  "318f6e4749b5d25628c7cc175bd8fccf2cb59fd89fa1eb75177d8345121e91e5",
 	}
 }

@@ -13,7 +13,7 @@ import (
 )
 
 func auditStateFixture() engine.State {
-	return engine.State{SchemaVersion: engine.StateSchemaV1, Rules: engine.RulesPin{Version: "ctp2-supported-v2", ContentHash: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}, Phase: engine.PhaseState{Mode: "sequential", ModeVersion: "turn-policy-v1", ActivePlayerOrder: []string{"a"}}, Players: []engine.Player{{ID: "a", NationID: "a", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}}, RNG: []engine.RNGDomainState{{Domain: engine.RNGDomainAI}, {Domain: engine.RNGDomainCombat}, {Domain: engine.RNGDomainSpecialAction}}, Terminal: engine.TerminalState{Ended: true, Reason: "conquest", WinningPlayerID: "a"}}
+	return engine.State{SchemaVersion: engine.StateSchemaV1, Rules: engine.RulesPin{Version: "ctp2-supported-v2", ContentHash: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}, Phase: engine.PhaseState{Mode: "sequential", ModeVersion: "turn-policy-v1", ActivePlayerOrder: []string{"a"}}, Players: []engine.Player{{ID: "a", NationID: "a", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}}, RNG: []engine.RNGDomainState{{Domain: engine.RNGDomainAI}, {Domain: engine.RNGDomainCombat}, {Domain: engine.RNGDomainRiot}, {Domain: engine.RNGDomainSpecialAction}}, Terminal: engine.TerminalState{Ended: true, Reason: "conquest", WinningPlayerID: "a"}}
 }
 
 func TestAuditTerminalReconstructsAuditFreeHashesReadOnly(t *testing.T) {

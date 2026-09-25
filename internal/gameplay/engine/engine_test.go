@@ -45,6 +45,7 @@ func fixtureState() State {
 		RNG: []RNGDomainState{
 			{Domain: RNGDomainAI, State: 3},
 			{Domain: RNGDomainCombat, State: 1},
+			{Domain: RNGDomainRiot, State: 4},
 			{Domain: RNGDomainSpecialAction, State: 2},
 		},
 	}
@@ -318,7 +319,7 @@ func TestRNGDomainsAreNamedAndSerializable(t *testing.T) {
 	if string(canonical) == "" {
 		t.Fatal("empty canonical state")
 	}
-	for _, domain := range []string{RNGDomainCombat, RNGDomainSpecialAction, RNGDomainAI} {
+	for _, domain := range []string{RNGDomainCombat, RNGDomainSpecialAction, RNGDomainAI, RNGDomainRiot} {
 		if _, ok := state.RNGState(domain); !ok {
 			t.Fatalf("missing named RNG domain %q", domain)
 		}

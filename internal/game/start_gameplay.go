@@ -136,7 +136,7 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 		SchemaVersion: engine.StateSchemaV1,
 		Rules:         pin,
 		Phase:         engine.PhaseState{Mode: style, ModeVersion: "turn-policy-v1", Turn: 1},
-		RNG:           []engine.RNGDomainState{{Domain: engine.RNGDomainCombat, State: 1}, {Domain: engine.RNGDomainSpecialAction, State: 2}, {Domain: engine.RNGDomainAI, State: 3}},
+		RNG:           []engine.RNGDomainState{{Domain: engine.RNGDomainCombat, State: 1}, {Domain: engine.RNGDomainSpecialAction, State: 2}, {Domain: engine.RNGDomainAI, State: 3}, {Domain: engine.RNGDomainRiot, State: 4}},
 	}
 	for _, tile := range snapshot.Tiles {
 		state.Tiles = append(state.Tiles, engine.Tile{ID: tileID(tile.X, tile.Y), X: tile.X, Y: tile.Y, Terrain: engineTerrainForRuntime(tile.Terrain, runtime), Open: true})

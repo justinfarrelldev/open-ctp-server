@@ -23,6 +23,7 @@ const (
 	RNGDomainCombat        = "combat"
 	RNGDomainSpecialAction = "special-action"
 	RNGDomainAI            = "ai"
+	RNGDomainRiot          = "riot"
 
 	CommandNoop               = "noop"
 	CommandSetWar             = "set-war"
@@ -1303,12 +1304,12 @@ func validateSources(sources Sources) error {
 	return nil
 }
 func validateRNG(entries []RNGDomainState) error {
-	if len(entries) != 3 {
+	if len(entries) < 3 || len(entries) > 4 {
 		return errors.New("all named RNG domains are required")
 	}
 	seen := makeIDSet(nil)
 	for _, entry := range entries {
-		if entry.Domain != RNGDomainCombat && entry.Domain != RNGDomainSpecialAction && entry.Domain != RNGDomainAI {
+		if entry.Domain != RNGDomainCombat && entry.Domain != RNGDomainSpecialAction && entry.Domain != RNGDomainAI && entry.Domain != RNGDomainRiot {
 			return fmt.Errorf("unknown RNG domain %q", entry.Domain)
 		}
 		if seen[entry.Domain] {

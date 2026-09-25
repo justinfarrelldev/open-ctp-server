@@ -90,6 +90,23 @@ func TestRetailLowHappinessCityRiotsAndLosesProductionGold(t *testing.T) {
 	}
 }
 
+func TestRetailRiotChanceCanLeaveUnhappyCityCalm(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Nations = []Nation{{ID: "nation-a"}}
+	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}}
+	state.RNG = []RNGDomainState{{Domain: RNGDomainAI, State: 3}, {Domain: RNGDomainCombat, State: 1}, {Domain: RNGDomainRiot, State: 6}, {Domain: RNGDomainSpecialAction, State: 2}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Effects: []Effect{{ID: "base", Kind: EffectHappiness, Value: 72}, {ID: "gold", Kind: EffectYieldGold, Value: 5}, {ID: "production", Kind: EffectYieldProduction, Value: 5}}}}
+	next, err := RecalculateRound(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Cities[0].Rioting || next.Cities[0].Yields.Production == 0 || next.Cities[0].Yields.Gold == 0 {
+		t.Fatalf("riot chance city = %+v, want calm city preserving production/gold", next.Cities[0])
+	}
+}
+
 func TestSetSpecialistsCommandPersistsValidAssignments(t *testing.T) {
 	state := fixtureState()
 	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}

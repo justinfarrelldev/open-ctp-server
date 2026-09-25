@@ -336,7 +336,7 @@ func runtimeStartedStateAt(t *testing.T, turn int) State {
 		Tiles:         []Tile{{ID: "tile-a", X: 0, Y: 0, Terrain: TerrainPlains, Open: true}, {ID: "tile-b", X: 1, Y: 0, Terrain: TerrainForest, Open: true}},
 		Players:       []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}, {ID: "player-b", NationID: "nation-b", Lifecycle: PlayerActive, Controller: ControllerHuman}},
 		Nations:       []Nation{{ID: "nation-a"}, {ID: "nation-b"}},
-		RNG:           []RNGDomainState{{Domain: RNGDomainCombat, State: 1}, {Domain: RNGDomainSpecialAction, State: 2}, {Domain: RNGDomainAI, State: 3}},
+		RNG:           []RNGDomainState{{Domain: RNGDomainCombat, State: 1}, {Domain: RNGDomainSpecialAction, State: 2}, {Domain: RNGDomainAI, State: 3}, {Domain: RNGDomainRiot, State: 4}},
 	}
 }
 

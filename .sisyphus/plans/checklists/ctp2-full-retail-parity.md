@@ -134,6 +134,7 @@
 - [x] Task 183: Overseas peace-movement deployment penalties use at-home radius and nearest owned city distance.
 - [x] Task 184: LowerPeaceMovement city effects scale combined peace-movement penalties.
 - [x] Task 185: City happiness defaults to retail DiffDB base contentment.
+- [x] Task 186: Low-happiness riots use retail riot-level/chance rolls with canonical RNG.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

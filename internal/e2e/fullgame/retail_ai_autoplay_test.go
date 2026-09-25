@@ -140,7 +140,7 @@ func retailAIInitialState(t *testing.T, root string) engine.State {
 			{ID: "ai-4", NationID: "nation-ai-4", Lifecycle: engine.PlayerActive, Controller: engine.ControllerAI},
 		},
 		Nations: []engine.Nation{{ID: "nation-ai-1", PublicWorks: 10000}, {ID: "nation-ai-2", PublicWorks: 10000}, {ID: "nation-ai-3", PublicWorks: 10000}, {ID: "nation-ai-4", PublicWorks: 10000}},
-		RNG:     []engine.RNGDomainState{{Domain: engine.RNGDomainCombat, State: 1}, {Domain: engine.RNGDomainSpecialAction, State: 2}, {Domain: engine.RNGDomainAI, State: 3}},
+		RNG:     []engine.RNGDomainState{{Domain: engine.RNGDomainCombat, State: 1}, {Domain: engine.RNGDomainSpecialAction, State: 2}, {Domain: engine.RNGDomainAI, State: 3}, {Domain: engine.RNGDomainRiot, State: 4}},
 	}
 	for y := 0; y < 6; y++ {
 		for x := 0; x < 6; x++ {
