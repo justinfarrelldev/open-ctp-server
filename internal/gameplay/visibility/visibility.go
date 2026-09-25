@@ -66,6 +66,7 @@ type UnitProjection struct {
 	ActiveDefenseRange int             `json:"active_defense_range,omitempty"`
 	Strength           int             `json:"strength,omitempty"`
 	Armor              int             `json:"armor,omitempty"`
+	Firepower          int             `json:"firepower,omitempty"`
 	Health             int             `json:"health,omitempty"`
 	MaxHealth          int             `json:"max_health,omitempty"`
 	VisibilityRange    int             `json:"visibility_range,omitempty"`
@@ -271,7 +272,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 				projected.IsProfessional = unit.IsProfessional
 				projected.IsSpecialForces = unit.IsSpecialForces
 				projected.ZOC = unit.ZOC
-				projected.Attack, projected.Defense, projected.Ranged, projected.BombardRange, projected.BombRounds, projected.ActiveDefenseRange, projected.Strength, projected.Armor = unit.Attack, unit.Defense, unit.Ranged, unit.BombardRange, unit.BombRounds, unit.ActiveDefenseRange, unit.Strength, unit.Armor
+				projected.Attack, projected.Defense, projected.Ranged, projected.BombardRange, projected.BombRounds, projected.ActiveDefenseRange, projected.Strength, projected.Armor, projected.Firepower = unit.Attack, unit.Defense, unit.Ranged, unit.BombardRange, unit.BombRounds, unit.ActiveDefenseRange, unit.Strength, unit.Armor, unit.Firepower
 				projected.Health, projected.MaxHealth = unit.Health, unit.MaxHealth
 				projected.VisibilityRange = unit.VisibilityRange
 				projected.Effects = append([]engine.Effect(nil), unit.Effects...)

@@ -141,6 +141,7 @@
 - [x] Task 190: Combat casualties record home/overseas peace-movement loss counters.
 - [x] Task 191: Peace-movement defeat pressure decays with government coefficients and resets turn losses.
 - [x] Task 192: Home/overseas defeat state contributes signed retail peace-movement happiness.
+- [x] Task 193: Retail unit firepower imports into runtime/units and scales combat damage.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

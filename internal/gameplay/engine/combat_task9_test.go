@@ -30,6 +30,16 @@ func combatCommand() Command {
 	return Command{SchemaVersion: CommandSchemaV1, ID: "combat-1", ActorPlayerID: "player-a", Type: CommandCombat, Payload: payload}
 }
 
+func TestRetailFirepowerScalesCombatDamage(t *testing.T) {
+	state := fixtureState()
+	attacker := &Unit{ID: "attacker", OwnerID: "player-a", Attack: 100, Strength: 2, Armor: 1, Firepower: 3, Health: 10, MaxHealth: 10}
+	defender := &Unit{ID: "defender", OwnerID: "player-b", Defense: 0, Strength: 1, Armor: 2, Health: 10, MaxHealth: 10}
+	combatStrike(&state, fixtureSources(), []*Unit{attacker}, []*Unit{defender}, false, &CombatResult{})
+	if got, want := defender.Health, 7; got != want {
+		t.Fatalf("defender health after firepower strike = %d, want %d", got, want)
+	}
+}
+
 func TestRetailCombatPromotesSurvivingWinnersToVeteran(t *testing.T) {
 	state := combatState()
 	state.Units = []Unit{

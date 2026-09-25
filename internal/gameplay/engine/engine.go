@@ -228,6 +228,7 @@ type Unit struct {
 	ActiveDefenseRange int      `json:"active_defense_range,omitempty"`
 	Strength           int      `json:"strength,omitempty"`
 	Armor              int      `json:"armor,omitempty"`
+	Firepower          int      `json:"firepower,omitempty"`
 	Health             int      `json:"health,omitempty"`
 	MaxHealth          int      `json:"max_health,omitempty"`
 	VisibilityRange    int      `json:"visibility_range,omitempty"`

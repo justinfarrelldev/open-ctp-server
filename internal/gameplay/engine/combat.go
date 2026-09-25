@@ -58,7 +58,7 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 	}
 	targetTileID := defenderUnits[0].TileID
 	for _, unit := range append(append([]*Unit(nil), attackerUnits...), defenderUnits...) {
-		if unit.Attack < 0 || unit.Defense < 0 || unit.Ranged < 0 || unit.Strength <= 0 || unit.Armor <= 0 || unit.Health <= 0 || unit.MaxHealth < unit.Health {
+		if unit.Attack < 0 || unit.Defense < 0 || unit.Ranged < 0 || unit.Strength <= 0 || unit.Armor <= 0 || unit.Firepower < 0 || unit.Health <= 0 || unit.MaxHealth < unit.Health {
 			return nil, nil, errors.New("combat unit is invalid")
 		}
 	}
@@ -459,6 +459,11 @@ func combatStrike(state *State, sources Sources, attackers, defenders []*Unit, r
 			if damage < 1 {
 				damage = 1
 			}
+			firepower := attacker.Firepower
+			if firepower < 1 {
+				firepower = 1
+			}
+			damage *= firepower
 			target.Health -= readinessAdjustedCombatDamage(*state, *target, damage)
 		}
 	}

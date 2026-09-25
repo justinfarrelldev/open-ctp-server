@@ -98,8 +98,12 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeUnitHasEffectValue(abolitionist, "special_underground_railway", 75) || !runtimeUnitHasEffectValue(abolitionist, "special_underground_railway_death_chance", 50) {
 		t.Fatalf("abolitionist runtime = %+v ok=%v", abolitionist, ok)
 	}
-	if runtime.Starter.Movement != 100 || runtime.Starter.Health != 10 || !runtimeStarterHasEffect(runtime.Starter, "settler") || !runtimeStarterHasEffect(runtime.Starter, "building_removes_population") {
+	if runtime.Starter.Movement != 100 || runtime.Starter.Health != 10 || runtime.Starter.Firepower != 1 || !runtimeStarterHasEffect(runtime.Starter, "settler") || !runtimeStarterHasEffect(runtime.Starter, "building_removes_population") {
 		t.Fatalf("starter = %+v, want retail settler", runtime.Starter)
+	}
+	battleship, ok := runtime.Unit("UNIT_BATTLESHIP")
+	if !ok || battleship.Firepower != 4 {
+		t.Fatalf("battleship firepower = %+v ok=%v, want 4", battleship, ok)
 	}
 
 	cavalry, ok := runtime.Unit("UNIT_CAVALRY")

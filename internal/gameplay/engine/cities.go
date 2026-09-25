@@ -2118,6 +2118,7 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 		ActiveDefenseRange: definition.ActiveDefenseRange,
 		Strength:           definition.Strength,
 		Armor:              definition.Armor,
+		Firepower:          definition.Firepower,
 		Health:             health,
 		MaxHealth:          health,
 		VisibilityRange:    definition.VisibilityRange,
