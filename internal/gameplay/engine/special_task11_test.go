@@ -592,6 +592,40 @@ func TestRetailIndulgenceSalesTransferGoldAndTimedHappiness(t *testing.T) {
 	}
 }
 
+func TestRetailIndulgenceSalesUsesConvertedAndOtherFaithConstants(t *testing.T) {
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Constants: rules.RuntimeConstants{UnconvertedIndulgenceGold: 3, UnconvertedIndulgenceHappiness: 2, ConvertedIndulgenceGold: 5, ConvertedIndulgenceHappiness: 4, OtherFaithIndulgenceGold: 2, OtherFaithIndulgenceHappiness: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainLand, Movement: 1, Health: 1}}}
+	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name        string
+		convertedTo string
+		gold        int
+		happiness   int
+	}{
+		{name: "converted-to-actor", convertedTo: "player-a", gold: 5, happiness: 4},
+		{name: "converted-to-other-faith", convertedTo: "player-c", gold: 2, happiness: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			state := task11State()
+			state.Rules = RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: contentHash, Definitions: definitions}
+			state.Nations[0].Gold = 1
+			state.Nations[1].Gold = 10
+			state.Cities[0].ConvertedToPlayerID = tc.convertedTo
+			state.Units[0].Effects = []Effect{{ID: "indulgence", Kind: EffectSpecialIndulgenceSales}}
+
+			next, _, err := task11Apply(t, state, CommandIndulgenceSales, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if next.Nations[0].Gold != 1+tc.gold || next.Nations[1].Gold != 10-tc.gold || !hasTimedHappinessAttack(next.Cities[0], tc.happiness, 1) {
+				t.Fatalf("indulgence branch state = nations %+v city %+v", next.Nations, next.Cities[0])
+			}
+		})
+	}
+}
+
 func TestRetailInciteRevolutionUsesChanceAndTransfersCityToRebels(t *testing.T) {
 	state := task11State()
 	state.Units[0].Effects = []Effect{{ID: "incite", Kind: EffectSpecialInciteRevolution, Value: 100}, {ID: "elite", Kind: EffectSpecialInciteRevolutionEliteChance, Value: 100}, {ID: "death", Kind: EffectSpecialInciteRevolutionDeathChance, Value: 0}}
@@ -801,7 +835,7 @@ func TestRetailConvertCityHonorsProtectionAndDisclosure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if next.Cities[0].OwnerID != "player-a" || next.Units[0].Movement != 3 {
+	if next.Cities[0].OwnerID != "player-b" || next.Cities[0].ConvertedToPlayerID != "player-a" || next.Cities[0].ConvertedBy != "cleric" || next.Units[0].Movement != 3 {
 		t.Fatalf("conversion outcome city=%+v unit=%+v", next.Cities[0], next.Units[0])
 	}
 	if len(events) != 1 || events[0].Type != EventCityConverted || strings.Contains(string(events[0].Payload), "target-city") {

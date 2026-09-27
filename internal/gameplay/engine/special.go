@@ -1026,14 +1026,48 @@ func convertCity(state *State, unit *Unit, city *City, sources Sources) (string,
 			return EventCityConversionFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
-	city.OwnerID = unit.OwnerID
+	city.ConvertedToPlayerID = unit.OwnerID
+	city.ConvertedBy = conversionSource(*unit)
 	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialConvertCity, sources)
 	return EventCityConverted, json.RawMessage(`{"disclosed":true}`), nil
 }
 
-func indulgenceSaleAmounts(runtime *rules.RuntimeRules) (int, int) {
+func conversionSource(unit Unit) string {
+	if hasEffect(unit.Effects, EffectIsTelevangelist) {
+		return "televangelist"
+	}
+	return "cleric"
+}
+
+func indulgenceSaleAmounts(city City, actorPlayerID string, runtime *rules.RuntimeRules) (int, int) {
 	gold := retailUnconvertedIndulgenceGold
 	happiness := retailUnconvertedIndulgenceHappiness
+	if city.ConvertedToPlayerID == actorPlayerID && actorPlayerID != "" {
+		gold = 5
+		happiness = 4
+		if runtime != nil {
+			if runtime.Constants.ConvertedIndulgenceGold > 0 {
+				gold = runtime.Constants.ConvertedIndulgenceGold
+			}
+			if runtime.Constants.ConvertedIndulgenceHappiness > 0 {
+				happiness = runtime.Constants.ConvertedIndulgenceHappiness
+			}
+		}
+		return gold, happiness
+	}
+	if city.ConvertedToPlayerID != "" && city.ConvertedToPlayerID != actorPlayerID {
+		gold = 2
+		happiness = 1
+		if runtime != nil {
+			if runtime.Constants.OtherFaithIndulgenceGold > 0 {
+				gold = runtime.Constants.OtherFaithIndulgenceGold
+			}
+			if runtime.Constants.OtherFaithIndulgenceHappiness > 0 {
+				happiness = runtime.Constants.OtherFaithIndulgenceHappiness
+			}
+		}
+		return gold, happiness
+	}
 	if runtime != nil {
 		if runtime.Constants.UnconvertedIndulgenceGold > 0 {
 			gold = runtime.Constants.UnconvertedIndulgenceGold
@@ -1121,7 +1155,7 @@ func indulgenceSales(state *State, unit *Unit, city *City, actorNation *Nation, 
 	if !hasEffect(unit.Effects, EffectSpecialIndulgenceSales) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	gold, happiness := indulgenceSaleAmounts(runtime)
+	gold, happiness := indulgenceSaleAmounts(*city, unit.OwnerID, runtime)
 	if actorNation == nil || targetNation == nil || targetNation.Gold < gold {
 		return "", nil, errors.New("special action target is unavailable")
 	}

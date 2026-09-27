@@ -265,6 +265,13 @@
 - [x] Task 314: Revolting cities create deterministic AI rebel player/nation ownership when no join-player wonder applies.
 - [x] Task 315: Revolt ownership clears city queues, removes attached trade routes, and updates city tile ownership.
 - [x] Task 316: Slave-uprising removes slave specialists and uses the rebel ownership transfer path.
+- [x] Task 317: Retail converted/other-faith indulgence constants import into runtime rules.
+- [x] Task 318: Canonical cities preserve retail religious conversion owner/source state.
+- [x] Task 319: Convert-city records religious conversion instead of transferring city ownership.
+- [x] Task 320: Televangelist conversion source is preserved separately from cleric conversion.
+- [x] Task 321: Indulgence-sales uses converted-to-seller constants when applicable.
+- [x] Task 322: Indulgence-sales uses other-faith constants when applicable.
+- [x] Task 323: Safe projections expose conversion state only to the city owner or converting player.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

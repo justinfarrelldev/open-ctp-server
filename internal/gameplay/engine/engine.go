@@ -251,28 +251,30 @@ type Unit struct {
 }
 
 type City struct {
-	ID                string           `json:"id"`
-	TypeID            string           `json:"type_id,omitempty"`
-	Name              string           `json:"name,omitempty"`
-	OwnerID           string           `json:"owner_id"`
-	TileID            string           `json:"tile_id"`
-	Population        int              `json:"population,omitempty"`
-	Happiness         int              `json:"happiness,omitempty"`
-	CrimePercent      int              `json:"crime_percent,omitempty"`
-	OvercrowdingLevel int              `json:"overcrowding_level,omitempty"`
-	ConquestDistress  int              `json:"conquest_distress,omitempty"`
-	Rioting           bool             `json:"rioting,omitempty"`
-	Specialists       map[string]int   `json:"specialists,omitempty"`
-	WorkedTileIDs     []string         `json:"worked_tile_ids,omitempty"`
-	Goods             []string         `json:"goods,omitempty"`
-	StoredFood        int              `json:"stored_food,omitempty"`
-	StarvationTurns   int              `json:"starvation_turns,omitempty"`
-	StoredProduction  int              `json:"stored_production,omitempty"`
-	Queue             []ProductionItem `json:"queue,omitempty"`
-	Buildings         []Building       `json:"buildings,omitempty"`
-	Obsolete          []string         `json:"obsolete,omitempty"`
-	Yields            Yield            `json:"yields,omitempty"`
-	Effects           []Effect         `json:"effects,omitempty"`
+	ID                  string           `json:"id"`
+	TypeID              string           `json:"type_id,omitempty"`
+	Name                string           `json:"name,omitempty"`
+	OwnerID             string           `json:"owner_id"`
+	TileID              string           `json:"tile_id"`
+	Population          int              `json:"population,omitempty"`
+	Happiness           int              `json:"happiness,omitempty"`
+	CrimePercent        int              `json:"crime_percent,omitempty"`
+	OvercrowdingLevel   int              `json:"overcrowding_level,omitempty"`
+	ConquestDistress    int              `json:"conquest_distress,omitempty"`
+	ConvertedToPlayerID string           `json:"converted_to_player_id,omitempty"`
+	ConvertedBy         string           `json:"converted_by,omitempty"`
+	Rioting             bool             `json:"rioting,omitempty"`
+	Specialists         map[string]int   `json:"specialists,omitempty"`
+	WorkedTileIDs       []string         `json:"worked_tile_ids,omitempty"`
+	Goods               []string         `json:"goods,omitempty"`
+	StoredFood          int              `json:"stored_food,omitempty"`
+	StarvationTurns     int              `json:"starvation_turns,omitempty"`
+	StoredProduction    int              `json:"stored_production,omitempty"`
+	Queue               []ProductionItem `json:"queue,omitempty"`
+	Buildings           []Building       `json:"buildings,omitempty"`
+	Obsolete            []string         `json:"obsolete,omitempty"`
+	Yields              Yield            `json:"yields,omitempty"`
+	Effects             []Effect         `json:"effects,omitempty"`
 }
 
 type Army struct {

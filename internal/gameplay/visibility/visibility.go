@@ -77,24 +77,26 @@ type UnitProjection struct {
 }
 
 type CityProjection struct {
-	ID                string                  `json:"id"`
-	OwnerID           string                  `json:"owner_id"`
-	TileID            string                  `json:"tile_id"`
-	Population        int                     `json:"population,omitempty"`
-	Happiness         int                     `json:"happiness,omitempty"`
-	CrimePercent      int                     `json:"crime_percent,omitempty"`
-	OvercrowdingLevel int                     `json:"overcrowding_level,omitempty"`
-	Rioting           bool                    `json:"rioting,omitempty"`
-	Specialists       map[string]int          `json:"specialists,omitempty"`
-	Goods             []string                `json:"goods,omitempty"`
-	Effects           []engine.Effect         `json:"effects,omitempty"`
-	StoredFood        int                     `json:"stored_food,omitempty"`
-	StoredProduction  int                     `json:"stored_production,omitempty"`
-	Queue             []engine.ProductionItem `json:"queue,omitempty"`
-	Buildings         []engine.Building       `json:"buildings,omitempty"`
-	Yields            *engine.Yield           `json:"yields,omitempty"`
-	Stale             bool                    `json:"stale"`
-	Observed          int                     `json:"observed_turn"`
+	ID                  string                  `json:"id"`
+	OwnerID             string                  `json:"owner_id"`
+	TileID              string                  `json:"tile_id"`
+	Population          int                     `json:"population,omitempty"`
+	Happiness           int                     `json:"happiness,omitempty"`
+	CrimePercent        int                     `json:"crime_percent,omitempty"`
+	OvercrowdingLevel   int                     `json:"overcrowding_level,omitempty"`
+	ConvertedToPlayerID string                  `json:"converted_to_player_id,omitempty"`
+	ConvertedBy         string                  `json:"converted_by,omitempty"`
+	Rioting             bool                    `json:"rioting,omitempty"`
+	Specialists         map[string]int          `json:"specialists,omitempty"`
+	Goods               []string                `json:"goods,omitempty"`
+	Effects             []engine.Effect         `json:"effects,omitempty"`
+	StoredFood          int                     `json:"stored_food,omitempty"`
+	StoredProduction    int                     `json:"stored_production,omitempty"`
+	Queue               []engine.ProductionItem `json:"queue,omitempty"`
+	Buildings           []engine.Building       `json:"buildings,omitempty"`
+	Yields              *engine.Yield           `json:"yields,omitempty"`
+	Stale               bool                    `json:"stale"`
+	Observed            int                     `json:"observed_turn"`
 }
 
 type ResearchProjection struct {
@@ -375,6 +377,10 @@ func diplomaticRegard(state engine.State, playerID, target string, relation engi
 
 func projectCity(city engine.City, playerID string, observed int) CityProjection {
 	projection := CityProjection{ID: city.ID, OwnerID: city.OwnerID, TileID: city.TileID, Effects: append([]engine.Effect(nil), city.Effects...), Observed: observed}
+	if city.OwnerID == playerID || city.ConvertedToPlayerID == playerID {
+		projection.ConvertedToPlayerID = city.ConvertedToPlayerID
+		projection.ConvertedBy = city.ConvertedBy
+	}
 	if city.OwnerID == playerID {
 		projection.Population = city.Population
 		projection.Happiness = city.Happiness

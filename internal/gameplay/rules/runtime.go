@@ -277,6 +277,10 @@ type RuntimeConstants struct {
 	CityGrowthCoefficient          int `json:"city_growth_coefficient,omitempty"`
 	UnconvertedIndulgenceGold      int `json:"unconverted_indulgence_gold,omitempty"`
 	UnconvertedIndulgenceHappiness int `json:"unconverted_indulgence_happiness,omitempty"`
+	ConvertedIndulgenceGold        int `json:"converted_indulgence_gold,omitempty"`
+	ConvertedIndulgenceHappiness   int `json:"converted_indulgence_happiness,omitempty"`
+	OtherFaithIndulgenceGold       int `json:"other_faith_indulgence_gold,omitempty"`
+	OtherFaithIndulgenceHappiness  int `json:"other_faith_indulgence_happiness,omitempty"`
 }
 
 type RuntimeGaia struct {

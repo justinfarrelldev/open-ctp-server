@@ -43,7 +43,7 @@ func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 	if runtime.Calendar.FinalTurn != 1000 {
 		t.Fatalf("runtime final turn = %d, want retail 2300 AD turn 1000", runtime.Calendar.FinalTurn)
 	}
-	if runtime.Constants.CityGrowthCoefficient != 175 || runtime.Constants.UnconvertedIndulgenceGold != 3 || runtime.Constants.UnconvertedIndulgenceHappiness != 2 {
+	if runtime.Constants.CityGrowthCoefficient != 175 || runtime.Constants.UnconvertedIndulgenceGold != 3 || runtime.Constants.UnconvertedIndulgenceHappiness != 2 || runtime.Constants.ConvertedIndulgenceGold != 5 || runtime.Constants.ConvertedIndulgenceHappiness != 4 || runtime.Constants.OtherFaithIndulgenceGold != 2 || runtime.Constants.OtherFaithIndulgenceHappiness != 1 {
 		t.Fatalf("runtime constants = %+v", runtime.Constants)
 	}
 	if got, want := runtime.VictoryEvaluatorIDs(), []string{"bloodlust_conquest", "diplomatic_world_union", "score_2300", "science_gaia_controller"}; !sameStringSlices(got, want) {

@@ -187,6 +187,10 @@ type RetailConstants struct {
 	CityGrowthCoefficient          int `json:"city_growth_coefficient"`
 	UnconvertedIndulgenceGold      int `json:"unconverted_indulgence_gold"`
 	UnconvertedIndulgenceHappiness int `json:"unconverted_indulgence_happiness"`
+	ConvertedIndulgenceGold        int `json:"converted_indulgence_gold"`
+	ConvertedIndulgenceHappiness   int `json:"converted_indulgence_happiness"`
+	OtherFaithIndulgenceGold       int `json:"other_faith_indulgence_gold"`
+	OtherFaithIndulgenceHappiness  int `json:"other_faith_indulgence_happiness"`
 }
 
 type RetailCalendarPeriod struct {
@@ -400,7 +404,7 @@ func loadRetailConstants(path string) (RetailConstants, error) {
 	values := map[string]int{}
 	for index := 0; index+1 < len(tokens); index++ {
 		switch tokens[index].value {
-		case "CITY_GROWTH_COEFFICIENT", "UNCONVERTED_INDULGENCE_GOLD", "UNCONVERTED_INDULGENCE_HAPPINESS":
+		case "CITY_GROWTH_COEFFICIENT", "UNCONVERTED_INDULGENCE_GOLD", "UNCONVERTED_INDULGENCE_HAPPINESS", "CONVERTED_INDULGENCE_GOLD", "CONVERTED_INDULGENCE_HAPPINESS", "OTHER_FAITH_INDULGENCE_GOLD", "OTHER_FAITH_INDULGENCE_HAPPINESS":
 			value, err := retailParseInt("CONST", tokens[index].value, tokens[index+1].value)
 			if err != nil {
 				return RetailConstants{}, err
@@ -408,7 +412,7 @@ func loadRetailConstants(path string) (RetailConstants, error) {
 			values[tokens[index].value] = value
 		}
 	}
-	return RetailConstants{CityGrowthCoefficient: values["CITY_GROWTH_COEFFICIENT"], UnconvertedIndulgenceGold: values["UNCONVERTED_INDULGENCE_GOLD"], UnconvertedIndulgenceHappiness: values["UNCONVERTED_INDULGENCE_HAPPINESS"]}, nil
+	return RetailConstants{CityGrowthCoefficient: values["CITY_GROWTH_COEFFICIENT"], UnconvertedIndulgenceGold: values["UNCONVERTED_INDULGENCE_GOLD"], UnconvertedIndulgenceHappiness: values["UNCONVERTED_INDULGENCE_HAPPINESS"], ConvertedIndulgenceGold: values["CONVERTED_INDULGENCE_GOLD"], ConvertedIndulgenceHappiness: values["CONVERTED_INDULGENCE_HAPPINESS"], OtherFaithIndulgenceGold: values["OTHER_FAITH_INDULGENCE_GOLD"], OtherFaithIndulgenceHappiness: values["OTHER_FAITH_INDULGENCE_HAPPINESS"]}, nil
 }
 
 func loadRetailEndGameYears(path string) (int, int, error) {
