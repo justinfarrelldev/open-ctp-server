@@ -170,6 +170,7 @@
 - [x] Task 219: Retail SpaceLaunch turn values import as runtime marker effects.
 - [x] Task 220: Retail unit PowerPoints import into runtime unit definitions.
 - [x] Task 221: Declaring war cancels existing trade routes between the new combatants.
+- [x] Task 222: Safe diplomacy projection exposes trade agreement proposals before foreign trade routes.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

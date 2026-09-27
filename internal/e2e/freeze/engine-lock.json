@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "bfff52b9bc5a4def80fdfcece6c038271666c4dc22e7b8fe9a28d889f2c8c047"
+      "sha256": "17ec8fb5614f79b1c4168eda582b6d5b715cacad9e14690c5d8d45f80419eeec"
     },
     {
       "path": "internal/runtime/runtime.go",
