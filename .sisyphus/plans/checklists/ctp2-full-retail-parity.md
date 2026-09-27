@@ -183,6 +183,7 @@
 - [x] Task 232: Retail `DeathEffectsHappy` unit flags are preserved as runtime unit effects.
 - [x] Task 233: Successful plant-nuke actions remove units in the city blast radius with safe count payloads.
 - [x] Task 234: Nuke-killed `death_effects_happy` units feed loss accounting.
+- [x] Task 235: Retail `Explodes` unit flags are preserved as runtime/canonical marker effects.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

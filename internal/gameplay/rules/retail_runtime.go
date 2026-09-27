@@ -460,6 +460,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "DeathEffectsHappy") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("death_effects_happy"), Kind: "death_effects_happy"})
 	}
+	if retailContainsString(unit.Flags, "Explodes") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("explodes"), Kind: "explodes"})
+	}
 	if retailContainsString(unit.Flags, "Paratrooper") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("paratrooper"), Kind: "paratrooper"})
 	}
