@@ -1,0 +1,4 @@
+=== RUN   TestCombatStartsWarAndCancelsTradeRoutes
+--- PASS: TestCombatStartsWarAndCancelsTradeRoutes (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s

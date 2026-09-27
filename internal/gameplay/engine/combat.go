@@ -68,6 +68,7 @@ func applyCombat(state *State, command Command, sources Sources, runtime *rules.
 	if !canArmyFight(*state, attackerUnits, defenderUnits) || barbarianAttackBlocked(*state, attackers.OwnerID, defenders.OwnerID) {
 		return nil, nil, errors.New("combat target is unavailable")
 	}
+	setWarState(state, attackers.OwnerID, defenders.OwnerID, true)
 
 	result := &CombatResult{AttackerArmyID: attackers.ID, DefenderArmyID: defenders.ID}
 	// The fixed CTP2-derived sequence is attacker ranged, defender ranged,

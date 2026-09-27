@@ -1,0 +1,6 @@
+=== RUN   TestCombatStartsWarAndCancelsTradeRoutes
+    combat_task9_test.go:52: combat did not start war: []engine.TurnPolicyWar(nil)
+--- FAIL: TestCombatStartsWarAndCancelsTradeRoutes (0.00s)
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

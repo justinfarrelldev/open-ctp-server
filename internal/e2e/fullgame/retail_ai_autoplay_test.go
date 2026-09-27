@@ -324,12 +324,7 @@ func retailAITurnSummary(t *testing.T, state engine.State, actor string, command
 			combatCommands++
 		}
 	}
-	atWarRelations := 0
-	for _, relation := range state.Diplomacy {
-		if relation.Treaty == "war" {
-			atWarRelations++
-		}
-	}
+	atWarRelations := len(state.Policy.Wars)
 	restartHash := retailAIRestartHash(t, state)
 	return retailAITurnRecord{Turn: state.Phase.Turn, ActivePlayerID: actor, Commands: append([]string(nil), commands...), CommandCount: len(commands), NonRoundCommands: nonRoundCommands, CombatCommands: combatCommands, Cities: len(state.Cities), Units: len(state.Units), ActiveQueues: activeQueues, Advances: advanceCount, ResearchTargets: researchTargets, ResearchProgress: researchProgress, Wonders: len(state.Wonders), TreasuryGold: treasuryGold, PublicWorks: publicWorks, TradeRoutes: len(state.TradeRoutes), TilePollution: tilePollution, WorldPollution: worldPollution, DiplomacyRecords: len(state.Diplomacy), AtWarRelations: atWarRelations, TerminalEnded: state.Terminal.Ended, TerminalReason: state.Terminal.Reason, StateHash: hash, RestartHash: restartHash, RestartEqual: restartHash == hash}
 }

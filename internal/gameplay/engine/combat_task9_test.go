@@ -40,6 +40,25 @@ func TestCombatAllowsCurrentlyVisibleTargetWithoutFogMemory(t *testing.T) {
 	}
 }
 
+func TestCombatStartsWarAndCancelsTradeRoutes(t *testing.T) {
+	state := combatState()
+	state.Cities = append(state.Cities, City{ID: "city-a", OwnerID: "player-a", TileID: "a"})
+	state.TradeRoutes = []TradeRoute{{ID: "combatants", SourceCityID: "city-a", DestinationCityID: "city-b"}}
+	next, _, _, err := Apply(state, combatCommand(), state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(next.Policy.Wars) != 1 || next.Policy.Wars[0] != (TurnPolicyWar{A: "player-a", B: "player-b"}) {
+		t.Fatalf("combat did not start war: %#v", next.Policy.Wars)
+	}
+	if relation := relationForPlayers(next, "player-a", "player-b"); relation == nil || !relation.Contact || relation.Trade || relation.Treaty != "" {
+		t.Fatalf("combat did not clear diplomatic peace/trade state: %#v", relation)
+	}
+	if len(next.TradeRoutes) != 0 {
+		t.Fatalf("combat did not cancel combatant trade routes: %#v", next.TradeRoutes)
+	}
+}
+
 func TestRetailFirepowerScalesCombatDamage(t *testing.T) {
 	state := fixtureState()
 	attacker := &Unit{ID: "attacker", OwnerID: "player-a", Attack: 100, Strength: 2, Armor: 1, Firepower: 3, Health: 10, MaxHealth: 10}

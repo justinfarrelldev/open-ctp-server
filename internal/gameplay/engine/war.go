@@ -21,7 +21,16 @@ func applyWarStateCommand(state *State, command Command) (string, json.RawMessag
 	if _, exists := playerByIDValue(*state, payload.TargetPlayerID); !exists {
 		return "", nil, errors.New("war target is invalid")
 	}
-	left, right := command.ActorPlayerID, payload.TargetPlayerID
+	setWarState(state, command.ActorPlayerID, payload.TargetPlayerID, payload.AtWar)
+	encoded, err := json.Marshal(warStatePayload{TargetPlayerID: payload.TargetPlayerID, AtWar: payload.AtWar})
+	if err != nil {
+		return "", nil, err
+	}
+	return EventWarStateChanged, encoded, nil
+}
+
+func setWarState(state *State, playerAID, playerBID string, atWar bool) {
+	left, right := playerAID, playerBID
 	if right < left {
 		left, right = right, left
 	}
@@ -31,25 +40,20 @@ func applyWarStateCommand(state *State, command Command) (string, json.RawMessag
 			filtered = append(filtered, edge)
 		}
 	}
-	relation := ensureRelation(state, command.ActorPlayerID, payload.TargetPlayerID)
+	relation := ensureRelation(state, playerAID, playerBID)
 	relation.Contact = true
 	if relation.EstablishedAt == 0 {
 		relation.EstablishedAt = state.Phase.Turn
 	}
-	if payload.AtWar {
+	if atWar {
 		filtered = append(filtered, TurnPolicyWar{A: left, B: right})
 		relation.Treaty = ""
 		relation.Trade = false
-		state.TradeRoutes = removeTradeRoutesBetweenPlayers(*state, command.ActorPlayerID, payload.TargetPlayerID)
+		state.TradeRoutes = removeTradeRoutesBetweenPlayers(*state, playerAID, playerBID)
 	} else if relation.Treaty == "" {
 		relation.Treaty = "peace"
 	}
 	state.Policy.Wars = filtered
-	encoded, err := json.Marshal(warStatePayload{TargetPlayerID: payload.TargetPlayerID, AtWar: payload.AtWar})
-	if err != nil {
-		return "", nil, err
-	}
-	return EventWarStateChanged, encoded, nil
 }
 
 func removeTradeRoutesBetweenPlayers(state State, playerAID, playerBID string) []TradeRoute {
