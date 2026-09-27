@@ -40,6 +40,60 @@ func TestRetailFirepowerScalesCombatDamage(t *testing.T) {
 	}
 }
 
+func TestRetailBombardUsesCanBombardDomains(t *testing.T) {
+	state := combatState()
+	state.Units = []Unit{
+		{ID: "bombarder", OwnerID: "player-a", TileID: "a", Movement: 1, Ranged: 100, BombardRange: 2, BombRounds: 1, Strength: 10, Armor: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "sea", Kind: EffectCanBombardSea}}},
+		{ID: "land-first", OwnerID: "player-b", TileID: "retreat", Domain: DomainLand, Defense: 1, Strength: 1, Armor: 1, Health: 5, MaxHealth: 5},
+		{ID: "sea-second", OwnerID: "player-b", TileID: "retreat", Domain: DomainSea, Defense: 1, Strength: 1, Armor: 1, Health: 5, MaxHealth: 5},
+	}
+	state.Armies = nil
+	state.Fog = append(state.Fog, FogObservation{PlayerID: "player-a", TileID: "retreat", Turn: 1})
+	payload, _ := json.Marshal(map[string]string{"unit_id": "bombarder", "target_tile_id": "retreat"})
+	next, _, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "bombard-domain", ActorPlayerID: "player-a", Type: CommandBombard, Payload: payload}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if land, ok := unitByID(next, "land-first"); !ok || land.Health != 5 {
+		t.Fatalf("land target was damaged by sea-only bombard: unit=%+v ok=%v", land, ok)
+	}
+	if _, ok := unitByID(next, "sea-second"); ok {
+		t.Fatalf("sea target survived sea-only bombard: %+v", next.Units)
+	}
+}
+
+func TestRetailActiveDefenseRequiresCarrierEnabler(t *testing.T) {
+	base := combatState()
+	base.Units = []Unit{
+		{ID: "bombarder", OwnerID: "player-a", TileID: "a", Domain: DomainAir, Movement: 1, Ranged: 100, BombardRange: 2, BombRounds: 1, Strength: 1, Armor: 1, Health: 10, MaxHealth: 10},
+		{ID: "target", OwnerID: "player-b", TileID: "retreat", Defense: 1, Strength: 1, Armor: 1, Health: 10, MaxHealth: 10},
+		{ID: "carrier-defense", OwnerID: "player-b", TileID: "retreat", Domain: DomainSea, Ranged: 100, ActiveDefenseRange: 3, Strength: 3, Armor: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "air", Kind: EffectDefendAir}, {ID: "requires-enabler", Kind: EffectActiveDefenseRequiresEnabler}}},
+	}
+	base.Armies = nil
+	base.Cities = nil
+	base.Fog = append(base.Fog, FogObservation{PlayerID: "player-a", TileID: "retreat", Turn: 1})
+	payload, _ := json.Marshal(map[string]string{"unit_id": "bombarder", "target_tile_id": "retreat"})
+	next, _, _, err := Apply(base, Command{SchemaVersion: CommandSchemaV1, ID: "no-enabler", ActorPlayerID: "player-a", Type: CommandBombard, Payload: payload}, base.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	bombarder, _ := unitByID(next, "bombarder")
+	if bombarder.Health != 10 {
+		t.Fatalf("carrier defense without enabler hit bombarder: %+v", bombarder)
+	}
+
+	withEnabler := base
+	withEnabler.Units = append(append([]Unit(nil), base.Units...), Unit{ID: "enabler", OwnerID: "player-b", TransportID: "carrier-defense", Domain: DomainAir, Health: 1, MaxHealth: 1, Effects: []Effect{{ID: "enable", Kind: EffectEnableCarrierDefenses}}})
+	next, _, _, err = Apply(withEnabler, Command{SchemaVersion: CommandSchemaV1, ID: "with-enabler", ActorPlayerID: "player-a", Type: CommandBombard, Payload: payload}, withEnabler.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	bombarder, _ = unitByID(next, "bombarder")
+	if bombarder.Health >= 10 {
+		t.Fatalf("carrier defense with enabler did not hit bombarder: %+v", bombarder)
+	}
+}
+
 func TestRetailActiveDefenseHonorsDefendDomains(t *testing.T) {
 	base := combatState()
 	base.Units = []Unit{

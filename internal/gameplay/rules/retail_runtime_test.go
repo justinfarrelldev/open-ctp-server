@@ -109,6 +109,18 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeUnitHasEffect(mobileSAM, "defend_air") {
 		t.Fatalf("mobile SAM defend effects = %+v ok=%v", mobileSAM, ok)
 	}
+	artillery, ok := runtime.Unit("UNIT_ARTILLERY")
+	if !ok || !runtimeUnitHasEffect(artillery, "can_bombard_land") || !runtimeUnitHasEffect(artillery, "can_bombard_sea") {
+		t.Fatalf("artillery bombard effects = %+v ok=%v", artillery, ok)
+	}
+	carrierDefense, ok := runtime.Unit("UNIT_AIRCRAFT_CARRIER")
+	if !ok || !runtimeUnitHasEffect(carrierDefense, "active_defense_requires_enabler") {
+		t.Fatalf("carrier active defense requirement = %+v ok=%v", carrierDefense, ok)
+	}
+	fighterDefense, ok := runtime.Unit("UNIT_FIGHTER")
+	if !ok || !runtimeUnitHasEffect(fighterDefense, "enable_carrier_defenses") {
+		t.Fatalf("fighter carrier defense enabler = %+v ok=%v", fighterDefense, ok)
+	}
 
 	cavalry, ok := runtime.Unit("UNIT_CAVALRY")
 	if !ok || !runtimeUnitHasEffect(cavalry, "mounted") {

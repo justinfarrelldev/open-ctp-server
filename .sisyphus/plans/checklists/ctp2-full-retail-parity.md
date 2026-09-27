@@ -144,6 +144,9 @@
 - [x] Task 193: Retail unit firepower imports into runtime/units and scales combat damage.
 - [x] Task 194: Firepower-aware damage applies to bombardment and active-defense interception.
 - [x] Task 195: Retail Defend domain metadata gates active-defense interception.
+- [x] Task 196: Retail CanBombard domain metadata imports and gates bombard target selection.
+- [x] Task 197: Retail ActiveDefenseOnlyWhenCarryingEnablers imports and requires carrier-defense cargo.
+- [x] Task 198: Retail EnableCarrierDefenses cargo enables carrier active-defense interception.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

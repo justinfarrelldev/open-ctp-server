@@ -244,7 +244,7 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 	if !ok || !targetOK || !combatVisible(*state, command.ActorPlayerID, payload.TargetTileID) || tileDistance(origin, targetTile) > unit.BombardRange {
 		return "", nil, errors.New("bombard target is unavailable")
 	}
-	targets := combatEligibleTargets(*unit, bombardTargets(*state, command.ActorPlayerID, payload.TargetTileID))
+	targets := bombardEligibleTargets(*unit, bombardTargets(*state, command.ActorPlayerID, payload.TargetTileID))
 	if len(targets) == 0 {
 		return "", nil, errors.New("bombard target is unavailable")
 	}
@@ -328,13 +328,25 @@ func activeDefenseInterceptors(state State, actorID, protectedOwnerID string, at
 			continue
 		}
 		tile, ok := tileByID(state, unit.TileID)
-		if !ok || tileDistance(tile, targetTile) > unit.ActiveDefenseRange || !activeDefenseCanDefend(*unit, attacker) {
+		if !ok || tileDistance(tile, targetTile) > unit.ActiveDefenseRange || !activeDefenseCanDefend(*unit, attacker) || !activeDefenseHasRequiredEnabler(state, *unit) {
 			continue
 		}
 		interceptors = append(interceptors, unit)
 	}
 	sort.Slice(interceptors, func(i, j int) bool { return interceptors[i].ID < interceptors[j].ID })
 	return interceptors
+}
+
+func activeDefenseHasRequiredEnabler(state State, interceptor Unit) bool {
+	if !hasEffect(interceptor.Effects, EffectActiveDefenseRequiresEnabler) {
+		return true
+	}
+	for _, cargo := range state.Units {
+		if cargo.TransportID == interceptor.ID && cargo.OwnerID == interceptor.OwnerID && hasEffect(cargo.Effects, EffectEnableCarrierDefenses) {
+			return true
+		}
+	}
+	return false
 }
 
 func activeDefenseCanDefend(interceptor, attacker Unit) bool {
@@ -420,6 +432,47 @@ func attackerCanAttackTarget(attacker, target Unit) bool {
 		return hasEffect(attacker.Effects, EffectCanAttackSpace)
 	case DomainAmphibious:
 		return hasEffect(attacker.Effects, EffectCanAttackLand) || hasEffect(attacker.Effects, EffectCanAttackSea)
+	default:
+		return true
+	}
+}
+
+func bombardEligibleTargets(attacker Unit, targets []*Unit) []*Unit {
+	eligible := targets[:0]
+	for _, target := range targets {
+		if unitCanBombardTarget(attacker, *target) {
+			eligible = append(eligible, target)
+		}
+	}
+	return eligible
+}
+
+func unitCanBombardTarget(attacker, target Unit) bool {
+	if bombarderHasCanBombardMetadata(attacker) {
+		return attackerCanBombardTarget(attacker, target)
+	}
+	return unitCanTarget(attacker, target)
+}
+
+func bombarderHasCanBombardMetadata(attacker Unit) bool {
+	return hasEffect(attacker.Effects, EffectCanBombardLand) || hasEffect(attacker.Effects, EffectCanBombardSea) || hasEffect(attacker.Effects, EffectCanBombardAir) || hasEffect(attacker.Effects, EffectCanBombardSpace) || hasEffect(attacker.Effects, EffectCanBombardUnderwater)
+}
+
+func attackerCanBombardTarget(attacker, target Unit) bool {
+	if hasEffect(target.Effects, EffectSubmarine) {
+		return hasEffect(attacker.Effects, EffectCanBombardUnderwater)
+	}
+	switch target.Domain {
+	case DomainLand:
+		return hasEffect(attacker.Effects, EffectCanBombardLand)
+	case DomainSea:
+		return hasEffect(attacker.Effects, EffectCanBombardSea)
+	case DomainAir:
+		return hasEffect(attacker.Effects, EffectCanBombardAir)
+	case DomainSpace:
+		return hasEffect(attacker.Effects, EffectCanBombardSpace)
+	case DomainAmphibious:
+		return hasEffect(attacker.Effects, EffectCanBombardLand) || hasEffect(attacker.Effects, EffectCanBombardSea)
 	default:
 		return true
 	}
