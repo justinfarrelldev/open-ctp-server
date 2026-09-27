@@ -117,6 +117,10 @@ type RetailTerrainImprovementEffect struct {
 	BonusProduction int      `json:"bonus_production,omitempty"`
 	BonusGold       int      `json:"bonus_gold,omitempty"`
 	MoveCost        int      `json:"move_cost,omitempty"`
+	DefenseBonus    float64  `json:"defense_bonus,omitempty"`
+	HealRate        float64  `json:"heal_rate,omitempty"`
+	VisionRange     int      `json:"vision_range,omitempty"`
+	RadarRange      int      `json:"radar_range,omitempty"`
 	EnableAdvance   string   `json:"enable_advance,omitempty"`
 	ProductionCost  int      `json:"production_cost,omitempty"`
 	ProductionTime  int      `json:"production_time,omitempty"`
@@ -733,7 +737,15 @@ func compileRetailTerrainImprovement(record RetailRawRecord) (RetailTerrainImpro
 	improvement := RetailTerrainImprovement{ID: record.ID, Class: record.FirstValue("Class"), Level: level, ConstructionTiles: constructionTiles, TerraformTerrain: record.FirstValue("TerraformTerrain"), CantBuildOn: record.Values("CantBuildOn"), Excludes: record.Values("Excludes"), Flags: retailFlags(record.Fields), RawFields: cloneRetailFields(record.Fields)}
 	for _, field := range record.FieldsByKey("TerrainEffect") {
 		effect := RetailTerrainImprovementEffect{Terrains: field.ChildValues("Terrain"), EnableAdvance: field.FirstValue("EnableAdvance"), Flags: retailFlags(field.Fields)}
-		for key, target := range map[string]*int{"BonusFood": &effect.BonusFood, "BonusProduction": &effect.BonusProduction, "BonusGold": &effect.BonusGold, "MoveCost": &effect.MoveCost, "ProductionCost": &effect.ProductionCost, "ProductionTime": &effect.ProductionTime, "TilesetIndex": &effect.TilesetIndex} {
+		effect.DefenseBonus, err = retailParseFloat(record.ID, "DefenseBonus", field.FirstValue("DefenseBonus"))
+		if err != nil {
+			return RetailTerrainImprovement{}, err
+		}
+		effect.HealRate, err = retailParseFloat(record.ID, "HealRate", field.FirstValue("HealRate"))
+		if err != nil {
+			return RetailTerrainImprovement{}, err
+		}
+		for key, target := range map[string]*int{"BonusFood": &effect.BonusFood, "BonusProduction": &effect.BonusProduction, "BonusGold": &effect.BonusGold, "MoveCost": &effect.MoveCost, "ProductionCost": &effect.ProductionCost, "ProductionTime": &effect.ProductionTime, "TilesetIndex": &effect.TilesetIndex, "VisionRange": &effect.VisionRange, "RadarRange": &effect.RadarRange} {
 			*target, err = retailFieldInt(record.ID, field, key)
 			if err != nil {
 				return RetailTerrainImprovement{}, err

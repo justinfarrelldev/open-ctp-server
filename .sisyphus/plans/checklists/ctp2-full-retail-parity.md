@@ -311,6 +311,12 @@
 - [x] Task 360: Build-improvement execution rejects terrain improvements outside their allowed terrain list.
 - [x] Task 361: Safe terrain action projections suppress disallowed-terrain improvements.
 - [x] Task 362: AI terrain improvement planning remains projection-only after allowed-terrain gating.
+- [x] Task 363: Retail terrain improvement defense/heal/vision/radar fields import into runtime rules.
+- [x] Task 364: Retail terrain improvement airport/radar/listening-post/upgrade/endgame markers import into runtime rules.
+- [x] Task 365: Built terrain improvement overlays preserve retail defense/heal/vision/radar metadata.
+- [x] Task 366: Built terrain improvement overlays preserve retail airport/radar/listening-post/upgrade/endgame markers.
+- [x] Task 367: Completed terrain improvement defense bonuses modify defenders in combat.
+- [x] Task 368: Terrain improvement special-field coverage remains safe in projections/AI because overlays expose only canonical public overlay metadata.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

@@ -95,20 +95,29 @@ type RuntimeUnitDefinition struct {
 }
 
 type RuntimeTerrainImprovementDefinition struct {
-	ID                string   `json:"id"`
-	Class             string   `json:"class,omitempty"`
-	BuildTurns        int      `json:"build_turns"`
-	PublicWorksCost   int      `json:"public_works_cost"`
-	MovementCostDelta int      `json:"movement_cost_delta,omitempty"`
-	YieldFood         int      `json:"yield_food,omitempty"`
-	YieldProduction   int      `json:"yield_production,omitempty"`
-	YieldGold         int      `json:"yield_gold,omitempty"`
-	PollutionDelta    int      `json:"pollution_delta,omitempty"`
-	TargetTerrain     string   `json:"target_terrain,omitempty"`
-	RequiredAdvanceID string   `json:"required_advance_id,omitempty"`
-	AllowedTerrains   []string `json:"allowed_terrains,omitempty"`
-	CantBuildOn       []string `json:"cant_build_on,omitempty"`
-	Excludes          []string `json:"excludes,omitempty"`
+	ID                  string   `json:"id"`
+	Class               string   `json:"class,omitempty"`
+	BuildTurns          int      `json:"build_turns"`
+	PublicWorksCost     int      `json:"public_works_cost"`
+	MovementCostDelta   int      `json:"movement_cost_delta,omitempty"`
+	YieldFood           int      `json:"yield_food,omitempty"`
+	YieldProduction     int      `json:"yield_production,omitempty"`
+	YieldGold           int      `json:"yield_gold,omitempty"`
+	PollutionDelta      int      `json:"pollution_delta,omitempty"`
+	TargetTerrain       string   `json:"target_terrain,omitempty"`
+	RequiredAdvanceID   string   `json:"required_advance_id,omitempty"`
+	AllowedTerrains     []string `json:"allowed_terrains,omitempty"`
+	DefenseBonusPercent int      `json:"defense_bonus_percent,omitempty"`
+	HealRatePercent     int      `json:"heal_rate_percent,omitempty"`
+	VisionRange         int      `json:"vision_range,omitempty"`
+	RadarRange          int      `json:"radar_range,omitempty"`
+	Airport             bool     `json:"airport,omitempty"`
+	Radar               bool     `json:"radar,omitempty"`
+	ListeningPost       bool     `json:"listening_post,omitempty"`
+	CanUpgrade          bool     `json:"can_upgrade,omitempty"`
+	Endgame             bool     `json:"endgame,omitempty"`
+	CantBuildOn         []string `json:"cant_build_on,omitempty"`
+	Excludes            []string `json:"excludes,omitempty"`
 }
 
 type RuntimePollutionSourceDefinition struct {
@@ -931,6 +940,42 @@ func compileTerrainImprovementDefinition(record Record) (RuntimeTerrainImproveme
 	if err != nil {
 		return RuntimeTerrainImprovementDefinition{}, err
 	}
+	defenseBonusPercent, err := optionalInteger(record, "DefenseBonusPercent", 0)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	healRatePercent, err := optionalInteger(record, "HealRatePercent", 0)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	visionRange, err := optionalInteger(record, "VisionRange", 0)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	radarRange, err := optionalInteger(record, "RadarRange", 0)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	airport, err := optionalBool(record, "Airport", false)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	radar, err := optionalBool(record, "Radar", false)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	listeningPost, err := optionalBool(record, "ListeningPost", false)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	canUpgrade, err := optionalBool(record, "CanUpgrade", false)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
+	endgame, err := optionalBool(record, "Endgame", false)
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
 	targetTerrain := record.Tags["TargetTerrain"]
 	allowedTerrains, err := optionalIDs(record, "AllowedTerrains")
 	if err != nil {
@@ -944,10 +989,10 @@ func compileTerrainImprovementDefinition(record Record) (RuntimeTerrainImproveme
 	if err != nil {
 		return RuntimeTerrainImprovementDefinition{}, err
 	}
-	if movementCostDelta == 0 && yieldFood == 0 && yieldProduction == 0 && yieldGold == 0 && pollutionDelta == 0 && targetTerrain == "" {
+	if movementCostDelta == 0 && yieldFood == 0 && yieldProduction == 0 && yieldGold == 0 && pollutionDelta == 0 && targetTerrain == "" && defenseBonusPercent == 0 && healRatePercent == 0 && visionRange == 0 && radarRange == 0 && !airport && !radar && !listeningPost && !canUpgrade && !endgame {
 		return RuntimeTerrainImprovementDefinition{}, fmt.Errorf("rules definition record %q has no terrain improvement effect", record.ID)
 	}
-	return RuntimeTerrainImprovementDefinition{ID: record.ID, Class: record.Tags["Class"], BuildTurns: buildTurns, PublicWorksCost: publicWorksCost, MovementCostDelta: movementCostDelta, YieldFood: yieldFood, YieldProduction: yieldProduction, YieldGold: yieldGold, PollutionDelta: pollutionDelta, TargetTerrain: targetTerrain, RequiredAdvanceID: record.Tags["RequiredAdvanceID"], AllowedTerrains: allowedTerrains, CantBuildOn: cantBuildOn, Excludes: excludes}, nil
+	return RuntimeTerrainImprovementDefinition{ID: record.ID, Class: record.Tags["Class"], BuildTurns: buildTurns, PublicWorksCost: publicWorksCost, MovementCostDelta: movementCostDelta, YieldFood: yieldFood, YieldProduction: yieldProduction, YieldGold: yieldGold, PollutionDelta: pollutionDelta, TargetTerrain: targetTerrain, RequiredAdvanceID: record.Tags["RequiredAdvanceID"], AllowedTerrains: allowedTerrains, DefenseBonusPercent: defenseBonusPercent, HealRatePercent: healRatePercent, VisionRange: visionRange, RadarRange: radarRange, Airport: airport, Radar: radar, ListeningPost: listeningPost, CanUpgrade: canUpgrade, Endgame: endgame, CantBuildOn: cantBuildOn, Excludes: excludes}, nil
 }
 
 func compilePollutionSourceDefinition(record Record) (RuntimePollutionSourceDefinition, error) {

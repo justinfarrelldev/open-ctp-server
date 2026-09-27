@@ -344,7 +344,7 @@ func buildTerrainImprovement(state *State, actorID string, payload BuildImprovem
 		return "", nil, err
 	}
 	actorNation.PublicWorks -= effective.PublicWorksCost
-	state.Overlays = append(state.Overlays, TileOverlay{ID: "improvement:" + tile.ID + ":" + definition.ID, TileID: tile.ID, Kind: "improvement", OwnerID: actorID, Remaining: effective.BuildTurns, TargetTerrain: effective.TargetTerrain, ImprovementID: definition.ID, MovementCostDelta: effective.MovementCostDelta, YieldFood: effective.YieldFood, YieldProduction: effective.YieldProduction, YieldGold: effective.YieldGold, PollutionDelta: effective.PollutionDelta})
+	state.Overlays = append(state.Overlays, TileOverlay{ID: "improvement:" + tile.ID + ":" + definition.ID, TileID: tile.ID, Kind: "improvement", OwnerID: actorID, Remaining: effective.BuildTurns, TargetTerrain: effective.TargetTerrain, ImprovementID: definition.ID, MovementCostDelta: effective.MovementCostDelta, YieldFood: effective.YieldFood, YieldProduction: effective.YieldProduction, YieldGold: effective.YieldGold, PollutionDelta: effective.PollutionDelta, DefenseBonusPercent: effective.DefenseBonusPercent, HealRatePercent: effective.HealRatePercent, VisionRange: effective.VisionRange, RadarRange: effective.RadarRange, Airport: effective.Airport, Radar: effective.Radar, ListeningPost: effective.ListeningPost, CanUpgrade: effective.CanUpgrade, Endgame: effective.Endgame})
 	return EventImprovementQueued, json.RawMessage(`{"disclosed":false}`), nil
 }
 

@@ -696,6 +696,7 @@ func livingCombatUnits(units []*Unit) []*Unit {
 
 func combatDefenseModifier(state State, unit Unit, attacker Unit) int {
 	modifier := combatModifier(state, unit, false)
+	modifier += tileImprovementDefenseModifier(state, unit)
 	if hasEffect(attacker.Effects, EffectIgnoreCityWalls) {
 		modifier -= cityWallDefenseAt(state, unit.TileID)
 	}
@@ -704,6 +705,19 @@ func combatDefenseModifier(state State, unit Unit, attacker Unit) int {
 	}
 	if attacker.Domain == DomainAir {
 		modifier += unit.Defense * effectValue(unit.Effects, EffectCombatDefenseVsAirPercent) / 100
+	}
+	return modifier
+}
+
+func tileImprovementDefenseModifier(state State, unit Unit) int {
+	if unit.TileID == "" || unit.Defense <= 0 {
+		return 0
+	}
+	modifier := 0
+	for _, overlay := range state.Overlays {
+		if overlay.TileID == unit.TileID && overlay.Kind == "improvement" && overlay.Remaining == 0 {
+			modifier += unit.Defense * overlay.DefenseBonusPercent / 100
+		}
 	}
 	return modifier
 }

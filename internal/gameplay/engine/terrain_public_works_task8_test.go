@@ -108,6 +108,22 @@ func TestRetailTerraformImprovementChangesTileTerrain(t *testing.T) {
 	}
 }
 
+func TestRetailTerrainImprovementBuildPreservesDefenseMetadata(t *testing.T) {
+	state := runtimeStartedState(t)
+	state.Nations[0].PublicWorks = 10
+	state.Tiles = []Tile{{ID: "tile-a", X: 0, Y: 0, Terrain: TerrainPlains, OwnerID: "player-a", Open: true}, {ID: "tile-b", X: 1, Y: 0, Terrain: TerrainPlains, OwnerID: "player-a", Open: true}}
+	state.Units = []Unit{{ID: "worker", OwnerID: "player-a", TileID: "tile-a", Domain: DomainLand, Movement: 3, Effects: []Effect{{ID: "terraform", Kind: EffectSpecialTerraform}}}}
+	runtime := &rules.RuntimeRules{TerrainImprovements: []rules.RuntimeTerrainImprovementDefinition{{ID: "TILEIMP_FORTIFICATIONS", BuildTurns: 1, PublicWorksCost: 1, DefenseBonusPercent: 50, HealRatePercent: 100, VisionRange: 2, CanUpgrade: true}}}
+
+	_, _, err := buildTerrainImprovement(&state, "player-a", BuildImprovementPayload{UnitID: "worker", TileID: "tile-b", ImprovementID: "TILEIMP_FORTIFICATIONS"}, runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Overlays) != 1 || state.Overlays[0].DefenseBonusPercent != 50 || state.Overlays[0].HealRatePercent != 100 || state.Overlays[0].VisionRange != 2 || !state.Overlays[0].CanUpgrade {
+		t.Fatalf("queued fortification overlay = %+v", state.Overlays)
+	}
+}
+
 func TestRetailTerrainImprovementRequiresAllowedTerrain(t *testing.T) {
 	state := runtimeStartedState(t)
 	state.Nations[0].PublicWorks = 10

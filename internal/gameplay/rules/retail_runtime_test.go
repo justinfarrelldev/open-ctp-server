@@ -337,6 +337,22 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || terraformGrassland.TargetTerrain != "TERRAIN_GRASSLAND" || terraformGrassland.BuildTurns != 1 || terraformGrassland.PublicWorksCost != 1 {
 		t.Fatalf("terraform grassland runtime = %+v ok=%v", terraformGrassland, ok)
 	}
+	fortifications, ok := runtime.TerrainImprovement("TILEIMP_FORTIFICATIONS")
+	if !ok || fortifications.DefenseBonusPercent != 50 || fortifications.HealRatePercent != 100 || fortifications.VisionRange != 2 || !fortifications.CanUpgrade {
+		t.Fatalf("fortifications runtime = %+v ok=%v", fortifications, ok)
+	}
+	airBases, ok := runtime.TerrainImprovement("TILEIMP_AIR_BASES")
+	if !ok || !airBases.Airport || airBases.VisionRange != 3 || airBases.RadarRange != 3 {
+		t.Fatalf("air bases runtime = %+v ok=%v", airBases, ok)
+	}
+	listeningPosts, ok := runtime.TerrainImprovement("TILEIMP_LISTENING_POSTS")
+	if !ok || !listeningPosts.Radar || !listeningPosts.ListeningPost || listeningPosts.VisionRange != 3 || listeningPosts.RadarRange != 3 {
+		t.Fatalf("listening posts runtime = %+v ok=%v", listeningPosts, ok)
+	}
+	processingTower, ok := runtime.TerrainImprovement("TILEIMP_PROCESSING_TOWER")
+	if !ok || !processingTower.Endgame {
+		t.Fatalf("processing tower runtime = %+v ok=%v", processingTower, ok)
+	}
 
 	granary, ok := runtime.ProductionDefinition("IMPROVE_GRANARY")
 	if !ok || granary.Kind != "building" || granary.Cost != 300 || granary.Upkeep != 1 || !sameStringSlices(granary.Prerequisites, []string{"ADVANCE_AGRICULTURE"}) {

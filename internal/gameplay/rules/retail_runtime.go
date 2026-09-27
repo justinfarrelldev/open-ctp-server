@@ -825,6 +825,15 @@ func projectRetailTerrainImprovement(improvement RetailTerrainImprovement) Runti
 	definition.MovementCostDelta = effect.MoveCost
 	definition.RequiredAdvanceID = effect.EnableAdvance
 	definition.AllowedTerrains = append([]string(nil), effect.Terrains...)
+	definition.DefenseBonusPercent = percentPoints(effect.DefenseBonus)
+	definition.HealRatePercent = percentPoints(effect.HealRate)
+	definition.VisionRange = effect.VisionRange
+	definition.RadarRange = effect.RadarRange
+	definition.Airport = retailContainsString(effect.Flags, "Airport")
+	definition.Radar = retailContainsString(effect.Flags, "Radar")
+	definition.ListeningPost = retailContainsString(effect.Flags, "ListeningPost")
+	definition.CanUpgrade = retailContainsString(effect.Flags, "CanUpgrade")
+	definition.Endgame = retailContainsString(effect.Flags, "Endgame")
 	return definition
 }
 

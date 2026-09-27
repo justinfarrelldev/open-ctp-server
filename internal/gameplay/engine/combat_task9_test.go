@@ -327,6 +327,17 @@ func TestRetailCityDefenseBuildingEffectsModifyDefenders(t *testing.T) {
 	}
 }
 
+func TestRetailTerrainImprovementDefenseBonusModifiesDefenders(t *testing.T) {
+	state := combatState()
+	state.Tiles = []Tile{{ID: "b", Terrain: TerrainPlains}}
+	state.Cities = nil
+	state.Overlays = []TileOverlay{{ID: "fort", TileID: "b", Kind: "improvement", OwnerID: "player-b", Remaining: 0, ImprovementID: "TILEIMP_FORTIFICATIONS", DefenseBonusPercent: 50}}
+	defender := Unit{ID: "defender", OwnerID: "player-b", TileID: "b", Defense: 10}
+	if got := combatDefenseModifier(state, defender, Unit{ID: "attacker", OwnerID: "player-a", Domain: DomainLand}); got != 5 {
+		t.Fatalf("defender terrain-improvement modifier = %d, want 50%% of defense", got)
+	}
+}
+
 func TestRetailMultipleActiveDefensesCanInterceptBombardment(t *testing.T) {
 	state := combatState()
 	state.Units = []Unit{
