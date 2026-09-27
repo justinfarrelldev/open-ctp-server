@@ -223,6 +223,31 @@ func TestRetailCombatPromotesSurvivingWinnersToVeteran(t *testing.T) {
 	}
 }
 
+func TestRetailVictoryEnslavementAddsPopulationToNearestWinnerCity(t *testing.T) {
+	state := combatState()
+	state.Units = []Unit{
+		{ID: "slaver", OwnerID: "player-a", TileID: "a", ArmyID: "attackers", Domain: DomainLand, Attack: 100, Defense: 10, Strength: 20, Armor: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "victory", Kind: EffectVictoryEnslavement}}},
+		{ID: "defender", OwnerID: "player-b", TileID: "b", ArmyID: "defenders", Domain: DomainLand, Attack: 0, Defense: 1, Strength: 1, Armor: 1, Health: 5, MaxHealth: 5},
+	}
+	state.Armies = []Army{{ID: "attackers", OwnerID: "player-a", UnitIDs: []string{"slaver"}}, {ID: "defenders", OwnerID: "player-b", UnitIDs: []string{"defender"}}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "a", Population: 2}, {ID: "city-b", OwnerID: "player-b", TileID: "b", Population: 2}}
+	next, events, _, err := Apply(state, combatCommand(), state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	city, ok := cityByID(next, "city-a")
+	if !ok || city.Population != 3 {
+		t.Fatalf("winner slave city = %+v ok=%v", city, ok)
+	}
+	captured, ok := cityByID(next, "city-b")
+	if !ok || captured.Population != 2 {
+		t.Fatalf("captured city population should not receive victory slave: %+v ok=%v", captured, ok)
+	}
+	if len(events) != 1 || !strings.Contains(string(events[0].Payload), "enslaved_population") {
+		t.Fatalf("combat event did not expose aggregate enslavement count safely: %#v", events)
+	}
+}
+
 func TestRetailCombatDomainMasksSelectEligibleTargets(t *testing.T) {
 	state := combatState()
 	state.Units = []Unit{

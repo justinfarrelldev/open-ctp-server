@@ -33,6 +33,7 @@ type CombatResult struct {
 	AttackerArmyID     string `json:"attacker_army_id"`
 	DefenderArmyID     string `json:"defender_army_id"`
 	CapturedCityID     string `json:"captured_city_id,omitempty"`
+	EnslavedPopulation int    `json:"enslaved_population,omitempty"`
 }
 
 func applyCombat(state *State, command Command, sources Sources) (*CombatResult, json.RawMessage, error) {
@@ -111,9 +112,11 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 	}
 	if _, ok := armyByID(state, attackers.ID); !ok {
 		result.Outcome = CombatOutcomeDefenderHeld
+		result.EnslavedPopulation = applyVictoryEnslavement(state, defenders.ID)
 		promoteArmyVeterans(state, defenders.ID)
 	} else if _, ok := armyByID(state, defenders.ID); !ok {
 		result.Outcome = CombatOutcomeAttackerWon
+		result.EnslavedPopulation = applyVictoryEnslavement(state, attackers.ID)
 		if armyCanCaptureTargetCity(*state, *attackers, targetTileID) {
 			moveArmyToTile(state, attackers.ID, targetTileID)
 			result.CapturedCityID = captureCityAt(state, command.ActorPlayerID, targetTileID)
@@ -127,6 +130,51 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 		return nil, nil, err
 	}
 	return result, eventPayload, nil
+}
+
+func applyVictoryEnslavement(state *State, armyID string) int {
+	army, ok := armyByID(state, armyID)
+	if !ok {
+		return 0
+	}
+	for _, unit := range combatArmyUnits(*state, *army) {
+		if unit.Health <= 0 || !hasEffect(unit.Effects, EffectVictoryEnslavement) {
+			continue
+		}
+		if city := nearestOwnedCity(state, unit.OwnerID, unit.TileID); city != nil {
+			city.Population++
+			return 1
+		}
+	}
+	return 0
+}
+
+func nearestOwnedCity(state *State, ownerID, fromTileID string) *City {
+	fromTile, ok := tileByID(*state, fromTileID)
+	if !ok {
+		return nil
+	}
+	bestIndex := -1
+	bestDistance := 0
+	for index := range state.Cities {
+		city := &state.Cities[index]
+		if city.OwnerID != ownerID {
+			continue
+		}
+		cityTile, ok := tileByID(*state, city.TileID)
+		if !ok {
+			continue
+		}
+		distance := tileDistance(fromTile, cityTile)
+		if bestIndex < 0 || distance < bestDistance || distance == bestDistance && city.ID < state.Cities[bestIndex].ID {
+			bestIndex = index
+			bestDistance = distance
+		}
+	}
+	if bestIndex < 0 {
+		return nil
+	}
+	return &state.Cities[bestIndex]
 }
 
 func recordUnitLossForPeaceMovement(state *State, unit Unit) {
