@@ -262,7 +262,7 @@ func unitHasRetailCapabilityMetadata(unit Unit) bool {
 		switch effect.Kind {
 		case EffectCantCaptureCity, EffectNoFuelThenCrash, EffectCanPillage, EffectBuildingRemovesPopulation, EffectIgnoreZOC, EffectCanAttackLand, EffectCanAttackSea, EffectCanAttackAir, EffectCanAttackSpace, EffectCanAttackUnderwater, EffectSubmarine, EffectWoodenShip,
 			EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns,
-			EffectSpecialConvertCity, EffectSpecialCreateFranchise, EffectSpecialInvestigateCity, EffectSpecialPlantNuke, EffectSpecialBioTerror, EffectSpecialNanoTerror, EffectSpecialPlague,
+			EffectSpecialConvertCity, EffectSpecialCreateFranchise, EffectSpecialInvestigateCity, EffectSpecialPlantNuke, EffectSpecialCauseUnhappiness, EffectSpecialIndulgenceSales, EffectSpecialInciteRevolution, EffectSpecialSlaveUprising, EffectSpecialBioTerror, EffectSpecialNanoTerror, EffectSpecialPlague,
 			EffectSpecialAssassinateRuler, EffectSpecialSlaveRaid, EffectSpecialSettlerSlaveRaid, EffectSpecialUndergroundRailway, EffectSpecialInjoin, EffectSpecialReform,
 			EffectSpecialCreatePark, EffectSpecialExpel, EffectSpecialSue:
 			return true

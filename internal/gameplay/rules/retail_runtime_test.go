@@ -220,8 +220,8 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("settler runtime = %+v ok=%v", settler, ok)
 	}
 	cleric, ok = runtime.Unit("UNIT_CLERIC")
-	if !ok || cleric.RequiredGovernmentID != "GOVERNMENT_THEOCRACY" {
-		t.Fatalf("cleric required government = %+v ok=%v", cleric, ok)
+	if !ok || cleric.RequiredGovernmentID != "GOVERNMENT_THEOCRACY" || !runtimeUnitHasEffectValue(cleric, "special_cause_unhappiness", 100) || !runtimeUnitHasEffectValue(cleric, "special_cause_unhappiness_timer", 1) || !runtimeUnitHasEffectValue(cleric, "special_cause_unhappiness_amount", 5) || !runtimeUnitHasEffect(cleric, "special_indulgence_sales") {
+		t.Fatalf("cleric required government/specials = %+v ok=%v", cleric, ok)
 	}
 	if !runtimeUnitHasEffect(abolitionist, "no_slaves") {
 		t.Fatalf("abolitionist no-slaves marker missing: %+v", abolitionist)
@@ -253,6 +253,23 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	nuke, ok := runtime.Unit("UNIT_NUKE")
 	if !ok || !runtimeUnitHasEffect(nuke, "nuclear_attack") {
 		t.Fatalf("nuke runtime = %+v ok=%v", nuke, ok)
+	}
+	spy, ok := runtime.Unit("UNIT_SPY")
+	if !ok || !runtimeUnitHasEffectValue(spy, "special_incite_revolution", 25) || !runtimeUnitHasEffectValue(spy, "special_incite_revolution_elite_chance", 35) || !runtimeUnitHasEffectValue(spy, "special_incite_revolution_death_chance", 50) {
+		t.Fatalf("spy incite revolution runtime = %+v ok=%v", spy, ok)
+	}
+	if !runtimeUnitHasEffect(abolitionist, "special_slave_uprising") {
+		t.Fatalf("abolitionist slave uprising marker missing: %+v", abolitionist)
+	}
+	if elephant.NeedsCityGoodID != "TERRAIN_PLAINS_GOOD_TWO" {
+		t.Fatalf("elephant city-good requirement = %+v", elephant)
+	}
+	if settler.SettleCityTypeID != "UNIT_CITY" {
+		t.Fatalf("settler city type = %+v", settler)
+	}
+	oceanCity, ok := runtime.Unit("UNIT_OCEAN_CITY")
+	if !ok || oceanCity.CityGrowthCoefficientPercent != 50 {
+		t.Fatalf("ocean city growth coefficient = %+v ok=%v", oceanCity, ok)
 	}
 	cargoHelicopter, ok := runtime.Unit("UNIT_CARGO_HELICOPTER")
 	if !ok || !runtimeUnitHasEffect(cargoHelicopter, "paratrooper_transport") {

@@ -218,6 +218,12 @@
 - [x] Task 267: Eliminate-nukes wonder effects remove both planted-nuke and nuclear-attack units.
 - [x] Task 268: Unit production rejects `nuclear_attack` units after nukes are eliminated for the actor's nation.
 - [x] Task 269: Safe production projections suppress `nuclear_attack` units after nukes are eliminated.
+- [x] Task 270: Retail `CauseUnhappiness` unit blocks are preserved as runtime/canonical special effects.
+- [x] Task 271: Retail `IndulgenceSales` unit blocks are preserved as runtime/canonical special effects.
+- [x] Task 272: Retail `InciteRevolution` unit blocks are preserved as runtime/canonical special effects.
+- [x] Task 273: Retail `SlaveUprising` unit blocks are preserved as runtime/canonical special effects.
+- [x] Task 274: Retail `NeedsCityGood` unit requirements are preserved in runtime unit definitions.
+- [x] Task 275: Retail `SettleCityType` and `CityGrowthCoefficient` unit fields are preserved in runtime unit definitions.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

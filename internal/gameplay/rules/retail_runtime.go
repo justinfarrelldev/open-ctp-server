@@ -373,7 +373,10 @@ func projectRetailUnit(unit RetailUnit) RuntimeUnitDefinition {
 	effects := retailUnitEffects(unit)
 	cargoDomains := retailCargoDomains(unit.CanCarry)
 	requiredGovernmentID := firstRetailUnitString(unit, "GovernmentType")
-	return RuntimeUnitDefinition{ID: unit.ID, Role: unit.Category, Domain: retailUnitDomain(unit.MovementTypes), Movement: positiveOrOne(unit.MaxMovePoints), Attack: unit.Attack, Defense: unit.Defense, Ranged: unit.ZBRangeAttack, BombardRange: unit.BombardRange, BombRounds: unit.BombRounds, ActiveDefenseRange: unit.ActiveDefenseRange, Strength: unit.Attack, Armor: unit.Armor, Firepower: positiveOrOne(unit.Firepower), Health: positiveOrOne(unit.MaxHP), MaxFuel: unit.MaxFuel, ZOC: !retailContainsString(unit.Flags, "NoZoc"), TransportCapacity: unit.CargoMax, CargoDomains: cargoDomains, ProductionCost: unit.ShieldCost, PowerPoints: unit.PowerPoints, Upkeep: unit.GoldHunger, ShieldHunger: unit.ShieldHunger, NeedsNoSupport: retailContainsString(unit.Flags, "NeedsNoSupport"), IsSpecialForces: retailContainsString(unit.Flags, "IsSpecialForces"), Prerequisites: singleOrEmpty(unit.EnableAdvance), RequiredGovernmentID: requiredGovernmentID, ObsoleteBy: append([]string(nil), unit.ObsoleteAdvance...), UpgradeTo: append([]string(nil), unit.UpgradeTo...), VisibilityRange: unit.VisionRange, Effects: effects}
+	needsCityGoodID := firstRetailUnitString(unit, "NeedsCityGood")
+	settleCityTypeID := firstRetailUnitString(unit, "SettleCityType")
+	cityGrowthCoefficientPercent := percentPoints(firstRetailUnitFloat(unit, "CityGrowthCoefficient"))
+	return RuntimeUnitDefinition{ID: unit.ID, Role: unit.Category, Domain: retailUnitDomain(unit.MovementTypes), Movement: positiveOrOne(unit.MaxMovePoints), Attack: unit.Attack, Defense: unit.Defense, Ranged: unit.ZBRangeAttack, BombardRange: unit.BombardRange, BombRounds: unit.BombRounds, ActiveDefenseRange: unit.ActiveDefenseRange, Strength: unit.Attack, Armor: unit.Armor, Firepower: positiveOrOne(unit.Firepower), Health: positiveOrOne(unit.MaxHP), MaxFuel: unit.MaxFuel, ZOC: !retailContainsString(unit.Flags, "NoZoc"), TransportCapacity: unit.CargoMax, CargoDomains: cargoDomains, ProductionCost: unit.ShieldCost, PowerPoints: unit.PowerPoints, Upkeep: unit.GoldHunger, ShieldHunger: unit.ShieldHunger, NeedsNoSupport: retailContainsString(unit.Flags, "NeedsNoSupport"), IsSpecialForces: retailContainsString(unit.Flags, "IsSpecialForces"), Prerequisites: singleOrEmpty(unit.EnableAdvance), RequiredGovernmentID: requiredGovernmentID, NeedsCityGoodID: needsCityGoodID, SettleCityTypeID: settleCityTypeID, CityGrowthCoefficientPercent: cityGrowthCoefficientPercent, ObsoleteBy: append([]string(nil), unit.ObsoleteAdvance...), UpgradeTo: append([]string(nil), unit.UpgradeTo...), VisibilityRange: unit.VisionRange, Effects: effects}
 }
 
 func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
@@ -502,6 +505,34 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	}
 	if len(unit.FieldsByKey("NuclearAttack")) > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("nuclear_attack"), Kind: "nuclear_attack"})
+	}
+	if fields := unit.FieldsByKey("CauseUnhappiness"); len(fields) > 0 {
+		if chance := percentPoints(retailRawFieldFloat(fields[0], "Chance")); chance > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: effectID("special_cause_unhappiness"), Kind: "special_cause_unhappiness", Value: chance})
+		}
+		if timer := int(retailRawFieldFloat(fields[0], "Timer")); timer > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: effectID("special_cause_unhappiness_timer"), Kind: "special_cause_unhappiness_timer", Value: timer})
+		}
+		if amount := int(retailRawFieldFloat(fields[0], "Amount")); amount > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: effectID("special_cause_unhappiness_amount"), Kind: "special_cause_unhappiness_amount", Value: amount})
+		}
+	}
+	if len(unit.FieldsByKey("IndulgenceSales")) > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_indulgence_sales"), Kind: "special_indulgence_sales"})
+	}
+	if fields := unit.FieldsByKey("InciteRevolution"); len(fields) > 0 {
+		if chance := percentPoints(retailRawFieldFloat(fields[0], "Chance")); chance > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: effectID("special_incite_revolution"), Kind: "special_incite_revolution", Value: chance})
+		}
+		if chance := percentPoints(retailRawFieldFloat(fields[0], "EliteChance")); chance > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: effectID("special_incite_revolution_elite_chance"), Kind: "special_incite_revolution_elite_chance", Value: chance})
+		}
+		if chance := percentPoints(retailRawFieldFloat(fields[0], "DeathChance")); chance > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: effectID("special_incite_revolution_death_chance"), Kind: "special_incite_revolution_death_chance", Value: chance})
+		}
+	}
+	if len(unit.FieldsByKey("SlaveUprising")) > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_slave_uprising"), Kind: "special_slave_uprising"})
 	}
 	if retailContainsString(unit.Flags, "CanPirate") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_pirate"), Kind: "can_pirate"})
