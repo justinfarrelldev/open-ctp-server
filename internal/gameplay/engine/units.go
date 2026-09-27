@@ -230,12 +230,25 @@ func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *ru
 func captureCityAt(state *State, actorID, tileID string) string {
 	for i := range state.Cities {
 		if state.Cities[i].TileID == tileID && state.Cities[i].OwnerID != actorID {
+			cityID := state.Cities[i].ID
 			state.Cities[i].OwnerID = actorID
 			state.Cities[i].ConquestDistress = conquestDistressForOwner(*state, actorID)
-			return state.Cities[i].ID
+			state.TradeRoutes = removeTradeRoutesTouchingCity(state.TradeRoutes, cityID)
+			return cityID
 		}
 	}
 	return ""
+}
+
+func removeTradeRoutesTouchingCity(routes []TradeRoute, cityID string) []TradeRoute {
+	kept := routes[:0]
+	for _, route := range routes {
+		if route.SourceCityID == cityID || route.DestinationCityID == cityID {
+			continue
+		}
+		kept = append(kept, route)
+	}
+	return kept
 }
 
 func conquestDistressForOwner(state State, ownerID string) int {

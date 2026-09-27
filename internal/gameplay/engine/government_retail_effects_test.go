@@ -224,6 +224,22 @@ func TestRetailConquestDistressAppliesToCapturedCityAndDecays(t *testing.T) {
 	}
 }
 
+func TestRetailCityCaptureRemovesTradeRoutesTouchingCapturedCity(t *testing.T) {
+	state := State{
+		Cities: []City{{ID: "captured", OwnerID: "player-b", TileID: "city-tile"}, {ID: "ally", OwnerID: "player-a", TileID: "ally-tile"}, {ID: "third", OwnerID: "player-c", TileID: "third-tile"}},
+		TradeRoutes: []TradeRoute{
+			{ID: "captured-ally", SourceCityID: "captured", DestinationCityID: "ally"},
+			{ID: "third-ally", SourceCityID: "third", DestinationCityID: "ally"},
+		},
+	}
+	if got := captureCityAt(&state, "player-a", "city-tile"); got != "captured" {
+		t.Fatalf("captured city = %q", got)
+	}
+	if len(state.TradeRoutes) != 1 || state.TradeRoutes[0].ID != "third-ally" {
+		t.Fatalf("capture did not remove captured-city trade routes: %#v", state.TradeRoutes)
+	}
+}
+
 func TestRetailWarDiscontentReducesCityHappiness(t *testing.T) {
 	state := State{
 		Players: []Player{{ID: "player-a", NationID: "nation-a"}},

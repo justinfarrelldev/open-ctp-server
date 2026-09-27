@@ -172,6 +172,7 @@
 - [x] Task 221: Declaring war cancels existing trade routes between the new combatants.
 - [x] Task 222: Safe diplomacy projection exposes trade agreement proposals before foreign trade routes.
 - [x] Task 223: Safe diplomacy projection exposes peace agreement proposals while at war.
+- [x] Task 224: Capturing a city cancels trade routes touching the captured city.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
