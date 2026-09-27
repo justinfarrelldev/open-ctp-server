@@ -71,6 +71,42 @@ func TestCompileRuntimePreservesSyntheticUnitCapabilities(t *testing.T) {
 	}
 }
 
+func TestCompileRuntimeRejectsUnknownProjectionVictoryEvaluator(t *testing.T) {
+	runtime := RuntimeRules{
+		CompatibilityVersion: CTP2CompatibilityVersion,
+		Victory:              []RuntimeVictory{{ID: "future_victory"}},
+		Calendar:             RuntimeCalendar{FinalTurn: 48},
+		Production:           []RuntimeProduction{{ID: "UNIT_SYNTHETIC", Kind: "unit"}},
+		Starter:              RuntimeStarter{Domain: "land", Movement: 1, Health: 1},
+		Units:                []RuntimeUnitDefinition{{ID: "UNIT_SYNTHETIC", Domain: "land", Movement: 1, Health: 1}},
+	}
+	definitions, hash, err := CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := CompileRuntime(definitions, hash); err == nil || !strings.Contains(err.Error(), "victory evaluator") {
+		t.Fatalf("CompileRuntime accepted unknown projection victory evaluator: %v", err)
+	}
+}
+
+func TestCompileRuntimeRejectsDuplicateProjectionVictoryEvaluator(t *testing.T) {
+	runtime := RuntimeRules{
+		CompatibilityVersion: CTP2CompatibilityVersion,
+		Victory:              []RuntimeVictory{{ID: "score_2300"}, {ID: "score_2300"}},
+		Calendar:             RuntimeCalendar{FinalTurn: 48},
+		Production:           []RuntimeProduction{{ID: "UNIT_SYNTHETIC", Kind: "unit"}},
+		Starter:              RuntimeStarter{Domain: "land", Movement: 1, Health: 1},
+		Units:                []RuntimeUnitDefinition{{ID: "UNIT_SYNTHETIC", Domain: "land", Movement: 1, Health: 1}},
+	}
+	definitions, hash, err := CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := CompileRuntime(definitions, hash); err == nil || !strings.Contains(err.Error(), "duplicated") {
+		t.Fatalf("CompileRuntime accepted duplicated projection victory evaluator: %v", err)
+	}
+}
+
 func TestCompileRuntimeRejectsMalformedUnitCapabilities(t *testing.T) {
 	t.Parallel()
 

@@ -155,6 +155,9 @@
 - [x] Task 204: Retail DefendAgainstSpies unit fields import as runtime effects.
 - [x] Task 205: City spy-defense units can stop and kill acting spies before city special actions.
 - [x] Task 206: Spy-defense odds remain hidden from enemy safe projections.
+- [x] Task 207: Restarted runtime projection rejects unknown victory evaluator IDs.
+- [x] Task 208: Restarted runtime projection rejects duplicated victory evaluator IDs.
+- [x] Task 209: Retail runtime terminal calendar/victory configuration survives canonical runtime restart.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

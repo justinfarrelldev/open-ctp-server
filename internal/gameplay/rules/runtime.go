@@ -517,6 +517,9 @@ func compileRuntimeProjectionDefinitions(definitions []byte, contentHash string)
 }
 
 func validateRuntimeProjection(runtime RuntimeRules) error {
+	if err := validateRuntimeProjectionVictory(runtime.Victory); err != nil {
+		return err
+	}
 	seenProduction := make(map[string]struct{}, len(runtime.Production))
 	for _, production := range runtime.Production {
 		if production.ID == "" || production.Kind == "" {
@@ -546,6 +549,27 @@ func validateRuntimeProjection(runtime RuntimeRules) error {
 				return fmt.Errorf("runtime government %q references missing advance %q", government.ID, government.EnableAdvanceID)
 			}
 		}
+	}
+	return nil
+}
+
+func validateRuntimeProjectionVictory(victories []RuntimeVictory) error {
+	supported := make(map[string]struct{})
+	for _, evaluator := range SupportedManifest().VictoryEvaluators {
+		supported[evaluator.ID] = struct{}{}
+	}
+	seen := make(map[string]struct{}, len(victories))
+	for _, victory := range victories {
+		if victory.ID == "" {
+			return errors.New("runtime victory evaluator is malformed")
+		}
+		if _, ok := supported[victory.ID]; !ok {
+			return fmt.Errorf("runtime victory evaluator %q is unsupported", victory.ID)
+		}
+		if _, exists := seen[victory.ID]; exists {
+			return fmt.Errorf("runtime victory evaluator %q is duplicated", victory.ID)
+		}
+		seen[victory.ID] = struct{}{}
 	}
 	return nil
 }

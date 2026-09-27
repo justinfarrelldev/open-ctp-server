@@ -54,6 +54,26 @@ func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 	}
 }
 
+func TestRetailRuntimeProjectionRoundTripsTerminalCalendar(t *testing.T) {
+	root := localRetailGameDataRoot(t)
+	db, err := LoadRetailRulesFromDirectory(root)
+	if err != nil {
+		t.Fatalf("LoadRetailRulesFromDirectory() error = %v", err)
+	}
+	runtime := ProjectRetailRuntime(db)
+	definitions, hash, err := CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatalf("CanonicalRuntimeDefinitions() error = %v", err)
+	}
+	restarted, err := CompileRuntime(definitions, hash)
+	if err != nil {
+		t.Fatalf("CompileRuntime(retail projection) error = %v", err)
+	}
+	if restarted.Calendar.FinalTurn != 1000 || !sameStringSlices(restarted.VictoryEvaluatorIDs(), []string{"bloodlust_conquest", "diplomatic_world_union", "score_2300", "science_gaia_controller"}) {
+		t.Fatalf("restarted runtime terminal config = final_turn:%d victory:%#v", restarted.Calendar.FinalTurn, restarted.VictoryEvaluatorIDs())
+	}
+}
+
 func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	root := localRetailGameDataRoot(t)
 	db, err := LoadRetailRulesFromDirectory(root)
