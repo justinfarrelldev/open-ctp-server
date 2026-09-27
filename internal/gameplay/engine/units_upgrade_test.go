@@ -37,6 +37,20 @@ func TestRetailUpgradeUnitAppliesTargetDefinitionFromUpgradeChain(t *testing.T) 
 	}
 }
 
+func TestRetailUpgradeUnitRequiresTargetGovernment(t *testing.T) {
+	state := fixtureState()
+	state.Nations = []Nation{{ID: "nation-a"}}
+	state.Units = []Unit{{ID: "unit-old", TypeID: "UNIT_OLD", OwnerID: "player-a", TileID: "0,0", Health: 10, MaxHealth: 10}}
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_FASCIST", Domain: DomainLand, Movement: 1, Health: 10, RequiredGovernmentID: "GOVERNMENT_FASCISM"}, {ID: "UNIT_OLD", Domain: DomainLand, Movement: 1, Health: 10, UpgradeTo: []string{"UNIT_FASCIST"}}}}
+	if err := upgradeUnit(&state, "player-a", upgradeUnitPayload{UnitID: "unit-old", UpgradeTo: "UNIT_FASCIST"}, runtime); err == nil {
+		t.Fatal("government-gated upgrade succeeded under wrong government")
+	}
+	state.Nations = []Nation{{ID: "nation-a", GovernmentID: "GOVERNMENT_FASCISM"}}
+	if err := upgradeUnit(&state, "player-a", upgradeUnitPayload{UnitID: "unit-old", UpgradeTo: "UNIT_FASCIST"}, runtime); err != nil {
+		t.Fatalf("government-gated upgrade under matching government failed: %v", err)
+	}
+}
+
 func TestRetailUpgradeUnitRejectsUnknownChain(t *testing.T) {
 	state := fixtureState()
 	state.Units = []Unit{{ID: "unit-old", TypeID: "UNIT_OLD", OwnerID: "player-a", TileID: "0,0", Health: 10, MaxHealth: 10}}

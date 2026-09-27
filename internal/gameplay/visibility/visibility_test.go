@@ -247,6 +247,33 @@ func TestProjectionExposesRetailUpgradeActionForOwnedUnit(t *testing.T) {
 	t.Fatalf("upgrade action missing: %#v", projection.LegalActions)
 }
 
+func TestProjectionSuppressesWrongGovernmentUpgradeAction(t *testing.T) {
+	state := fixtureState()
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_OLD", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_OLD", Domain: engine.DomainLand, Movement: 1, Health: 10, UpgradeTo: []string{"UNIT_FASCIST"}}, {ID: "UNIT_FASCIST", Domain: engine.DomainLand, Movement: 2, Health: 20, RequiredGovernmentID: "GOVERNMENT_FASCISM"}}}
+	definitions, hash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Rules = engine.RulesPin{Version: rules.CTP2CompatibilityVersion, Definitions: definitions, ContentHash: hash}
+	state.Nations = []engine.Nation{{ID: "a"}, {ID: "b"}}
+	state.Units = []engine.Unit{{ID: "unit-old", TypeID: "UNIT_OLD", OwnerID: "a", TileID: "0,0", Domain: engine.DomainLand, Movement: 1, MaxMovement: 1, Health: 10, MaxHealth: 10}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if productionActionTarget(projection, engine.CommandUpgradeUnit, "UNIT_FASCIST") {
+		t.Fatalf("wrong-government upgrade action leaked: %#v", projection.LegalActions)
+	}
+	state.Nations = []engine.Nation{{ID: "a", GovernmentID: "GOVERNMENT_FASCISM"}, {ID: "b"}}
+	projection, err = Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !productionActionTarget(projection, engine.CommandUpgradeUnit, "UNIT_FASCIST") {
+		t.Fatalf("matching-government upgrade action missing: %#v", projection.LegalActions)
+	}
+}
+
 func TestDiplomacyProjectsPeaceProposalAtWar(t *testing.T) {
 	state := fixtureState()
 	state.Players = []engine.Player{{ID: "a", NationID: "na", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}, {ID: "b", NationID: "nb", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}}

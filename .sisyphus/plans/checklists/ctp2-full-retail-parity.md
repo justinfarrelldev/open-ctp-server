@@ -212,6 +212,8 @@
 - [x] Task 261: Retail unit `GovernmentType` is preserved as runtime `required_government_id`.
 - [x] Task 262: Unit production enforces matching current government for government-gated units.
 - [x] Task 263: Safe production projections suppress wrong-government unit production actions.
+- [x] Task 264: Unit upgrades enforce matching current government for government-gated target units.
+- [x] Task 265: Safe upgrade projections suppress wrong-government government-gated target units.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

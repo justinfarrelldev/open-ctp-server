@@ -879,7 +879,7 @@ func upgradeActions(projection Projection, unit UnitProjection) []ActionProjecti
 	actions := make([]ActionProjection, 0, len(current.UpgradeTo))
 	for _, targetID := range current.UpgradeTo {
 		target, ok := definitions[targetID]
-		if !ok || !allAdvancesSatisfied(known, target.Prerequisites) || anyAdvanceSatisfied(known, target.ObsoleteBy) {
+		if !ok || unitProductionBlockedByGovernment(projection, target) || !allAdvancesSatisfied(known, target.Prerequisites) || anyAdvanceSatisfied(known, target.ObsoleteBy) {
 			continue
 		}
 		actions = append(actions, action(engine.CommandUpgradeUnit, "upgrade-unit", unit.ID, targetID, map[string]string{"unit_id": unit.ID, "upgrade_to": targetID}, []string{"unit_id", "upgrade_to"}))

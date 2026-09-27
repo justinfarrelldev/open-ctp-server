@@ -79,7 +79,7 @@
     },
     {
       "path": "internal/gameplay/engine/units.go",
-      "sha256": "aab6b3f69394ebb671bee64f5f4793ade55471f00be9f9d34a40568b175df912"
+      "sha256": "f9d8b508f760fd4be89c2a6837f7dac234ddd667c840deaadd1480a7955dfb10"
     },
     {
       "path": "internal/gameplay/engine/war.go",
@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "0f18037c8a1a92125a44c8fdb2fd7293a012b556d000aa89d89d51fd8bf21a03"
+      "sha256": "4986dabf151146c5e43c76079f42fce816ab607986cc7ff2b69efde72fc179db"
     },
     {
       "path": "internal/runtime/runtime.go",
