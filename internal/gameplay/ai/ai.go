@@ -233,7 +233,7 @@ func projectedUnitCanFortify(effects []engine.Effect) bool {
 	for _, effect := range effects {
 		switch effect.Kind {
 		case engine.EffectCantCaptureCity, engine.EffectNoFuelThenCrash, engine.EffectCanPillage, engine.EffectBuildingRemovesPopulation, engine.EffectIgnoreZOC, engine.EffectCanAttackLand, engine.EffectCanAttackSea, engine.EffectCanAttackAir, engine.EffectCanAttackSpace, engine.EffectCanAttackUnderwater, engine.EffectSubmarine, engine.EffectWoodenShip,
-			engine.EffectSpecialEmbassy, engine.EffectSpecialSoothsaying, engine.EffectSpecialCauseUnhappiness, engine.EffectSpecialInciteRevolution, engine.EffectSpecialSteal, engine.EffectSpecialCapture, engine.EffectSpecialTerraform, engine.EffectSpecialTerraformTurns,
+			engine.EffectSpecialEmbassy, engine.EffectSpecialSoothsaying, engine.EffectSpecialCauseUnhappiness, engine.EffectSpecialInciteRevolution, engine.EffectSpecialIndulgenceSales, engine.EffectSpecialSteal, engine.EffectSpecialCapture, engine.EffectSpecialTerraform, engine.EffectSpecialTerraformTurns,
 			engine.EffectSpecialConvertCity, engine.EffectSpecialCreateFranchise, engine.EffectSpecialInvestigateCity, engine.EffectSpecialPlantNuke, engine.EffectSpecialBioTerror, engine.EffectSpecialNanoTerror, engine.EffectSpecialPlague,
 			engine.EffectSpecialAssassinateRuler, engine.EffectSpecialSlaveRaid, engine.EffectSpecialSettlerSlaveRaid, engine.EffectSpecialUndergroundRailway, engine.EffectSpecialInjoin, engine.EffectSpecialReform,
 			engine.EffectSpecialCreatePark, engine.EffectSpecialExpel, engine.EffectSpecialSue:
@@ -458,6 +458,7 @@ func projectedUnitSpecialTargetCandidates(projection visibility.Projection) []Ca
 		engine.CommandConvertCity:        620,
 		engine.CommandCauseUnhappiness:   618,
 		engine.CommandInciteRevolution:   617,
+		engine.CommandIndulgenceSales:    616,
 		engine.CommandInvestigateCity:    610,
 		engine.CommandAssassinateRuler:   605,
 		engine.CommandInjoin:             600,

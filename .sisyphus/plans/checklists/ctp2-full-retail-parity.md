@@ -240,6 +240,10 @@
 - [x] Task 289: Safe projections and HTTP routes expose `incite-revolution` only from owned capable units.
 - [x] Task 290: AI command scoring recognizes projected incite-revolution actions.
 - [x] Task 291: Incite-revolution event payloads avoid leaking canonical city identifiers.
+- [x] Task 292: `IndulgenceSales` special actions execute the retail default unconverted gold transfer.
+- [x] Task 293: `IndulgenceSales` applies a timed retail default happiness bonus to the target city.
+- [x] Task 294: Safe projections and HTTP routes expose `indulgence-sales` only from owned capable units.
+- [x] Task 295: AI command scoring recognizes projected indulgence-sales actions.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
