@@ -492,7 +492,7 @@ func removeExternalFranchises(effects []Effect, ownerID string) []Effect {
 }
 
 func undergroundRailway(state *State, unit *Unit, city *City, actorNation *Nation, sources Sources) (string, json.RawMessage, error) {
-	if !hasEffect(unit.Effects, EffectSpecialUndergroundRailway) || city.Population <= 1 {
+	if !hasEffect(unit.Effects, EffectSpecialUndergroundRailway) || city.Specialists["POP_SLAVE"] <= 0 {
 		return "", nil, errors.New("special action is not authorized")
 	}
 	if err := spendSpecialMove(unit); err != nil {
@@ -508,7 +508,13 @@ func undergroundRailway(state *State, unit *Unit, city *City, actorNation *Natio
 			return EventUndergroundRailwayFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
-	city.Population--
+	city.Specialists["POP_SLAVE"]--
+	if city.Specialists["POP_SLAVE"] <= 0 {
+		delete(city.Specialists, "POP_SLAVE")
+	}
+	if home := nearestOwnedCity(state, unit.OwnerID, unit.TileID); home != nil {
+		home.Population++
+	}
 	upsertNationEffect(actorNation, EffectFreedPopulation, 1)
 	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialUndergroundRailway, sources)
 	return EventUndergroundRailway, json.RawMessage(`{"disclosed":true}`), nil

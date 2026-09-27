@@ -283,6 +283,9 @@
 - [x] Task 332: City conversion state is normalized when converted-to player becomes city owner.
 - [x] Task 333: Conquest/capture ownership changes clear now-invalid conversion state.
 - [x] Task 334: Revolt/rebel ownership changes clear now-invalid conversion state.
+- [x] Task 335: Underground railway requires slave population in the target city.
+- [x] Task 336: Underground railway consumes one target slave specialist without reducing target population.
+- [x] Task 337: Underground railway adds one population to the nearest owned city for the acting player.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

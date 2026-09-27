@@ -145,9 +145,15 @@ func TestRetailSpecialDeathChanceRemovesActingUnitAfterResolvedActions(t *testin
 				t.Fatalf("assassination effects missing: %+v", state.Nations[1])
 			}
 		}},
-		{name: "underground", command: CommandUndergroundRailway, actionKind: EffectSpecialUndergroundRailway, deathKind: EffectSpecialUndergroundRailwayDeathChance, wantEvent: EventUndergroundRailway, setup: func(state *State) { state.Cities[0].Population = 4 }, assertState: func(t *testing.T, state State) {
-			if state.Cities[0].Population != 3 || !hasEffect(state.Nations[0].Effects, EffectFreedPopulation) {
-				t.Fatalf("underground railway effects missing: city=%+v nation=%+v", state.Cities[0], state.Nations[0])
+		{name: "underground", command: CommandUndergroundRailway, actionKind: EffectSpecialUndergroundRailway, deathKind: EffectSpecialUndergroundRailwayDeathChance, wantEvent: EventUndergroundRailway, setup: func(state *State) {
+			state.Cities[0].Population = 4
+			state.Cities[0].Specialists = map[string]int{"POP_SLAVE": 1}
+			state.Cities = append(state.Cities, City{ID: "home", OwnerID: "player-a", TileID: "a", Population: 2})
+		}, assertState: func(t *testing.T, state State) {
+			target, _ := cityByID(state, "target-city")
+			home, _ := cityByID(state, "home")
+			if target == nil || home == nil || target.Specialists["POP_SLAVE"] != 0 || home.Population != 3 || !hasEffect(state.Nations[0].Effects, EffectFreedPopulation) {
+				t.Fatalf("underground railway effects missing: target=%+v home=%+v nation=%+v", target, home, state.Nations[0])
 			}
 		}},
 		{name: "slave", command: CommandSlaveRaid, actionKind: EffectSpecialSlaveRaid, deathKind: EffectSpecialSlaveRaidDeathChance, wantEvent: EventSlaveRaidApplied, setup: func(state *State) { state.Cities[0].Population = 4 }, assertState: func(t *testing.T, state State) {
@@ -300,27 +306,35 @@ func TestRetailSueFranchiseRemovesOwnCityExternalFranchise(t *testing.T) {
 	}
 }
 
-func TestRetailUndergroundRailwayFreesPopulation(t *testing.T) {
+func TestRetailUndergroundRailwayFreesSlaveToNearestHomeCity(t *testing.T) {
 	state := task11State()
 	state.Cities[0].Population = 4
+	state.Cities[0].Specialists = map[string]int{"POP_SLAVE": 1}
+	state.Cities = append(state.Cities, City{ID: "home", OwnerID: "player-a", TileID: "a", Population: 2})
 	state.Units[0].Effects = []Effect{{ID: "railway", Kind: EffectSpecialUndergroundRailway}}
 	next, events, err := task11Apply(t, state, CommandUndergroundRailway, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if next.Cities[0].Population != 3 || !hasEffect(next.Nations[0].Effects, EffectFreedPopulation) || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventUndergroundRailway {
-		t.Fatalf("railway outcome city=%+v nation=%+v unit=%+v events=%+v", next.Cities[0], next.Nations[0], next.Units[0], events)
+	target, _ := cityByID(next, "target-city")
+	home, _ := cityByID(next, "home")
+	if target == nil || home == nil || target.Specialists["POP_SLAVE"] != 0 || target.Population != 4 || home.Population != 3 || !hasEffect(next.Nations[0].Effects, EffectFreedPopulation) || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventUndergroundRailway {
+		t.Fatalf("railway outcome target=%+v home=%+v nation=%+v unit=%+v events=%+v", target, home, next.Nations[0], next.Units[0], events)
 	}
 
 	state = task11State()
 	state.Cities[0].Population = 4
+	state.Cities[0].Specialists = map[string]int{"POP_SLAVE": 1}
+	state.Cities = append(state.Cities, City{ID: "home", OwnerID: "player-a", TileID: "a", Population: 2})
 	state.Units[0].Effects = []Effect{{ID: "railway", Kind: EffectSpecialUndergroundRailway, Value: 10}}
 	next, events, err = task11Apply(t, state, CommandUndergroundRailway, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if next.Cities[0].Population != 4 || hasEffect(next.Nations[0].Effects, EffectFreedPopulation) || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventUndergroundRailwayFailed {
-		t.Fatalf("chance-failed railway outcome city=%+v nation=%+v unit=%+v events=%+v", next.Cities[0], next.Nations[0], next.Units[0], events)
+	target, _ = cityByID(next, "target-city")
+	home, _ = cityByID(next, "home")
+	if target == nil || home == nil || target.Population != 4 || target.Specialists["POP_SLAVE"] != 1 || home.Population != 2 || hasEffect(next.Nations[0].Effects, EffectFreedPopulation) || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventUndergroundRailwayFailed {
+		t.Fatalf("chance-failed railway outcome target=%+v home=%+v nation=%+v unit=%+v events=%+v", target, home, next.Nations[0], next.Units[0], events)
 	}
 }
 
