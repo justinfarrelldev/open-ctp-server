@@ -684,7 +684,7 @@ func TestTask6ProjectionExposesOwnedResearchOnly(t *testing.T) {
 func TestTask5ProjectionExposesOwnedUnitCapabilitiesOnly(t *testing.T) {
 	state := fixtureState()
 	state.Units = []engine.Unit{
-		{ID: "owned", OwnerID: "a", TileID: "0,0", Domain: engine.DomainLand, Movement: 3, CargoCapacity: 2, CargoDomains: []string{engine.DomainLand}, ZOC: true, Attack: 7, Defense: 5, Strength: 6, Armor: 2, Health: 8, MaxHealth: 10, VisibilityRange: 3, Effects: []engine.Effect{{ID: "settler", Kind: engine.EffectSettler}}},
+		{ID: "owned", OwnerID: "a", TileID: "0,0", Domain: engine.DomainLand, Movement: 3, CargoCapacity: 2, CargoDomains: []string{engine.DomainLand}, Upkeep: 4, ShieldHunger: 5, FoodHunger: 6, ZOC: true, Attack: 7, Defense: 5, Strength: 6, Armor: 2, Health: 8, MaxHealth: 10, VisibilityRange: 3, Effects: []engine.Effect{{ID: "settler", Kind: engine.EffectSettler}}},
 		{ID: "visible-enemy", OwnerID: "b", TileID: "1,0", Domain: engine.DomainSea, Movement: 9, Attack: 99, Defense: 99, Strength: 99, Armor: 9, Health: 9, MaxHealth: 9},
 	}
 	state, err := Update(state)
@@ -699,11 +699,11 @@ func TestTask5ProjectionExposesOwnedUnitCapabilitiesOnly(t *testing.T) {
 		t.Fatalf("projection units = %#v", projection.Units)
 	}
 	owned := projection.Units[0]
-	if owned.ID != "owned" || owned.Domain != engine.DomainLand || owned.Movement != 3 || owned.CargoCapacity != 2 || !owned.ZOC || owned.Attack != 7 || owned.Defense != 5 || owned.Strength != 6 || owned.Armor != 2 || owned.Health != 8 || owned.MaxHealth != 10 || owned.VisibilityRange != 3 || len(owned.Effects) != 1 {
+	if owned.ID != "owned" || owned.Domain != engine.DomainLand || owned.Movement != 3 || owned.CargoCapacity != 2 || owned.Upkeep != 4 || owned.ShieldHunger != 5 || owned.FoodHunger != 6 || !owned.ZOC || owned.Attack != 7 || owned.Defense != 5 || owned.Strength != 6 || owned.Armor != 2 || owned.Health != 8 || owned.MaxHealth != 10 || owned.VisibilityRange != 3 || len(owned.Effects) != 1 {
 		t.Fatalf("owned projection capabilities = %#v", owned)
 	}
 	enemy := projection.Units[1]
-	if enemy.ID != "visible-enemy" || enemy.Domain != "" || enemy.Movement != 0 || enemy.Attack != 0 || enemy.Health != 0 || len(enemy.Effects) != 0 {
+	if enemy.ID != "visible-enemy" || enemy.Domain != "" || enemy.Movement != 0 || enemy.Attack != 0 || enemy.Health != 0 || enemy.Upkeep != 0 || enemy.ShieldHunger != 0 || enemy.FoodHunger != 0 || len(enemy.Effects) != 0 {
 		t.Fatalf("enemy projection leaked capabilities = %#v", enemy)
 	}
 }

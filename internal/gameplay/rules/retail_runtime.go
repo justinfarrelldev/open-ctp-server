@@ -376,7 +376,7 @@ func projectRetailUnit(unit RetailUnit) RuntimeUnitDefinition {
 	needsCityGoodID := firstRetailUnitString(unit, "NeedsCityGood")
 	settleCityTypeID := firstRetailUnitString(unit, "SettleCityType")
 	cityGrowthCoefficientPercent := percentPoints(firstRetailUnitFloat(unit, "CityGrowthCoefficient"))
-	return RuntimeUnitDefinition{ID: unit.ID, Role: unit.Category, Domain: retailUnitDomain(unit.MovementTypes), Movement: positiveOrOne(unit.MaxMovePoints), Attack: unit.Attack, Defense: unit.Defense, Ranged: unit.ZBRangeAttack, BombardRange: unit.BombardRange, BombRounds: unit.BombRounds, ActiveDefenseRange: unit.ActiveDefenseRange, Strength: unit.Attack, Armor: unit.Armor, Firepower: positiveOrOne(unit.Firepower), Health: positiveOrOne(unit.MaxHP), MaxFuel: unit.MaxFuel, ZOC: !retailContainsString(unit.Flags, "NoZoc"), TransportCapacity: unit.CargoMax, CargoDomains: cargoDomains, ProductionCost: unit.ShieldCost, PowerPoints: unit.PowerPoints, Upkeep: unit.GoldHunger, ShieldHunger: unit.ShieldHunger, NeedsNoSupport: retailContainsString(unit.Flags, "NeedsNoSupport"), IsSpecialForces: retailContainsString(unit.Flags, "IsSpecialForces"), Prerequisites: singleOrEmpty(unit.EnableAdvance), RequiredGovernmentID: requiredGovernmentID, NeedsCityGoodID: needsCityGoodID, SettleCityTypeID: settleCityTypeID, CityGrowthCoefficientPercent: cityGrowthCoefficientPercent, ObsoleteBy: append([]string(nil), unit.ObsoleteAdvance...), UpgradeTo: append([]string(nil), unit.UpgradeTo...), VisibilityRange: unit.VisionRange, Effects: effects}
+	return RuntimeUnitDefinition{ID: unit.ID, Role: unit.Category, Domain: retailUnitDomain(unit.MovementTypes), Movement: positiveOrOne(unit.MaxMovePoints), Attack: unit.Attack, Defense: unit.Defense, Ranged: unit.ZBRangeAttack, BombardRange: unit.BombardRange, BombRounds: unit.BombRounds, ActiveDefenseRange: unit.ActiveDefenseRange, Strength: unit.Attack, Armor: unit.Armor, Firepower: positiveOrOne(unit.Firepower), Health: positiveOrOne(unit.MaxHP), MaxFuel: unit.MaxFuel, ZOC: !retailContainsString(unit.Flags, "NoZoc"), TransportCapacity: unit.CargoMax, CargoDomains: cargoDomains, ProductionCost: unit.ShieldCost, PowerPoints: unit.PowerPoints, Upkeep: unit.GoldHunger, ShieldHunger: unit.ShieldHunger, FoodHunger: unit.FoodHunger, NeedsNoSupport: retailContainsString(unit.Flags, "NeedsNoSupport"), IsSpecialForces: retailContainsString(unit.Flags, "IsSpecialForces"), Prerequisites: singleOrEmpty(unit.EnableAdvance), RequiredGovernmentID: requiredGovernmentID, NeedsCityGoodID: needsCityGoodID, SettleCityTypeID: settleCityTypeID, CityGrowthCoefficientPercent: cityGrowthCoefficientPercent, ObsoleteBy: append([]string(nil), unit.ObsoleteAdvance...), UpgradeTo: append([]string(nil), unit.UpgradeTo...), VisibilityRange: unit.VisionRange, Effects: effects}
 }
 
 func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
@@ -634,6 +634,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 			chance = 100
 		}
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("special_steal"), Kind: "special_steal", Value: chance})
+		if specificChance := percentPoints(retailRawFieldFloat(fields[0], "SpecificChance")); specificChance > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: effectID("special_steal_specific_chance"), Kind: "special_steal_specific_chance", Value: specificChance})
+		}
 		if deathChance := percentPoints(retailRawFieldFloat(fields[0], "DeathChance")); deathChance > 0 {
 			effects = append(effects, RuntimeStarterEffect{ID: effectID("special_capture"), Kind: "special_capture", Value: deathChance})
 		}

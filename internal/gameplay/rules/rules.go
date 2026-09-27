@@ -572,7 +572,7 @@ func validateCTP2Tags(kind string, id token, tags map[string]string, path string
 	required := []string{}
 	switch kind {
 	case "unit":
-		allowed = map[string]bool{"Description": true, "MaxMovePoints": true, "Role": true, "Domain": true, "Attack": true, "Defense": true, "Strength": true, "Armor": true, "Health": true, "ZOC": true, "TransportCapacity": true, "CargoDomains": true, "ProductionCost": true, "Upkeep": true, "Prerequisites": true, "ObsoleteBy": true, "VisibilityRange": true, "Effects": true}
+		allowed = map[string]bool{"Description": true, "MaxMovePoints": true, "Role": true, "Domain": true, "Attack": true, "Defense": true, "Strength": true, "Armor": true, "Health": true, "ZOC": true, "TransportCapacity": true, "CargoDomains": true, "ProductionCost": true, "Upkeep": true, "FoodHunger": true, "Prerequisites": true, "ObsoleteBy": true, "VisibilityRange": true, "Effects": true}
 		required = []string{"Description", "MaxMovePoints", "Role"}
 	case "advance":
 		allowed = map[string]bool{"Description": true, "Cost": true, "PrerequisiteAdvanceIDs": true}

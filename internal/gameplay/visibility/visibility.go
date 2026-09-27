@@ -55,6 +55,7 @@ type UnitProjection struct {
 	CargoDomains       []string        `json:"cargo_domains,omitempty"`
 	Upkeep             int             `json:"upkeep,omitempty"`
 	ShieldHunger       int             `json:"shield_hunger,omitempty"`
+	FoodHunger         int             `json:"food_hunger,omitempty"`
 	NeedsNoSupport     bool            `json:"needs_no_support,omitempty"`
 	IsProfessional     bool            `json:"is_professional,omitempty"`
 	IsSpecialForces    bool            `json:"is_special_forces,omitempty"`
@@ -269,6 +270,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 				projected.CargoDomains = append([]string(nil), unit.CargoDomains...)
 				projected.Upkeep = unit.Upkeep
 				projected.ShieldHunger = unit.ShieldHunger
+				projected.FoodHunger = unit.FoodHunger
 				projected.NeedsNoSupport = unit.NeedsNoSupport
 				projected.IsProfessional = unit.IsProfessional
 				projected.IsSpecialForces = unit.IsSpecialForces

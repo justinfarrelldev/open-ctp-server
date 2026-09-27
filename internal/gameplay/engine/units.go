@@ -214,6 +214,7 @@ func applyUnitDefinition(unit *Unit, definition rules.RuntimeUnitDefinition) {
 	unit.CargoDomains = append([]string(nil), definition.CargoDomains...)
 	unit.Upkeep = definition.Upkeep
 	unit.ShieldHunger = definition.ShieldHunger
+	unit.FoodHunger = definition.FoodHunger
 	unit.NeedsNoSupport = definition.NeedsNoSupport
 	unit.IsSpecialForces = definition.IsSpecialForces
 	unit.ZOC = definition.ZOC
@@ -261,7 +262,7 @@ func unitHasRetailCapabilityMetadata(unit Unit) bool {
 	for _, effect := range unit.Effects {
 		switch effect.Kind {
 		case EffectCantCaptureCity, EffectNoFuelThenCrash, EffectCanPillage, EffectBuildingRemovesPopulation, EffectIgnoreZOC, EffectCanAttackLand, EffectCanAttackSea, EffectCanAttackAir, EffectCanAttackSpace, EffectCanAttackUnderwater, EffectSubmarine, EffectWoodenShip,
-			EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns,
+			EffectSpecialEmbassy, EffectSpecialSoothsaying, EffectSpecialSteal, EffectSpecialStealSpecificChance, EffectSpecialCapture, EffectSpecialTerraform, EffectSpecialTerraformTurns,
 			EffectSpecialConvertCity, EffectSpecialCreateFranchise, EffectSpecialInvestigateCity, EffectSpecialPlantNuke, EffectSpecialCauseUnhappiness, EffectSpecialIndulgenceSales, EffectSpecialInciteRevolution, EffectSpecialSlaveUprising, EffectSpecialBioTerror, EffectSpecialNanoTerror, EffectSpecialPlague,
 			EffectSpecialAssassinateRuler, EffectSpecialSlaveRaid, EffectSpecialSettlerSlaveRaid, EffectSpecialUndergroundRailway, EffectSpecialInjoin, EffectSpecialReform,
 			EffectSpecialCreatePark, EffectSpecialExpel, EffectSpecialSue:
@@ -509,7 +510,7 @@ func validateUnitState(state State) error {
 		}
 	}
 	for _, unit := range state.Units {
-		if unit.ID == "" || unit.OwnerID == "" || (unit.Domain != "" && !supportedDomain(unit.Domain)) || unit.Movement < 0 || unit.MaxMovement < 0 || unit.Fuel < 0 || unit.MaxFuel < 0 || (unit.MaxFuel == 0 && unit.Fuel != 0) || (unit.MaxFuel > 0 && unit.Fuel > unit.MaxFuel) || unit.CargoCapacity < 0 || unit.Upkeep < 0 || unit.ShieldHunger < 0 || unit.BombardRange < 0 || unit.BombRounds < 0 || unit.ActiveDefenseRange < 0 || unit.VisibilityRange < 0 || unit.Firepower < 0 {
+		if unit.ID == "" || unit.OwnerID == "" || (unit.Domain != "" && !supportedDomain(unit.Domain)) || unit.Movement < 0 || unit.MaxMovement < 0 || unit.Fuel < 0 || unit.MaxFuel < 0 || (unit.MaxFuel == 0 && unit.Fuel != 0) || (unit.MaxFuel > 0 && unit.Fuel > unit.MaxFuel) || unit.CargoCapacity < 0 || unit.Upkeep < 0 || unit.ShieldHunger < 0 || unit.FoodHunger < 0 || unit.BombardRange < 0 || unit.BombRounds < 0 || unit.ActiveDefenseRange < 0 || unit.VisibilityRange < 0 || unit.Firepower < 0 {
 			return errors.New("unit capability is invalid")
 		}
 		if unit.TransportID != "" {

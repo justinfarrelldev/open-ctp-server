@@ -13,6 +13,7 @@ const (
 	EffectSpecialEmbassy                       = "special_embassy"
 	EffectSpecialSoothsaying                   = "special_soothsaying"
 	EffectSpecialSteal                         = "special_steal"
+	EffectSpecialStealSpecificChance           = "special_steal_specific_chance"
 	EffectSpecialCapture                       = "special_capture"
 	EffectSpecialTerraform                     = "special_terraform"
 	EffectSpecialTerraformTurns                = "special_terraform_turns"

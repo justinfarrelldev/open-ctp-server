@@ -216,6 +216,7 @@ type Unit struct {
 	CargoDomains       []string `json:"cargo_domains,omitempty"`
 	Upkeep             int      `json:"upkeep,omitempty"`
 	ShieldHunger       int      `json:"shield_hunger,omitempty"`
+	FoodHunger         int      `json:"food_hunger,omitempty"`
 	NeedsNoSupport     bool     `json:"needs_no_support,omitempty"`
 	IsProfessional     bool     `json:"is_professional,omitempty"`
 	IsSpecialForces    bool     `json:"is_special_forces,omitempty"`

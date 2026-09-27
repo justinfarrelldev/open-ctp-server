@@ -224,6 +224,10 @@
 - [x] Task 273: Retail `SlaveUprising` unit blocks are preserved as runtime/canonical special effects.
 - [x] Task 274: Retail `NeedsCityGood` unit requirements are preserved in runtime unit definitions.
 - [x] Task 275: Retail `SettleCityType` and `CityGrowthCoefficient` unit fields are preserved in runtime unit definitions.
+- [x] Task 276: Retail `FoodHunger` is preserved in runtime unit definitions and produced units.
+- [x] Task 277: Owned-unit projections expose `food_hunger` while visible enemy projections keep upkeep/support/food fields hidden.
+- [x] Task 278: Retail `StealTechnology.SpecificChance` is preserved as canonical runtime special metadata.
+- [x] Task 279: Retail `Units.txt` field coverage audit leaves only non-gameplay sound/presentation cargo-load metadata outside runtime projection.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

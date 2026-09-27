@@ -255,8 +255,8 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("nuke runtime = %+v ok=%v", nuke, ok)
 	}
 	spy, ok := runtime.Unit("UNIT_SPY")
-	if !ok || !runtimeUnitHasEffectValue(spy, "special_incite_revolution", 25) || !runtimeUnitHasEffectValue(spy, "special_incite_revolution_elite_chance", 35) || !runtimeUnitHasEffectValue(spy, "special_incite_revolution_death_chance", 50) {
-		t.Fatalf("spy incite revolution runtime = %+v ok=%v", spy, ok)
+	if !ok || !runtimeUnitHasEffectValue(spy, "special_incite_revolution", 25) || !runtimeUnitHasEffectValue(spy, "special_incite_revolution_elite_chance", 35) || !runtimeUnitHasEffectValue(spy, "special_incite_revolution_death_chance", 50) || !runtimeUnitHasEffectValue(spy, "special_steal_specific_chance", 25) {
+		t.Fatalf("spy incite revolution/steal runtime = %+v ok=%v", spy, ok)
 	}
 	if !runtimeUnitHasEffect(abolitionist, "special_slave_uprising") {
 		t.Fatalf("abolitionist slave uprising marker missing: %+v", abolitionist)
