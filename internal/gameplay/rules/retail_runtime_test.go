@@ -196,6 +196,9 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeUnitHasEffect(cruiseMissile, "single_use") {
 		t.Fatalf("cruise missile runtime = %+v ok=%v", cruiseMissile, ok)
 	}
+	if !runtimeUnitHasEffect(carrier, "death_effects_happy") {
+		t.Fatalf("carrier death effect missing: %+v", carrier)
+	}
 	cargoHelicopter, ok := runtime.Unit("UNIT_CARGO_HELICOPTER")
 	if !ok || !runtimeUnitHasEffect(cargoHelicopter, "paratrooper_transport") {
 		t.Fatalf("cargo helicopter runtime = %+v ok=%v", cargoHelicopter, ok)

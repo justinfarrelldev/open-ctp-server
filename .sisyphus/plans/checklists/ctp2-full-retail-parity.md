@@ -180,6 +180,9 @@
 - [x] Task 229: Runtime unit definition compilation preserves `UpgradeTo` chains.
 - [x] Task 230: `upgrade-unit` command applies eligible runtime unit upgrades deterministically.
 - [x] Task 231: Safe projection exposes eligible unit upgrade actions without leaking hidden state.
+- [x] Task 232: Retail `DeathEffectsHappy` unit flags are preserved as runtime unit effects.
+- [x] Task 233: Successful plant-nuke actions remove units in the city blast radius with safe count payloads.
+- [x] Task 234: Nuke-killed `death_effects_happy` units feed loss accounting.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

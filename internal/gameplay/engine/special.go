@@ -700,9 +700,39 @@ func plantNuke(state *State, unit *Unit, city *City, actorNation *Nation, target
 	if tile := tilePointer(state, city.TileID); tile != nil {
 		tile.Pollution += 10
 	}
+	destroyedUnits := resolveNukeBlastUnits(state, unit.ID, city.TileID)
 	resolvePlantNukeEscape(state, unit, sources)
 	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialPlantNuke, sources)
-	return EventNukePlanted, json.RawMessage(`{"disclosed":true}`), nil
+	payload, _ := json.Marshal(struct {
+		Disclosed      bool `json:"disclosed"`
+		DestroyedUnits int  `json:"destroyed_units,omitempty"`
+	}{Disclosed: true, DestroyedUnits: destroyedUnits})
+	return EventNukePlanted, payload, nil
+}
+
+func resolveNukeBlastUnits(state *State, actingUnitID, cityTileID string) int {
+	origin, ok := tileByID(*state, cityTileID)
+	if !ok {
+		return 0
+	}
+	removed := make([]string, 0)
+	for _, unit := range state.Units {
+		if unit.ID == actingUnitID || unit.TileID == "" || unit.TransportID != "" {
+			continue
+		}
+		tile, ok := tileByID(*state, unit.TileID)
+		if !ok || tileDistance(origin, tile) > 1 {
+			continue
+		}
+		if hasEffect(unit.Effects, EffectDeathEffectsHappy) {
+			recordUnitLossForPeaceMovement(state, unit)
+		}
+		removed = append(removed, unit.ID)
+	}
+	for _, unitID := range removed {
+		removeUnitAndCargo(state, unitID)
+	}
+	return len(removed)
 }
 
 func resolvePlantNukeEscape(state *State, unit *Unit, sources Sources) {

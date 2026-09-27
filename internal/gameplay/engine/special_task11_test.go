@@ -430,6 +430,35 @@ func TestRetailCreateParkCleansPollutedAdjacentTile(t *testing.T) {
 	}
 }
 
+func TestRetailPlantNukeRemovesUnitsInBlastRadiusAndRecordsDeathEffect(t *testing.T) {
+	state := task11State()
+	state.Tiles = append(state.Tiles, Tile{ID: "c", X: 1, Y: 1, Terrain: TerrainPlains, OwnerID: "player-b", Open: true})
+	state.Units[0].Effects = []Effect{{ID: "nuke", Kind: EffectSpecialPlantNuke}}
+	state.Units = append(state.Units,
+		Unit{ID: "guard", OwnerID: "player-b", TileID: "b", Domain: DomainLand, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "death-happy", Kind: EffectDeathEffectsHappy}}},
+		Unit{ID: "reserve", OwnerID: "player-b", TileID: "c", Domain: DomainLand, Health: 10, MaxHealth: 10},
+	)
+	next, events, err := task11Apply(t, state, CommandPlantNuke, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := unitByID(next, "guard"); ok {
+		t.Fatalf("nuked guard survived: %#v", next.Units)
+	}
+	if _, ok := unitByID(next, "reserve"); ok {
+		t.Fatalf("nuked reserve survived: %#v", next.Units)
+	}
+	if _, ok := unitByID(next, "agent"); !ok {
+		t.Fatalf("acting plant-nuke unit should use existing escape/death mechanics, not blast removal: %#v", next.Units)
+	}
+	if len(events) != 1 || events[0].Type != EventNukePlanted || !strings.Contains(string(events[0].Payload), "destroyed_units") {
+		t.Fatalf("nuke event = %#v", events)
+	}
+	if next.Nations[1].PeaceMovement == nil || next.Nations[1].PeaceMovement.UnitsLostHome != 1 {
+		t.Fatalf("death-effects-happy loss not recorded: %#v", next.Nations[1].PeaceMovement)
+	}
+}
+
 func TestRetailPlantNukeRequiresNuclearAdvanceWhenRuntimeDeclaresIt(t *testing.T) {
 	state := task11State()
 	state.Cities[0].Population = 8
