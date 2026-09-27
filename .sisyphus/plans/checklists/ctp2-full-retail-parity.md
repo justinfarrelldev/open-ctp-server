@@ -175,6 +175,7 @@
 - [x] Task 224: Capturing a city cancels trade routes touching the captured city.
 - [x] Task 225: Retail `SingleUse` unit flags are preserved as runtime unit effects.
 - [x] Task 226: Single-use bombard units are consumed after bombardment.
+- [x] Task 227: Single-use attackers are consumed after normal combat.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

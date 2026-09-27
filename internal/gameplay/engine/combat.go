@@ -103,6 +103,12 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 			result.DefenderCasualties++
 		}
 	}
+	for _, unit := range combatArmyUnits(*state, *attackers) {
+		if unit.Health > 0 && hasEffect(unit.Effects, EffectSingleUse) {
+			removeUnitAndCargo(state, unit.ID)
+			result.AttackerCasualties++
+		}
+	}
 	if _, ok := armyByID(state, attackers.ID); !ok {
 		result.Outcome = CombatOutcomeDefenderHeld
 		promoteArmyVeterans(state, defenders.ID)

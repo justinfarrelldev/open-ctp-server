@@ -146,6 +146,22 @@ func TestRetailSingleUseBombarderIsConsumedAfterBombardment(t *testing.T) {
 	}
 }
 
+func TestRetailSingleUseAttackerIsConsumedAfterCombat(t *testing.T) {
+	state := combatState()
+	state.Units = []Unit{
+		{ID: "missile", OwnerID: "player-a", TileID: "a", ArmyID: "attackers", Attack: 100, Defense: 1, Strength: 2, Armor: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "single-use", Kind: EffectSingleUse}}},
+		{ID: "defender", OwnerID: "player-b", TileID: "b", ArmyID: "defenders", Defense: 0, Strength: 1, Armor: 1, Health: 1, MaxHealth: 1},
+	}
+	state.Armies = []Army{{ID: "attackers", OwnerID: "player-a", UnitIDs: []string{"missile"}}, {ID: "defenders", OwnerID: "player-b", UnitIDs: []string{"defender"}}}
+	next, _, _, err := Apply(state, combatCommand(), state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatalf("Combat() error = %v", err)
+	}
+	if _, ok := unitByID(next, "missile"); ok {
+		t.Fatalf("single-use attacker survived combat: %#v", next.Units)
+	}
+}
+
 func TestRetailCanCounterBombardReturnsFireAfterBombardment(t *testing.T) {
 	state := fixtureState()
 	state.Tiles = []Tile{{ID: "a", X: 0, Y: 0, Terrain: TerrainPlains, Open: true}, {ID: "b", X: 1, Y: 0, Terrain: TerrainPlains, Open: true}}
