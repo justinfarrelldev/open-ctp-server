@@ -337,7 +337,7 @@ func buildTerrainImprovement(state *State, actorID string, payload BuildImprovem
 	}
 	effective := effectiveTerrainImprovement(*state, runtime, definition, tile.ID)
 	actorNation := nationForID(state, nationForPlayer(*state, actorID))
-	if actorNation == nil || effective.PublicWorksCost < 1 || effective.BuildTurns < 1 || actorNation.PublicWorks < effective.PublicWorksCost {
+	if actorNation == nil || definition.RequiredAdvanceID != "" && !containsString(actorNation.Advances, definition.RequiredAdvanceID) || effective.PublicWorksCost < 1 || effective.BuildTurns < 1 || actorNation.PublicWorks < effective.PublicWorksCost {
 		return "", nil, errors.New("terrain action is not eligible")
 	}
 	if err := spendSpecialMove(unit); err != nil {

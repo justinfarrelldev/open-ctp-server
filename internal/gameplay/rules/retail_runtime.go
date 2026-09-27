@@ -22,7 +22,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		PollutionModel:       projectRetailPollutionModel(db.PollutionModel),
 	}
 	for _, advance := range db.Advances {
-		runtime.Advances = append(runtime.Advances, RuntimeAdvanceDefinition{ID: advance.ID, Cost: advance.Cost, Prerequisites: append([]string(nil), advance.Prerequisites...), AllowsPlantNuke: retailContainsString(advance.Flags, "PlantNuke")})
+		runtime.Advances = append(runtime.Advances, projectRetailAdvance(advance))
 	}
 	for _, unit := range db.Units {
 		projected := projectRetailUnit(unit)
@@ -152,6 +152,25 @@ func projectRetailPollutionModel(model RetailPollutionModel) *RuntimePollutionMo
 		return nil
 	}
 	return &RuntimePollutionModel{PopulationStart: model.PopulationStart, PopulationRatio: model.PopulationRatio, ProductionStart: model.ProductionStart, ProductionRatio: model.ProductionRatio}
+}
+
+func projectRetailAdvance(advance RetailAdvance) RuntimeAdvanceDefinition {
+	return RuntimeAdvanceDefinition{
+		ID:                          advance.ID,
+		Cost:                        advance.Cost,
+		Prerequisites:               append([]string(nil), advance.Prerequisites...),
+		AllowsPlantNuke:             retailContainsString(advance.Flags, "PlantNuke"),
+		EnablesCapitalization:       retailContainsString(advance.Flags, "Capitalization"),
+		EnablesInfrastructure:       retailContainsString(advance.Flags, "Infrastructure"),
+		EnablesTransform:            retailContainsString(advance.Flags, "Transform"),
+		EnablesRoads:                retailContainsString(advance.Flags, "Roads"),
+		EnablesRailroads:            retailContainsString(advance.Flags, "Railroads"),
+		EnablesMagLev:               retailContainsString(advance.Flags, "MagLev"),
+		EnablesTunnels:              retailContainsString(advance.Flags, "Tunnels"),
+		EnablesDeepOcean:            retailContainsString(advance.Flags, "DeepOcean"),
+		PollutionSizeModifier:       signedPercentPointsValue(advance.FloatValues["PollutionSizeModifier"]),
+		PollutionProductionModifier: signedPercentPointsValue(advance.FloatValues["PollutionProductionModifier"]),
+	}
 }
 
 func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffect {
@@ -337,6 +356,11 @@ func retailWonderRuntimeEffects(wonder RetailWonder, buildingEffects map[string]
 		return effects[i].ID < effects[j].ID
 	})
 	return effects
+}
+
+func signedPercentPointsValue(value float64) int {
+	result, _ := signedPercentPoints(value)
+	return result
 }
 
 func signedPercentPoints(value float64) (int, bool) {
@@ -799,6 +823,7 @@ func projectRetailTerrainImprovement(improvement RetailTerrainImprovement) Runti
 	definition.YieldProduction = effect.BonusProduction
 	definition.YieldGold = effect.BonusGold
 	definition.MovementCostDelta = effect.MoveCost
+	definition.RequiredAdvanceID = effect.EnableAdvance
 	return definition
 }
 

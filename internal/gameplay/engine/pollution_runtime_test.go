@@ -80,6 +80,29 @@ func TestRetailCityPollutionAppliesGovernmentCoefficientBeforeBuildingReducers(t
 	}
 }
 
+func TestRetailCityPollutionAppliesAdvancePollutionModifiers(t *testing.T) {
+	state := runtimeStartedState(t)
+	state.Phase.Turn = state.RecalculatedTurn + 1
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Tiles = []Tile{{ID: "tile-a", X: 0, Y: 0, Terrain: TerrainPlains, Open: true}}
+	state.Nations[0].Advances = []string{"ADVANCE_CLEAN"}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Population: 10}}
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: TerrainPlains, Cost: 100, Domains: []string{DomainLand}, CityProduction: 10}}}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainLand, Movement: 1, Health: 1}}, Advances: []rules.RuntimeAdvanceDefinition{{ID: "ADVANCE_CLEAN", Cost: 1, PollutionSizeModifier: -50, PollutionProductionModifier: -100}}, PollutionTriggers: []rules.RuntimePollutionTriggerDefinition{{ID: "POLLUTION_TRIGGER_LIST_SMALL_MAP", TriggerLevels: []int64{4000000}, DisasterTypes: []string{"POLLUTION_FLOOD_DISASTER"}}}}
+	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Rules = RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: contentHash, Definitions: definitions}
+
+	next, err := RecalculateRound(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := tileByIDForTest(next.Tiles, "tile-a").Pollution; got != 5 {
+		t.Fatalf("city tile pollution = %d, want advance modifiers population 50%% plus production 0%%", got)
+	}
+}
+
 func TestCityPollutionRequiresRetailPollutionTriggers(t *testing.T) {
 	state := runtimeStartedState(t)
 	state.Phase.Turn = state.RecalculatedTurn + 1

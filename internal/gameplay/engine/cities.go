@@ -795,7 +795,7 @@ func RecalculateRound(state State) (State, error) {
 		}
 		advanceCityFoodWithRuntime(city, runtime, cityMaxPopulation(next, *city), cityStarvationProtection(next, *city), foodVatPercent(*city), cityFoodConsumptionForNation(next, *city))
 		if cityPollutionEnabled(runtime) {
-			applyCityPollution(&next, *city, runtimePollutionModel(runtime))
+			applyCityPollution(&next, *city, runtimePollutionModel(runtime), runtime)
 		}
 	}
 	applyReadinessSupportTax(&next, runtime)
@@ -1031,8 +1031,8 @@ func runtimePollutionModel(runtime *rules.RuntimeRules) rules.RuntimePollutionMo
 	return *runtime.PollutionModel
 }
 
-func applyCityPollution(state *State, city City, model rules.RuntimePollutionModel) {
-	pollution := cityPollution(*state, city, model)
+func applyCityPollution(state *State, city City, model rules.RuntimePollutionModel, runtime *rules.RuntimeRules) {
+	pollution := cityPollution(*state, city, model, runtime)
 	for index := range state.Tiles {
 		if state.Tiles[index].ID == city.TileID {
 			state.Tiles[index].Pollution = pollution
@@ -1041,7 +1041,7 @@ func applyCityPollution(state *State, city City, model rules.RuntimePollutionMod
 	}
 }
 
-func cityPollution(state State, city City, model rules.RuntimePollutionModel) int {
+func cityPollution(state State, city City, model rules.RuntimePollutionModel, runtime *rules.RuntimeRules) int {
 	basePopulationPollution := cityPollutionBucket(positivePopulation(city.Population), model.PopulationStart, model.PopulationRatio)
 	baseProductionPollution := cityPollutionBucket(city.Yields.Production, model.ProductionStart, model.ProductionRatio)
 	pollutionPercent := 0
@@ -1060,6 +1060,9 @@ func cityPollution(state State, city City, model rules.RuntimePollutionModel) in
 			flatPollution += effect.Value
 		}
 	}
+	advancePopulationPercent, advanceProductionPercent := advancePollutionModifiers(state, city, runtime)
+	populationPercent += advancePopulationPercent
+	productionPercent += advanceProductionPercent
 	basePopulationPollution += signedPercentDelta(basePopulationPollution, pollutionPercent)
 	baseProductionPollution += signedPercentDelta(baseProductionPollution, pollutionPercent)
 	if basePopulationPollution < 0 {
@@ -1081,6 +1084,32 @@ func cityPollution(state State, city City, model rules.RuntimePollutionModel) in
 		return 0
 	}
 	return total
+}
+
+func advancePollutionModifiers(state State, city City, runtime *rules.RuntimeRules) (int, int) {
+	if runtime == nil {
+		return 0, 0
+	}
+	nationID := nationForPlayer(state, city.OwnerID)
+	if nationID == "" {
+		return 0, 0
+	}
+	populationPercent, productionPercent := 0, 0
+	for _, nation := range state.Nations {
+		if nation.ID != nationID {
+			continue
+		}
+		for _, advanceID := range nation.Advances {
+			advance, ok := runtime.Advance(advanceID)
+			if !ok {
+				continue
+			}
+			populationPercent += advance.PollutionSizeModifier
+			productionPercent += advance.PollutionProductionModifier
+		}
+		break
+	}
+	return populationPercent, productionPercent
 }
 
 func cityPollutionBucket(value, start, ratio int) int {

@@ -64,11 +64,12 @@ type RetailUnit struct {
 }
 
 type RetailAdvance struct {
-	ID            string           `json:"id"`
-	Cost          int              `json:"cost"`
-	Prerequisites []string         `json:"prerequisites,omitempty"`
-	Flags         []string         `json:"flags,omitempty"`
-	RawFields     []RetailRawField `json:"raw_fields"`
+	ID            string             `json:"id"`
+	Cost          int                `json:"cost"`
+	Prerequisites []string           `json:"prerequisites,omitempty"`
+	FloatValues   map[string]float64 `json:"float_values,omitempty"`
+	Flags         []string           `json:"flags,omitempty"`
+	RawFields     []RetailRawField   `json:"raw_fields"`
 }
 
 type RetailWonder struct {
@@ -697,7 +698,7 @@ func compileRetailAdvance(record RetailRawRecord) (RetailAdvance, error) {
 	if err != nil {
 		return RetailAdvance{}, err
 	}
-	return RetailAdvance{ID: record.ID, Cost: cost, Prerequisites: record.Values("Prerequisites"), Flags: retailFlags(record.Fields), RawFields: cloneRetailFields(record.Fields)}, nil
+	return RetailAdvance{ID: record.ID, Cost: cost, Prerequisites: record.Values("Prerequisites"), FloatValues: retailFloatValues(record.Fields), Flags: retailFlags(record.Fields), RawFields: cloneRetailFields(record.Fields)}, nil
 }
 
 func compileRetailWonder(record RetailRawRecord) (RetailWonder, error) {

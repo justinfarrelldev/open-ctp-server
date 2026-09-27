@@ -43,7 +43,7 @@
     },
     {
       "path": "internal/gameplay/engine/cities.go",
-      "sha256": "eeb65e6ccf205a6a1d8daafbf8c9898358fdb9301cab3e350303d8a7aa01202d"
+      "sha256": "bb033e177c40ecdf0a7506d33472ddda3737ec116150b73583e493b6ef9b6e95"
     },
     {
       "path": "internal/gameplay/engine/combat.go",
@@ -71,7 +71,7 @@
     },
     {
       "path": "internal/gameplay/engine/special.go",
-      "sha256": "c0f3280d86536a94e4d4666b07042516d9b2af532d0c1c8a8c1c74938059c25e"
+      "sha256": "d68f71758cbfedd12c16c32781658028f9eb936b79e9f2ea5f68591362509010"
     },
     {
       "path": "internal/gameplay/engine/turns/turns.go",
@@ -99,7 +99,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_catalog.go",
-      "sha256": "96b407d8219980d2917519ab967394c8e6fca66df846476b4857a0180bedb38e"
+      "sha256": "1fdd9aa7d8fb92c1a25765ae129034f3c6293df07c88076a568774020d68412d"
     },
     {
       "path": "internal/gameplay/rules/retail_pollution.go",
@@ -111,7 +111,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_runtime.go",
-      "sha256": "5ea9ea9cf8484a5e1631e3c99831133d20e8804938b245ce2ce4097803bce552"
+      "sha256": "6c92378222eeff112e09a5f2dbd5a9625ca881277f3fb406c4f49152f3501e52"
     },
     {
       "path": "internal/gameplay/rules/rules.go",
@@ -119,7 +119,7 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "708f1622eaadfe5397837bcfe59583b17388d70e820535a429d1d21d16059fc4"
+      "sha256": "08474d7f591ef8b7d6355d94d5b4ef8b6e138f641d3b47afb00e20395e2741f3"
     },
     {
       "path": "internal/gameplay/service/ai.go",
@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "0131449720b03b2a2697e56b294a4cea0ea7a019f19456437d29a12c9834c6e8"
+      "sha256": "ed3f8cc3e374bd8e901fa164f170d75e9f6b5f08019455bd081597c2bc03d27a"
     },
     {
       "path": "internal/runtime/runtime.go",

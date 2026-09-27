@@ -37,10 +37,20 @@ type RuntimeRules struct {
 // RuntimeAdvanceDefinition is the bounded synthetic technology model. It keeps
 // CTP2's prerequisite/cost shape without copying the retail tree.
 type RuntimeAdvanceDefinition struct {
-	ID              string   `json:"id"`
-	Cost            int      `json:"cost"`
-	Prerequisites   []string `json:"prerequisites,omitempty"`
-	AllowsPlantNuke bool     `json:"allows_plant_nuke,omitempty"`
+	ID                          string   `json:"id"`
+	Cost                        int      `json:"cost"`
+	Prerequisites               []string `json:"prerequisites,omitempty"`
+	AllowsPlantNuke             bool     `json:"allows_plant_nuke,omitempty"`
+	EnablesCapitalization       bool     `json:"enables_capitalization,omitempty"`
+	EnablesInfrastructure       bool     `json:"enables_infrastructure,omitempty"`
+	EnablesTransform            bool     `json:"enables_transform,omitempty"`
+	EnablesRoads                bool     `json:"enables_roads,omitempty"`
+	EnablesRailroads            bool     `json:"enables_railroads,omitempty"`
+	EnablesMagLev               bool     `json:"enables_maglev,omitempty"`
+	EnablesTunnels              bool     `json:"enables_tunnels,omitempty"`
+	EnablesDeepOcean            bool     `json:"enables_deep_ocean,omitempty"`
+	PollutionSizeModifier       int      `json:"pollution_size_modifier,omitempty"`
+	PollutionProductionModifier int      `json:"pollution_production_modifier,omitempty"`
 }
 
 // RuntimeUnitDefinition is the bounded, client-safe unit capability model compiled
@@ -95,6 +105,7 @@ type RuntimeTerrainImprovementDefinition struct {
 	YieldGold         int      `json:"yield_gold,omitempty"`
 	PollutionDelta    int      `json:"pollution_delta,omitempty"`
 	TargetTerrain     string   `json:"target_terrain,omitempty"`
+	RequiredAdvanceID string   `json:"required_advance_id,omitempty"`
 	CantBuildOn       []string `json:"cant_build_on,omitempty"`
 	Excludes          []string `json:"excludes,omitempty"`
 }
@@ -488,6 +499,13 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 		}
 	}
 	sort.Slice(runtime.TerrainImprovements, func(i, j int) bool { return runtime.TerrainImprovements[i].ID < runtime.TerrainImprovements[j].ID })
+	for _, improvement := range runtime.TerrainImprovements {
+		if improvement.RequiredAdvanceID != "" {
+			if _, ok := runtime.Advance(improvement.RequiredAdvanceID); !ok {
+				return RuntimeRules{}, fmt.Errorf("rules definition terrain improvement %q references missing advance %q", improvement.ID, improvement.RequiredAdvanceID)
+			}
+		}
+	}
 	sort.Slice(runtime.PollutionSources, func(i, j int) bool { return runtime.PollutionSources[i].ID < runtime.PollutionSources[j].ID })
 	sort.Slice(runtime.PollutionTriggers, func(i, j int) bool { return runtime.PollutionTriggers[i].ID < runtime.PollutionTriggers[j].ID })
 	sort.Slice(runtime.Governments, func(i, j int) bool { return runtime.Governments[i].ID < runtime.Governments[j].ID })
@@ -573,6 +591,13 @@ func validateRuntimeProjection(runtime RuntimeRules) error {
 		if government.EnableAdvanceID != "" {
 			if _, ok := runtime.Advance(government.EnableAdvanceID); !ok {
 				return fmt.Errorf("runtime government %q references missing advance %q", government.ID, government.EnableAdvanceID)
+			}
+		}
+	}
+	for _, improvement := range runtime.TerrainImprovements {
+		if improvement.RequiredAdvanceID != "" {
+			if _, ok := runtime.Advance(improvement.RequiredAdvanceID); !ok {
+				return fmt.Errorf("runtime terrain improvement %q references missing advance %q", improvement.ID, improvement.RequiredAdvanceID)
 			}
 		}
 	}
@@ -833,7 +858,47 @@ func compileAdvanceDefinition(record Record) (RuntimeAdvanceDefinition, error) {
 	if err != nil {
 		return RuntimeAdvanceDefinition{}, err
 	}
-	return RuntimeAdvanceDefinition{ID: record.ID, Cost: cost, Prerequisites: prerequisites, AllowsPlantNuke: allowsPlantNuke}, nil
+	capitalization, err := optionalBool(record, "EnablesCapitalization", false)
+	if err != nil {
+		return RuntimeAdvanceDefinition{}, err
+	}
+	infrastructure, err := optionalBool(record, "EnablesInfrastructure", false)
+	if err != nil {
+		return RuntimeAdvanceDefinition{}, err
+	}
+	transform, err := optionalBool(record, "EnablesTransform", false)
+	if err != nil {
+		return RuntimeAdvanceDefinition{}, err
+	}
+	roads, err := optionalBool(record, "EnablesRoads", false)
+	if err != nil {
+		return RuntimeAdvanceDefinition{}, err
+	}
+	railroads, err := optionalBool(record, "EnablesRailroads", false)
+	if err != nil {
+		return RuntimeAdvanceDefinition{}, err
+	}
+	maglev, err := optionalBool(record, "EnablesMagLev", false)
+	if err != nil {
+		return RuntimeAdvanceDefinition{}, err
+	}
+	tunnels, err := optionalBool(record, "EnablesTunnels", false)
+	if err != nil {
+		return RuntimeAdvanceDefinition{}, err
+	}
+	deepOcean, err := optionalBool(record, "EnablesDeepOcean", false)
+	if err != nil {
+		return RuntimeAdvanceDefinition{}, err
+	}
+	pollutionSizeModifier, err := optionalInteger(record, "PollutionSizeModifier", 0)
+	if err != nil {
+		return RuntimeAdvanceDefinition{}, err
+	}
+	pollutionProductionModifier, err := optionalInteger(record, "PollutionProductionModifier", 0)
+	if err != nil {
+		return RuntimeAdvanceDefinition{}, err
+	}
+	return RuntimeAdvanceDefinition{ID: record.ID, Cost: cost, Prerequisites: prerequisites, AllowsPlantNuke: allowsPlantNuke, EnablesCapitalization: capitalization, EnablesInfrastructure: infrastructure, EnablesTransform: transform, EnablesRoads: roads, EnablesRailroads: railroads, EnablesMagLev: maglev, EnablesTunnels: tunnels, EnablesDeepOcean: deepOcean, PollutionSizeModifier: pollutionSizeModifier, PollutionProductionModifier: pollutionProductionModifier}, nil
 }
 
 func compileTerrainImprovementDefinition(record Record) (RuntimeTerrainImprovementDefinition, error) {
@@ -877,7 +942,7 @@ func compileTerrainImprovementDefinition(record Record) (RuntimeTerrainImproveme
 	if movementCostDelta == 0 && yieldFood == 0 && yieldProduction == 0 && yieldGold == 0 && pollutionDelta == 0 && targetTerrain == "" {
 		return RuntimeTerrainImprovementDefinition{}, fmt.Errorf("rules definition record %q has no terrain improvement effect", record.ID)
 	}
-	return RuntimeTerrainImprovementDefinition{ID: record.ID, Class: record.Tags["Class"], BuildTurns: buildTurns, PublicWorksCost: publicWorksCost, MovementCostDelta: movementCostDelta, YieldFood: yieldFood, YieldProduction: yieldProduction, YieldGold: yieldGold, PollutionDelta: pollutionDelta, TargetTerrain: targetTerrain, CantBuildOn: cantBuildOn, Excludes: excludes}, nil
+	return RuntimeTerrainImprovementDefinition{ID: record.ID, Class: record.Tags["Class"], BuildTurns: buildTurns, PublicWorksCost: publicWorksCost, MovementCostDelta: movementCostDelta, YieldFood: yieldFood, YieldProduction: yieldProduction, YieldGold: yieldGold, PollutionDelta: pollutionDelta, TargetTerrain: targetTerrain, RequiredAdvanceID: record.Tags["RequiredAdvanceID"], CantBuildOn: cantBuildOn, Excludes: excludes}, nil
 }
 
 func compilePollutionSourceDefinition(record Record) (RuntimePollutionSourceDefinition, error) {

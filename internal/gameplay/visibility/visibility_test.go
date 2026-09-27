@@ -971,6 +971,26 @@ func TestRetailSueFranchiseActionProjectsForOwnFranchisedCity(t *testing.T) {
 	}
 }
 
+func TestTerrainActionsSuppressAdvanceGatedImprovements(t *testing.T) {
+	projection := Projection{
+		Diplomacy: &DiplomacyProjection{PublicWorks: 10},
+		Research:  &ResearchProjection{},
+		Tiles: []TileProjection{
+			{ID: "home", X: 0, Y: 0},
+			{ID: "work", X: 1, Y: 0, Terrain: engine.TerrainPlains},
+		},
+		Rules: &RulesProjection{TerrainImprovements: []rules.RuntimeTerrainImprovementDefinition{{ID: "TILEIMP_FARMS", BuildTurns: 1, PublicWorksCost: 1, RequiredAdvanceID: "ADVANCE_AGRICULTURE"}}},
+	}
+	unit := UnitProjection{ID: "worker", OwnerID: "a", TileID: "home", Movement: 1, Effects: []engine.Effect{{ID: "terraform", Kind: engine.EffectSpecialTerraform}}}
+	if actions := terrainActions(projection, projectedTiles(projection), unit); len(actions) != 0 {
+		t.Fatalf("advance-gated terrain actions projected before advance: %#v", actions)
+	}
+	projection.Research.Advances = []string{"ADVANCE_AGRICULTURE"}
+	if actions := terrainActions(projection, projectedTiles(projection), unit); !hasAction(actions, engine.CommandBuildImprovement) {
+		t.Fatalf("advance-gated terrain action missing after advance: %#v", actions)
+	}
+}
+
 func TestTerrainActionsUseRetailAIImprovementListOrder(t *testing.T) {
 	projection := Projection{
 		Diplomacy: &DiplomacyProjection{PublicWorks: 10},

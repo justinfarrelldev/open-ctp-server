@@ -300,6 +300,13 @@
 - [x] Task 349: Plant-nuke preserves in-progress tile improvements while removing completed blast improvements.
 - [x] Task 350: Retail plant-nuke kills the configured number of neighboring tiles as `TERRAIN_DEAD`.
 - [x] Task 351: Retail plant-nuke records global nuke pollution in canonical pollution history.
+- [x] Task 352: Retail advance infrastructure/capitalization/transform/transport flags are preserved in runtime rules.
+- [x] Task 353: Retail advance pollution size/production modifiers are preserved in runtime rules.
+- [x] Task 354: City pollution applies owned retail advance pollution modifiers.
+- [x] Task 355: Retail terrain improvement `EnableAdvance` imports as runtime required-advance metadata.
+- [x] Task 356: Terrain improvement execution rejects missing required advances.
+- [x] Task 357: Safe terrain action projections suppress missing-advance improvements.
+- [x] Task 358: AI terrain improvement planning continues through projected legal actions after advance gating.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

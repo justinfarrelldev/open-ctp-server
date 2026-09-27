@@ -49,6 +49,23 @@ func TestTask8PublicWorksImprovementChangesMovementYieldAndPollution(t *testing.
 	}
 }
 
+func TestRetailTerrainImprovementRequiresEnabledAdvance(t *testing.T) {
+	state := runtimeStartedState(t)
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Nations[0].PublicWorks = 2
+	state.Tiles = []Tile{{ID: "tile-a", X: 0, Y: 0, Terrain: TerrainPlains, OwnerID: "player-a", Open: true}, {ID: "tile-b", X: 1, Y: 0, Terrain: TerrainForest, OwnerID: "player-a", Open: true}}
+	state.Units = []Unit{{ID: "worker", OwnerID: "player-a", TileID: "tile-a", Domain: DomainLand, Movement: 2, Effects: []Effect{{ID: "terraform", Kind: EffectSpecialTerraform}}}}
+	runtime := &rules.RuntimeRules{TerrainImprovements: []rules.RuntimeTerrainImprovementDefinition{{ID: "TILEIMP_FARMS", BuildTurns: 1, PublicWorksCost: 1, RequiredAdvanceID: "ADVANCE_AGRICULTURE"}}}
+
+	if _, _, err := buildTerrainImprovement(&state, "player-a", BuildImprovementPayload{UnitID: "worker", TileID: "tile-b", ImprovementID: "TILEIMP_FARMS"}, runtime); err == nil {
+		t.Fatal("advance-gated improvement was accepted before advance was known")
+	}
+	state.Nations[0].Advances = []string{"ADVANCE_AGRICULTURE"}
+	if _, _, err := buildTerrainImprovement(&state, "player-a", BuildImprovementPayload{UnitID: "worker", TileID: "tile-b", ImprovementID: "TILEIMP_FARMS"}, runtime); err != nil {
+		t.Fatalf("advance-gated improvement rejected after advance: %v", err)
+	}
+}
+
 func TestRetailTerraformImprovementUsesTerrainTransformCostAndTurns(t *testing.T) {
 	state := runtimeStartedState(t)
 	state.Phase.ActivePlayerOrder = []string{"player-a"}

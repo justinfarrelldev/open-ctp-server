@@ -288,8 +288,40 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	}
 
 	railroad, ok := runtime.Advance("ADVANCE_RAILROAD")
-	if !ok || railroad.Cost != 10912 || !sameStringSlices(railroad.Prerequisites, []string{"ADVANCE_BANKING", "ADVANCE_MODERN_METALLURGY"}) {
+	if !ok || railroad.Cost != 10912 || !sameStringSlices(railroad.Prerequisites, []string{"ADVANCE_BANKING", "ADVANCE_MODERN_METALLURGY"}) || !railroad.EnablesRailroads {
 		t.Fatalf("railroad runtime = %+v ok=%v", railroad, ok)
+	}
+	massProduction, ok := runtime.Advance("ADVANCE_MASS_PRODUCTION")
+	if !ok || massProduction.PollutionSizeModifier != 50 || massProduction.PollutionProductionModifier != 50 || !massProduction.EnablesInfrastructure {
+		t.Fatalf("mass production advance = %+v ok=%v", massProduction, ok)
+	}
+	gaiaTheory, ok := runtime.Advance("ADVANCE_GAIA_THEORY")
+	if !ok || gaiaTheory.PollutionSizeModifier != -100 || gaiaTheory.PollutionProductionModifier != -100 {
+		t.Fatalf("gaia theory advance = %+v ok=%v", gaiaTheory, ok)
+	}
+	trade, ok := runtime.Advance("ADVANCE_TRADE")
+	if !ok || !trade.EnablesRoads {
+		t.Fatalf("trade advance = %+v ok=%v", trade, ok)
+	}
+	toolmaking, ok := runtime.Advance("ADVANCE_TOOLMAKING")
+	if !ok || !toolmaking.EnablesTransform {
+		t.Fatalf("toolmaking advance = %+v ok=%v", toolmaking, ok)
+	}
+	oilRefining, ok := runtime.Advance("ADVANCE_OIL_REFINING")
+	if !ok || !oilRefining.EnablesDeepOcean {
+		t.Fatalf("oil refining advance = %+v ok=%v", oilRefining, ok)
+	}
+	htSuperconductor, ok := runtime.Advance("ADVANCE_HT_SUPERCONDUCTOR")
+	if !ok || !htSuperconductor.EnablesMagLev {
+		t.Fatalf("HT superconductor advance = %+v ok=%v", htSuperconductor, ok)
+	}
+	nanoAssembly, ok := runtime.Advance("ADVANCE_NANO_ASSEMBLY")
+	if !ok || !nanoAssembly.EnablesTunnels {
+		t.Fatalf("nano assembly advance = %+v ok=%v", nanoAssembly, ok)
+	}
+	globalEconomics, ok := runtime.Advance("ADVANCE_GLOBAL_ECONOMICS")
+	if !ok || !globalEconomics.EnablesCapitalization {
+		t.Fatalf("global economics advance = %+v ok=%v", globalEconomics, ok)
 	}
 
 	plains, ok := runtime.Movement.Terrain("TERRAIN_PLAINS")
@@ -298,7 +330,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	}
 
 	farms, ok := runtime.TerrainImprovement("TILEIMP_FARMS")
-	if !ok || farms.BuildTurns != 2 || farms.PublicWorksCost != 200 || farms.YieldFood != 10 || farms.Class != "Farm" || !retailContainsString(farms.CantBuildOn, "TERRAIN_WATER_SHELF") || !retailContainsString(farms.Excludes, "Mine") {
+	if !ok || farms.BuildTurns != 2 || farms.PublicWorksCost != 200 || farms.YieldFood != 10 || farms.Class != "Farm" || farms.RequiredAdvanceID != "ADVANCE_AGRICULTURE" || !retailContainsString(farms.CantBuildOn, "TERRAIN_WATER_SHELF") || !retailContainsString(farms.Excludes, "Mine") {
 		t.Fatalf("farms runtime = %+v ok=%v", farms, ok)
 	}
 	terraformGrassland, ok := runtime.TerrainImprovement("TILEIMP_TERRAFORM_GRASSLAND")
