@@ -2137,6 +2137,7 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 	}
 	unit := Unit{
 		ID:                 producedUnitID(*state, city.ID, item.ID),
+		TypeID:             definition.ID,
 		OwnerID:            city.OwnerID,
 		TileID:             city.TileID,
 		Domain:             definition.Domain,

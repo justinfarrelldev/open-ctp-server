@@ -28,7 +28,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		runtime.Units = append(runtime.Units, projected)
 		runtime.Production = append(runtime.Production, RuntimeProduction{ID: unit.ID, Kind: "unit"})
 		if unit.ID == "UNIT_SETTLER" {
-			runtime.Starter = RuntimeStarter{Domain: projected.Domain, Movement: projected.Movement, Attack: projected.Attack, Defense: projected.Defense, Ranged: projected.Ranged, Strength: projected.Strength, Armor: projected.Armor, Firepower: projected.Firepower, Health: projected.Health, MaxFuel: projected.MaxFuel, ZOC: projected.ZOC, TransportCapacity: projected.TransportCapacity, CargoDomains: append([]string(nil), projected.CargoDomains...), VisibilityRange: projected.VisibilityRange, Effects: append([]RuntimeStarterEffect(nil), projected.Effects...)}
+			runtime.Starter = RuntimeStarter{TypeID: projected.ID, Domain: projected.Domain, Movement: projected.Movement, Attack: projected.Attack, Defense: projected.Defense, Ranged: projected.Ranged, Strength: projected.Strength, Armor: projected.Armor, Firepower: projected.Firepower, Health: projected.Health, MaxFuel: projected.MaxFuel, ZOC: projected.ZOC, TransportCapacity: projected.TransportCapacity, CargoDomains: append([]string(nil), projected.CargoDomains...), VisibilityRange: projected.VisibilityRange, Effects: append([]RuntimeStarterEffect(nil), projected.Effects...)}
 		}
 	}
 	buildingEffects := make(map[string][]RuntimeStarterEffect, len(db.Buildings))

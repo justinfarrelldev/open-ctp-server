@@ -41,6 +41,7 @@ type TilePlanning struct {
 
 type UnitProjection struct {
 	ID                 string          `json:"id"`
+	TypeID             string          `json:"type_id,omitempty"`
 	OwnerID            string          `json:"owner_id"`
 	TileID             string          `json:"tile_id"`
 	TransportID        string          `json:"transport_id,omitempty"`
@@ -257,7 +258,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	}
 	for _, unit := range state.Units {
 		if unitVisibleToPlayer(state, playerID, visible, unit) {
-			projected := UnitProjection{ID: unit.ID, OwnerID: unit.OwnerID, TileID: unit.TileID, TransportID: unit.TransportID, ArmyID: unit.ArmyID, Fortified: unit.Fortified}
+			projected := UnitProjection{ID: unit.ID, TypeID: unit.TypeID, OwnerID: unit.OwnerID, TileID: unit.TileID, TransportID: unit.TransportID, ArmyID: unit.ArmyID, Fortified: unit.Fortified}
 			if unit.OwnerID != playerID {
 				projected.Effects = publicTargetEffects(unit.Effects)
 			}
@@ -845,6 +846,7 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 		if unit.ArmyID == "" && unit.TileID != "" && hasEffect(unit.Effects, engine.EffectSettler) && !cityOnTile(projection, unit.TileID) {
 			actions = append(actions, action(engine.CommandFoundCity, "found-city", unit.ID, unit.TileID, map[string]string{"unit_id": unit.ID, "city_id": "client-city-" + unit.ID, "name": "City " + unit.ID}, []string{"unit_id", "city_id", "name"}))
 		}
+		actions = append(actions, upgradeActions(projection, unit)...)
 		actions = append(actions, moveActions(projection, tiles, unit)...)
 		actions = append(actions, embarkActions(projection, unit)...)
 		actions = append(actions, combatActions(projection, tiles, unit)...)
@@ -854,6 +856,33 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 		actions = append(actions, specialActions(projection, tiles, cities, unit, playerID)...)
 		actions = append(actions, terrainActions(projection, tiles, unit)...)
 		actions = append(actions, createParkActions(projection, tiles, unit)...)
+	}
+	return actions
+}
+
+func upgradeActions(projection Projection, unit UnitProjection) []ActionProjection {
+	if projection.Rules == nil || unit.TypeID == "" || unit.TransportID != "" {
+		return nil
+	}
+	known := []string(nil)
+	if projection.Research != nil {
+		known = projection.Research.Advances
+	}
+	definitions := make(map[string]rules.RuntimeUnitDefinition, len(projection.Rules.Units))
+	for _, definition := range projection.Rules.Units {
+		definitions[definition.ID] = definition
+	}
+	current, ok := definitions[unit.TypeID]
+	if !ok || len(current.UpgradeTo) == 0 {
+		return nil
+	}
+	actions := make([]ActionProjection, 0, len(current.UpgradeTo))
+	for _, targetID := range current.UpgradeTo {
+		target, ok := definitions[targetID]
+		if !ok || !allAdvancesSatisfied(known, target.Prerequisites) || anyAdvanceSatisfied(known, target.ObsoleteBy) {
+			continue
+		}
+		actions = append(actions, action(engine.CommandUpgradeUnit, "upgrade-unit", unit.ID, targetID, map[string]string{"unit_id": unit.ID, "upgrade_to": targetID}, []string{"unit_id", "upgrade_to"}))
 	}
 	return actions
 }

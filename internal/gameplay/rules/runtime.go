@@ -235,6 +235,7 @@ func (runtime RuntimeRules) Unit(id string) (RuntimeUnitDefinition, bool) {
 }
 
 type RuntimeStarter struct {
+	TypeID            string                 `json:"type_id,omitempty"`
 	Domain            string                 `json:"domain"`
 	Movement          int                    `json:"movement"`
 	Attack            int                    `json:"attack"`
@@ -473,7 +474,7 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 		return RuntimeRules{}, errors.New("rules definitions require the synthetic starter unit")
 	}
 	runtime.Starter = RuntimeStarter{
-		Domain: starterUnit.Domain, Movement: starterUnit.Movement, Attack: starterUnit.Attack, Defense: starterUnit.Defense, Ranged: starterUnit.Ranged, Strength: starterUnit.Strength, Armor: starterUnit.Armor, Firepower: starterUnit.Firepower, Health: starterUnit.Health, MaxFuel: starterUnit.MaxFuel, ZOC: starterUnit.ZOC, TransportCapacity: starterUnit.TransportCapacity, CargoDomains: append([]string(nil), starterUnit.CargoDomains...), VisibilityRange: starterUnit.VisibilityRange,
+		TypeID: starterUnit.ID, Domain: starterUnit.Domain, Movement: starterUnit.Movement, Attack: starterUnit.Attack, Defense: starterUnit.Defense, Ranged: starterUnit.Ranged, Strength: starterUnit.Strength, Armor: starterUnit.Armor, Firepower: starterUnit.Firepower, Health: starterUnit.Health, MaxFuel: starterUnit.MaxFuel, ZOC: starterUnit.ZOC, TransportCapacity: starterUnit.TransportCapacity, CargoDomains: append([]string(nil), starterUnit.CargoDomains...), VisibilityRange: starterUnit.VisibilityRange,
 		Effects: append([]RuntimeStarterEffect(nil), starterUnit.Effects...),
 	}
 	sort.Slice(runtime.Victory, func(i, j int) bool { return runtime.Victory[i].ID < runtime.Victory[j].ID })
@@ -510,7 +511,7 @@ func compileRuntimeProjectionDefinitions(definitions []byte, contentHash string)
 		if !ok {
 			return RuntimeRules{}, errors.New("runtime definitions require a starter unit")
 		}
-		runtime.Starter = RuntimeStarter{Domain: starter.Domain, Movement: starter.Movement, Attack: starter.Attack, Defense: starter.Defense, Ranged: starter.Ranged, Strength: starter.Strength, Armor: starter.Armor, Firepower: starter.Firepower, Health: starter.Health, MaxFuel: starter.MaxFuel, ZOC: starter.ZOC, TransportCapacity: starter.TransportCapacity, CargoDomains: append([]string(nil), starter.CargoDomains...), VisibilityRange: starter.VisibilityRange, Effects: append([]RuntimeStarterEffect(nil), starter.Effects...)}
+		runtime.Starter = RuntimeStarter{TypeID: starter.ID, Domain: starter.Domain, Movement: starter.Movement, Attack: starter.Attack, Defense: starter.Defense, Ranged: starter.Ranged, Strength: starter.Strength, Armor: starter.Armor, Firepower: starter.Firepower, Health: starter.Health, MaxFuel: starter.MaxFuel, ZOC: starter.ZOC, TransportCapacity: starter.TransportCapacity, CargoDomains: append([]string(nil), starter.CargoDomains...), VisibilityRange: starter.VisibilityRange, Effects: append([]RuntimeStarterEffect(nil), starter.Effects...)}
 	}
 	if err := validateRuntimeProjection(runtime); err != nil {
 		return RuntimeRules{}, err
@@ -1240,7 +1241,11 @@ func compileUnitDefinition(record Record) (RuntimeUnitDefinition, error) {
 	if err != nil {
 		return RuntimeUnitDefinition{}, err
 	}
-	return RuntimeUnitDefinition{ID: record.ID, Role: record.Tags["Role"], Domain: domain, Movement: movement, Attack: attack, Defense: defense, Ranged: ranged, BombardRange: bombardRange, BombRounds: bombRounds, Strength: strength, Armor: armor, Firepower: firepower, Health: health, MaxFuel: maxFuel, ZOC: zoc, TransportCapacity: transportCapacity, CargoDomains: cargoDomains, ProductionCost: productionCost, Upkeep: upkeep, ShieldHunger: shieldHunger, NeedsNoSupport: needsNoSupport, IsSpecialForces: isSpecialForces, Prerequisites: prerequisites, ObsoleteBy: obsoleteBy, VisibilityRange: visibilityRange, Effects: effects}, nil
+	upgradeTo, err := optionalIDs(record, "UpgradeTo")
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	return RuntimeUnitDefinition{ID: record.ID, Role: record.Tags["Role"], Domain: domain, Movement: movement, Attack: attack, Defense: defense, Ranged: ranged, BombardRange: bombardRange, BombRounds: bombRounds, Strength: strength, Armor: armor, Firepower: firepower, Health: health, MaxFuel: maxFuel, ZOC: zoc, TransportCapacity: transportCapacity, CargoDomains: cargoDomains, ProductionCost: productionCost, Upkeep: upkeep, ShieldHunger: shieldHunger, NeedsNoSupport: needsNoSupport, IsSpecialForces: isSpecialForces, Prerequisites: prerequisites, ObsoleteBy: obsoleteBy, UpgradeTo: upgradeTo, VisibilityRange: visibilityRange, Effects: effects}, nil
 }
 
 func unitEffects(record Record) ([]RuntimeStarterEffect, error) {

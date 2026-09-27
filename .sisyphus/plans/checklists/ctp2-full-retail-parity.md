@@ -176,6 +176,10 @@
 - [x] Task 225: Retail `SingleUse` unit flags are preserved as runtime unit effects.
 - [x] Task 226: Single-use bombard units are consumed after bombardment.
 - [x] Task 227: Single-use attackers are consumed after normal combat.
+- [x] Task 228: Canonical/runtime-started/produced units preserve retail unit `type_id` identity.
+- [x] Task 229: Runtime unit definition compilation preserves `UpgradeTo` chains.
+- [x] Task 230: `upgrade-unit` command applies eligible runtime unit upgrades deterministically.
+- [x] Task 231: Safe projection exposes eligible unit upgrade actions without leaking hidden state.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

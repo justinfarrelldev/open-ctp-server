@@ -22,6 +22,11 @@ type unitPayload struct {
 	UnitID string `json:"unit_id"`
 }
 
+type upgradeUnitPayload struct {
+	UnitID    string `json:"unit_id"`
+	UpgradeTo string `json:"upgrade_to"`
+}
+
 type embarkPayload struct {
 	UnitID      string `json:"unit_id"`
 	TransportID string `json:"transport_id"`
@@ -64,6 +69,12 @@ func applyUnitCommand(state *State, command Command, runtime *rules.RuntimeRules
 		}
 		unit.Fortified = true
 		return "unit.fortified", nil
+	case CommandUpgradeUnit:
+		var payload upgradeUnitPayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", err
+		}
+		return EventUnitUpgraded, upgradeUnit(state, command.ActorPlayerID, payload, runtime)
 	case CommandDisband:
 		var payload unitPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -133,6 +144,95 @@ func ownedUnit(state *State, actorID, unitID string) (*Unit, error) {
 		}
 	}
 	return nil, ErrObstructed
+}
+
+func upgradeUnit(state *State, actorID string, payload upgradeUnitPayload, runtime *rules.RuntimeRules) error {
+	unit, err := ownedUnit(state, actorID, payload.UnitID)
+	if err != nil || payload.UpgradeTo == "" || runtime == nil || unit.TransportID != "" {
+		return invalidUnitAction(err)
+	}
+	currentID := unit.TypeID
+	if currentID == "" {
+		currentID = producedUnitTypeID(unit.ID)
+	}
+	current, ok := runtime.Unit(currentID)
+	if currentID == "" || !ok || !containsString(current.UpgradeTo, payload.UpgradeTo) {
+		return errors.New("unit upgrade is invalid")
+	}
+	target, ok := runtime.Unit(payload.UpgradeTo)
+	if !ok || !playerHasAllPrerequisites(*state, actorID, target.Prerequisites) {
+		return errors.New("unit upgrade is invalid")
+	}
+	applyUnitDefinition(unit, target)
+	return nil
+}
+
+func producedUnitTypeID(unitID string) string {
+	parts := strings.Split(unitID, ":")
+	if len(parts) >= 4 && parts[0] == "unit" {
+		return parts[2]
+	}
+	return ""
+}
+
+func playerHasAllPrerequisites(state State, playerID string, prerequisites []string) bool {
+	if len(prerequisites) == 0 {
+		return true
+	}
+	nationID := nationForPlayer(state, playerID)
+	for _, nation := range state.Nations {
+		if nation.ID != nationID {
+			continue
+		}
+		for _, prerequisite := range prerequisites {
+			if !containsString(nation.Advances, prerequisite) && !wonderExists(state, prerequisite) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
+func applyUnitDefinition(unit *Unit, definition rules.RuntimeUnitDefinition) {
+	oldHealth, oldMaxHealth := unit.Health, unit.MaxHealth
+	unit.TypeID = definition.ID
+	unit.Domain = definition.Domain
+	unit.Movement = 0
+	unit.MaxMovement = definition.Movement
+	unit.Fuel = definition.MaxFuel
+	unit.MaxFuel = definition.MaxFuel
+	unit.CargoCapacity = definition.TransportCapacity
+	unit.CargoDomains = append([]string(nil), definition.CargoDomains...)
+	unit.Upkeep = definition.Upkeep
+	unit.ShieldHunger = definition.ShieldHunger
+	unit.NeedsNoSupport = definition.NeedsNoSupport
+	unit.IsSpecialForces = definition.IsSpecialForces
+	unit.ZOC = definition.ZOC
+	unit.Effects = runtimeUnitEffects(definition)
+	unit.Attack = definition.Attack
+	unit.Defense = definition.Defense
+	unit.Ranged = definition.Ranged
+	unit.BombardRange = definition.BombardRange
+	unit.BombRounds = definition.BombRounds
+	unit.ActiveDefenseRange = definition.ActiveDefenseRange
+	unit.Strength = definition.Strength
+	unit.Armor = definition.Armor
+	unit.Firepower = definition.Firepower
+	unit.MaxHealth = definition.Health
+	if unit.MaxHealth < 1 {
+		unit.MaxHealth = 1
+	}
+	if oldMaxHealth > 0 && oldHealth > 0 {
+		unit.Health = oldHealth * unit.MaxHealth / oldMaxHealth
+		if unit.Health < 1 {
+			unit.Health = 1
+		}
+	} else {
+		unit.Health = unit.MaxHealth
+	}
+	unit.VisibilityRange = definition.VisibilityRange
+	unit.Fortified = false
 }
 
 func invalidUnitAction(err error) error {

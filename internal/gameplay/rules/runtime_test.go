@@ -66,8 +66,18 @@ func TestCompileRuntimePreservesSyntheticUnitCapabilities(t *testing.T) {
 	if unit.Domain != "land" || unit.Movement != 2 || unit.Attack != 4 || unit.Defense != 4 || unit.Strength != 4 || unit.Armor != 2 || unit.Health != 10 || !unit.ZOC || unit.VisibilityRange != 2 || len(unit.Effects) != 6 {
 		t.Fatalf("unit capabilities = %+v, want starter land combat profile", unit)
 	}
-	if runtime.Starter.Domain != unit.Domain || runtime.Starter.Movement != unit.Movement || runtime.Starter.Attack != unit.Attack || runtime.Starter.Defense != unit.Defense || runtime.Starter.Strength != unit.Strength || runtime.Starter.Armor != unit.Armor || runtime.Starter.Health != unit.Health || runtime.Starter.ZOC != unit.ZOC || runtime.Starter.VisibilityRange != unit.VisibilityRange || len(runtime.Starter.Effects) != len(unit.Effects) {
+	if runtime.Starter.TypeID != unit.ID || runtime.Starter.Domain != unit.Domain || runtime.Starter.Movement != unit.Movement || runtime.Starter.Attack != unit.Attack || runtime.Starter.Defense != unit.Defense || runtime.Starter.Strength != unit.Strength || runtime.Starter.Armor != unit.Armor || runtime.Starter.Health != unit.Health || runtime.Starter.ZOC != unit.ZOC || runtime.Starter.VisibilityRange != unit.VisibilityRange || len(runtime.Starter.Effects) != len(unit.Effects) {
 		t.Fatalf("starter = %+v, want derived from %+v", runtime.Starter, unit)
+	}
+}
+
+func TestCompileUnitDefinitionPreservesUpgradeChains(t *testing.T) {
+	unit, err := compileUnitDefinition(Record{Kind: "unit", ID: "UNIT_OLD", Tags: map[string]string{"Domain": "land", "MaxMovePoints": "1", "Health": "1", "UpgradeTo": "UNIT_NEW,UNIT_LATER"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !sameStrings(unit.UpgradeTo, []string{"UNIT_NEW", "UNIT_LATER"}) {
+		t.Fatalf("upgrade chain = %#v", unit.UpgradeTo)
 	}
 }
 

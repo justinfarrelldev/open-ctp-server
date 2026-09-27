@@ -38,6 +38,7 @@ const (
 	CommandMoveUnit           = "move-unit"
 	CommandDisband            = "disband-unit"
 	CommandFortify            = "fortify-unit"
+	CommandUpgradeUnit        = "upgrade-unit"
 	CommandEmbark             = "embark-unit"
 	CommandDisembark          = "disembark-unit"
 	CommandArmyCreate         = "create-army"
@@ -91,6 +92,7 @@ const (
 	EventCombatResolved           = "combat.resolved"
 	EventBombarded                = "bombard.resolved"
 	EventUnitDisbanded            = "unit.disbanded"
+	EventUnitUpgraded             = "unit.upgraded"
 	EventEmbassyEstablished       = "embassy.established"
 	EventSoothsayingApplied       = "soothsaying.applied"
 	EventTechnologyStolen         = "technology.stolen"
@@ -200,6 +202,7 @@ type Tile struct {
 
 type Unit struct {
 	ID                 string   `json:"id"`
+	TypeID             string   `json:"type_id,omitempty"`
 	OwnerID            string   `json:"owner_id"`
 	TileID             string   `json:"tile_id"`
 	ArmyID             string   `json:"army_id,omitempty"`
