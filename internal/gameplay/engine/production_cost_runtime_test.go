@@ -69,6 +69,20 @@ func TestRuntimeEliminateNukesBlocksNuclearAttackProduction(t *testing.T) {
 	}
 }
 
+func TestRuntimeProductionQueueRejectsUnitsNeedingAbsentCityGood(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_COFFEE_EXPORTER", Domain: DomainLand, Movement: 1, Health: 1, NeedsCityGoodID: "GOOD_COFFEE"}}}
+
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_COFFEE_EXPORTER", Kind: ProductionUnit, Cost: 1}}, runtime); err == nil {
+		t.Fatal("queueProduction accepted a city-good-gated unit without the required good")
+	}
+	state.Cities[0].Goods = []string{"GOOD_COFFEE"}
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_COFFEE_EXPORTER", Kind: ProductionUnit, Cost: 1}}, runtime); err != nil {
+		t.Fatalf("queueProduction with required city good error = %v", err)
+	}
+}
+
 func TestRuntimeUnitProductionRequiresCurrentGovernment(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})

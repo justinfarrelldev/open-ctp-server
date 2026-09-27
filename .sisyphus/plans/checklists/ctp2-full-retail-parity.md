@@ -253,6 +253,9 @@
 - [x] Task 302: Runtime city growth applies the imported base city-growth coefficient.
 - [x] Task 303: Runtime projections preserve retail unconverted indulgence gold/happiness constants.
 - [x] Task 304: Indulgence-sales execution uses runtime indulgence constants with safe synthetic fallbacks.
+- [x] Task 305: Canonical cities preserve an owned-city good inventory abstraction for retail city-good requirements.
+- [x] Task 306: Unit production enforces retail `NeedsCityGood` runtime requirements.
+- [x] Task 307: Safe owned-city projections and production actions suppress city-good-gated units until the good is present.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

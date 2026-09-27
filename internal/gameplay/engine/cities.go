@@ -494,6 +494,9 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if payload.Item.Kind == ProductionUnit && productionGovernmentMismatch(*state, actor, payload.Item, runtime) {
 		return errors.New("production prerequisite is not met")
 	}
+	if payload.Item.Kind == ProductionUnit && !productionCityGoodSatisfied(*city, payload.Item, runtime) {
+		return errors.New("production prerequisite is not met")
+	}
 	if payload.Item.Kind == ProductionUnit && productionHasNuclearAttackEffect(payload.Item, runtime) && playerHasNationEffect(*state, actor, EffectEliminateNukes) {
 		return errors.New("production prerequisite is not met")
 	}
@@ -532,6 +535,17 @@ func productionGovernmentMismatch(state State, actor string, item ProductionItem
 	nationID := nationForPlayer(state, actor)
 	nation := nationForID(&state, nationID)
 	return nation == nil || nation.GovernmentID != unit.RequiredGovernmentID
+}
+
+func productionCityGoodSatisfied(city City, item ProductionItem, runtime *rules.RuntimeRules) bool {
+	if item.Kind != ProductionUnit || runtime == nil {
+		return true
+	}
+	unit, ok := runtime.Unit(item.ID)
+	if !ok || unit.NeedsCityGoodID == "" {
+		return true
+	}
+	return containsString(city.Goods, unit.NeedsCityGoodID)
 }
 
 func productionHasCreateParkEffect(item ProductionItem, runtime *rules.RuntimeRules) bool {

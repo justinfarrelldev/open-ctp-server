@@ -53,3 +53,26 @@ func TestProductionActionsIncludeUnlockedRuntimeBuildings(t *testing.T) {
 	}
 	t.Fatalf("missing runtime building production action: %#v", actions)
 }
+
+func TestProductionActionsHideUnitsNeedingAbsentCityGood(t *testing.T) {
+	projection := Projection{
+		Cities: []CityProjection{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}},
+		Rules:  &RulesProjection{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_COFFEE_EXPORTER", Domain: engine.DomainLand, Movement: 1, Health: 1, ProductionCost: 10, NeedsCityGoodID: "GOOD_COFFEE"}}},
+	}
+	if hasProductionAction(productionActions(engine.State{}, projection, "player-a"), "UNIT_COFFEE_EXPORTER") {
+		t.Fatal("city-good-gated unit was projected without the required good")
+	}
+	projection.Cities[0].Goods = []string{"GOOD_COFFEE"}
+	if !hasProductionAction(productionActions(engine.State{}, projection, "player-a"), "UNIT_COFFEE_EXPORTER") {
+		t.Fatal("city-good-gated unit was not projected after the required good was present")
+	}
+}
+
+func hasProductionAction(actions []ActionProjection, targetID string) bool {
+	for _, action := range actions {
+		if action.Command == engine.CommandQueueProduction && action.TargetID == targetID {
+			return true
+		}
+	}
+	return false
+}

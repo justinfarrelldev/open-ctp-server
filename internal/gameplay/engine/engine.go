@@ -264,6 +264,7 @@ type City struct {
 	Rioting           bool             `json:"rioting,omitempty"`
 	Specialists       map[string]int   `json:"specialists,omitempty"`
 	WorkedTileIDs     []string         `json:"worked_tile_ids,omitempty"`
+	Goods             []string         `json:"goods,omitempty"`
 	StoredFood        int              `json:"stored_food,omitempty"`
 	StarvationTurns   int              `json:"starvation_turns,omitempty"`
 	StoredProduction  int              `json:"stored_production,omitempty"`
