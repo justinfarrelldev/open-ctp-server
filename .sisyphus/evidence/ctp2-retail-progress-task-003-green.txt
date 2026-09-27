@@ -1,0 +1,5 @@
+=== RUN   TestRetailAIAutoPlayProgressRecordsRestartEquality
+    retail_ai_autoplay_test.go:115: retail AI transcript: /tmp/TestRetailAIAutoPlayProgressRecordsRestartEquality2831489330/001/retail-ai-restart.jsonl
+--- PASS: TestRetailAIAutoPlayProgressRecordsRestartEquality (3.62s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame	3.691s

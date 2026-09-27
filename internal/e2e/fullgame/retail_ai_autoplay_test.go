@@ -110,6 +110,19 @@ func TestRetailAIAutoPlayProgressRecordsCoreMechanics(t *testing.T) {
 	}
 }
 
+func TestRetailAIAutoPlayProgressRecordsRestartEquality(t *testing.T) {
+	root := localRetailGameDataRoot(t)
+	_, records := runRetailAIAutoPlay(t, root, 16, filepath.Join(t.TempDir(), "retail-ai-restart.jsonl"))
+	if len(records) < 16 {
+		t.Fatalf("records = %d, want at least 16", len(records))
+	}
+	for _, record := range records {
+		if !record.RestartEqual || record.RestartHash != record.StateHash {
+			t.Fatalf("turn %d restart_equal/hash = %t/%q, state_hash = %q", record.Turn, record.RestartEqual, record.RestartHash, record.StateHash)
+		}
+	}
+}
+
 func TestRetailAIAutoPlayRecordsAtLeastHundredTurns(t *testing.T) {
 	root := localRetailGameDataRoot(t)
 	transcript := filepath.Join(t.TempDir(), "retail-ai-100-turns.jsonl")
@@ -152,6 +165,8 @@ type retailAITurnRecord struct {
 	TerminalEnded    bool     `json:"terminal_ended"`
 	TerminalReason   string   `json:"terminal_reason,omitempty"`
 	StateHash        string   `json:"state_hash"`
+	RestartHash      string   `json:"restart_hash"`
+	RestartEqual     bool     `json:"restart_equal"`
 }
 
 func runRetailAIAutoPlay(t *testing.T, root string, targetTurn int, transcript string) (engine.State, []retailAITurnRecord) {
@@ -315,7 +330,28 @@ func retailAITurnSummary(t *testing.T, state engine.State, actor string, command
 			atWarRelations++
 		}
 	}
-	return retailAITurnRecord{Turn: state.Phase.Turn, ActivePlayerID: actor, Commands: append([]string(nil), commands...), CommandCount: len(commands), NonRoundCommands: nonRoundCommands, CombatCommands: combatCommands, Cities: len(state.Cities), Units: len(state.Units), ActiveQueues: activeQueues, Advances: advanceCount, ResearchTargets: researchTargets, ResearchProgress: researchProgress, Wonders: len(state.Wonders), TreasuryGold: treasuryGold, PublicWorks: publicWorks, TradeRoutes: len(state.TradeRoutes), TilePollution: tilePollution, WorldPollution: worldPollution, DiplomacyRecords: len(state.Diplomacy), AtWarRelations: atWarRelations, TerminalEnded: state.Terminal.Ended, TerminalReason: state.Terminal.Reason, StateHash: hash}
+	restartHash := retailAIRestartHash(t, state)
+	return retailAITurnRecord{Turn: state.Phase.Turn, ActivePlayerID: actor, Commands: append([]string(nil), commands...), CommandCount: len(commands), NonRoundCommands: nonRoundCommands, CombatCommands: combatCommands, Cities: len(state.Cities), Units: len(state.Units), ActiveQueues: activeQueues, Advances: advanceCount, ResearchTargets: researchTargets, ResearchProgress: researchProgress, Wonders: len(state.Wonders), TreasuryGold: treasuryGold, PublicWorks: publicWorks, TradeRoutes: len(state.TradeRoutes), TilePollution: tilePollution, WorldPollution: worldPollution, DiplomacyRecords: len(state.Diplomacy), AtWarRelations: atWarRelations, TerminalEnded: state.Terminal.Ended, TerminalReason: state.Terminal.Reason, StateHash: hash, RestartHash: restartHash, RestartEqual: restartHash == hash}
+}
+
+func retailAIRestartHash(t *testing.T, state engine.State) string {
+	t.Helper()
+	encoded, err := json.Marshal(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var restarted engine.State
+	if err := json.Unmarshal(encoded, &restarted); err != nil {
+		t.Fatal(err)
+	}
+	if err := engine.ValidateState(restarted); err != nil {
+		t.Fatalf("restarted state invalid: %v", err)
+	}
+	hash, err := engine.CanonicalStateHash(restarted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return hash
 }
 
 func writeRetailAITranscript(t *testing.T, path string, records []retailAITurnRecord) {

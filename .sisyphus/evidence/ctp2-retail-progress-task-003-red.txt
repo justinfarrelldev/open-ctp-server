@@ -1,0 +1,7 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame [github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame.test]
+internal/e2e/fullgame/retail_ai_autoplay_test.go:120:14: record.RestartEqual undefined (type retailAITurnRecord has no field or method RestartEqual)
+internal/e2e/fullgame/retail_ai_autoplay_test.go:120:37: record.RestartHash undefined (type retailAITurnRecord has no field or method RestartHash)
+internal/e2e/fullgame/retail_ai_autoplay_test.go:121:88: record.RestartEqual undefined (type retailAITurnRecord has no field or method RestartEqual)
+internal/e2e/fullgame/retail_ai_autoplay_test.go:121:109: record.RestartHash undefined (type retailAITurnRecord has no field or method RestartHash)
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame [build failed]
+FAIL
