@@ -1,0 +1,6 @@
+=== RUN   TestCreateTradeRouteCarriesSourceGoodAndGold
+--- PASS: TestCreateTradeRouteCarriesSourceGoodAndGold (0.00s)
+=== RUN   TestTradeRouteImportsGoodForDestinationProduction
+--- PASS: TestTradeRouteImportsGoodForDestinationProduction (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.008s

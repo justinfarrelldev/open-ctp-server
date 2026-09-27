@@ -1,0 +1,9 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/cities_task10_test.go:69:55: next.TradeRoutes[0].GoodID undefined (type TradeRoute has no field or method GoodID)
+internal/gameplay/engine/cities_task10_test.go:69:101: next.TradeRoutes[0].Gold undefined (type TradeRoute has no field or method Gold)
+internal/gameplay/engine/cities_task10_test.go:76:38: next.TradeRoutes[0].Gold undefined (type TradeRoute has no field or method Gold)
+internal/gameplay/engine/cities_task10_test.go:77:104: next.TradeRoutes[0].Gold undefined (type TradeRoute has no field or method Gold)
+internal/gameplay/engine/cities_task10_test.go:88:102: unknown field GoodID in struct literal of type struct{ID string "json:\"id\""; SourceCityID string "json:\"source_city_id\""; DestinationCityID string "json:\"destination_city_id\""; CrossesWater bool "json:\"crosses_water,omitempty\""}
+internal/gameplay/engine/cities_task10_test.go:88:124: unknown field Gold in struct literal of type struct{ID string "json:\"id\""; SourceCityID string "json:\"source_city_id\""; DestinationCityID string "json:\"destination_city_id\""; CrossesWater bool "json:\"crosses_water,omitempty\""}
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL

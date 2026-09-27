@@ -317,8 +317,35 @@ func createTradeRoute(state *State, actor string, payload CreateTradeRoutePayloa
 	if tradeRouteIDExists(*state, routeID) {
 		return errors.New("trade route already exists")
 	}
-	state.TradeRoutes = append(state.TradeRoutes, TradeRoute{ID: routeID, SourceCityID: source.ID, DestinationCityID: destination.ID, CrossesWater: tradeRouteCrossesWater(*state, *source, *destination)})
+	goodID := tradeRouteGoodID(*source, *destination)
+	state.TradeRoutes = append(state.TradeRoutes, TradeRoute{ID: routeID, SourceCityID: source.ID, DestinationCityID: destination.ID, GoodID: goodID, Gold: tradeRouteGold(goodID), CrossesWater: tradeRouteCrossesWater(*state, *source, *destination)})
 	return nil
+}
+
+func tradeRouteGoodID(source, destination City) string {
+	if len(source.Goods) == 0 {
+		return ""
+	}
+	goods := append([]string(nil), source.Goods...)
+	sort.Strings(goods)
+	for _, good := range goods {
+		if good != "" && !containsString(destination.Goods, good) {
+			return good
+		}
+	}
+	for _, good := range goods {
+		if good != "" {
+			return good
+		}
+	}
+	return ""
+}
+
+func tradeRouteGold(goodID string) int {
+	if goodID == "" {
+		return 0
+	}
+	return 1
 }
 
 func tradeRouteAgreementAllows(state State, sourceOwnerID, destinationOwnerID string) bool {
@@ -527,7 +554,7 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if payload.Item.Kind == ProductionUnit && productionGovernmentMismatch(*state, actor, payload.Item, runtime) {
 		return errors.New("production prerequisite is not met")
 	}
-	if payload.Item.Kind == ProductionUnit && !productionCityGoodSatisfied(*city, payload.Item, runtime) {
+	if payload.Item.Kind == ProductionUnit && !productionCityGoodSatisfied(*state, *city, payload.Item, runtime) {
 		return errors.New("production prerequisite is not met")
 	}
 	if payload.Item.Kind == ProductionUnit && productionHasNuclearAttackEffect(payload.Item, runtime) && playerHasNationEffect(*state, actor, EffectEliminateNukes) {
@@ -570,7 +597,7 @@ func productionGovernmentMismatch(state State, actor string, item ProductionItem
 	return nation == nil || nation.GovernmentID != unit.RequiredGovernmentID
 }
 
-func productionCityGoodSatisfied(city City, item ProductionItem, runtime *rules.RuntimeRules) bool {
+func productionCityGoodSatisfied(state State, city City, item ProductionItem, runtime *rules.RuntimeRules) bool {
 	if item.Kind != ProductionUnit || runtime == nil {
 		return true
 	}
@@ -578,7 +605,32 @@ func productionCityGoodSatisfied(city City, item ProductionItem, runtime *rules.
 	if !ok || unit.NeedsCityGoodID == "" {
 		return true
 	}
-	return containsString(city.Goods, unit.NeedsCityGoodID)
+	return containsString(cityAvailableGoods(state, city), unit.NeedsCityGoodID)
+}
+
+func cityAvailableGoods(state State, city City) []string {
+	goods := append([]string(nil), city.Goods...)
+	seen := make(map[string]bool, len(goods))
+	for _, good := range goods {
+		seen[good] = true
+	}
+	for _, route := range state.TradeRoutes {
+		if route.DestinationCityID != city.ID {
+			continue
+		}
+		goodID := route.GoodID
+		if goodID == "" {
+			if source, ok := cityByID(state, route.SourceCityID); ok {
+				goodID = tradeRouteGoodID(*source, city)
+			}
+		}
+		if goodID != "" && !seen[goodID] {
+			seen[goodID] = true
+			goods = append(goods, goodID)
+		}
+	}
+	sort.Strings(goods)
+	return goods
 }
 
 func productionHasCreateParkEffect(item ProductionItem, runtime *rules.RuntimeRules) bool {
@@ -2539,7 +2591,7 @@ func cityYieldAndFranchiseLossWithRuntime(state State, city City, runtime *rules
 	if hasTelevision && goldPerTelevision > 0 {
 		yield.Gold += goldPerTelevision
 	}
-	yield.Gold += tradeRouteWonderGold(state, city)
+	yield.Gold += tradeRouteGoldYield(state, city) + tradeRouteWonderGold(state, city)
 	applySocialPolicyEconomy(state, city, &yield)
 	for _, building := range city.Buildings {
 		if !isObsolete(city.Obsolete, building.ObsoletedBy) {
@@ -2602,6 +2654,27 @@ func brokerageGoldPercentBonus(state State, city City) int {
 		}
 	}
 	return bonusPercent
+}
+
+func tradeRouteGoldYield(state State, city City) int {
+	gold := 0
+	for _, route := range state.TradeRoutes {
+		if route.SourceCityID != city.ID {
+			continue
+		}
+		if route.Gold > 0 {
+			gold += route.Gold
+			continue
+		}
+		goodID := route.GoodID
+		if goodID == "" {
+			if destination, ok := cityByID(state, route.DestinationCityID); ok {
+				goodID = tradeRouteGoodID(city, *destination)
+			}
+		}
+		gold += tradeRouteGold(goodID)
+	}
+	return gold
 }
 
 func tradeRouteWonderGold(state State, city City) int {

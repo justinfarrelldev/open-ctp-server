@@ -360,6 +360,8 @@ type TradeRoute struct {
 	ID                string `json:"id"`
 	SourceCityID      string `json:"source_city_id"`
 	DestinationCityID string `json:"destination_city_id"`
+	GoodID            string `json:"good_id,omitempty"`
+	Gold              int    `json:"gold,omitempty"`
 	CrossesWater      bool   `json:"crosses_water,omitempty"`
 }
 

@@ -16,6 +16,7 @@
 - [x] Task 002: Retail AI progress records now include command throughput, active queues, research targets/progress, treasury/public works, trade/diplomacy/war, pollution, combat, terminal, and state-hash metrics.
 - [x] Task 003: Retail AI progress records now checkpoint canonical JSON restart equality on every recorded turn.
 - [x] Task 004: Accepted combat now establishes mutual war state, clears trade treaty state, and cancels combatant trade routes, matching CTP2 hostile-action diplomacy/trade cleanup.
+- [x] Task 005: Trade routes now carry source goods, add source gold yield, and let destination production satisfy NeedsCityGood prerequisites from imported goods.
 
 ## Full-Game Mechanical Execution First
 

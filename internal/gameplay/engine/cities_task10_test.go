@@ -53,6 +53,45 @@ func TestCreateTradeRouteCommandAddsCanonicalRoute(t *testing.T) {
 	}
 }
 
+func TestCreateTradeRouteCarriesSourceGoodAndGold(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}, {ID: "player-b", NationID: "nation-b", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a", "player-b"}
+	state.Nations = []Nation{{ID: "nation-a"}, {ID: "nation-b"}}
+	state.Tiles = []Tile{{ID: "tile-a", X: 0, Y: 0, Terrain: TerrainPlains, Open: true}, {ID: "tile-b", X: 2, Y: 0, Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Goods: []string{"GOOD_IVORY", "GOOD_SILK"}}, {ID: "city-b", OwnerID: "player-b", TileID: "tile-b"}}
+	state.Diplomacy = []DiplomaticRelation{{ID: "player-a:player-b", PlayerAID: "player-a", PlayerBID: "player-b", Contact: true, Treaty: "trade", Trade: true}}
+	body, _ := json.Marshal(map[string]string{"source_city_id": "city-a", "destination_city_id": "city-b"})
+	next, _, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "route", ActorPlayerID: "player-a", Type: CommandCreateTradeRoute, Payload: body}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatalf("Apply() error = %v", err)
+	}
+	if len(next.TradeRoutes) != 1 || next.TradeRoutes[0].GoodID != "GOOD_IVORY" || next.TradeRoutes[0].Gold <= 0 {
+		t.Fatalf("trade route good/gold = %#v", next.TradeRoutes)
+	}
+	yield, err := cityYield(next, next.Cities[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if yield.Gold < next.TradeRoutes[0].Gold {
+		t.Fatalf("source city gold yield = %d, want at least route gold %d", yield.Gold, next.TradeRoutes[0].Gold)
+	}
+}
+
+func TestTradeRouteImportsGoodForDestinationProduction(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}, {ID: "player-b", NationID: "nation-b", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a", "player-b"}
+	state.Nations = []Nation{{ID: "nation-a"}, {ID: "nation-b"}}
+	state.Tiles = []Tile{{ID: "tile-a", X: 0, Y: 0, Terrain: TerrainPlains, Open: true}, {ID: "tile-b", X: 2, Y: 0, Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Goods: []string{"GOOD_IVORY"}}, {ID: "city-b", OwnerID: "player-b", TileID: "tile-b"}}
+	state.TradeRoutes = []TradeRoute{{ID: "route", SourceCityID: "city-a", DestinationCityID: "city-b", GoodID: "GOOD_IVORY", Gold: 1}}
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_ELEPHANT", Domain: DomainLand, Movement: 1, Health: 1, NeedsCityGoodID: "GOOD_IVORY"}}}
+	if err := queueProduction(&state, "player-b", QueueProductionPayload{CityID: "city-b", Item: ProductionItem{ID: "UNIT_ELEPHANT", Kind: ProductionUnit, Cost: 1}}, runtime); err != nil {
+		t.Fatalf("queueProduction should use imported trade-route good: %v", err)
+	}
+}
+
 func TestCreateTradeRouteRejectsForeignDestinationWithoutTradeAgreement(t *testing.T) {
 	state := fixtureState()
 	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}, {ID: "player-b", NationID: "nation-b", Lifecycle: PlayerActive, Controller: ControllerHuman}}
