@@ -726,16 +726,23 @@ func plantNuke(state *State, unit *Unit, city *City, actorNation *Nation, target
 			return EventNukeFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
-	if city.Population > 1 {
-		city.Population /= 2
+	cityID, cityTileID := city.ID, city.TileID
+	if city.Population >= 3 {
+		killed := city.Population * nukePopulationPercent(runtime) / 100
+		if killed < 1 {
+			killed = 1
+		}
+		city.Population -= killed
 		if city.Population < 1 {
 			city.Population = 1
 		}
+	} else {
+		removeCityByID(state, cityID)
 	}
-	if tile := tilePointer(state, city.TileID); tile != nil {
-		tile.Pollution += 10
+	if tile := tilePointer(state, cityTileID); tile != nil {
+		tile.Pollution += nukePollution(runtime)
 	}
-	destroyedUnits := resolveNukeBlastUnits(state, unit.ID, city.TileID)
+	destroyedUnits := resolveNukeBlastUnits(state, unit.ID, cityTileID)
 	resolvePlantNukeEscape(state, unit, sources)
 	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialPlantNuke, sources)
 	payload, _ := json.Marshal(struct {
@@ -743,6 +750,30 @@ func plantNuke(state *State, unit *Unit, city *City, actorNation *Nation, target
 		DestroyedUnits int  `json:"destroyed_units,omitempty"`
 	}{Disclosed: true, DestroyedUnits: destroyedUnits})
 	return EventNukePlanted, payload, nil
+}
+
+func nukePopulationPercent(runtime *rules.RuntimeRules) int {
+	if runtime != nil && runtime.Constants.NukePopulationPercent > 0 {
+		return runtime.Constants.NukePopulationPercent
+	}
+	return 75
+}
+
+func nukePollution(runtime *rules.RuntimeRules) int {
+	if runtime != nil && runtime.Constants.PollutionCausedByNuke > 0 {
+		return runtime.Constants.PollutionCausedByNuke
+	}
+	return 10
+}
+
+func removeCityByID(state *State, cityID string) {
+	for index := range state.Cities {
+		if state.Cities[index].ID == cityID {
+			state.Cities = append(state.Cities[:index], state.Cities[index+1:]...)
+			state.TradeRoutes = removeTradeRoutesTouchingCity(state.TradeRoutes, cityID)
+			return
+		}
+	}
 }
 
 func resolveNukeBlastUnits(state *State, actingUnitID, cityTileID string) int {

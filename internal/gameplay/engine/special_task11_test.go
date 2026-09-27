@@ -136,7 +136,7 @@ func TestRetailSpecialDeathChanceRemovesActingUnitAfterResolvedActions(t *testin
 			}
 		}},
 		{name: "plant-nuke", command: CommandPlantNuke, actionKind: EffectSpecialPlantNuke, deathKind: EffectSpecialPlantNukeDeathChance, wantEvent: EventNukePlanted, setup: func(state *State) { state.Cities[0].Population = 8 }, assertState: func(t *testing.T, state State) {
-			if state.Cities[0].Population != 4 || state.Tiles[1].Pollution == 0 {
+			if state.Cities[0].Population != 2 || state.Tiles[1].Pollution == 0 {
 				t.Fatalf("nuke effects missing: city=%+v tile=%+v", state.Cities[0], state.Tiles[1])
 			}
 		}},
@@ -473,6 +473,20 @@ func TestRetailPlantNukeRemovesUnitsInBlastRadiusAndRecordsDeathEffect(t *testin
 	}
 }
 
+func TestRetailPlantNukeDestroysTinyCity(t *testing.T) {
+	state := task11State()
+	state.Cities[0].Population = 2
+	state.Units[0].Effects = []Effect{{ID: "nuke", Kind: EffectSpecialPlantNuke}}
+
+	next, events, err := task11Apply(t, state, CommandPlantNuke, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := cityByID(next, "target-city"); ok || len(events) != 1 || events[0].Type != EventNukePlanted {
+		t.Fatalf("tiny city nuke result city still present/events=%+v state=%+v", events, next.Cities)
+	}
+}
+
 func TestRetailPlantNukeRequiresNuclearAdvanceWhenRuntimeDeclaresIt(t *testing.T) {
 	state := task11State()
 	state.Cities[0].Population = 8
@@ -488,7 +502,7 @@ func TestRetailPlantNukeRequiresNuclearAdvanceWhenRuntimeDeclaresIt(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	if state.Cities[0].Population != 4 || eventType != EventNukePlanted {
+	if state.Cities[0].Population != 2 || eventType != EventNukePlanted {
 		t.Fatalf("plant nuke with advance outcome city=%+v event=%s", state.Cities[0], eventType)
 	}
 }
@@ -501,7 +515,7 @@ func TestRetailPlantNukeDamagesCityAndHonorsProtection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if next.Cities[0].Population != 4 || next.Tiles[1].Pollution == 0 || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventNukePlanted || strings.Contains(string(events[0].Payload), "target-city") {
+	if next.Cities[0].Population != 2 || next.Tiles[1].Pollution == 0 || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventNukePlanted || strings.Contains(string(events[0].Payload), "target-city") {
 		t.Fatalf("nuke outcome city=%+v tile=%+v unit=%+v events=%+v", next.Cities[0], next.Tiles[1], next.Units[0], events)
 	}
 

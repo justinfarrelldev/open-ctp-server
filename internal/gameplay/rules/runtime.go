@@ -285,6 +285,9 @@ type RuntimeConstants struct {
 	TelevangelistConversionPercent int `json:"televangelist_conversion_percent,omitempty"`
 	EmancipationUnhappinessTurns   int `json:"emancipation_unhappiness_turns,omitempty"`
 	EmancipationUnhappinessAmount  int `json:"emancipation_unhappiness_amount,omitempty"`
+	NukePopulationPercent          int `json:"nuke_population_percent,omitempty"`
+	NukeKillTiles                  int `json:"nuke_kill_tiles,omitempty"`
+	PollutionCausedByNuke          int `json:"pollution_caused_by_nuke,omitempty"`
 }
 
 type RuntimeGaia struct {

@@ -291,6 +291,11 @@
 - [x] Task 340: Emancipation applies retail unhappiness timers to non-owner cities where slaves were freed.
 - [x] Task 341: Emancipation removes slave-uprising units as illegal slavery units.
 - [x] Task 342: Emancipation continues removing slave-raid and settler-slave-raid units globally.
+- [x] Task 343: Retail nuke population, kill-tile, and pollution constants import into runtime rules.
+- [x] Task 344: Plant-nuke city damage uses retail `NUKE_POPULATION_PERCENTAGE`.
+- [x] Task 345: Plant-nuke destroys tiny cities below the retail population threshold.
+- [x] Task 346: Plant-nuke removes trade routes attached to a destroyed city.
+- [x] Task 347: Plant-nuke pollution uses retail `POLLUTION_CAUSED_BY_NUKE` when runtime rules provide it.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
