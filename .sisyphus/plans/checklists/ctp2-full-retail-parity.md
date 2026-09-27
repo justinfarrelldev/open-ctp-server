@@ -317,6 +317,9 @@
 - [x] Task 366: Built terrain improvement overlays preserve retail airport/radar/listening-post/upgrade/endgame markers.
 - [x] Task 367: Completed terrain improvement defense bonuses modify defenders in combat.
 - [x] Task 368: Terrain improvement special-field coverage remains safe in projections/AI because overlays expose only canonical public overlay metadata.
+- [x] Task 369: Retail terrain `EnvBase.Defense` imports as runtime terrain defense metadata.
+- [x] Task 370: Combat defense uses runtime terrain defense percentages with synthetic forest fallback retained.
+- [x] Task 371: Bombard, active-defense, and counter-bombard defense paths use the same runtime terrain defense modifier.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

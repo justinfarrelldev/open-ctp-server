@@ -210,6 +210,7 @@ type RuntimeTerrain struct {
 	CityFood                 int      `json:"city_food,omitempty"`
 	CityProduction           int      `json:"city_production,omitempty"`
 	CityGold                 int      `json:"city_gold,omitempty"`
+	DefenseBonusPercent      int      `json:"defense_bonus_percent,omitempty"`
 	TransformAddTime         int      `json:"transform_add_time,omitempty"`
 	TransformAddMaterials    int      `json:"transform_add_materials,omitempty"`
 	TransformRemoveTime      int      `json:"transform_remove_time,omitempty"`
@@ -764,6 +765,10 @@ func compileRecord(runtime *RuntimeRules, record Record) error {
 		if err != nil {
 			return err
 		}
+		defenseBonusPercent, err := optionalInteger(record, "DefenseBonusPercent", 0)
+		if err != nil {
+			return err
+		}
 		food, err := optionalInteger(record, "Food", 0)
 		if err != nil {
 			return err
@@ -777,7 +782,7 @@ func compileRecord(runtime *RuntimeRules, record Record) error {
 			return err
 		}
 		runtime.Movement.Configured = true
-		runtime.Movement.Terrains = append(runtime.Movement.Terrains, RuntimeTerrain{ID: record.ID, Cost: cost, Domains: domains, Food: food, Production: production, Gold: gold})
+		runtime.Movement.Terrains = append(runtime.Movement.Terrains, RuntimeTerrain{ID: record.ID, Cost: cost, Domains: domains, Food: food, Production: production, Gold: gold, DefenseBonusPercent: defenseBonusPercent})
 	case "movement":
 		if record.ID != "MOVEMENT_SYNTHETIC" || runtime.Movement.PolicyConfigured {
 			return fmt.Errorf("rules definition record %q has invalid movement policy", record.ID)

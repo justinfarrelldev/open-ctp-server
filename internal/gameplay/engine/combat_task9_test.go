@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
 func combatState() State {
@@ -324,6 +326,17 @@ func TestRetailCityDefenseBuildingEffectsModifyDefenders(t *testing.T) {
 	defender := state.Units[2]
 	if got := combatModifier(state, defender, false); got != 17 { // fortified + forest + city walls
 		t.Fatalf("defender combat modifier = %d, want fortified + forest + city walls", got)
+	}
+}
+
+func TestRetailTerrainDefenseBonusModifiesDefenders(t *testing.T) {
+	state := combatState()
+	state.Tiles = []Tile{{ID: "mountain", Terrain: "TERRAIN_MOUNTAIN"}}
+	state.Cities = nil
+	defender := Unit{ID: "defender", OwnerID: "player-b", TileID: "mountain", Defense: 7}
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_MOUNTAIN", DefenseBonusPercent: 100}}}}
+	if got := combatDefenseModifierWithRuntime(state, runtime, defender, Unit{ID: "attacker", OwnerID: "player-a", Domain: DomainLand}); got != 7 {
+		t.Fatalf("defender terrain modifier = %d, want 100%% of defense", got)
 	}
 }
 

@@ -328,6 +328,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || plains.Cost != 100 || plains.Food != 10 || plains.Production != 10 || plains.Gold != 5 || plains.CityFood != 10 || plains.CityProduction != 15 || plains.CityGold != 15 || plains.TransformAddTime != 1 || plains.TransformAddMaterials != 200 || plains.TransformRemoveTime != 1 || plains.TransformRemoveMaterials != 50 || !sameStringSlices(plains.Domains, []string{"air", "land"}) {
 		t.Fatalf("plains runtime terrain = %+v ok=%v", plains, ok)
 	}
+	forest, ok := runtime.Movement.Terrain("TERRAIN_FOREST")
+	if !ok || forest.DefenseBonusPercent != 25 {
+		t.Fatalf("forest runtime terrain defense = %+v ok=%v", forest, ok)
+	}
 
 	farms, ok := runtime.TerrainImprovement("TILEIMP_FARMS")
 	if !ok || farms.BuildTurns != 2 || farms.PublicWorksCost != 200 || farms.YieldFood != 10 || farms.Class != "Farm" || farms.RequiredAdvanceID != "ADVANCE_AGRICULTURE" || !sameStringSlices(farms.AllowedTerrains, []string{"TERRAIN_DESERT", "TERRAIN_GRASSLAND", "TERRAIN_PLAINS"}) || !retailContainsString(farms.CantBuildOn, "TERRAIN_WATER_SHELF") || !retailContainsString(farms.Excludes, "Mine") {

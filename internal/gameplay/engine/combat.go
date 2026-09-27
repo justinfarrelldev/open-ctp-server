@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"sort"
+
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
 const (
@@ -36,7 +38,7 @@ type CombatResult struct {
 	EnslavedPopulation int    `json:"enslaved_population,omitempty"`
 }
 
-func applyCombat(state *State, command Command, sources Sources) (*CombatResult, json.RawMessage, error) {
+func applyCombat(state *State, command Command, sources Sources, runtime *rules.RuntimeRules) (*CombatResult, json.RawMessage, error) {
 	if err := activeActor(*state, command.ActorPlayerID); err != nil {
 		return nil, nil, err
 	}
@@ -72,22 +74,22 @@ func applyCombat(state *State, command Command, sources Sources) (*CombatResult,
 	// attacker melee, defender melee, with IDs ordering each line. No rejected
 	// command reaches this point, so it cannot advance combat RNG.
 	for rounds := 0; rounds < 64 && len(attackerUnits) > 0 && len(defenderUnits) > 0; rounds++ {
-		combatStrike(state, sources, attackerUnits, defenderUnits, true, result)
+		combatStrikeWithRuntime(state, sources, attackerUnits, defenderUnits, true, result, runtime)
 		defenderUnits = livingCombatUnits(defenderUnits)
 		if len(defenderUnits) == 0 {
 			break
 		}
-		combatStrike(state, sources, defenderUnits, attackerUnits, true, result)
+		combatStrikeWithRuntime(state, sources, defenderUnits, attackerUnits, true, result, runtime)
 		attackerUnits = livingCombatUnits(attackerUnits)
 		if len(attackerUnits) == 0 {
 			break
 		}
-		combatStrike(state, sources, attackerUnits, defenderUnits, false, result)
+		combatStrikeWithRuntime(state, sources, attackerUnits, defenderUnits, false, result, runtime)
 		defenderUnits = livingCombatUnits(defenderUnits)
 		if len(defenderUnits) == 0 {
 			break
 		}
-		combatStrike(state, sources, defenderUnits, attackerUnits, false, result)
+		combatStrikeWithRuntime(state, sources, defenderUnits, attackerUnits, false, result, runtime)
 		attackerUnits = livingCombatUnits(attackerUnits)
 	}
 	for _, unit := range combatArmyUnits(*state, *attackers) {
@@ -281,7 +283,7 @@ func armyCanCaptureTargetCity(state State, attackers Army, targetTileID string) 
 	return false
 }
 
-func applyBombard(state *State, command Command, sources Sources) (string, json.RawMessage, error) {
+func applyBombard(state *State, command Command, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if err := activeActor(*state, command.ActorPlayerID); err != nil {
 		return "", nil, err
 	}
@@ -305,7 +307,7 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 	activeDefenseHits := 0
 	interceptors := activeDefenseInterceptors(*state, command.ActorPlayerID, targets[0].OwnerID, *unit, targetTile)
 	for _, interceptor := range interceptors {
-		defense := unit.Defense + combatDefenseModifier(*state, *unit, *interceptor)
+		defense := unit.Defense + combatDefenseModifierWithRuntime(*state, runtime, *unit, *interceptor)
 		if defense < 0 {
 			defense = 0
 		}
@@ -333,7 +335,7 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 	hits := 0
 	for round := 0; round < unit.BombRounds && len(targets) > 0; round++ {
 		target := targets[0]
-		defense := target.Defense + combatDefenseModifier(*state, *target, *unit)
+		defense := target.Defense + combatDefenseModifierWithRuntime(*state, runtime, *target, *unit)
 		if defense < 0 {
 			defense = 0
 		}
@@ -344,7 +346,7 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 		}
 		targets = livingCombatUnits(targets)
 	}
-	counterBombardHits := counterBombard(state, sources, unit, livingCombatUnits(targets))
+	counterBombardHits := counterBombard(state, sources, unit, livingCombatUnits(targets), runtime)
 	unit.Movement--
 	destroyed := 0
 	for _, target := range bombardTargets(*state, command.ActorPlayerID, payload.TargetTileID) {
@@ -367,7 +369,7 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 	return EventBombarded, payloadJSON, nil
 }
 
-func counterBombard(state *State, sources Sources, attacker *Unit, defenders []*Unit) int {
+func counterBombard(state *State, sources Sources, attacker *Unit, defenders []*Unit, runtime *rules.RuntimeRules) int {
 	hits := 0
 	for _, defender := range defenders {
 		if attacker.Health <= 0 {
@@ -377,7 +379,7 @@ func counterBombard(state *State, sources Sources, attacker *Unit, defenders []*
 			continue
 		}
 		for round := 0; round < defender.BombRounds && attacker.Health > 0; round++ {
-			defense := attacker.Defense + combatDefenseModifier(*state, *attacker, *defender)
+			defense := attacker.Defense + combatDefenseModifierWithRuntime(*state, runtime, *attacker, *defender)
 			if defense < 0 {
 				defense = 0
 			}
@@ -579,6 +581,10 @@ func unitCanTarget(attacker, target Unit) bool {
 }
 
 func combatStrike(state *State, sources Sources, attackers, defenders []*Unit, ranged bool, result *CombatResult) {
+	combatStrikeWithRuntime(state, sources, attackers, defenders, ranged, result, nil)
+}
+
+func combatStrikeWithRuntime(state *State, sources Sources, attackers, defenders []*Unit, ranged bool, result *CombatResult, runtime *rules.RuntimeRules) {
 	for _, attacker := range livingCombatUnits(attackers) {
 		if (ranged && attacker.Ranged <= 0) || (!ranged && attacker.Attack <= 0) {
 			continue
@@ -592,8 +598,8 @@ func combatStrike(state *State, sources Sources, attackers, defenders []*Unit, r
 		if ranged {
 			attack = attacker.Ranged
 		}
-		attack += combatAttackModifier(*state, *attacker, *target)
-		defense := target.Defense + combatDefenseModifier(*state, *target, *attacker)
+		attack += combatAttackModifierWithRuntime(*state, runtime, *attacker, *target)
+		defense := target.Defense + combatDefenseModifierWithRuntime(*state, runtime, *target, *attacker)
 		if attack <= 0 || defense < 0 {
 			continue
 		}
@@ -695,7 +701,11 @@ func livingCombatUnits(units []*Unit) []*Unit {
 }
 
 func combatDefenseModifier(state State, unit Unit, attacker Unit) int {
-	modifier := combatModifier(state, unit, false)
+	return combatDefenseModifierWithRuntime(state, nil, unit, attacker)
+}
+
+func combatDefenseModifierWithRuntime(state State, runtime *rules.RuntimeRules, unit Unit, attacker Unit) int {
+	modifier := combatModifierWithRuntime(state, runtime, unit, false)
 	modifier += tileImprovementDefenseModifier(state, unit)
 	if hasEffect(attacker.Effects, EffectIgnoreCityWalls) {
 		modifier -= cityWallDefenseAt(state, unit.TileID)
@@ -732,7 +742,11 @@ func cityWallDefenseAt(state State, tileID string) int {
 }
 
 func combatAttackModifier(state State, unit Unit, target Unit) int {
-	modifier := combatModifier(state, unit, true)
+	return combatAttackModifierWithRuntime(state, nil, unit, target)
+}
+
+func combatAttackModifierWithRuntime(state State, runtime *rules.RuntimeRules, unit Unit, target Unit) int {
+	modifier := combatModifierWithRuntime(state, runtime, unit, true)
 	if hasEffect(target.Effects, EffectWoodenShip) {
 		modifier += unit.Attack * effectValue(unit.Effects, EffectCombatAttackVsWoodenShipPercent) / 100
 	}
@@ -745,13 +759,17 @@ func combatAttackModifier(state State, unit Unit, target Unit) int {
 }
 
 func combatModifier(state State, unit Unit, attack bool) int {
+	return combatModifierWithRuntime(state, nil, unit, attack)
+}
+
+func combatModifierWithRuntime(state State, runtime *rules.RuntimeRules, unit Unit, attack bool) int {
 	modifier := effectsModifierAgainst(unit.Effects, attack, "")
 	if !attack && unit.Fortified {
 		modifier++
 	}
 	if !attack {
-		if tile, ok := tileByID(state, unit.TileID); ok && tile.Terrain == TerrainForest {
-			modifier++
+		if tile, ok := tileByID(state, unit.TileID); ok {
+			modifier += terrainDefenseModifier(runtime, tile.Terrain, unit.Defense)
 		}
 		for _, city := range state.Cities {
 			if city.TileID == unit.TileID {
@@ -769,6 +787,21 @@ func combatModifier(state State, unit Unit, attack bool) int {
 		}
 	}
 	return modifier
+}
+
+func terrainDefenseModifier(runtime *rules.RuntimeRules, terrainID string, defense int) int {
+	if defense <= 0 {
+		return 0
+	}
+	if runtime != nil {
+		if terrain, ok := runtime.Movement.Terrain(terrainID); ok {
+			return defense * terrain.DefenseBonusPercent / 100
+		}
+	}
+	if terrainID == TerrainForest {
+		return 1
+	}
+	return 0
 }
 
 func effectsModifierAgainst(effects []Effect, attack bool, targetDomain string) int {

@@ -600,10 +600,10 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 	case CommandSetResearch, CommandRoundComplete, CommandEndGame, CommandLeaveGame, CommandTakeoverAI:
 		eventType, eventPayload, err = applyLifecycleCommand(state, command, runtime)
 	case CommandCombat:
-		combatResult, eventPayload, err = applyCombat(state, command, sources)
+		combatResult, eventPayload, err = applyCombat(state, command, sources, runtime)
 		eventType = EventCombatResolved
 	case CommandBombard:
-		eventType, eventPayload, err = applyBombard(state, command, sources)
+		eventType, eventPayload, err = applyBombard(state, command, sources, runtime)
 	case CommandFoundCity, CommandQueueProduction, CommandCancelProduction, CommandSetSpecialists, CommandCreateTradeRoute:
 		eventType, err = applyCityCommand(state, command, runtime)
 	default:
