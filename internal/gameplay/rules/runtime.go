@@ -18,6 +18,7 @@ type RuntimeRules struct {
 	ContentHash          string                                `json:"content_hash"`
 	Victory              []RuntimeVictory                      `json:"victory"`
 	Calendar             RuntimeCalendar                       `json:"calendar"`
+	Constants            RuntimeConstants                      `json:"constants,omitempty"`
 	Gaia                 RuntimeGaia                           `json:"gaia"`
 	Production           []RuntimeProduction                   `json:"production"`
 	Effects              []RuntimeEffect                       `json:"effects"`
@@ -270,6 +271,12 @@ type RuntimeVictory struct {
 
 type RuntimeCalendar struct {
 	FinalTurn int `json:"final_turn"`
+}
+
+type RuntimeConstants struct {
+	CityGrowthCoefficient          int `json:"city_growth_coefficient,omitempty"`
+	UnconvertedIndulgenceGold      int `json:"unconverted_indulgence_gold,omitempty"`
+	UnconvertedIndulgenceHappiness int `json:"unconverted_indulgence_happiness,omitempty"`
 }
 
 type RuntimeGaia struct {

@@ -23,6 +23,7 @@ type RetailRules struct {
 	PollutionTriggerLists []RetailPollutionTriggerList `json:"pollution_trigger_lists"`
 	PollutionModel        RetailPollutionModel         `json:"pollution_model"`
 	Calendar              RetailCalendar               `json:"calendar"`
+	Constants             RetailConstants              `json:"constants"`
 	AI                    RetailAILists                `json:"ai"`
 }
 
@@ -182,6 +183,12 @@ type RetailCalendar struct {
 	Periods          []RetailCalendarPeriod `json:"periods,omitempty"`
 }
 
+type RetailConstants struct {
+	CityGrowthCoefficient          int `json:"city_growth_coefficient"`
+	UnconvertedIndulgenceGold      int `json:"unconverted_indulgence_gold"`
+	UnconvertedIndulgenceHappiness int `json:"unconverted_indulgence_happiness"`
+}
+
 type RetailCalendarPeriod struct {
 	StartTurn    int `json:"start_turn"`
 	YearsPerTurn int `json:"years_per_turn"`
@@ -224,11 +231,17 @@ func LoadRetailRulesFromDirectory(directory string) (RetailRules, error) {
 		return RetailRules{}, err
 	}
 	result.PollutionModel = pollutionModel
-	calendar, err := loadRetailCalendar(diffPath, filepath.Join(directory, "Const.txt"))
+	constPath := filepath.Join(directory, "Const.txt")
+	calendar, err := loadRetailCalendar(diffPath, constPath)
 	if err != nil {
 		return RetailRules{}, err
 	}
 	result.Calendar = calendar
+	constants, err := loadRetailConstants(constPath)
+	if err != nil {
+		return RetailRules{}, err
+	}
+	result.Constants = constants
 	for _, catalog := range RetailGameCatalogs() {
 		path := filepath.Join(directory, catalog.Filename)
 		data, err := os.ReadFile(path)
@@ -373,6 +386,29 @@ func loadRetailCalendar(diffPath, constPath string) (RetailCalendar, error) {
 	}
 	calendar.FinalTurn = finalTurn
 	return calendar, nil
+}
+
+func loadRetailConstants(path string) (RetailConstants, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return RetailConstants{}, importError(ErrorInvalidDirectory, path, 1, "", err.Error())
+	}
+	tokens, err := lexRetailCTP2(string(data), filepath.Base(path))
+	if err != nil {
+		return RetailConstants{}, err
+	}
+	values := map[string]int{}
+	for index := 0; index+1 < len(tokens); index++ {
+		switch tokens[index].value {
+		case "CITY_GROWTH_COEFFICIENT", "UNCONVERTED_INDULGENCE_GOLD", "UNCONVERTED_INDULGENCE_HAPPINESS":
+			value, err := retailParseInt("CONST", tokens[index].value, tokens[index+1].value)
+			if err != nil {
+				return RetailConstants{}, err
+			}
+			values[tokens[index].value] = value
+		}
+	}
+	return RetailConstants{CityGrowthCoefficient: values["CITY_GROWTH_COEFFICIENT"], UnconvertedIndulgenceGold: values["UNCONVERTED_INDULGENCE_GOLD"], UnconvertedIndulgenceHappiness: values["UNCONVERTED_INDULGENCE_HAPPINESS"]}, nil
 }
 
 func loadRetailEndGameYears(path string) (int, int, error) {

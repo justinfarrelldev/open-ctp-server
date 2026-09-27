@@ -1061,14 +1061,14 @@ func advanceCityFood(city *City, maxPopulation int, starvationProtection int, fo
 }
 
 func advanceCityFoodWithConsumption(city *City, maxPopulation int, starvationProtection int, foodVatPercent int, consumption int) {
-	advanceCityFoodWithGrowthCoefficient(city, maxPopulation, starvationProtection, foodVatPercent, consumption, 100)
+	advanceCityFoodWithGrowthCoefficient(city, maxPopulation, starvationProtection, foodVatPercent, consumption, 100, 100)
 }
 
 func advanceCityFoodWithRuntime(city *City, runtime *rules.RuntimeRules, maxPopulation int, starvationProtection int, foodVatPercent int, consumption int) {
-	advanceCityFoodWithGrowthCoefficient(city, maxPopulation, starvationProtection, foodVatPercent, consumption, cityGrowthCoefficientPercent(*city, runtime))
+	advanceCityFoodWithGrowthCoefficient(city, maxPopulation, starvationProtection, foodVatPercent, consumption, cityGrowthCoefficientBase(runtime), cityGrowthCoefficientPercent(*city, runtime))
 }
 
-func advanceCityFoodWithGrowthCoefficient(city *City, maxPopulation int, starvationProtection int, foodVatPercent int, consumption int, growthCoefficientPercent int) {
+func advanceCityFoodWithGrowthCoefficient(city *City, maxPopulation int, starvationProtection int, foodVatPercent int, consumption int, growthCoefficientBase int, growthCoefficientPercent int) {
 	if city.Population < 1 {
 		city.Population = 1
 	}
@@ -1098,11 +1098,11 @@ func advanceCityFoodWithGrowthCoefficient(city *City, maxPopulation int, starvat
 		return
 	}
 	city.StarvationTurns = 0
-	for city.StoredFood >= cityFoodGrowthThresholdWithCoefficient(city.Population, growthCoefficientPercent) {
+	for city.StoredFood >= cityFoodGrowthThresholdWithCoefficient(city.Population, growthCoefficientBase, growthCoefficientPercent) {
 		if maxPopulation > 0 && city.Population >= maxPopulation {
 			return
 		}
-		city.StoredFood -= cityFoodGrowthThresholdWithCoefficient(city.Population, growthCoefficientPercent)
+		city.StoredFood -= cityFoodGrowthThresholdWithCoefficient(city.Population, growthCoefficientBase, growthCoefficientPercent)
 		city.Population++
 	}
 }
@@ -1912,21 +1912,31 @@ func cityFoodConsumptionForNation(state State, city City) int {
 }
 
 func cityFoodGrowthThreshold(population int) int {
-	return cityFoodGrowthThresholdWithCoefficient(population, 100)
+	return cityFoodGrowthThresholdWithCoefficient(population, 100, 100)
 }
 
-func cityFoodGrowthThresholdWithCoefficient(population int, coefficientPercent int) int {
+func cityFoodGrowthThresholdWithCoefficient(population int, base int, coefficientPercent int) int {
+	if base <= 0 {
+		base = 100
+	}
 	if population < 1 {
 		population = 1
 	}
 	if coefficientPercent <= 0 {
 		coefficientPercent = 100
 	}
-	threshold := population * 100 * coefficientPercent / 100
+	threshold := population * base * coefficientPercent / 100
 	if threshold < 1 {
 		threshold = 1
 	}
 	return threshold
+}
+
+func cityGrowthCoefficientBase(runtime *rules.RuntimeRules) int {
+	if runtime == nil || runtime.Constants.CityGrowthCoefficient <= 0 {
+		return 100
+	}
+	return runtime.Constants.CityGrowthCoefficient
 }
 
 func cityGrowthCoefficientPercent(city City, runtime *rules.RuntimeRules) int {

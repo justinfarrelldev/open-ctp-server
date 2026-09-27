@@ -160,7 +160,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		case CommandInciteRevolution:
 			return inciteRevolution(state, unit, city, sources)
 		case CommandIndulgenceSales:
-			return indulgenceSales(state, unit, city, actorNation, targetNation)
+			return indulgenceSales(state, unit, city, actorNation, targetNation, runtime)
 		case CommandSlaveUprising:
 			return slaveUprising(unit, city)
 		case CommandStealTechnology:
@@ -1030,6 +1030,20 @@ func convertCity(state *State, unit *Unit, city *City, sources Sources) (string,
 	return EventCityConverted, json.RawMessage(`{"disclosed":true}`), nil
 }
 
+func indulgenceSaleAmounts(runtime *rules.RuntimeRules) (int, int) {
+	gold := retailUnconvertedIndulgenceGold
+	happiness := retailUnconvertedIndulgenceHappiness
+	if runtime != nil {
+		if runtime.Constants.UnconvertedIndulgenceGold > 0 {
+			gold = runtime.Constants.UnconvertedIndulgenceGold
+		}
+		if runtime.Constants.UnconvertedIndulgenceHappiness > 0 {
+			happiness = runtime.Constants.UnconvertedIndulgenceHappiness
+		}
+	}
+	return gold, happiness
+}
+
 func slaveUprising(unit *Unit, city *City) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialSlaveUprising) {
 		return "", nil, errors.New("special action is not authorized")
@@ -1048,19 +1062,20 @@ func slaveUprising(unit *Unit, city *City) (string, json.RawMessage, error) {
 	return EventSlaveUprising, json.RawMessage(`{"disclosed":true}`), nil
 }
 
-func indulgenceSales(state *State, unit *Unit, city *City, actorNation *Nation, targetNation *Nation) (string, json.RawMessage, error) {
+func indulgenceSales(state *State, unit *Unit, city *City, actorNation *Nation, targetNation *Nation, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialIndulgenceSales) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if actorNation == nil || targetNation == nil || targetNation.Gold < retailUnconvertedIndulgenceGold {
+	gold, happiness := indulgenceSaleAmounts(runtime)
+	if actorNation == nil || targetNation == nil || targetNation.Gold < gold {
 		return "", nil, errors.New("special action target is unavailable")
 	}
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
 	}
-	targetNation.Gold -= retailUnconvertedIndulgenceGold
-	actorNation.Gold += retailUnconvertedIndulgenceGold
-	city.Effects = append(city.Effects, Effect{ID: "indulgence:" + unit.ID, Kind: EffectHappiness, Value: retailUnconvertedIndulgenceHappiness, Turns: 1})
+	targetNation.Gold -= gold
+	actorNation.Gold += gold
+	city.Effects = append(city.Effects, Effect{ID: "indulgence:" + unit.ID, Kind: EffectHappiness, Value: happiness, Turns: 1})
 	return EventIndulgenceSold, json.RawMessage(`{"disclosed":true}`), nil
 }
 

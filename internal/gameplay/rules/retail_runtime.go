@@ -17,6 +17,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		ContentHash:          "retail-catalog-projection",
 		Victory:              []RuntimeVictory{{ID: "bloodlust_conquest"}, {ID: "diplomatic_world_union"}, {ID: "score_2300"}, {ID: "science_gaia_controller"}},
 		Calendar:             RuntimeCalendar{FinalTurn: retailRuntimeFinalTurn(db.Calendar)},
+		Constants:            RuntimeConstants{CityGrowthCoefficient: db.Constants.CityGrowthCoefficient, UnconvertedIndulgenceGold: db.Constants.UnconvertedIndulgenceGold, UnconvertedIndulgenceHappiness: db.Constants.UnconvertedIndulgenceHappiness},
 		Movement:             RuntimeMovement{Configured: true, PolicyConfigured: true, OpenAccess: false, ZOCStopsPath: true},
 		PollutionModel:       projectRetailPollutionModel(db.PollutionModel),
 	}

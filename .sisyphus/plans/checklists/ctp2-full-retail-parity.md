@@ -248,6 +248,11 @@
 - [x] Task 297: `POP_SLAVE` is accepted as canonical city specialist state for slave mechanics.
 - [x] Task 298: Safe projections and HTTP routes expose `slave-uprising` only from owned capable units.
 - [x] Task 299: AI command scoring recognizes projected slave-uprising actions.
+- [x] Task 300: Retail `Const.txt` selected gameplay constants import into the typed retail catalog.
+- [x] Task 301: Runtime projections preserve retail `CITY_GROWTH_COEFFICIENT`.
+- [x] Task 302: Runtime city growth applies the imported base city-growth coefficient.
+- [x] Task 303: Runtime projections preserve retail unconverted indulgence gold/happiness constants.
+- [x] Task 304: Indulgence-sales execution uses runtime indulgence constants with safe synthetic fallbacks.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

@@ -575,12 +575,18 @@ func TestRetailIndulgenceSalesTransferGoldAndTimedHappiness(t *testing.T) {
 	state.Nations[0].Gold = 1
 	state.Nations[1].Gold = 10
 	state.Units[0].Effects = []Effect{{ID: "indulgence", Kind: EffectSpecialIndulgenceSales}}
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Constants: rules.RuntimeConstants{UnconvertedIndulgenceGold: 5, UnconvertedIndulgenceHappiness: 4}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainLand, Movement: 1, Health: 1}}}
+	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Rules = RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: contentHash, Definitions: definitions}
 
 	next, events, err := task11Apply(t, state, CommandIndulgenceSales, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if next.Nations[0].Gold != 4 || next.Nations[1].Gold != 7 || next.Units[0].Movement != 3 || cityHappiness(next, next.Cities[0]) != 77 || !hasTimedHappinessAttack(next.Cities[0], 2, 1) || len(events) != 1 || events[0].Type != EventIndulgenceSold || strings.Contains(string(events[0].Payload), "target-city") {
+	if next.Nations[0].Gold != 6 || next.Nations[1].Gold != 5 || next.Units[0].Movement != 3 || cityHappiness(next, next.Cities[0]) != 79 || !hasTimedHappinessAttack(next.Cities[0], 4, 1) || len(events) != 1 || events[0].Type != EventIndulgenceSold || strings.Contains(string(events[0].Payload), "target-city") {
 		t.Fatalf("indulgence state/events = nations %+v city %+v unit %+v events %#v", next.Nations, next.Cities[0], next.Units[0], events)
 	}
 }
