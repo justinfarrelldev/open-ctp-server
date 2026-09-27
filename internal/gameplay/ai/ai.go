@@ -331,6 +331,7 @@ func governmentCandidates(projection visibility.Projection, playerID string) []C
 }
 
 func projectedScienceRateCandidates(projection visibility.Projection) []Candidate {
+	desiredPercent := projectedAISciencePercent(projection)
 	candidates := make([]Candidate, 0)
 	for _, action := range projection.LegalActions {
 		if action.Command != engine.CommandSetScienceRate || len(action.Payload) == 0 {
@@ -339,12 +340,27 @@ func projectedScienceRateCandidates(projection visibility.Projection) []Candidat
 		var payload struct {
 			SciencePercent int `json:"science_percent"`
 		}
-		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.SciencePercent != 100 {
+		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.SciencePercent != desiredPercent {
 			continue
 		}
 		candidates = append(candidates, Candidate{Type: engine.CommandSetScienceRate, EntityID: action.EntityID, TargetID: action.TargetID, Score: 755, Payload: append(json.RawMessage(nil), action.Payload...)})
 	}
 	return candidates
+}
+
+func projectedAISciencePercent(projection visibility.Projection) int {
+	if projection.Rules != nil && projection.Rules.AI != nil {
+		for _, strategy := range projection.Rules.AI.Strategies {
+			if strategy.SciencePercent <= 0 {
+				continue
+			}
+			if strategy.SciencePercent > 100 {
+				return 100
+			}
+			return strategy.SciencePercent
+		}
+	}
+	return 100
 }
 
 func projectedTradeRouteCandidates(projection visibility.Projection) []Candidate {

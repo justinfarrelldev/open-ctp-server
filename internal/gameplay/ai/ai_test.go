@@ -108,6 +108,33 @@ func TestPlannerUsesOnlyProjectionAndStableCandidateTuples(t *testing.T) {
 	}
 }
 
+func TestPlannerUsesRetailAIStrategyScienceRate(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		LegalActions: []visibility.ActionProjection{
+			{Command: engine.CommandSetScienceRate, Route: "set-science-rate", EntityID: "ai", TargetID: "60", Payload: json.RawMessage(`{"science_percent":60}`)},
+			{Command: engine.CommandSetScienceRate, Route: "set-science-rate", EntityID: "ai", TargetID: "100", Payload: json.RawMessage(`{"science_percent":100}`)},
+		},
+		Rules: &visibility.RulesProjection{AI: &rules.RuntimeAI{Strategies: []rules.RuntimeAIStrategy{{ID: "STRATEGY_DEFAULT", SciencePercent: 60}}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type != engine.CommandSetScienceRate {
+			continue
+		}
+		if candidate.TargetID != "60" {
+			t.Fatalf("science-rate target = %q, want retail strategy 60; candidates=%#v", candidate.TargetID, candidates)
+		}
+		return
+	}
+	t.Fatalf("science-rate candidate missing: %#v", candidates)
+}
+
 func TestPlannerUsesProjectedScienceRateAction(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		LegalActions: []visibility.ActionProjection{{Command: engine.CommandSetScienceRate, Route: "set-science-rate", EntityID: "ai", TargetID: "100", Payload: json.RawMessage(`{"science_percent":100}`)}},

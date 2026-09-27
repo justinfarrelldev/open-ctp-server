@@ -1,0 +1,14 @@
+=== RUN   TestProjectRetailRuntimeIncludesCompleteReleasedCatalog
+--- PASS: TestProjectRetailRuntimeIncludesCompleteReleasedCatalog (0.01s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules	0.020s
+=== RUN   TestGovernmentActionsIncludeRetailAIStrategySciencePercent
+--- PASS: TestGovernmentActionsIncludeRetailAIStrategySciencePercent (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.005s
+=== RUN   TestPlannerUsesRetailAIStrategyScienceRate
+--- PASS: TestPlannerUsesRetailAIStrategyScienceRate (0.00s)
+=== RUN   TestPlannerUsesProjectedScienceRateAction
+--- PASS: TestPlannerUsesProjectedScienceRateAction (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai	0.004s

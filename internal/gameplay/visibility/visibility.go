@@ -477,7 +477,16 @@ func cloneRuntimeAI(ai *rules.RuntimeAI) *rules.RuntimeAI {
 		WonderBuildLists:   cloneRuntimeAILists(ai.WonderBuildLists),
 		AdvanceLists:       cloneRuntimeAILists(ai.AdvanceLists),
 		ImprovementLists:   cloneRuntimeAILists(ai.ImprovementLists),
+		Strategies:         cloneRuntimeAIStrategies(ai.Strategies),
 	}
+}
+
+func cloneRuntimeAIStrategies(strategies []rules.RuntimeAIStrategy) []rules.RuntimeAIStrategy {
+	cloned := make([]rules.RuntimeAIStrategy, 0, len(strategies))
+	for _, strategy := range strategies {
+		cloned = append(cloned, strategy)
+	}
+	return cloned
 }
 
 func cloneRuntimeAILists(lists []rules.RuntimeAIList) []rules.RuntimeAIList {
@@ -555,6 +564,37 @@ func viewerCanAct(state engine.State, projection Projection, playerID string) bo
 	return state.Phase.ActivePlayerOrder[state.Phase.ActivePlayerIndex] == playerID
 }
 
+func projectedAIStrategySciencePercent(projection Projection) (int, bool) {
+	if projection.Rules == nil || projection.Rules.AI == nil {
+		return 0, false
+	}
+	for _, strategy := range projection.Rules.AI.Strategies {
+		if strategy.SciencePercent > 0 {
+			return clampPercent(strategy.SciencePercent), true
+		}
+	}
+	return 0, false
+}
+
+func appendUniqueInt(values []int, value int) []int {
+	for _, existing := range values {
+		if existing == value {
+			return values
+		}
+	}
+	return append(values, value)
+}
+
+func clampPercent(value int) int {
+	if value < 0 {
+		return 0
+	}
+	if value > 100 {
+		return 100
+	}
+	return value
+}
+
 func researchActions(projection Projection, playerID string) []ActionProjection {
 	if projection.Research == nil || projection.Research.TargetID != "" {
 		return nil
@@ -579,7 +619,12 @@ func governmentActions(projection Projection, playerID string) []ActionProjectio
 	if projection.Diplomacy.SciencePercent != nil {
 		currentSciencePercent = *projection.Diplomacy.SciencePercent
 	}
-	for _, percent := range []int{0, 50, 100} {
+	sciencePercents := []int{0, 50, 100}
+	if strategyScience, ok := projectedAIStrategySciencePercent(projection); ok {
+		sciencePercents = appendUniqueInt(sciencePercents, strategyScience)
+		sort.Ints(sciencePercents)
+	}
+	for _, percent := range sciencePercents {
 		if currentSciencePercent == percent {
 			continue
 		}

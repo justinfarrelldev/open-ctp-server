@@ -35,7 +35,7 @@
     },
     {
       "path": "internal/gameplay/ai/ai.go",
-      "sha256": "322cbc92e60aa0974f86c9431c5a4cf904bfed0030906a423cd714119a88143b"
+      "sha256": "222f532b59f0e890fce5d0e2d149e59ffa2e09f27fb591a4883765954341dc4f"
     },
     {
       "path": "internal/gameplay/combat/http.go",
@@ -99,7 +99,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_catalog.go",
-      "sha256": "3f59399c7cee6687a2cd6d043409b6de384e9a642295bee65837872a4da1302d"
+      "sha256": "4340e00e9c03888be59a610a75b0d990ace3bd68d29bb9cc021596a8a328fde0"
     },
     {
       "path": "internal/gameplay/rules/retail_pollution.go",
@@ -111,7 +111,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_runtime.go",
-      "sha256": "7687c4d256a20bcfb7ec611e83631e76208a3ce825a8e34977018ad30a20ce1a"
+      "sha256": "e9433ffbd98b6eda9e8a5b24693f6cb225fd09c7b92a688ab0964549601d9755"
     },
     {
       "path": "internal/gameplay/rules/rules.go",
@@ -119,7 +119,7 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "9dfc7378d71cc818f345063b8e65ed9e46058426bc19689dddb6a1fc6127d7ef"
+      "sha256": "db7290a254c3931ae5ea54b1a8adccaa1e34073d5eeb3ccece921382b173726e"
     },
     {
       "path": "internal/gameplay/service/ai.go",
@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "3e691db106874edf4c7026a04162a61e0cc9cd614c8cb6a3c1620f7769ebbb87"
+      "sha256": "08a9de70737fa9c541b8530f8e82caaa4701700b89ef364a812e6bde29e7c57f"
     },
     {
       "path": "internal/runtime/runtime.go",

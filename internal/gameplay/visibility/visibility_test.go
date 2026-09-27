@@ -364,6 +364,20 @@ func TestScienceRateLegalActionsTreatUnsetAsDefaultHundred(t *testing.T) {
 	}
 }
 
+func TestGovernmentActionsIncludeRetailAIStrategySciencePercent(t *testing.T) {
+	projection := Projection{
+		Rules:     &RulesProjection{AI: &rules.RuntimeAI{Strategies: []rules.RuntimeAIStrategy{{ID: "STRATEGY_DEFAULT", SciencePercent: 60}}}},
+		Diplomacy: &DiplomacyProjection{},
+	}
+	actions := governmentActions(projection, "a")
+	for _, action := range actions {
+		if action.Command == engine.CommandSetScienceRate && action.TargetID == "60" && bytes.Contains(action.Payload, []byte(`"science_percent":60`)) {
+			return
+		}
+	}
+	t.Fatalf("strategy science percent action missing: %#v", actions)
+}
+
 func TestRetailStealthProjectionRequiresStealthDetection(t *testing.T) {
 	state := fixtureState()
 	state.Cities = []engine.City{{ID: "home", OwnerID: "a", TileID: "0,0"}}

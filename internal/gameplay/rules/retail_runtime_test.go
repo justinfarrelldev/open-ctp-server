@@ -55,6 +55,16 @@ func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 	if runtime.AI == nil || len(runtime.AI.UnitBuildLists) != 27 || len(runtime.AI.BuildingBuildLists) != 13 || len(runtime.AI.WonderBuildLists) != 7 || len(runtime.AI.AdvanceLists) != 7 || len(runtime.AI.ImprovementLists) != 4 {
 		t.Fatalf("runtime AI lists = %+v", runtime.AI)
 	}
+	for _, strategy := range runtime.AI.Strategies {
+		if strategy.ID != "STRATEGY_DEFAULT" {
+			continue
+		}
+		if strategy.SciencePercent != 60 || strategy.PublicWorksPercent != 30 || strategy.PublicWorksReserve != 100 {
+			t.Fatalf("STRATEGY_DEFAULT economy sliders = %+v", strategy)
+		}
+		return
+	}
+	t.Fatalf("STRATEGY_DEFAULT missing from AI strategies")
 }
 
 func TestRetailRuntimeProjectionRoundTripsTerminalCalendar(t *testing.T) {

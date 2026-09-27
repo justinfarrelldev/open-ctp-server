@@ -18,6 +18,7 @@
 - [x] Task 004: Accepted combat now establishes mutual war state, clears trade treaty state, and cancels combatant trade routes, matching CTP2 hostile-action diplomacy/trade cleanup.
 - [x] Task 005: Trade routes now carry source goods, add source gold yield, and let destination production satisfy NeedsCityGood prerequisites from imported goods.
 - [x] Task 006: Public-works terrain improvements can be queued without worker units on owned/city-radius tiles, are projected as legal actions, and are selected by AI planners.
+- [x] Task 007: Retail AI strategy economy sliders are imported and the planner uses the strategy science percent instead of forcing 100% science/no-gold economy.
 
 ## Full-Game Mechanical Execution First
 

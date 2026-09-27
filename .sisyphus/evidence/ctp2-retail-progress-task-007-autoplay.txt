@@ -1,0 +1,3 @@
+OPEN_CTP_RECORD_RETAIL_AI_TURNS=/tmp/retail-ai-after-task007.jsonl go test ./internal/e2e/fullgame -run TestRetailAIAutoPlayRecordsAtLeastHundredTurns -count=1 -v
+PASS; final transcript summary:
+{"commands": ["respond-agreement", "create-trade-route", "reform", "reform", "reform", "reform", "reform", "reform", "round-complete"], "gold": 2346, "public_works": 38000, "restart_equal": true, "trade_routes": 1, "turn": 101}

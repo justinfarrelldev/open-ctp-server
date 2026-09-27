@@ -122,9 +122,21 @@ func projectRetailAI(ai RetailAILists) *RuntimeAI {
 		WonderBuildLists:   projectRetailAILists(ai.WonderBuildLists),
 		AdvanceLists:       projectRetailAILists(ai.AdvanceLists),
 		ImprovementLists:   projectRetailAILists(ai.ImprovementLists),
+		Strategies:         projectRetailAIStrategies(ai.Strategies),
 	}
-	if len(projected.UnitBuildLists) == 0 && len(projected.BuildingBuildLists) == 0 && len(projected.WonderBuildLists) == 0 && len(projected.AdvanceLists) == 0 && len(projected.ImprovementLists) == 0 {
+	if len(projected.UnitBuildLists) == 0 && len(projected.BuildingBuildLists) == 0 && len(projected.WonderBuildLists) == 0 && len(projected.AdvanceLists) == 0 && len(projected.ImprovementLists) == 0 && len(projected.Strategies) == 0 {
 		return nil
+	}
+	return projected
+}
+
+func projectRetailAIStrategies(strategies []RetailAIStrategy) []RuntimeAIStrategy {
+	projected := make([]RuntimeAIStrategy, 0, len(strategies))
+	for _, strategy := range strategies {
+		if strategy.ID == "" {
+			continue
+		}
+		projected = append(projected, RuntimeAIStrategy{ID: strategy.ID, SciencePercent: strategy.SciencePercent, PublicWorksPercent: strategy.PublicWorksPercent, PublicWorksReserve: strategy.PublicWorksReserve})
 	}
 	return projected
 }

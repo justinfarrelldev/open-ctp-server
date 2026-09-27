@@ -211,11 +211,21 @@ type RetailCalendarPeriod struct {
 }
 
 type RetailAILists struct {
-	UnitBuildLists     []RetailAIList `json:"unit_build_lists,omitempty"`
-	BuildingBuildLists []RetailAIList `json:"building_build_lists,omitempty"`
-	WonderBuildLists   []RetailAIList `json:"wonder_build_lists,omitempty"`
-	AdvanceLists       []RetailAIList `json:"advance_lists,omitempty"`
-	ImprovementLists   []RetailAIList `json:"improvement_lists,omitempty"`
+	UnitBuildLists     []RetailAIList     `json:"unit_build_lists,omitempty"`
+	BuildingBuildLists []RetailAIList     `json:"building_build_lists,omitempty"`
+	WonderBuildLists   []RetailAIList     `json:"wonder_build_lists,omitempty"`
+	AdvanceLists       []RetailAIList     `json:"advance_lists,omitempty"`
+	ImprovementLists   []RetailAIList     `json:"improvement_lists,omitempty"`
+	Strategies         []RetailAIStrategy `json:"strategies,omitempty"`
+}
+
+// RetailAIStrategy preserves the released AI strategy economy sliders used by
+// retail to set science tax and public-works/material allocation.
+type RetailAIStrategy struct {
+	ID                 string `json:"id"`
+	SciencePercent     int    `json:"science_percent,omitempty"`
+	PublicWorksPercent int    `json:"public_works_percent,omitempty"`
+	PublicWorksReserve int    `json:"public_works_reserve,omitempty"`
 }
 
 type RetailAIList struct {
@@ -597,7 +607,60 @@ func loadRetailAILists(directory string) (RetailAILists, error) {
 	if result.ImprovementLists, err = parseRetailAIListFile(filepath.Join(directory, "ImprovementLists.txt"), "Improvement"); err != nil {
 		return RetailAILists{}, err
 	}
+	if result.Strategies, err = parseRetailAIStrategyFile(filepath.Join(directory, "strategies.txt")); err != nil {
+		return RetailAILists{}, err
+	}
 	return result, nil
+}
+
+func parseRetailAIStrategyFile(path string) ([]RetailAIStrategy, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, importError(ErrorInvalidDirectory, path, 1, "", err.Error())
+	}
+	records, err := ParseRetailRawRecords(filepath.Base(path), stripRetailAIComments(data), RetailCatalog{Filename: filepath.Base(path), Kind: "ai_strategy", Prefixes: []string{"STRATEGY_"}})
+	if err != nil {
+		return nil, err
+	}
+	strategies := make([]RetailAIStrategy, 0, len(records))
+	for _, record := range records {
+		strategy := RetailAIStrategy{ID: record.ID}
+		for _, field := range record.Fields {
+			if len(field.Values) == 0 {
+				continue
+			}
+			switch field.Key {
+			case "SciencePercent":
+				strategy.SciencePercent, err = retailParseInt(record.ID, field.Key, field.Values[0])
+			case "PublicWorksPercent":
+				strategy.PublicWorksPercent, err = retailParseInt(record.ID, field.Key, field.Values[0])
+			case "PublicWorksReserve":
+				strategy.PublicWorksReserve, err = retailParseInt(record.ID, field.Key, field.Values[0])
+			}
+			if err != nil {
+				return nil, err
+			}
+		}
+		strategies = append(strategies, strategy)
+	}
+	return strategies, nil
+}
+
+func stripRetailAIComments(data []byte) []byte {
+	lines := strings.Split(string(data), "\n")
+	for index, line := range lines {
+		if comment := strings.Index(line, "#"); comment >= 0 {
+			line = line[:comment]
+		}
+		if comment := strings.Index(line, "//"); comment >= 0 {
+			line = line[:comment]
+		}
+		lines[index] = line
+	}
+	return []byte(strings.Join(lines, "\n"))
 }
 
 func parseRetailAIListFile(path string, itemKey string) ([]RetailAIList, error) {

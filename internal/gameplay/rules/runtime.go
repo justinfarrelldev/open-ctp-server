@@ -332,11 +332,21 @@ type RuntimeProduction struct {
 }
 
 type RuntimeAI struct {
-	UnitBuildLists     []RuntimeAIList `json:"unit_build_lists,omitempty"`
-	BuildingBuildLists []RuntimeAIList `json:"building_build_lists,omitempty"`
-	WonderBuildLists   []RuntimeAIList `json:"wonder_build_lists,omitempty"`
-	AdvanceLists       []RuntimeAIList `json:"advance_lists,omitempty"`
-	ImprovementLists   []RuntimeAIList `json:"improvement_lists,omitempty"`
+	UnitBuildLists     []RuntimeAIList     `json:"unit_build_lists,omitempty"`
+	BuildingBuildLists []RuntimeAIList     `json:"building_build_lists,omitempty"`
+	WonderBuildLists   []RuntimeAIList     `json:"wonder_build_lists,omitempty"`
+	AdvanceLists       []RuntimeAIList     `json:"advance_lists,omitempty"`
+	ImprovementLists   []RuntimeAIList     `json:"improvement_lists,omitempty"`
+	Strategies         []RuntimeAIStrategy `json:"strategies,omitempty"`
+}
+
+// RuntimeAIStrategy carries retail AI economy slider preferences that can be
+// used from projections without exposing hidden world state.
+type RuntimeAIStrategy struct {
+	ID                 string `json:"id"`
+	SciencePercent     int    `json:"science_percent,omitempty"`
+	PublicWorksPercent int    `json:"public_works_percent,omitempty"`
+	PublicWorksReserve int    `json:"public_works_reserve,omitempty"`
 }
 
 type RuntimeAIList struct {
