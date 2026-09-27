@@ -155,21 +155,26 @@ func tileByIDMust(t *testing.T, state State, id string) Tile {
 	return tile
 }
 
-func TestRetailFreeSlavesWonderRemovesSlaverUnitsEverywhere(t *testing.T) {
+func TestRetailFreeSlavesWonderEmancipatesCitiesAndSlaverUnitsEverywhere(t *testing.T) {
 	state := State{
-		Tiles:  []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}},
-		Cities: []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", StoredProduction: 1, Queue: []ProductionItem{{ID: "WONDER_EMANCIPATION", Kind: ProductionWonder, Cost: 1, Effects: []Effect{{ID: "free", Kind: EffectFreeSlaves}}}}}},
+		Tiles: []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}, {ID: "tile-b", Terrain: TerrainPlains, Open: true}},
+		Cities: []City{
+			{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Specialists: map[string]int{"POP_SLAVE": 2}, StoredProduction: 1, Queue: []ProductionItem{{ID: "WONDER_EMANCIPATION", Kind: ProductionWonder, Cost: 1, Effects: []Effect{{ID: "free", Kind: EffectFreeSlaves}}}}},
+			{ID: "city-b", OwnerID: "player-b", TileID: "tile-b", Specialists: map[string]int{"POP_SLAVE": 1}},
+		},
 		Units: []Unit{
 			{ID: "slaver-a", OwnerID: "player-a", TileID: "tile-a", Effects: []Effect{{ID: "slave", Kind: EffectSpecialSlaveRaid}}},
 			{ID: "slaver-b", OwnerID: "player-b", TileID: "tile-a", Effects: []Effect{{ID: "settler-slave", Kind: EffectSpecialSettlerSlaveRaid}}},
+			{ID: "uprising", OwnerID: "player-b", TileID: "tile-a", Effects: []Effect{{ID: "uprising", Kind: EffectSpecialSlaveUprising}}},
 			{ID: "guard", OwnerID: "player-b", TileID: "tile-a"},
 		},
 	}
-	if err := completeProduction(&state, &state.Cities[0], nil); err != nil {
+	runtime := &rules.RuntimeRules{Constants: rules.RuntimeConstants{EmancipationUnhappinessTurns: 5, EmancipationUnhappinessAmount: -3}}
+	if err := completeProduction(&state, &state.Cities[0], runtime); err != nil {
 		t.Fatal(err)
 	}
-	if len(state.Units) != 1 || state.Units[0].ID != "guard" {
-		t.Fatalf("units after free-slaves wonder = %#v", state.Units)
+	if len(state.Units) != 1 || state.Units[0].ID != "guard" || state.Cities[0].Specialists["POP_SLAVE"] != 0 || state.Cities[1].Specialists["POP_SLAVE"] != 0 || !hasTimedHappinessAttack(state.Cities[1], -3, 5) || hasTimedHappinessAttack(state.Cities[0], -3, 5) {
+		t.Fatalf("free-slaves wonder result units=%#v cities=%#v", state.Units, state.Cities)
 	}
 }
 

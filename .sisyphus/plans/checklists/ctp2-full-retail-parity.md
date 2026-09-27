@@ -286,6 +286,11 @@
 - [x] Task 335: Underground railway requires slave population in the target city.
 - [x] Task 336: Underground railway consumes one target slave specialist without reducing target population.
 - [x] Task 337: Underground railway adds one population to the nearest owned city for the acting player.
+- [x] Task 338: Retail emancipation unhappiness constants import into runtime rules.
+- [x] Task 339: `FreeSlaves` wonder completion removes `POP_SLAVE` specialists from cities.
+- [x] Task 340: Emancipation applies retail unhappiness timers to non-owner cities where slaves were freed.
+- [x] Task 341: Emancipation removes slave-uprising units as illegal slavery units.
+- [x] Task 342: Emancipation continues removing slave-raid and settler-slave-raid units globally.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

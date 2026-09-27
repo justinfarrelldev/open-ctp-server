@@ -2038,7 +2038,7 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 			return nil
 		}
 		state.Wonders = append(state.Wonders, Wonder{ID: item.ID, OwnerID: city.OwnerID, CityID: city.ID, Scope: item.Scope, ObsoletedBy: item.ObsoletedBy, Effects: item.Effects})
-		applyWonderCompletionEffects(state, state.Wonders[len(state.Wonders)-1])
+		applyWonderCompletionEffects(state, state.Wonders[len(state.Wonders)-1], runtime)
 		return nil
 	default:
 		return errors.New("unsupported production kind")
@@ -2104,7 +2104,7 @@ func HasEffectiveEmbassyWith(state State, actorPlayerID, targetPlayerID string) 
 	return actorNation != nil && targetNationID != "" && containsString(actorNation.Embassies, targetNationID)
 }
 
-func applyWonderCompletionEffects(state *State, wonder Wonder) {
+func applyWonderCompletionEffects(state *State, wonder Wonder, runtime *rules.RuntimeRules) {
 	if wonder.Destroyed {
 		return
 	}
@@ -2127,7 +2127,7 @@ func applyWonderCompletionEffects(state *State, wonder Wonder) {
 		case EffectEliminateNukes:
 			eliminateNukes(state)
 		case EffectFreeSlaves:
-			removeSlaverUnits(state)
+			emancipateSlaves(state, wonder.OwnerID, runtime)
 		case EffectPollutersToParks:
 			convertPollutedCitiesToParks(state, wonder.OwnerID, wonder.CityID, effect.Value)
 		case EffectTemporaryFullHappiness:
@@ -2276,6 +2276,34 @@ func filterOverlaysNotOnTiles(overlays []TileOverlay, removed map[string]bool) [
 	return filtered
 }
 
+func emancipationUnhappiness(runtime *rules.RuntimeRules) (int, int) {
+	turns, amount := 5, -3
+	if runtime != nil {
+		if runtime.Constants.EmancipationUnhappinessTurns > 0 {
+			turns = runtime.Constants.EmancipationUnhappinessTurns
+		}
+		if runtime.Constants.EmancipationUnhappinessAmount != 0 {
+			amount = runtime.Constants.EmancipationUnhappinessAmount
+		}
+	}
+	return turns, amount
+}
+
+func emancipateSlaves(state *State, wonderOwnerID string, runtime *rules.RuntimeRules) {
+	turns, amount := emancipationUnhappiness(runtime)
+	for index := range state.Cities {
+		freed := state.Cities[index].Specialists["POP_SLAVE"]
+		if freed <= 0 {
+			continue
+		}
+		delete(state.Cities[index].Specialists, "POP_SLAVE")
+		if state.Cities[index].OwnerID != wonderOwnerID {
+			state.Cities[index].Effects = append(state.Cities[index].Effects, Effect{ID: "emancipation", Kind: EffectHappiness, Value: amount, Turns: turns})
+		}
+	}
+	removeSlaverUnits(state)
+}
+
 func removeSlaverUnits(state *State) {
 	removed := make([]string, 0)
 	for _, unit := range state.Units {
@@ -2290,7 +2318,7 @@ func removeSlaverUnits(state *State) {
 
 func unitHasSlaveryEffect(unit Unit) bool {
 	for _, effect := range unit.Effects {
-		if effect.Kind == EffectSpecialSlaveRaid || effect.Kind == EffectSpecialSettlerSlaveRaid {
+		if effect.Kind == EffectSpecialSlaveRaid || effect.Kind == EffectSpecialSettlerSlaveRaid || effect.Kind == EffectSpecialSlaveUprising {
 			return true
 		}
 	}

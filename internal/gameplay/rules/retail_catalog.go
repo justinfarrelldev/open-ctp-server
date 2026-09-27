@@ -193,6 +193,8 @@ type RetailConstants struct {
 	OtherFaithIndulgenceHappiness  int `json:"other_faith_indulgence_happiness"`
 	ClericConversionPercent        int `json:"cleric_conversion_percent"`
 	TelevangelistConversionPercent int `json:"televangelist_conversion_percent"`
+	EmancipationUnhappinessTurns   int `json:"emancipation_unhappiness_turns"`
+	EmancipationUnhappinessAmount  int `json:"emancipation_unhappiness_amount"`
 }
 
 type RetailCalendarPeriod struct {
@@ -407,7 +409,7 @@ func loadRetailConstants(path string) (RetailConstants, error) {
 	floatValues := map[string]int{}
 	for index := 0; index+1 < len(tokens); index++ {
 		switch tokens[index].value {
-		case "CITY_GROWTH_COEFFICIENT", "UNCONVERTED_INDULGENCE_GOLD", "UNCONVERTED_INDULGENCE_HAPPINESS", "CONVERTED_INDULGENCE_GOLD", "CONVERTED_INDULGENCE_HAPPINESS", "OTHER_FAITH_INDULGENCE_GOLD", "OTHER_FAITH_INDULGENCE_HAPPINESS":
+		case "CITY_GROWTH_COEFFICIENT", "UNCONVERTED_INDULGENCE_GOLD", "UNCONVERTED_INDULGENCE_HAPPINESS", "CONVERTED_INDULGENCE_GOLD", "CONVERTED_INDULGENCE_HAPPINESS", "OTHER_FAITH_INDULGENCE_GOLD", "OTHER_FAITH_INDULGENCE_HAPPINESS", "EMANCIPATION_UNHAPPINESS_TURNS":
 			value, err := retailParseInt("CONST", tokens[index].value, tokens[index+1].value)
 			if err != nil {
 				return RetailConstants{}, err
@@ -419,9 +421,15 @@ func loadRetailConstants(path string) (RetailConstants, error) {
 				return RetailConstants{}, err
 			}
 			floatValues[tokens[index].value] = percentPoints(value)
+		case "EMANCIPATION_UNHAPPINESS_AMOUNT":
+			value, err := retailParseFloat("CONST", tokens[index].value, tokens[index+1].value)
+			if err != nil {
+				return RetailConstants{}, err
+			}
+			floatValues[tokens[index].value] = int(value)
 		}
 	}
-	return RetailConstants{CityGrowthCoefficient: values["CITY_GROWTH_COEFFICIENT"], UnconvertedIndulgenceGold: values["UNCONVERTED_INDULGENCE_GOLD"], UnconvertedIndulgenceHappiness: values["UNCONVERTED_INDULGENCE_HAPPINESS"], ConvertedIndulgenceGold: values["CONVERTED_INDULGENCE_GOLD"], ConvertedIndulgenceHappiness: values["CONVERTED_INDULGENCE_HAPPINESS"], OtherFaithIndulgenceGold: values["OTHER_FAITH_INDULGENCE_GOLD"], OtherFaithIndulgenceHappiness: values["OTHER_FAITH_INDULGENCE_HAPPINESS"], ClericConversionPercent: floatValues["CLERIC_CONVERSION_FACTOR"], TelevangelistConversionPercent: floatValues["TELEVANGELIST_CONVERSION_FACTOR"]}, nil
+	return RetailConstants{CityGrowthCoefficient: values["CITY_GROWTH_COEFFICIENT"], UnconvertedIndulgenceGold: values["UNCONVERTED_INDULGENCE_GOLD"], UnconvertedIndulgenceHappiness: values["UNCONVERTED_INDULGENCE_HAPPINESS"], ConvertedIndulgenceGold: values["CONVERTED_INDULGENCE_GOLD"], ConvertedIndulgenceHappiness: values["CONVERTED_INDULGENCE_HAPPINESS"], OtherFaithIndulgenceGold: values["OTHER_FAITH_INDULGENCE_GOLD"], OtherFaithIndulgenceHappiness: values["OTHER_FAITH_INDULGENCE_HAPPINESS"], ClericConversionPercent: floatValues["CLERIC_CONVERSION_FACTOR"], TelevangelistConversionPercent: floatValues["TELEVANGELIST_CONVERSION_FACTOR"], EmancipationUnhappinessTurns: values["EMANCIPATION_UNHAPPINESS_TURNS"], EmancipationUnhappinessAmount: floatValues["EMANCIPATION_UNHAPPINESS_AMOUNT"]}, nil
 }
 
 func loadRetailEndGameYears(path string) (int, int, error) {
