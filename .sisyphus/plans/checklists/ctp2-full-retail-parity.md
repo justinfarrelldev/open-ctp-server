@@ -276,6 +276,10 @@
 - [x] Task 325: Converted-city gold is siphoned to the converted-to nation during treasury advancement.
 - [x] Task 326: Cleric conversion gold uses the retail cleric conversion factor.
 - [x] Task 327: Televangelist conversion gold uses the retail televangelist conversion factor.
+- [x] Task 328: Canonical tiles preserve map good/resource identifiers.
+- [x] Task 329: Founded cities collect unique goods from the city tile and adjacent radius.
+- [x] Task 330: City recalculation refreshes city goods from the current map radius.
+- [x] Task 331: `NeedsCityGood` production gates work from map-derived city goods.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

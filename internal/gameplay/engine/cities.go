@@ -446,8 +446,31 @@ func foundCity(state *State, actor string, payload FoundCityPayload) error {
 	cityTypeID := unit.SettleCityTypeID
 	population, buildings := foundedCitySeed(unit.Effects)
 	removeUnitAndCargo(state, unit.ID)
-	state.Cities = append(state.Cities, City{ID: payload.CityID, TypeID: cityTypeID, Name: payload.Name, OwnerID: actor, TileID: tileID, Population: population, Buildings: buildings})
+	state.Cities = append(state.Cities, City{ID: payload.CityID, TypeID: cityTypeID, Name: payload.Name, OwnerID: actor, TileID: tileID, Population: population, Buildings: buildings, Goods: cityGoodsInRadius(*state, tileID)})
 	return nil
+}
+
+func cityGoodsInRadius(state State, tileID string) []string {
+	center, ok := tileByID(state, tileID)
+	if !ok {
+		return nil
+	}
+	goods := make([]string, 0)
+	seen := make(map[string]bool)
+	for _, tile := range state.Tiles {
+		if tile.GoodID == "" {
+			continue
+		}
+		if tile.ID != center.ID && !adjacent(center, tile) {
+			continue
+		}
+		if !seen[tile.GoodID] {
+			goods = append(goods, tile.GoodID)
+			seen[tile.GoodID] = true
+		}
+	}
+	sort.Strings(goods)
+	return goods
 }
 
 func foundedCitySeed(effects []Effect) (int, []Building) {
@@ -735,6 +758,7 @@ func RecalculateRound(state State) (State, error) {
 		if !ok {
 			continue
 		}
+		city.Goods = cityGoodsInRadius(next, city.TileID)
 		if err := completeProduction(&next, city, runtime); err != nil {
 			return State{}, err
 		}

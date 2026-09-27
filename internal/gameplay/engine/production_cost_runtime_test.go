@@ -69,6 +69,17 @@ func TestRuntimeEliminateNukesBlocksNuclearAttackProduction(t *testing.T) {
 	}
 }
 
+func TestRuntimeFoundCityCollectsAdjacentGoodsForNeedsCityGoodProduction(t *testing.T) {
+	state := task10State()
+	state.Tiles = append(state.Tiles, Tile{ID: "good", X: 1, Y: 1, Terrain: TerrainPlains, Open: true, GoodID: "GOOD_COFFEE"})
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_COFFEE_EXPORTER", Domain: DomainLand, Movement: 1, Health: 1, NeedsCityGoodID: "GOOD_COFFEE"}}}
+
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_COFFEE_EXPORTER", Kind: ProductionUnit, Cost: 1}}, runtime); err != nil {
+		t.Fatalf("queueProduction should use founded city goods: %v city=%+v", err, state.Cities[0])
+	}
+}
+
 func TestRuntimeProductionQueueRejectsUnitsNeedingAbsentCityGood(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
