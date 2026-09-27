@@ -72,6 +72,7 @@ type UnitProjection struct {
 	Health             int             `json:"health,omitempty"`
 	MaxHealth          int             `json:"max_health,omitempty"`
 	VisibilityRange    int             `json:"visibility_range,omitempty"`
+	SettleCityTypeID   string          `json:"settle_city_type_id,omitempty"`
 	Effects            []engine.Effect `json:"effects,omitempty"`
 }
 
@@ -278,6 +279,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 				projected.Attack, projected.Defense, projected.Ranged, projected.BombardRange, projected.BombRounds, projected.ActiveDefenseRange, projected.Strength, projected.Armor, projected.Firepower = unit.Attack, unit.Defense, unit.Ranged, unit.BombardRange, unit.BombRounds, unit.ActiveDefenseRange, unit.Strength, unit.Armor, unit.Firepower
 				projected.Health, projected.MaxHealth = unit.Health, unit.MaxHealth
 				projected.VisibilityRange = unit.VisibilityRange
+				projected.SettleCityTypeID = unit.SettleCityTypeID
 				projected.Effects = append([]engine.Effect(nil), unit.Effects...)
 			}
 			result.Units = append(result.Units, projected)

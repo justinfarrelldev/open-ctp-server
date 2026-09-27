@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
 func task10State() State {
@@ -226,12 +228,37 @@ func TestRetailIncreaseBrokeragesAmplifiesBrokerageCommerce(t *testing.T) {
 	}
 }
 
-func TestRetailSettlerEffectsSeedFoundedCitySizeAndBuildings(t *testing.T) {
+func TestRetailSettlerEffectsSeedFoundedCitySizeBuildingsAndCityType(t *testing.T) {
 	state := task10State()
+	state.Units[0].SettleCityTypeID = "UNIT_OCEAN_CITY"
 	state.Units[0].Effects = []Effect{{ID: "settle", Kind: EffectSettler}, {ID: "settle-size", Kind: EffectSettleSize, Value: 3}, {ID: "IMPROVE_GRANARY", Kind: EffectSettleBuilding}}
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
-	if len(state.Cities) != 1 || state.Cities[0].Population != 3 || len(state.Cities[0].Buildings) != 1 || state.Cities[0].Buildings[0].ID != "IMPROVE_GRANARY" {
+	if len(state.Cities) != 1 || state.Cities[0].Population != 3 || state.Cities[0].TypeID != "UNIT_OCEAN_CITY" || len(state.Cities[0].Buildings) != 1 || state.Cities[0].Buildings[0].ID != "IMPROVE_GRANARY" {
 		t.Fatalf("founded city = %+v", state.Cities)
+	}
+}
+
+func TestRetailRuntimeSettleCityTypeAndGrowthCoefficient(t *testing.T) {
+	state := task10State()
+	state.Units[0].TypeID = "UNIT_SEA_ENGINEER"
+	state.Units[0].SettleCityTypeID = "UNIT_OCEAN_CITY"
+	state.Tiles[0].Terrain = "TERRAIN_WATER_SHELF"
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	state.Cities[0].StoredFood = 0
+	state.Phase.Turn = state.RecalculatedTurn + 1
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_WATER_SHELF", Cost: 100, Domains: []string{DomainSea}, CityFood: 52}}}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainSea, Movement: 1, Health: 1, SettleCityTypeID: "UNIT_OCEAN_CITY", Effects: []rules.RuntimeStarterEffect{{ID: "settler", Kind: EffectSettler}}}, {ID: "UNIT_OCEAN_CITY", Domain: DomainSea, Movement: 1, Health: 1, CityGrowthCoefficientPercent: 50}}}
+	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Rules = RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: contentHash, Definitions: definitions}
+
+	next, err := RecalculateRound(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Cities[0].TypeID != "UNIT_OCEAN_CITY" || next.Cities[0].Population != 2 || next.Cities[0].StoredFood != 0 {
+		t.Fatalf("city type/growth = type %q pop %d stored %d", next.Cities[0].TypeID, next.Cities[0].Population, next.Cities[0].StoredFood)
 	}
 }
 

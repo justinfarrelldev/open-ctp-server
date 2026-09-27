@@ -228,6 +228,10 @@
 - [x] Task 277: Owned-unit projections expose `food_hunger` while visible enemy projections keep upkeep/support/food fields hidden.
 - [x] Task 278: Retail `StealTechnology.SpecificChance` is preserved as canonical runtime special metadata.
 - [x] Task 279: Retail `Units.txt` field coverage audit leaves only non-gameplay sound/presentation cargo-load metadata outside runtime projection.
+- [x] Task 280: Produced units preserve runtime `settle_city_type_id` metadata.
+- [x] Task 281: Found-city execution records the founded city's retail city unit type.
+- [x] Task 282: City food growth applies the founded city type's retail `CityGrowthCoefficient`.
+- [x] Task 283: Owned-unit projections expose `settle_city_type_id` while visible enemy units keep it hidden.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

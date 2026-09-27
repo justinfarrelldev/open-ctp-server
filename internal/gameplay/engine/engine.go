@@ -236,10 +236,12 @@ type Unit struct {
 	Health             int      `json:"health,omitempty"`
 	MaxHealth          int      `json:"max_health,omitempty"`
 	VisibilityRange    int      `json:"visibility_range,omitempty"`
+	SettleCityTypeID   string   `json:"settle_city_type_id,omitempty"`
 }
 
 type City struct {
 	ID                string           `json:"id"`
+	TypeID            string           `json:"type_id,omitempty"`
 	Name              string           `json:"name,omitempty"`
 	OwnerID           string           `json:"owner_id"`
 	TileID            string           `json:"tile_id"`

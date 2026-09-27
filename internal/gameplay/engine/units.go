@@ -241,6 +241,7 @@ func applyUnitDefinition(unit *Unit, definition rules.RuntimeUnitDefinition) {
 		unit.Health = unit.MaxHealth
 	}
 	unit.VisibilityRange = definition.VisibilityRange
+	unit.SettleCityTypeID = definition.SettleCityTypeID
 	unit.Fortified = false
 }
 

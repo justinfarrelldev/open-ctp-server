@@ -443,9 +443,10 @@ func foundCity(state *State, actor string, payload FoundCityPayload) error {
 		}
 	}
 	tileID := unit.TileID
+	cityTypeID := unit.SettleCityTypeID
 	population, buildings := foundedCitySeed(unit.Effects)
 	removeUnitAndCargo(state, unit.ID)
-	state.Cities = append(state.Cities, City{ID: payload.CityID, Name: payload.Name, OwnerID: actor, TileID: tileID, Population: population, Buildings: buildings})
+	state.Cities = append(state.Cities, City{ID: payload.CityID, TypeID: cityTypeID, Name: payload.Name, OwnerID: actor, TileID: tileID, Population: population, Buildings: buildings})
 	return nil
 }
 
@@ -744,7 +745,7 @@ func RecalculateRound(state State) (State, error) {
 		if nation := nationForID(&next, nationForPlayer(next, city.OwnerID)); nation != nil {
 			advanceConquestDistress(city, *nation)
 		}
-		advanceCityFoodWithConsumption(city, cityMaxPopulation(next, *city), cityStarvationProtection(next, *city), foodVatPercent(*city), cityFoodConsumptionForNation(next, *city))
+		advanceCityFoodWithRuntime(city, runtime, cityMaxPopulation(next, *city), cityStarvationProtection(next, *city), foodVatPercent(*city), cityFoodConsumptionForNation(next, *city))
 		if cityPollutionEnabled(runtime) {
 			applyCityPollution(&next, *city, runtimePollutionModel(runtime))
 		}
@@ -1060,6 +1061,14 @@ func advanceCityFood(city *City, maxPopulation int, starvationProtection int, fo
 }
 
 func advanceCityFoodWithConsumption(city *City, maxPopulation int, starvationProtection int, foodVatPercent int, consumption int) {
+	advanceCityFoodWithGrowthCoefficient(city, maxPopulation, starvationProtection, foodVatPercent, consumption, 100)
+}
+
+func advanceCityFoodWithRuntime(city *City, runtime *rules.RuntimeRules, maxPopulation int, starvationProtection int, foodVatPercent int, consumption int) {
+	advanceCityFoodWithGrowthCoefficient(city, maxPopulation, starvationProtection, foodVatPercent, consumption, cityGrowthCoefficientPercent(*city, runtime))
+}
+
+func advanceCityFoodWithGrowthCoefficient(city *City, maxPopulation int, starvationProtection int, foodVatPercent int, consumption int, growthCoefficientPercent int) {
 	if city.Population < 1 {
 		city.Population = 1
 	}
@@ -1089,11 +1098,11 @@ func advanceCityFoodWithConsumption(city *City, maxPopulation int, starvationPro
 		return
 	}
 	city.StarvationTurns = 0
-	for city.StoredFood >= cityFoodGrowthThreshold(city.Population) {
+	for city.StoredFood >= cityFoodGrowthThresholdWithCoefficient(city.Population, growthCoefficientPercent) {
 		if maxPopulation > 0 && city.Population >= maxPopulation {
 			return
 		}
-		city.StoredFood -= cityFoodGrowthThreshold(city.Population)
+		city.StoredFood -= cityFoodGrowthThresholdWithCoefficient(city.Population, growthCoefficientPercent)
 		city.Population++
 	}
 }
@@ -1897,10 +1906,32 @@ func cityFoodConsumptionForNation(state State, city City) int {
 }
 
 func cityFoodGrowthThreshold(population int) int {
+	return cityFoodGrowthThresholdWithCoefficient(population, 100)
+}
+
+func cityFoodGrowthThresholdWithCoefficient(population int, coefficientPercent int) int {
 	if population < 1 {
 		population = 1
 	}
-	return population * 100
+	if coefficientPercent <= 0 {
+		coefficientPercent = 100
+	}
+	threshold := population * 100 * coefficientPercent / 100
+	if threshold < 1 {
+		threshold = 1
+	}
+	return threshold
+}
+
+func cityGrowthCoefficientPercent(city City, runtime *rules.RuntimeRules) int {
+	if runtime == nil || city.TypeID == "" {
+		return 100
+	}
+	definition, ok := runtime.Unit(city.TypeID)
+	if !ok || definition.CityGrowthCoefficientPercent <= 0 {
+		return 100
+	}
+	return definition.CityGrowthCoefficientPercent
 }
 
 func runtimeRulesForState(state State) (*rules.RuntimeRules, error) {
@@ -2269,6 +2300,7 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 		Health:             health,
 		MaxHealth:          health,
 		VisibilityRange:    definition.VisibilityRange,
+		SettleCityTypeID:   definition.SettleCityTypeID,
 	}
 	state.Units = append(state.Units, unit)
 	if hasEffect(unit.Effects, EffectBuildingRemovesPopulation) && city.Population > 1 {
