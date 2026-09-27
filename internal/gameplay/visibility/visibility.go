@@ -692,13 +692,28 @@ func tradeRouteActions(state engine.State, projection Projection, playerID strin
 	actions := make([]ActionProjection, 0)
 	for _, source := range owned {
 		for _, destination := range destinations {
-			if source.ID == destination.ID || existing[source.ID+"\x00"+destination.ID] {
+			if source.ID == destination.ID || existing[source.ID+"\x00"+destination.ID] || !projectedTradeAgreementAllows(projection, playerID, destination.OwnerID) {
 				continue
 			}
 			actions = append(actions, action(engine.CommandCreateTradeRoute, "create-trade-route", source.ID, destination.ID, map[string]string{"source_city_id": source.ID, "destination_city_id": destination.ID}, []string{"source_city_id", "destination_city_id"}))
 		}
 	}
 	return actions
+}
+
+func projectedTradeAgreementAllows(projection Projection, playerID, destinationOwnerID string) bool {
+	if destinationOwnerID == playerID {
+		return true
+	}
+	if projection.Diplomacy == nil {
+		return false
+	}
+	for _, relation := range projection.Diplomacy.Relations {
+		if relation.TargetPlayerID == destinationOwnerID && relation.Regard != "hotwar" && (relation.Trade || relation.Treaty == "trade" || relation.Treaty == "union") {
+			return true
+		}
+	}
+	return false
 }
 
 func specialistActions(projection Projection, playerID string) []ActionProjection {

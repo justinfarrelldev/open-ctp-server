@@ -81,6 +81,7 @@ func TestVisibleCitiesProjectCreateTradeRouteAction(t *testing.T) {
 	state.Tiles = []engine.Tile{{ID: "0,0", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "1,0", X: 1, Y: 0, Terrain: engine.TerrainPlains, Open: true}}
 	state.Units = nil
 	state.Cities = []engine.City{{ID: "home", OwnerID: "a", TileID: "0,0"}, {ID: "foreign", OwnerID: "b", TileID: "1,0"}}
+	state.Diplomacy = []engine.DiplomaticRelation{{ID: "a:b", PlayerAID: "a", PlayerBID: "b", Contact: true, Treaty: "trade", Trade: true}}
 	projection, err := Project(state, "a")
 	if err != nil {
 		t.Fatal(err)
@@ -91,6 +92,26 @@ func TestVisibleCitiesProjectCreateTradeRouteAction(t *testing.T) {
 		}
 	}
 	t.Fatalf("trade route action missing: %#v", projection.LegalActions)
+}
+
+func TestVisibleCitiesSuppressForeignTradeRouteActionWithoutTradeAgreement(t *testing.T) {
+	state := fixtureState()
+	state.Players = []engine.Player{{ID: "a", NationID: "na", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}, {ID: "b", NationID: "nb", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"a", "b"}
+	state.Nations = []engine.Nation{{ID: "na"}, {ID: "nb"}}
+	state.Tiles = []engine.Tile{{ID: "0,0", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "1,0", X: 1, Y: 0, Terrain: engine.TerrainPlains, Open: true}}
+	state.Units = nil
+	state.Cities = []engine.City{{ID: "home", OwnerID: "a", TileID: "0,0"}, {ID: "foreign", OwnerID: "b", TileID: "1,0"}}
+	state.Diplomacy = []engine.DiplomaticRelation{{ID: "a:b", PlayerAID: "a", PlayerBID: "b", Contact: true, Treaty: "peace"}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, action := range projection.LegalActions {
+		if action.Command == engine.CommandCreateTradeRoute && action.TargetID == "foreign" {
+			t.Fatalf("foreign trade route action leaked without trade agreement: %#v", action)
+		}
+	}
 }
 
 func TestSpecialistsProjectOwnerAssignmentsAndLegalAction(t *testing.T) {

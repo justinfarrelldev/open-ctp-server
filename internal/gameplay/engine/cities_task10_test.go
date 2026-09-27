@@ -2,6 +2,7 @@ package engine
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -39,6 +40,7 @@ func TestCreateTradeRouteCommandAddsCanonicalRoute(t *testing.T) {
 	state.Nations = []Nation{{ID: "nation-a"}, {ID: "nation-b"}}
 	state.Tiles = []Tile{{ID: "tile-a", X: 0, Y: 0, Terrain: TerrainPlains, Open: true}, {ID: "tile-b", X: 2, Y: 0, Terrain: TerrainPlains, Open: true}}
 	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}, {ID: "city-b", OwnerID: "player-b", TileID: "tile-b"}}
+	state.Diplomacy = []DiplomaticRelation{{ID: "player-a:player-b", PlayerAID: "player-a", PlayerBID: "player-b", Contact: true, Treaty: "trade", Trade: true}}
 	body, _ := json.Marshal(map[string]string{"source_city_id": "city-a", "destination_city_id": "city-b"})
 	next, events, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "route", ActorPlayerID: "player-a", Type: CommandCreateTradeRoute, Payload: body}, state.Rules, fixtureSources())
 	if err != nil {
@@ -46,6 +48,21 @@ func TestCreateTradeRouteCommandAddsCanonicalRoute(t *testing.T) {
 	}
 	if len(next.TradeRoutes) != 1 || next.TradeRoutes[0].SourceCityID != "city-a" || next.TradeRoutes[0].DestinationCityID != "city-b" || len(events) != 1 || events[0].Type != EventTradeRouteCreated {
 		t.Fatalf("trade route command failed: routes=%#v events=%#v", next.TradeRoutes, events)
+	}
+}
+
+func TestCreateTradeRouteRejectsForeignDestinationWithoutTradeAgreement(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}, {ID: "player-b", NationID: "nation-b", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a", "player-b"}
+	state.Nations = []Nation{{ID: "nation-a"}, {ID: "nation-b"}}
+	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}, {ID: "tile-b", Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}, {ID: "city-b", OwnerID: "player-b", TileID: "tile-b"}}
+	state.Diplomacy = []DiplomaticRelation{{ID: "player-a:player-b", PlayerAID: "player-a", PlayerBID: "player-b", Contact: true, Treaty: "peace"}}
+	body, _ := json.Marshal(map[string]string{"source_city_id": "city-a", "destination_city_id": "city-b"})
+	_, _, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "route", ActorPlayerID: "player-a", Type: CommandCreateTradeRoute, Payload: body}, state.Rules, fixtureSources())
+	if err == nil || !strings.Contains(err.Error(), "agreement") {
+		t.Fatalf("trade route without trade agreement err=%v, want agreement failure", err)
 	}
 }
 

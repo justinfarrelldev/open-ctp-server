@@ -278,6 +278,9 @@ func createTradeRoute(state *State, actor string, payload CreateTradeRoutePayloa
 	if !ok {
 		return errors.New("trade route destination is unavailable")
 	}
+	if !tradeRouteAgreementAllows(*state, actor, destination.OwnerID) {
+		return errors.New("trade route agreement is required")
+	}
 	for _, route := range state.TradeRoutes {
 		if route.SourceCityID == source.ID && route.DestinationCityID == destination.ID {
 			return errors.New("trade route already exists")
@@ -289,6 +292,26 @@ func createTradeRoute(state *State, actor string, payload CreateTradeRoutePayloa
 	}
 	state.TradeRoutes = append(state.TradeRoutes, TradeRoute{ID: routeID, SourceCityID: source.ID, DestinationCityID: destination.ID, CrossesWater: tradeRouteCrossesWater(*state, *source, *destination)})
 	return nil
+}
+
+func tradeRouteAgreementAllows(state State, sourceOwnerID, destinationOwnerID string) bool {
+	if sourceOwnerID == destinationOwnerID {
+		return true
+	}
+	left, right := sourceOwnerID, destinationOwnerID
+	if right < left {
+		left, right = right, left
+	}
+	for _, war := range state.Policy.Wars {
+		if war.A == left && war.B == right {
+			return false
+		}
+	}
+	relation := relationForPlayers(state, sourceOwnerID, destinationOwnerID)
+	if relation == nil || !relation.Contact {
+		return false
+	}
+	return relation.Trade || relation.Treaty == "trade" || relation.Treaty == "union"
 }
 
 func tradeRouteIDExists(state State, routeID string) bool {

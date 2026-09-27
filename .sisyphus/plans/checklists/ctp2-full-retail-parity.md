@@ -147,6 +147,8 @@
 - [x] Task 196: Retail CanBombard domain metadata imports and gates bombard target selection.
 - [x] Task 197: Retail ActiveDefenseOnlyWhenCarryingEnablers imports and requires carrier-defense cargo.
 - [x] Task 198: Retail EnableCarrierDefenses cargo enables carrier active-defense interception.
+- [x] Task 199: Canonical foreign trade-route creation requires contact and trade/union agreement.
+- [x] Task 200: Safe trade-route action projection suppresses foreign routes without trade agreement.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
