@@ -66,6 +66,7 @@ type RuntimeUnitDefinition struct {
 	TransportCapacity  int                    `json:"transport_capacity,omitempty"`
 	CargoDomains       []string               `json:"cargo_domains,omitempty"`
 	ProductionCost     int                    `json:"production_cost,omitempty"`
+	PowerPoints        int                    `json:"power_points,omitempty"`
 	Upkeep             int                    `json:"upkeep,omitempty"`
 	ShieldHunger       int                    `json:"shield_hunger,omitempty"`
 	NeedsNoSupport     bool                   `json:"needs_no_support,omitempty"`

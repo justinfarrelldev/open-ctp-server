@@ -168,6 +168,7 @@
 - [x] Task 217: Retail Paratrooper unit fields import as runtime marker effects.
 - [x] Task 218: Retail ParatrooperTransport unit fields import as runtime marker effects.
 - [x] Task 219: Retail SpaceLaunch turn values import as runtime marker effects.
+- [x] Task 220: Retail unit PowerPoints import into runtime unit definitions.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

@@ -182,7 +182,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok {
 		t.Fatalf("UNIT_AIRCRAFT_CARRIER missing")
 	}
-	if carrier.Attack != 25 || carrier.Defense != 30 || carrier.Ranged != 25 || carrier.BombardRange != 1 || carrier.BombRounds != 10 || carrier.Movement != 400 || carrier.TransportCapacity != 5 || carrier.ProductionCost != 3000 || carrier.Upkeep != 150 || carrier.ShieldHunger != 30 {
+	if carrier.Attack != 25 || carrier.Defense != 30 || carrier.Ranged != 25 || carrier.BombardRange != 1 || carrier.BombRounds != 10 || carrier.Movement != 400 || carrier.TransportCapacity != 5 || carrier.ProductionCost != 3000 || carrier.PowerPoints != 3000 || carrier.Upkeep != 150 || carrier.ShieldHunger != 30 {
 		t.Fatalf("carrier runtime = %+v", carrier)
 	}
 	if got, want := carrier.CargoDomains, []string{"air"}; !sameStringSlices(got, want) {
