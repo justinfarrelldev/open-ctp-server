@@ -489,6 +489,12 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if payload.Item.Kind == ProductionUnit && HasActiveWonderEffect(*state, actor, EffectProhibitSlavers) && productionHasSlaverEffect(payload.Item, runtime) {
 		return errors.New("production prerequisite is not met")
 	}
+	if payload.Item.Kind == ProductionUnit && productionHasSlaverEffect(payload.Item, runtime) && playerHasUnitEffect(*state, actor, EffectNoSlaves) {
+		return errors.New("production prerequisite is not met")
+	}
+	if payload.Item.Kind == ProductionUnit && productionHasNoSlavesEffect(payload.Item, runtime) && playerHasSlaverUnit(*state, actor) {
+		return errors.New("production prerequisite is not met")
+	}
 	if payload.Item.Kind == ProductionUnit && productionHasCreateParkEffect(payload.Item, runtime) && !HasActiveWonderEffect(*state, actor, EffectEnableParkRangers) {
 		return errors.New("production prerequisite is not met")
 	}
@@ -533,6 +539,35 @@ func productionHasSlaverEffect(item ProductionItem, runtime *rules.RuntimeRules)
 	}
 	for _, effect := range unit.Effects {
 		if effect.Kind == EffectSpecialSlaveRaid || effect.Kind == EffectSpecialSettlerSlaveRaid {
+			return true
+		}
+	}
+	return false
+}
+
+func productionHasNoSlavesEffect(item ProductionItem, runtime *rules.RuntimeRules) bool {
+	if item.Kind != ProductionUnit || runtime == nil {
+		return hasEffect(item.Effects, EffectNoSlaves)
+	}
+	unit, ok := runtime.Unit(item.ID)
+	if !ok {
+		return hasEffect(item.Effects, EffectNoSlaves)
+	}
+	return runtimeUnitHasEffect(unit, EffectNoSlaves)
+}
+
+func playerHasUnitEffect(state State, ownerID, effectKind string) bool {
+	for _, unit := range state.Units {
+		if unit.OwnerID == ownerID && hasEffect(unit.Effects, effectKind) {
+			return true
+		}
+	}
+	return false
+}
+
+func playerHasSlaverUnit(state State, ownerID string) bool {
+	for _, unit := range state.Units {
+		if unit.OwnerID == ownerID && unitHasSlaveryEffect(unit) {
 			return true
 		}
 	}

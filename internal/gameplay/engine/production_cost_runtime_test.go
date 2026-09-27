@@ -59,6 +59,24 @@ func TestRuntimeCantBuildUnitCannotBeQueued(t *testing.T) {
 	}
 }
 
+func TestRuntimeNoSlavesAndSlaverProductionExcludeEachOther(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{
+		{ID: "UNIT_ABOLITIONIST", Domain: DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "no-slaves", Kind: EffectNoSlaves}}},
+		{ID: "UNIT_SLAVER", Domain: DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "slave", Kind: EffectSpecialSlaveRaid}}},
+	}}
+	state.Units = append(state.Units, Unit{ID: "abolitionist", OwnerID: "player-a", TileID: "a", Effects: []Effect{{ID: "no-slaves", Kind: EffectNoSlaves}}})
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_SLAVER", Kind: ProductionUnit, Cost: 1}}, runtime); err == nil {
+		t.Fatal("slaver production succeeded while no-slaves unit exists")
+	}
+	state.Units = []Unit{{ID: "slaver", OwnerID: "player-a", TileID: "a", Effects: []Effect{{ID: "slave", Kind: EffectSpecialSlaveRaid}}}}
+	state.Cities[0].Queue = nil
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_ABOLITIONIST", Kind: ProductionUnit, Cost: 1}}, runtime); err == nil {
+		t.Fatal("no-slaves production succeeded while slaver unit exists")
+	}
+}
+
 func TestRuntimeUnitProductionRepeatsUnlessOnlyBuildOne(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})

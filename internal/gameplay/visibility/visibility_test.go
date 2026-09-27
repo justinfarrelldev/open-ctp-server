@@ -144,6 +144,61 @@ func TestProjectionSuppressesCantBuildRuntimeUnitProduction(t *testing.T) {
 	}
 }
 
+func TestProjectionSuppressesNoSlavesAndSlaverExclusiveProduction(t *testing.T) {
+	state := projectionStateWithRuntime(t, rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_SLAVER", Kind: engine.ProductionUnit}, {ID: "UNIT_WORKER", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{
+		{ID: "UNIT_SLAVER", Domain: engine.DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "slave", Kind: engine.EffectSpecialSlaveRaid}}},
+		{ID: "UNIT_WORKER", Domain: engine.DomainLand, Movement: 1, Health: 1},
+	}})
+	state.Units = []engine.Unit{{ID: "abolitionist", OwnerID: "a", TileID: "0,0", Effects: []engine.Effect{{ID: "no-slaves", Kind: engine.EffectNoSlaves}}}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if productionActionTarget(projection, engine.CommandQueueProduction, "UNIT_SLAVER") {
+		t.Fatalf("slaver production leaked while no-slaves unit exists: %#v", projection.LegalActions)
+	}
+	if !productionActionTarget(projection, engine.CommandQueueProduction, "UNIT_WORKER") {
+		t.Fatalf("fallback worker production missing after slaver suppression: %#v", projection.LegalActions)
+	}
+
+	state = projectionStateWithRuntime(t, rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_ABOLITIONIST", Kind: engine.ProductionUnit}, {ID: "UNIT_WORKER", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{
+		{ID: "UNIT_ABOLITIONIST", Domain: engine.DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "no-slaves", Kind: engine.EffectNoSlaves}}},
+		{ID: "UNIT_WORKER", Domain: engine.DomainLand, Movement: 1, Health: 1},
+	}})
+	state.Units = []engine.Unit{{ID: "slaver", OwnerID: "a", TileID: "0,0", Effects: []engine.Effect{{ID: "slave", Kind: engine.EffectSpecialSlaveRaid}}}}
+	projection, err = Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if productionActionTarget(projection, engine.CommandQueueProduction, "UNIT_ABOLITIONIST") {
+		t.Fatalf("no-slaves production leaked while slaver exists: %#v", projection.LegalActions)
+	}
+	if !productionActionTarget(projection, engine.CommandQueueProduction, "UNIT_WORKER") {
+		t.Fatalf("fallback worker production missing after no-slaves suppression: %#v", projection.LegalActions)
+	}
+}
+
+func projectionStateWithRuntime(t *testing.T, runtime rules.RuntimeRules) engine.State {
+	t.Helper()
+	definitions, hash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := fixtureState()
+	state.Rules = engine.RulesPin{Version: rules.CTP2CompatibilityVersion, Definitions: definitions, ContentHash: hash}
+	state.Cities = []engine.City{{ID: "city-a", OwnerID: "a", TileID: "0,0", Population: 2}}
+	return state
+}
+
+func productionActionTarget(projection Projection, command, targetID string) bool {
+	for _, action := range projection.LegalActions {
+		if action.Command == command && action.TargetID == targetID {
+			return true
+		}
+	}
+	return false
+}
+
 func TestProjectionExposesRetailUpgradeActionForOwnedUnit(t *testing.T) {
 	state := fixtureState()
 	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_OLD", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_OLD", Domain: engine.DomainLand, Movement: 1, Health: 10, UpgradeTo: []string{"UNIT_NEW"}}, {ID: "UNIT_NEW", Domain: engine.DomainLand, Movement: 2, Health: 20, Prerequisites: []string{"ADVANCE_UPGRADE"}}}}

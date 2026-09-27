@@ -206,6 +206,9 @@
 - [x] Task 255: Retail runtime unit production consumes completed `OnlyBuildOne` unit queue items.
 - [x] Task 256: Retail `VictoryEnslavement` triggers after combat for the surviving army.
 - [x] Task 257: Combat payloads expose only aggregate `enslaved_population` for victory enslavement.
+- [x] Task 258: Retail `NoSlaves` units block production of slave-raid units.
+- [x] Task 259: Existing slave-raid units block production of retail `NoSlaves` units.
+- [x] Task 260: Safe production projections suppress mutually-exclusive `NoSlaves`/slaver production actions.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

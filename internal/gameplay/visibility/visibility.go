@@ -774,7 +774,7 @@ func productionActions(projection Projection, playerID string) []ActionProjectio
 			actions = append(actions, action(engine.CommandQueueProduction, "queue-production", city.ID, production.ID, map[string]any{"city_id": city.ID, "item": item}, []string{"city_id", "item"}))
 		}
 		for _, unit := range projection.Rules.Units {
-			if unit.ID == "" || runtimeUnitHasEffect(unit, engine.EffectCantBuild) || !allAdvancesSatisfied(known, unit.Prerequisites) || unitRemovesPopulation(unit) && city.Population <= 1 || anyAdvanceSatisfied(known, unit.ObsoleteBy) {
+			if unit.ID == "" || runtimeUnitHasEffect(unit, engine.EffectCantBuild) || unitProductionBlockedByExclusiveSlavery(projection, playerID, unit) || !allAdvancesSatisfied(known, unit.Prerequisites) || unitRemovesPopulation(unit) && city.Population <= 1 || anyAdvanceSatisfied(known, unit.ObsoleteBy) {
 				continue
 			}
 			cost := unit.ProductionCost
@@ -1364,6 +1364,43 @@ func allAdvancesSatisfied(known, required []string) bool {
 
 func unitRemovesPopulation(unit rules.RuntimeUnitDefinition) bool {
 	return runtimeUnitHasEffect(unit, engine.EffectBuildingRemovesPopulation)
+}
+
+func unitProductionBlockedByExclusiveSlavery(projection Projection, playerID string, unit rules.RuntimeUnitDefinition) bool {
+	if (runtimeUnitHasEffect(unit, engine.EffectSpecialSlaveRaid) || runtimeUnitHasEffect(unit, engine.EffectSpecialSettlerSlaveRaid)) && projectionPlayerHasUnitEffect(projection, playerID, engine.EffectNoSlaves) {
+		return true
+	}
+	if runtimeUnitHasEffect(unit, engine.EffectNoSlaves) && projectionPlayerHasSlaverUnit(projection, playerID) {
+		return true
+	}
+	return false
+}
+
+func projectionPlayerHasUnitEffect(projection Projection, playerID, effectKind string) bool {
+	for _, unit := range projection.Units {
+		if unit.OwnerID == playerID && unitProjectionHasEffect(unit, effectKind) {
+			return true
+		}
+	}
+	return false
+}
+
+func projectionPlayerHasSlaverUnit(projection Projection, playerID string) bool {
+	for _, unit := range projection.Units {
+		if unit.OwnerID == playerID && (unitProjectionHasEffect(unit, engine.EffectSpecialSlaveRaid) || unitProjectionHasEffect(unit, engine.EffectSpecialSettlerSlaveRaid)) {
+			return true
+		}
+	}
+	return false
+}
+
+func unitProjectionHasEffect(unit UnitProjection, kind string) bool {
+	for _, effect := range unit.Effects {
+		if effect.Kind == kind {
+			return true
+		}
+	}
+	return false
 }
 
 func runtimeUnitHasEffect(unit rules.RuntimeUnitDefinition, kind string) bool {
