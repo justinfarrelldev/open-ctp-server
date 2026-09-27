@@ -627,7 +627,14 @@ func diplomacyActions(projection Projection, playerID string) []ActionProjection
 		if relation.TargetPlayerID == "" {
 			continue
 		}
-		if relation.Regard != "hotwar" && !relation.Trade && relation.Treaty != "trade" && relation.Treaty != "union" && !pending["trade\x00"+playerID+"\x00"+relation.TargetPlayerID] {
+		if relation.Regard == "hotwar" {
+			if !pending["peace\x00"+playerID+"\x00"+relation.TargetPlayerID] {
+				proposalID := "client-peace-" + playerID + "-" + relation.TargetPlayerID
+				actions = append(actions, action(engine.CommandProposeAgreement, "propose-agreement", playerID, relation.TargetPlayerID, map[string]string{"proposal_id": proposalID, "target_player_id": relation.TargetPlayerID, "kind": "peace"}, []string{"proposal_id", "target_player_id", "kind"}))
+			}
+			continue
+		}
+		if !relation.Trade && relation.Treaty != "trade" && relation.Treaty != "union" && !pending["trade\x00"+playerID+"\x00"+relation.TargetPlayerID] {
 			proposalID := "client-trade-" + playerID + "-" + relation.TargetPlayerID
 			actions = append(actions, action(engine.CommandProposeAgreement, "propose-agreement", playerID, relation.TargetPlayerID, map[string]string{"proposal_id": proposalID, "target_player_id": relation.TargetPlayerID, "kind": "trade"}, []string{"proposal_id", "target_player_id", "kind"}))
 		}

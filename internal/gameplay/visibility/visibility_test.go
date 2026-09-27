@@ -114,6 +114,25 @@ func TestVisibleCitiesSuppressForeignTradeRouteActionWithoutTradeAgreement(t *te
 	}
 }
 
+func TestDiplomacyProjectsPeaceProposalAtWar(t *testing.T) {
+	state := fixtureState()
+	state.Players = []engine.Player{{ID: "a", NationID: "na", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}, {ID: "b", NationID: "nb", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"a", "b"}
+	state.Nations = []engine.Nation{{ID: "na"}, {ID: "nb"}}
+	state.Diplomacy = []engine.DiplomaticRelation{{ID: "a:b", PlayerAID: "a", PlayerBID: "b", Contact: true}}
+	state.Policy.Wars = []engine.TurnPolicyWar{{A: "a", B: "b"}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, action := range projection.LegalActions {
+		if action.Command == engine.CommandProposeAgreement && action.TargetID == "b" && bytes.Contains(action.Payload, []byte(`"kind":"peace"`)) {
+			return
+		}
+	}
+	t.Fatalf("peace proposal action missing: %#v", projection.LegalActions)
+}
+
 func TestDiplomacyProjectsTradeProposalBeforeForeignTradeRoutes(t *testing.T) {
 	state := fixtureState()
 	state.Players = []engine.Player{{ID: "a", NationID: "na", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}, {ID: "b", NationID: "nb", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}}
