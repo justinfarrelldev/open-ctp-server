@@ -505,7 +505,7 @@ func legalActions(state engine.State, projection Projection, playerID string) []
 	actions = append(actions, diplomacyActions(projection, playerID)...)
 	actions = append(actions, tradeRouteActions(state, projection, playerID)...)
 	actions = append(actions, specialistActions(projection, playerID)...)
-	actions = append(actions, productionActions(projection, playerID)...)
+	actions = append(actions, productionActions(state, projection, playerID)...)
 	actions = append(actions, unitActions(projection, playerID)...)
 	sort.Slice(actions, func(i, j int) bool {
 		if actions[i].Command == actions[j].Command {
@@ -746,7 +746,7 @@ func specialistActions(projection Projection, playerID string) []ActionProjectio
 	return actions
 }
 
-func productionActions(projection Projection, playerID string) []ActionProjection {
+func productionActions(state engine.State, projection Projection, playerID string) []ActionProjection {
 	actions := make([]ActionProjection, 0)
 	known := []string(nil)
 	if projection.Research != nil {
@@ -774,7 +774,7 @@ func productionActions(projection Projection, playerID string) []ActionProjectio
 			actions = append(actions, action(engine.CommandQueueProduction, "queue-production", city.ID, production.ID, map[string]any{"city_id": city.ID, "item": item}, []string{"city_id", "item"}))
 		}
 		for _, unit := range projection.Rules.Units {
-			if unit.ID == "" || runtimeUnitHasEffect(unit, engine.EffectCantBuild) || unitProductionBlockedByGovernment(projection, unit) || unitProductionBlockedByExclusiveSlavery(projection, playerID, unit) || !allAdvancesSatisfied(known, unit.Prerequisites) || unitRemovesPopulation(unit) && city.Population <= 1 || anyAdvanceSatisfied(known, unit.ObsoleteBy) {
+			if unit.ID == "" || runtimeUnitHasEffect(unit, engine.EffectCantBuild) || unitProductionBlockedByGovernment(projection, unit) || unitProductionBlockedByEliminateNukes(state, playerID, unit) || unitProductionBlockedByExclusiveSlavery(projection, playerID, unit) || !allAdvancesSatisfied(known, unit.Prerequisites) || unitRemovesPopulation(unit) && city.Population <= 1 || anyAdvanceSatisfied(known, unit.ObsoleteBy) {
 				continue
 			}
 			cost := unit.ProductionCost
@@ -1364,6 +1364,34 @@ func allAdvancesSatisfied(known, required []string) bool {
 
 func unitRemovesPopulation(unit rules.RuntimeUnitDefinition) bool {
 	return runtimeUnitHasEffect(unit, engine.EffectBuildingRemovesPopulation)
+}
+
+func unitProductionBlockedByEliminateNukes(state engine.State, playerID string, unit rules.RuntimeUnitDefinition) bool {
+	if !runtimeUnitHasEffect(unit, engine.EffectNuclearAttack) {
+		return false
+	}
+	nationID := ""
+	for _, player := range state.Players {
+		if player.ID == playerID {
+			nationID = player.NationID
+			break
+		}
+	}
+	for _, nation := range state.Nations {
+		if nation.ID == nationID && stateEffectsContain(nation.Effects, engine.EffectEliminateNukes) {
+			return true
+		}
+	}
+	return false
+}
+
+func stateEffectsContain(effects []engine.Effect, kind string) bool {
+	for _, effect := range effects {
+		if effect.Kind == kind {
+			return true
+		}
+	}
+	return false
 }
 
 func unitProductionBlockedByGovernment(projection Projection, unit rules.RuntimeUnitDefinition) bool {

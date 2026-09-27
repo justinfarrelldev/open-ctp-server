@@ -214,6 +214,10 @@
 - [x] Task 263: Safe production projections suppress wrong-government unit production actions.
 - [x] Task 264: Unit upgrades enforce matching current government for government-gated target units.
 - [x] Task 265: Safe upgrade projections suppress wrong-government government-gated target units.
+- [x] Task 266: Retail `NuclearAttack` imports as runtime/canonical `nuclear_attack` marker effects.
+- [x] Task 267: Eliminate-nukes wonder effects remove both planted-nuke and nuclear-attack units.
+- [x] Task 268: Unit production rejects `nuclear_attack` units after nukes are eliminated for the actor's nation.
+- [x] Task 269: Safe production projections suppress `nuclear_attack` units after nukes are eliminated.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

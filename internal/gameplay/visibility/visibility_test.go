@@ -144,6 +144,24 @@ func TestProjectionSuppressesCantBuildRuntimeUnitProduction(t *testing.T) {
 	}
 }
 
+func TestProjectionSuppressesNuclearAttackProductionAfterEliminateNukes(t *testing.T) {
+	state := projectionStateWithRuntime(t, rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_NUKE", Kind: engine.ProductionUnit}, {ID: "UNIT_WORKER", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{
+		{ID: "UNIT_NUKE", Domain: engine.DomainAir, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "nuke", Kind: engine.EffectNuclearAttack}}},
+		{ID: "UNIT_WORKER", Domain: engine.DomainLand, Movement: 1, Health: 1},
+	}})
+	state.Nations = []engine.Nation{{ID: "a", Effects: []engine.Effect{{ID: "eliminate", Kind: engine.EffectEliminateNukes}}}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if productionActionTarget(projection, engine.CommandQueueProduction, "UNIT_NUKE") {
+		t.Fatalf("nuclear-attack production leaked after eliminate-nukes: %#v", projection.LegalActions)
+	}
+	if !productionActionTarget(projection, engine.CommandQueueProduction, "UNIT_WORKER") {
+		t.Fatalf("fallback worker production missing after nuke suppression: %#v", projection.LegalActions)
+	}
+}
+
 func TestProjectionSuppressesWrongGovernmentUnitProduction(t *testing.T) {
 	state := projectionStateWithRuntime(t, rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_CLERIC", Kind: engine.ProductionUnit}, {ID: "UNIT_WORKER", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{
 		{ID: "UNIT_CLERIC", Domain: engine.DomainLand, Movement: 1, Health: 1, RequiredGovernmentID: "GOVERNMENT_THEOCRACY"},

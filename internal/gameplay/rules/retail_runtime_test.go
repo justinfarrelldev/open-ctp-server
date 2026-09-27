@@ -250,6 +250,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeUnitHasEffect(slaver, "victory_enslavement") {
 		t.Fatalf("slaver runtime = %+v ok=%v", slaver, ok)
 	}
+	nuke, ok := runtime.Unit("UNIT_NUKE")
+	if !ok || !runtimeUnitHasEffect(nuke, "nuclear_attack") {
+		t.Fatalf("nuke runtime = %+v ok=%v", nuke, ok)
+	}
 	cargoHelicopter, ok := runtime.Unit("UNIT_CARGO_HELICOPTER")
 	if !ok || !runtimeUnitHasEffect(cargoHelicopter, "paratrooper_transport") {
 		t.Fatalf("cargo helicopter runtime = %+v ok=%v", cargoHelicopter, ok)

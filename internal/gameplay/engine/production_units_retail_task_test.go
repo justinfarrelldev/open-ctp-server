@@ -14,6 +14,7 @@ func TestRetailEliminateNukesWonderDisarmsNationsAndRemovesNukeUnits(t *testing.
 		Cities:  []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", StoredProduction: 1, Queue: []ProductionItem{{ID: "WONDER_NANITE_DEFUSER", Kind: ProductionWonder, Cost: 1, Effects: []Effect{{ID: "defuse", Kind: EffectEliminateNukes}}}}}},
 		Units: []Unit{
 			{ID: "suitcase", OwnerID: "player-b", TileID: "tile-a", Effects: []Effect{{ID: "nuke", Kind: EffectSpecialPlantNuke}}},
+			{ID: "missile", OwnerID: "player-b", TileID: "tile-a", Effects: []Effect{{ID: "nuke", Kind: EffectNuclearAttack}}},
 			{ID: "guard", OwnerID: "player-b", TileID: "tile-a"},
 		},
 	}
@@ -21,7 +22,10 @@ func TestRetailEliminateNukesWonderDisarmsNationsAndRemovesNukeUnits(t *testing.
 		t.Fatal(err)
 	}
 	if _, ok := unitByID(state, "suitcase"); ok {
-		t.Fatalf("nuke unit survived eliminate-nukes wonder: %#v", state.Units)
+		t.Fatalf("plant-nuke unit survived eliminate-nukes wonder: %#v", state.Units)
+	}
+	if _, ok := unitByID(state, "missile"); ok {
+		t.Fatalf("nuclear-attack unit survived eliminate-nukes wonder: %#v", state.Units)
 	}
 	if _, ok := unitByID(state, "guard"); !ok {
 		t.Fatalf("non-nuke unit removed by eliminate-nukes wonder: %#v", state.Units)

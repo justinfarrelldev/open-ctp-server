@@ -59,6 +59,16 @@ func TestRuntimeCantBuildUnitCannotBeQueued(t *testing.T) {
 	}
 }
 
+func TestRuntimeEliminateNukesBlocksNuclearAttackProduction(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	state.Nations = []Nation{{ID: "nation-a", Effects: []Effect{{ID: "eliminate", Kind: EffectEliminateNukes}}}}
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_NUKE", Domain: DomainAir, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "nuke", Kind: EffectNuclearAttack}}}}}
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_NUKE", Kind: ProductionUnit, Cost: 1}}, runtime); err == nil {
+		t.Fatal("nuclear-attack production succeeded after eliminate-nukes effect")
+	}
+}
+
 func TestRuntimeUnitProductionRequiresCurrentGovernment(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})

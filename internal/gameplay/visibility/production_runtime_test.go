@@ -35,7 +35,7 @@ func TestProductionActionsIncludeUnlockedRuntimeBuildings(t *testing.T) {
 		}},
 	}
 
-	actions := productionActions(projection, "player-a")
+	actions := productionActions(engine.State{}, projection, "player-a")
 	for _, action := range actions {
 		if action.Command != engine.CommandQueueProduction || action.TargetID != "IMPROVE_GRANARY" {
 			continue
