@@ -232,6 +232,10 @@
 - [x] Task 281: Found-city execution records the founded city's retail city unit type.
 - [x] Task 282: City food growth applies the founded city type's retail `CityGrowthCoefficient`.
 - [x] Task 283: Owned-unit projections expose `settle_city_type_id` while visible enemy units keep it hidden.
+- [x] Task 284: `CauseUnhappiness` / advertising special actions execute from retail chance/timer/amount metadata.
+- [x] Task 285: Timed negative happiness effects expire deterministically across city recalculations.
+- [x] Task 286: Safe projections and HTTP routes expose `cause-unhappiness` only from owned capable units.
+- [x] Task 287: AI command scoring recognizes projected cause-unhappiness actions.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

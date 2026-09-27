@@ -1749,6 +1749,12 @@ func advanceTemporaryCityEffects(city *City) {
 	}
 	effects := city.Effects[:0]
 	for _, effect := range city.Effects {
+		if effect.Turns > 0 {
+			effect.Turns--
+			if effect.Turns <= 0 {
+				continue
+			}
+		}
 		if effect.Kind == EffectTemporaryFullHappiness || effect.Kind == EffectWatchful {
 			effect.Value--
 			if effect.Value <= 0 {

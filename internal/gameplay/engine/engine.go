@@ -54,6 +54,7 @@ const (
 	CommandBombard            = "bombard"
 	CommandEstablishEmbassy   = "establish-embassy"
 	CommandSoothsaying        = "soothsaying"
+	CommandCauseUnhappiness   = "cause-unhappiness"
 	CommandStealTechnology    = "steal-technology"
 	CommandConvertCity        = "convert-city"
 	CommandBioTerror          = "bio-terror"
@@ -95,6 +96,8 @@ const (
 	EventUnitUpgraded             = "unit.upgraded"
 	EventEmbassyEstablished       = "embassy.established"
 	EventSoothsayingApplied       = "soothsaying.applied"
+	EventCauseUnhappinessApplied  = "city.unhappiness_applied"
+	EventCauseUnhappinessFailed   = "city.unhappiness_failed"
 	EventTechnologyStolen         = "technology.stolen"
 	EventTechnologyFailed         = "technology.failed"
 	EventCityConverted            = "city.converted"
@@ -311,6 +314,7 @@ type Effect struct {
 	ID    string `json:"id"`
 	Kind  string `json:"kind"`
 	Value int    `json:"value,omitempty"`
+	Turns int    `json:"turns,omitempty"`
 }
 
 type DiplomaticRelation struct {

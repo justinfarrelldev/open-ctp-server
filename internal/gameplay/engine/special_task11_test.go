@@ -555,6 +555,40 @@ func TestRetailInvestigateCityStoresPrivateCityReport(t *testing.T) {
 	}
 }
 
+func TestRetailCauseUnhappinessAddsTimedHappinessAttack(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = []Effect{{ID: "cause", Kind: EffectSpecialCauseUnhappiness, Value: 100}, {ID: "timer", Kind: EffectSpecialCauseUnhappinessTimer, Value: 2}, {ID: "amount", Kind: EffectSpecialCauseUnhappinessAmount, Value: 5}}
+
+	next, events, err := task11Apply(t, state, CommandCauseUnhappiness, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 || events[0].Type != EventCauseUnhappinessApplied || strings.Contains(string(events[0].Payload), "target-city") {
+		t.Fatalf("cause unhappiness event = %#v", events)
+	}
+	city := next.Cities[0]
+	if next.Units[0].Movement != 3 || cityHappiness(next, city) != 70 || !hasTimedHappinessAttack(city, -5, 2) || !hasEffect(city.Effects, EffectWatchful) {
+		t.Fatalf("cause unhappiness state = unit %+v city %+v happiness %d", next.Units[0], city, cityHappiness(next, city))
+	}
+	advanceTemporaryCityEffects(&city)
+	if !hasTimedHappinessAttack(city, -5, 1) {
+		t.Fatalf("happiness attack did not tick: %+v", city.Effects)
+	}
+	advanceTemporaryCityEffects(&city)
+	if hasTimedHappinessAttack(city, -5, 1) || hasTimedHappinessAttack(city, -5, 2) {
+		t.Fatalf("happiness attack did not expire: %+v", city.Effects)
+	}
+}
+
+func hasTimedHappinessAttack(city City, amount int, turns int) bool {
+	for _, effect := range city.Effects {
+		if effect.Kind == EffectHappiness && effect.Value == amount && effect.Turns == turns {
+			return true
+		}
+	}
+	return false
+}
+
 func TestRetailCreateFranchiseMarksCityOnce(t *testing.T) {
 	state := task11State()
 	state.Units[0].Effects = []Effect{{ID: "franchise", Kind: EffectSpecialCreateFranchise}}
