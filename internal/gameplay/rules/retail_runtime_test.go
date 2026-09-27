@@ -199,6 +199,18 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !runtimeUnitHasEffect(carrier, "death_effects_happy") || !runtimeUnitHasEffect(carrier, "explodes") {
 		t.Fatalf("carrier marker effects missing: %+v", carrier)
 	}
+	abolitionist, ok = runtime.Unit("UNIT_ABOLITIONIST")
+	if !ok || !runtimeUnitHasEffect(abolitionist, "loss_move_to_dmg_none") {
+		t.Fatalf("abolitionist runtime = %+v ok=%v", abolitionist, ok)
+	}
+	cityUnit, ok := runtime.Unit("UNIT_CITY")
+	if !ok || !runtimeUnitHasEffect(cityUnit, "cant_build") {
+		t.Fatalf("city unit runtime = %+v ok=%v", cityUnit, ok)
+	}
+	caravan, ok := runtime.Unit("UNIT_CARAVAN")
+	if !ok || !runtimeUnitHasEffect(caravan, "is_trader") {
+		t.Fatalf("caravan runtime = %+v ok=%v", caravan, ok)
+	}
 	cargoHelicopter, ok := runtime.Unit("UNIT_CARGO_HELICOPTER")
 	if !ok || !runtimeUnitHasEffect(cargoHelicopter, "paratrooper_transport") {
 		t.Fatalf("cargo helicopter runtime = %+v ok=%v", cargoHelicopter, ok)

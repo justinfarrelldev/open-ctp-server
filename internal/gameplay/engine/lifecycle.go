@@ -333,6 +333,9 @@ func refreshedUnitMovement(state State, unit Unit, fallback int) int {
 	if unit.MaxMovement > 0 {
 		movement = unit.MaxMovement
 	}
+	if !hasEffect(unit.Effects, EffectLossMoveToDmgNone) && unit.Health > 0 && unit.MaxHealth > 0 && unit.Health < unit.MaxHealth {
+		movement = movement * unit.Health / unit.MaxHealth
+	}
 	if unit.Domain == DomainSea || unit.Domain == DomainAmphibious {
 		movement += boatMovementBonus(state, unit.OwnerID)
 	}

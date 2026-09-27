@@ -50,6 +50,15 @@ func TestRuntimePopulationRemovingUnitProductionRequiresSparePopulation(t *testi
 	}
 }
 
+func TestRuntimeCantBuildUnitCannotBeQueued(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_CITY", Domain: DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "cant-build", Kind: EffectCantBuild}}}}}
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_CITY", Kind: ProductionUnit, Cost: 1}}, runtime); err == nil {
+		t.Fatal("CantBuild unit production succeeded")
+	}
+}
+
 func TestRuntimeBuildingProductionRequiresPrerequisiteBuildings(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})

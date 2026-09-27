@@ -114,6 +114,36 @@ func TestVisibleCitiesSuppressForeignTradeRouteActionWithoutTradeAgreement(t *te
 	}
 }
 
+func TestProjectionSuppressesCantBuildRuntimeUnitProduction(t *testing.T) {
+	state := fixtureState()
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_OK", Kind: engine.ProductionUnit}, {ID: "UNIT_CITY", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_OK", Domain: engine.DomainLand, Movement: 1, Health: 1}, {ID: "UNIT_CITY", Domain: engine.DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "cant-build", Kind: engine.EffectCantBuild}}}}}
+	definitions, hash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Rules = engine.RulesPin{Version: rules.CTP2CompatibilityVersion, Definitions: definitions, ContentHash: hash}
+	state.Cities = []engine.City{{ID: "city-a", OwnerID: "a", TileID: "0,0", Population: 2}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	seenOK := false
+	for _, action := range projection.LegalActions {
+		if action.Command != engine.CommandQueueProduction {
+			continue
+		}
+		if action.TargetID == "UNIT_CITY" {
+			t.Fatalf("cant-build unit production action leaked: %#v", action)
+		}
+		if action.TargetID == "UNIT_OK" {
+			seenOK = true
+		}
+	}
+	if !seenOK {
+		t.Fatalf("normal unit production action missing: %#v", projection.LegalActions)
+	}
+}
+
 func TestProjectionExposesRetailUpgradeActionForOwnedUnit(t *testing.T) {
 	state := fixtureState()
 	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_OLD", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_OLD", Domain: engine.DomainLand, Movement: 1, Health: 10, UpgradeTo: []string{"UNIT_NEW"}}, {ID: "UNIT_NEW", Domain: engine.DomainLand, Movement: 2, Health: 20, Prerequisites: []string{"ADVANCE_UPGRADE"}}}}

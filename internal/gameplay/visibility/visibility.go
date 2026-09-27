@@ -774,7 +774,7 @@ func productionActions(projection Projection, playerID string) []ActionProjectio
 			actions = append(actions, action(engine.CommandQueueProduction, "queue-production", city.ID, production.ID, map[string]any{"city_id": city.ID, "item": item}, []string{"city_id", "item"}))
 		}
 		for _, unit := range projection.Rules.Units {
-			if unit.ID == "" || !allAdvancesSatisfied(known, unit.Prerequisites) || unitRemovesPopulation(unit) && city.Population <= 1 || anyAdvanceSatisfied(known, unit.ObsoleteBy) {
+			if unit.ID == "" || runtimeUnitHasEffect(unit, engine.EffectCantBuild) || !allAdvancesSatisfied(known, unit.Prerequisites) || unitRemovesPopulation(unit) && city.Population <= 1 || anyAdvanceSatisfied(known, unit.ObsoleteBy) {
 				continue
 			}
 			cost := unit.ProductionCost
@@ -1363,8 +1363,12 @@ func allAdvancesSatisfied(known, required []string) bool {
 }
 
 func unitRemovesPopulation(unit rules.RuntimeUnitDefinition) bool {
+	return runtimeUnitHasEffect(unit, engine.EffectBuildingRemovesPopulation)
+}
+
+func runtimeUnitHasEffect(unit rules.RuntimeUnitDefinition, kind string) bool {
 	for _, effect := range unit.Effects {
-		if effect.Kind == engine.EffectBuildingRemovesPopulation {
+		if effect.Kind == kind {
 			return true
 		}
 	}

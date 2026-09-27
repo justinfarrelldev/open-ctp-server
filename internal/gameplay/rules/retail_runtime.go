@@ -392,6 +392,12 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "NoFuelThenCrash") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("no_fuel_then_crash"), Kind: "no_fuel_then_crash"})
 	}
+	if retailContainsString(unit.Flags, "LossMoveToDmgNone") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("loss_move_to_dmg_none"), Kind: "loss_move_to_dmg_none"})
+	}
+	if retailContainsString(unit.Flags, "CantBuild") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("cant_build"), Kind: "cant_build"})
+	}
 	if retailContainsString(unit.Flags, "CantCaptureCity") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("cant_capture_city"), Kind: "cant_capture_city"})
 	}
@@ -462,6 +468,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	}
 	if retailContainsString(unit.Flags, "Explodes") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("explodes"), Kind: "explodes"})
+	}
+	if retailContainsString(unit.Flags, "IsTrader") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("is_trader"), Kind: "is_trader"})
 	}
 	if retailContainsString(unit.Flags, "Paratrooper") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("paratrooper"), Kind: "paratrooper"})

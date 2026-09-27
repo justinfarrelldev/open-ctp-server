@@ -27,6 +27,20 @@ func TestRetailBoatMovementWonderRefreshesSeaUnitMovement(t *testing.T) {
 	}
 }
 
+func TestRetailDamagedUnitMovementRefreshScalesByHealthUnlessExempt(t *testing.T) {
+	state := runtimeStartedState(t)
+	state.Units = []Unit{
+		{ID: "damaged", OwnerID: "player-a", TileID: "tile-a", Domain: DomainLand, Movement: 0, MaxMovement: 6, Health: 3, MaxHealth: 6},
+		{ID: "exempt", OwnerID: "player-a", TileID: "tile-a", Domain: DomainLand, Movement: 0, MaxMovement: 6, Health: 3, MaxHealth: 6, Effects: []Effect{{ID: "loss-none", Kind: EffectLossMoveToDmgNone}}},
+	}
+	next := runtimeApply(t, state, "player-a", CommandRoundComplete, map[string]any{})
+	damaged, _ := unitByID(next, "damaged")
+	exempt, _ := unitByID(next, "exempt")
+	if damaged.Movement != 3 || exempt.Movement != 6 {
+		t.Fatalf("movement refresh damaged=%+v exempt=%+v, want 3 and 6", damaged, exempt)
+	}
+}
+
 func TestTask17RoundRefreshesMovementFromPinnedRuntime(t *testing.T) {
 	state := runtimeStartedState(t)
 	state.Units = []Unit{{ID: "scout", OwnerID: "player-a", TileID: "tile-a", Domain: DomainLand, Movement: 0}}

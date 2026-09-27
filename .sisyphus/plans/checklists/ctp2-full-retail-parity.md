@@ -184,6 +184,10 @@
 - [x] Task 233: Successful plant-nuke actions remove units in the city blast radius with safe count payloads.
 - [x] Task 234: Nuke-killed `death_effects_happy` units feed loss accounting.
 - [x] Task 235: Retail `Explodes` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 236: Retail `LossMoveToDmgNone` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 237: Damaged unit movement refresh scales by health unless `loss_move_to_dmg_none` applies.
+- [x] Task 238: Retail `CantBuild` unit flags block production in engine and safe projections.
+- [x] Task 239: Retail `IsTrader` unit flags are preserved as runtime/canonical marker effects.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
