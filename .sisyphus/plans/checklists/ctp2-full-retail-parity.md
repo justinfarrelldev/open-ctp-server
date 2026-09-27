@@ -280,6 +280,9 @@
 - [x] Task 329: Founded cities collect unique goods from the city tile and adjacent radius.
 - [x] Task 330: City recalculation refreshes city goods from the current map radius.
 - [x] Task 331: `NeedsCityGood` production gates work from map-derived city goods.
+- [x] Task 332: City conversion state is normalized when converted-to player becomes city owner.
+- [x] Task 333: Conquest/capture ownership changes clear now-invalid conversion state.
+- [x] Task 334: Revolt/rebel ownership changes clear now-invalid conversion state.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

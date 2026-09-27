@@ -1092,6 +1092,7 @@ func transferRevoltingCity(state *State, city *City) {
 		return
 	}
 	city.OwnerID = newOwner
+	normalizeCityConversionOwner(city)
 	city.Queue = nil
 	state.TradeRoutes = removeTradeRoutesTouchingCity(state.TradeRoutes, city.ID)
 	for index := range state.Tiles {

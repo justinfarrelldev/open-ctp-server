@@ -342,6 +342,7 @@ func captureCityAt(state *State, actorID, tileID string) string {
 		if state.Cities[i].TileID == tileID && state.Cities[i].OwnerID != actorID {
 			cityID := state.Cities[i].ID
 			state.Cities[i].OwnerID = actorID
+			normalizeCityConversionOwner(&state.Cities[i])
 			state.Cities[i].ConquestDistress = conquestDistressForOwner(*state, actorID)
 			state.TradeRoutes = removeTradeRoutesTouchingCity(state.TradeRoutes, cityID)
 			return cityID

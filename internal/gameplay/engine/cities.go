@@ -473,6 +473,16 @@ func cityGoodsInRadius(state State, tileID string) []string {
 	return goods
 }
 
+func normalizeCityConversionOwner(city *City) {
+	if city == nil {
+		return
+	}
+	if city.ConvertedToPlayerID != "" && city.ConvertedToPlayerID == city.OwnerID {
+		city.ConvertedToPlayerID = ""
+		city.ConvertedBy = ""
+	}
+}
+
 func foundedCitySeed(effects []Effect) (int, []Building) {
 	population := 1
 	buildings := make([]Building, 0)

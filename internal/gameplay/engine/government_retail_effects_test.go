@@ -203,6 +203,19 @@ func TestAdvancePeaceMovementAppliesDefeatDecayAndResetsLossCounters(t *testing.
 	}
 }
 
+func TestRetailCityCaptureClearsConversionWhenConvertedOwnerCaptures(t *testing.T) {
+	state := richState()
+	state.Cities = []City{{ID: "city", OwnerID: "player-b", TileID: "city-tile", ConvertedToPlayerID: "player-a", ConvertedBy: "cleric"}}
+	state.Tiles = append(state.Tiles, Tile{ID: "city-tile", X: 2, Y: 2, Terrain: TerrainPlains, OwnerID: "player-b", Open: true})
+
+	if got := captureCityAt(&state, "player-a", "city-tile"); got != "city" {
+		t.Fatalf("captureCityAt() = %q", got)
+	}
+	if state.Cities[0].ConvertedToPlayerID != "" || state.Cities[0].ConvertedBy != "" {
+		t.Fatalf("captured city conversion was not cleared: %+v", state.Cities[0])
+	}
+}
+
 func TestRetailConquestDistressAppliesToCapturedCityAndDecays(t *testing.T) {
 	state := State{
 		Players: []Player{{ID: "player-a", NationID: "nation-a"}, {ID: "player-b", NationID: "nation-b"}},
