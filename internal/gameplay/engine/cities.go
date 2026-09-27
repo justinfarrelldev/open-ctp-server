@@ -1857,7 +1857,9 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 		return nil
 	}
 	city.StoredProduction -= item.Cost
-	city.Queue = city.Queue[1:]
+	if productionCompletionConsumesQueue(city.Queue, item, runtime) {
+		city.Queue = city.Queue[1:]
+	}
 	switch item.Kind {
 	case ProductionUnit:
 		return completeUnitProduction(state, city, item, runtime)
@@ -1875,6 +1877,17 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 	default:
 		return errors.New("unsupported production kind")
 	}
+}
+
+func productionCompletionConsumesQueue(queue []ProductionItem, item ProductionItem, runtime *rules.RuntimeRules) bool {
+	if item.Kind != ProductionUnit || len(queue) != 1 || runtime == nil {
+		return true
+	}
+	definition, ok := runtime.Unit(item.ID)
+	if !ok {
+		return true
+	}
+	return runtimeUnitHasEffect(definition, EffectOnlyBuildOne)
 }
 
 func ownerWonderEffectSum(state State, ownerID, kind string) int {

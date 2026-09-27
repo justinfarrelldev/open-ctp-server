@@ -59,6 +59,27 @@ func TestRuntimeCantBuildUnitCannotBeQueued(t *testing.T) {
 	}
 }
 
+func TestRuntimeUnitProductionRepeatsUnlessOnlyBuildOne(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	state.Cities[0].Yields.Production = 2
+	state.Cities[0].Queue = []ProductionItem{{ID: "UNIT_REPEAT", Kind: ProductionUnit, Cost: 1}}
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_ONE", Domain: DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "only-one", Kind: EffectOnlyBuildOne}}}, {ID: "UNIT_REPEAT", Domain: DomainLand, Movement: 1, Health: 1}}}
+	if err := completeProduction(&state, &state.Cities[0], runtime); err != nil {
+		t.Fatalf("completeProduction(repeat) error = %v", err)
+	}
+	if len(state.Cities[0].Queue) != 1 || state.Cities[0].Queue[0].ID != "UNIT_REPEAT" || len(state.Units) != 2 {
+		t.Fatalf("repeat unit production should keep sole queue item: city=%+v units=%+v", state.Cities[0], state.Units)
+	}
+	state.Cities[0].Queue = []ProductionItem{{ID: "UNIT_ONE", Kind: ProductionUnit, Cost: 1}}
+	if err := completeProduction(&state, &state.Cities[0], runtime); err != nil {
+		t.Fatalf("completeProduction(only-build-one) error = %v", err)
+	}
+	if len(state.Cities[0].Queue) != 0 || len(state.Units) != 3 {
+		t.Fatalf("only-build-one unit production should consume queue item: city=%+v units=%+v", state.Cities[0], state.Units)
+	}
+}
+
 func TestRuntimeBuildingProductionRequiresPrerequisiteBuildings(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})

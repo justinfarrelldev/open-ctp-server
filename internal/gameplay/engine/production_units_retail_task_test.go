@@ -284,7 +284,7 @@ func TestProductionCompletionCreatesRuntimeUnitAtCity(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RecalculateRound() error = %v", err)
 	}
-	if len(next.Cities[0].Queue) != 0 || next.Cities[0].StoredProduction != 2 {
+	if len(next.Cities[0].Queue) != 1 || next.Cities[0].Queue[0].ID != "UNIT_SYNTHETIC" || next.Cities[0].StoredProduction != 2 {
 		t.Fatalf("city production state = %#v", next.Cities[0])
 	}
 	if len(next.Units) != 1 {

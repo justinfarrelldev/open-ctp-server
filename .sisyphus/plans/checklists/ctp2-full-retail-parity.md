@@ -202,6 +202,8 @@
 - [x] Task 251: Retail `OnlyBuildOne` unit flags are preserved as runtime/canonical marker effects.
 - [x] Task 252: Retail `ThrowParty` unit flags are preserved as runtime/canonical marker effects.
 - [x] Task 253: Retail `VictoryEnslavement` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 254: Retail runtime unit production repeats a sole queued non-`OnlyBuildOne` unit after completion.
+- [x] Task 255: Retail runtime unit production consumes completed `OnlyBuildOne` unit queue items.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
