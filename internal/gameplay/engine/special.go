@@ -365,6 +365,9 @@ func effectiveTerrainImprovement(state State, runtime *rules.RuntimeRules, defin
 
 func terrainImprovementAllowed(state State, runtime *rules.RuntimeRules, definition rules.RuntimeTerrainImprovementDefinition, tileID string) bool {
 	terrain := EffectiveTerrain(state, tileID)
+	if len(definition.AllowedTerrains) > 0 && !containsString(definition.AllowedTerrains, terrain) {
+		return false
+	}
 	if containsString(definition.CantBuildOn, terrain) {
 		return false
 	}

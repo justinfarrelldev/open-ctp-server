@@ -1255,7 +1255,7 @@ func terrainActions(projection Projection, tiles map[string]TileProjection, unit
 		}
 		if projection.Rules != nil {
 			for _, improvement := range orderedTerrainImprovements(*projection.Rules) {
-				if terrainImprovementBlockedByAdvance(projection, improvement) {
+				if terrainImprovementBlockedByAdvance(projection, improvement) || terrainImprovementBlockedByTerrain(improvement, tile.Terrain) {
 					continue
 				}
 				effective := projectedEffectiveTerrainImprovement(*projection.Rules, improvement, tile.Terrain)
@@ -1268,6 +1268,10 @@ func terrainActions(projection Projection, tiles map[string]TileProjection, unit
 		}
 	}
 	return actions
+}
+
+func terrainImprovementBlockedByTerrain(improvement rules.RuntimeTerrainImprovementDefinition, terrain string) bool {
+	return len(improvement.AllowedTerrains) > 0 && !containsString(improvement.AllowedTerrains, terrain)
 }
 
 func terrainImprovementBlockedByAdvance(projection Projection, improvement rules.RuntimeTerrainImprovementDefinition) bool {

@@ -71,7 +71,7 @@
     },
     {
       "path": "internal/gameplay/engine/special.go",
-      "sha256": "d68f71758cbfedd12c16c32781658028f9eb936b79e9f2ea5f68591362509010"
+      "sha256": "8e18900544f705ef52c544a08c9dfce5fdd58ec75f02e6c04ca7e7c924307dc9"
     },
     {
       "path": "internal/gameplay/engine/turns/turns.go",
@@ -111,7 +111,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_runtime.go",
-      "sha256": "6c92378222eeff112e09a5f2dbd5a9625ca881277f3fb406c4f49152f3501e52"
+      "sha256": "f7a3986e6bf2e59b7e5c8a9c1ba806c5036bb7e04acf14088511502cabdb89b2"
     },
     {
       "path": "internal/gameplay/rules/rules.go",
@@ -119,7 +119,7 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "08474d7f591ef8b7d6355d94d5b4ef8b6e138f641d3b47afb00e20395e2741f3"
+      "sha256": "cb0f5915d2f5883a9d45d12a2c8ed3b054047012ed2d58f9559006131cca99e9"
     },
     {
       "path": "internal/gameplay/service/ai.go",
@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "ed3f8cc3e374bd8e901fa164f170d75e9f6b5f08019455bd081597c2bc03d27a"
+      "sha256": "fcaa0755161954a97932f2e1f045ff2b5523818d988d5fdbb1bfc75012c43572"
     },
     {
       "path": "internal/runtime/runtime.go",

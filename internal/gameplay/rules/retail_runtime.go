@@ -824,6 +824,7 @@ func projectRetailTerrainImprovement(improvement RetailTerrainImprovement) Runti
 	definition.YieldGold = effect.BonusGold
 	definition.MovementCostDelta = effect.MoveCost
 	definition.RequiredAdvanceID = effect.EnableAdvance
+	definition.AllowedTerrains = append([]string(nil), effect.Terrains...)
 	return definition
 }
 

@@ -307,6 +307,10 @@
 - [x] Task 356: Terrain improvement execution rejects missing required advances.
 - [x] Task 357: Safe terrain action projections suppress missing-advance improvements.
 - [x] Task 358: AI terrain improvement planning continues through projected legal actions after advance gating.
+- [x] Task 359: Retail terrain improvement `TerrainEffect.Terrain` lists import as runtime allowed-terrain metadata.
+- [x] Task 360: Build-improvement execution rejects terrain improvements outside their allowed terrain list.
+- [x] Task 361: Safe terrain action projections suppress disallowed-terrain improvements.
+- [x] Task 362: AI terrain improvement planning remains projection-only after allowed-terrain gating.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

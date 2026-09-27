@@ -106,6 +106,7 @@ type RuntimeTerrainImprovementDefinition struct {
 	PollutionDelta    int      `json:"pollution_delta,omitempty"`
 	TargetTerrain     string   `json:"target_terrain,omitempty"`
 	RequiredAdvanceID string   `json:"required_advance_id,omitempty"`
+	AllowedTerrains   []string `json:"allowed_terrains,omitempty"`
 	CantBuildOn       []string `json:"cant_build_on,omitempty"`
 	Excludes          []string `json:"excludes,omitempty"`
 }
@@ -931,6 +932,10 @@ func compileTerrainImprovementDefinition(record Record) (RuntimeTerrainImproveme
 		return RuntimeTerrainImprovementDefinition{}, err
 	}
 	targetTerrain := record.Tags["TargetTerrain"]
+	allowedTerrains, err := optionalIDs(record, "AllowedTerrains")
+	if err != nil {
+		return RuntimeTerrainImprovementDefinition{}, err
+	}
 	cantBuildOn, err := optionalIDs(record, "CantBuildOn")
 	if err != nil {
 		return RuntimeTerrainImprovementDefinition{}, err
@@ -942,7 +947,7 @@ func compileTerrainImprovementDefinition(record Record) (RuntimeTerrainImproveme
 	if movementCostDelta == 0 && yieldFood == 0 && yieldProduction == 0 && yieldGold == 0 && pollutionDelta == 0 && targetTerrain == "" {
 		return RuntimeTerrainImprovementDefinition{}, fmt.Errorf("rules definition record %q has no terrain improvement effect", record.ID)
 	}
-	return RuntimeTerrainImprovementDefinition{ID: record.ID, Class: record.Tags["Class"], BuildTurns: buildTurns, PublicWorksCost: publicWorksCost, MovementCostDelta: movementCostDelta, YieldFood: yieldFood, YieldProduction: yieldProduction, YieldGold: yieldGold, PollutionDelta: pollutionDelta, TargetTerrain: targetTerrain, RequiredAdvanceID: record.Tags["RequiredAdvanceID"], CantBuildOn: cantBuildOn, Excludes: excludes}, nil
+	return RuntimeTerrainImprovementDefinition{ID: record.ID, Class: record.Tags["Class"], BuildTurns: buildTurns, PublicWorksCost: publicWorksCost, MovementCostDelta: movementCostDelta, YieldFood: yieldFood, YieldProduction: yieldProduction, YieldGold: yieldGold, PollutionDelta: pollutionDelta, TargetTerrain: targetTerrain, RequiredAdvanceID: record.Tags["RequiredAdvanceID"], AllowedTerrains: allowedTerrains, CantBuildOn: cantBuildOn, Excludes: excludes}, nil
 }
 
 func compilePollutionSourceDefinition(record Record) (RuntimePollutionSourceDefinition, error) {

@@ -330,7 +330,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	}
 
 	farms, ok := runtime.TerrainImprovement("TILEIMP_FARMS")
-	if !ok || farms.BuildTurns != 2 || farms.PublicWorksCost != 200 || farms.YieldFood != 10 || farms.Class != "Farm" || farms.RequiredAdvanceID != "ADVANCE_AGRICULTURE" || !retailContainsString(farms.CantBuildOn, "TERRAIN_WATER_SHELF") || !retailContainsString(farms.Excludes, "Mine") {
+	if !ok || farms.BuildTurns != 2 || farms.PublicWorksCost != 200 || farms.YieldFood != 10 || farms.Class != "Farm" || farms.RequiredAdvanceID != "ADVANCE_AGRICULTURE" || !sameStringSlices(farms.AllowedTerrains, []string{"TERRAIN_DESERT", "TERRAIN_GRASSLAND", "TERRAIN_PLAINS"}) || !retailContainsString(farms.CantBuildOn, "TERRAIN_WATER_SHELF") || !retailContainsString(farms.Excludes, "Mine") {
 		t.Fatalf("farms runtime = %+v ok=%v", farms, ok)
 	}
 	terraformGrassland, ok := runtime.TerrainImprovement("TILEIMP_TERRAFORM_GRASSLAND")
