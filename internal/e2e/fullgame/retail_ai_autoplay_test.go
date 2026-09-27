@@ -14,6 +14,45 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility"
 )
 
+func TestRetailRuntimeScoreVictoryCanReachTerminalFinalTurn(t *testing.T) {
+	root := localRetailGameDataRoot(t)
+	db, err := rules.LoadRetailRulesFromDirectory(root)
+	if err != nil {
+		t.Fatalf("LoadRetailRulesFromDirectory() error = %v", err)
+	}
+	runtime := rules.ProjectRetailRuntime(db)
+	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatalf("CanonicalRuntimeDefinitions() error = %v", err)
+	}
+	state := engine.State{
+		SchemaVersion: engine.StateSchemaV1,
+		Rules:         engine.RulesPin{Version: runtime.CompatibilityVersion, ContentHash: contentHash, Definitions: definitions},
+		Phase:         engine.PhaseState{Mode: "sequential", ModeVersion: "turn-policy-v1", Turn: runtime.Calendar.FinalTurn - 1, ActivePlayerOrder: []string{"ai-1", "ai-2"}},
+		Players: []engine.Player{
+			{ID: "ai-1", NationID: "nation-ai-1", Lifecycle: engine.PlayerActive, Controller: engine.ControllerAI},
+			{ID: "ai-2", NationID: "nation-ai-2", Lifecycle: engine.PlayerActive, Controller: engine.ControllerAI},
+		},
+		Nations: []engine.Nation{{ID: "nation-ai-1"}, {ID: "nation-ai-2"}},
+		Tiles:   []engine.Tile{{ID: "tile-1", Terrain: "TERRAIN_PLAINS", Open: true}, {ID: "tile-2", Terrain: "TERRAIN_PLAINS", Open: true}},
+		Cities: []engine.City{
+			{ID: "city-1", OwnerID: "ai-1", TileID: "tile-1", Effects: []engine.Effect{{ID: "score-1", Kind: engine.EffectVictory, Value: 2}}},
+			{ID: "city-2", OwnerID: "ai-2", TileID: "tile-2", Effects: []engine.Effect{{ID: "score-2", Kind: engine.EffectVictory, Value: 1}}},
+		},
+		RNG: []engine.RNGDomainState{{Domain: engine.RNGDomainCombat, State: 1}, {Domain: engine.RNGDomainSpecialAction, State: 2}, {Domain: engine.RNGDomainAI, State: 3}, {Domain: engine.RNGDomainRiot, State: 4}},
+	}
+	if err := engine.ValidateState(state); err != nil {
+		t.Fatalf("terminal proof state invalid: %v", err)
+	}
+	next, events, _, err := engine.Apply(state, engine.Command{SchemaVersion: engine.CommandSchemaV1, ID: "retail-final-turn", ActorPlayerID: "ai-1", Type: engine.CommandRoundComplete, Payload: json.RawMessage(`{}`)}, state.Rules, retailAISources())
+	if err != nil {
+		t.Fatalf("round complete at retail final turn: %v", err)
+	}
+	if !next.Terminal.Ended || next.Terminal.Reason != "score_2300" || next.Terminal.WinningPlayerID != "ai-1" || len(events) != 1 || events[0].Type != engine.EventTerminal {
+		t.Fatalf("retail final turn terminal = %#v events=%#v", next.Terminal, events)
+	}
+}
+
 func TestRetailAIAutoPlayRecordsAtLeastHundredTurns(t *testing.T) {
 	root := localRetailGameDataRoot(t)
 	transcript := filepath.Join(t.TempDir(), "retail-ai-100-turns.jsonl")

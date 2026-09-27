@@ -22,6 +22,7 @@ type RetailRules struct {
 	Governments           []RetailGovernment           `json:"governments"`
 	PollutionTriggerLists []RetailPollutionTriggerList `json:"pollution_trigger_lists"`
 	PollutionModel        RetailPollutionModel         `json:"pollution_model"`
+	Calendar              RetailCalendar               `json:"calendar"`
 	AI                    RetailAILists                `json:"ai"`
 }
 
@@ -172,6 +173,19 @@ type RetailPollutionModel struct {
 	ProductionRatio int `json:"production_ratio"`
 }
 
+type RetailCalendar struct {
+	StartYear        int                    `json:"start_year"`
+	EarlyWarningYear int                    `json:"early_warning_year"`
+	EndYear          int                    `json:"end_year"`
+	FinalTurn        int                    `json:"final_turn"`
+	Periods          []RetailCalendarPeriod `json:"periods,omitempty"`
+}
+
+type RetailCalendarPeriod struct {
+	StartTurn    int `json:"start_turn"`
+	YearsPerTurn int `json:"years_per_turn"`
+}
+
 type RetailAILists struct {
 	UnitBuildLists     []RetailAIList `json:"unit_build_lists,omitempty"`
 	BuildingBuildLists []RetailAIList `json:"building_build_lists,omitempty"`
@@ -203,11 +217,17 @@ func LoadRetailRulesFromDirectory(directory string) (RetailRules, error) {
 		return RetailRules{}, importError(ErrorInvalidDirectory, "", 1, "", "directory must be provided")
 	}
 	var result RetailRules
-	pollutionModel, err := loadRetailPollutionModel(filepath.Join(directory, "DiffDB.txt"))
+	diffPath := filepath.Join(directory, "DiffDB.txt")
+	pollutionModel, err := loadRetailPollutionModel(diffPath)
 	if err != nil {
 		return RetailRules{}, err
 	}
 	result.PollutionModel = pollutionModel
+	calendar, err := loadRetailCalendar(diffPath, filepath.Join(directory, "Const.txt"))
+	if err != nil {
+		return RetailRules{}, err
+	}
+	result.Calendar = calendar
 	for _, catalog := range RetailGameCatalogs() {
 		path := filepath.Join(directory, catalog.Filename)
 		data, err := os.ReadFile(path)
@@ -333,6 +353,158 @@ func compileRetailPollutionModel(fields []RetailRawField) (RetailPollutionModel,
 		return RetailPollutionModel{}, err
 	}
 	return RetailPollutionModel{PopulationStart: populationStart, PopulationRatio: populationRatio, ProductionStart: productionStart, ProductionRatio: productionRatio}, nil
+}
+
+func loadRetailCalendar(diffPath, constPath string) (RetailCalendar, error) {
+	endYear, earlyWarningYear, err := loadRetailEndGameYears(constPath)
+	if err != nil {
+		return RetailCalendar{}, err
+	}
+	calendar, err := loadRetailTimeScale(diffPath)
+	if err != nil {
+		return RetailCalendar{}, err
+	}
+	calendar.EndYear = endYear
+	calendar.EarlyWarningYear = earlyWarningYear
+	finalTurn, err := retailCalendarFinalTurn(calendar)
+	if err != nil {
+		return RetailCalendar{}, err
+	}
+	calendar.FinalTurn = finalTurn
+	return calendar, nil
+}
+
+func loadRetailEndGameYears(path string) (int, int, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0, 0, importError(ErrorInvalidDirectory, path, 1, "", err.Error())
+	}
+	tokens, err := lexRetailCTP2(string(data), filepath.Base(path))
+	if err != nil {
+		return 0, 0, err
+	}
+	endYear, earlyWarningYear := 0, 0
+	for index := 0; index+1 < len(tokens); index++ {
+		switch tokens[index].value {
+		case "END_OF_GAME_YEAR":
+			value, err := retailParseInt("CONST", tokens[index].value, tokens[index+1].value)
+			if err != nil {
+				return 0, 0, err
+			}
+			endYear = value
+		case "END_OF_GAME_YEAR_EARLY_WARNING":
+			value, err := retailParseInt("CONST", tokens[index].value, tokens[index+1].value)
+			if err != nil {
+				return 0, 0, err
+			}
+			earlyWarningYear = value
+		}
+	}
+	if endYear == 0 {
+		return 0, 0, importError(ErrorMalformedValue, path, 1, "CONST", "END_OF_GAME_YEAR missing")
+	}
+	return endYear, earlyWarningYear, nil
+}
+
+func loadRetailTimeScale(path string) (RetailCalendar, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return RetailCalendar{}, importError(ErrorInvalidDirectory, path, 1, "", err.Error())
+	}
+	tokens, err := lexRetailCTP2(string(data), filepath.Base(path))
+	if err != nil {
+		return RetailCalendar{}, err
+	}
+	for index := 0; index < len(tokens); index++ {
+		if tokens[index].value != "{" {
+			continue
+		}
+		fields, _, err := parseRetailFields(tokens, index+1, filepath.Base(path), "DIFFICULTY")
+		if err != nil {
+			return RetailCalendar{}, err
+		}
+		calendar, err := compileRetailTimeScale(fields)
+		if err != nil {
+			return RetailCalendar{}, err
+		}
+		if calendar.StartYear != 0 && len(calendar.Periods) > 0 {
+			return calendar, nil
+		}
+	}
+	return RetailCalendar{}, importError(ErrorMalformedValue, path, 1, "DIFFICULTY", "TIME_SCALE missing")
+}
+
+func compileRetailTimeScale(fields []RetailRawField) (RetailCalendar, error) {
+	timeScale, ok := retailFirstBlock(fields, "TIME_SCALE")
+	if !ok {
+		return RetailCalendar{}, nil
+	}
+	startYear, err := retailSingleChildInt(timeScale, "START_YEAR")
+	if err != nil {
+		return RetailCalendar{}, err
+	}
+	calendar := RetailCalendar{StartYear: startYear}
+	for _, field := range timeScale.Fields {
+		if field.Key != "PERIOD" || len(field.Fields) == 0 {
+			continue
+		}
+		startTurn, err := retailSingleChildInt(field, "START_TURN")
+		if err != nil {
+			return RetailCalendar{}, err
+		}
+		yearsPerTurn, err := retailSingleChildInt(field, "YEARS_PER_TURN")
+		if err != nil {
+			return RetailCalendar{}, err
+		}
+		calendar.Periods = append(calendar.Periods, RetailCalendarPeriod{StartTurn: startTurn, YearsPerTurn: yearsPerTurn})
+	}
+	if len(calendar.Periods) == 0 {
+		return RetailCalendar{}, importError(ErrorMalformedValue, "DiffDB.txt", 1, "TIME_SCALE", "PERIOD missing")
+	}
+	return calendar, nil
+}
+
+func retailSingleChildInt(field RetailRawField, key string) (int, error) {
+	values := field.ChildValues(key)
+	if len(values) == 0 {
+		return 0, importError(ErrorMalformedValue, "DiffDB.txt", 1, key, "value missing")
+	}
+	return retailParseInt("DIFFICULTY", key, values[0])
+}
+
+func retailCalendarFinalTurn(calendar RetailCalendar) (int, error) {
+	if len(calendar.Periods) == 0 {
+		return 0, importError(ErrorMalformedValue, "DiffDB.txt", 1, "TIME_SCALE", "periods missing")
+	}
+	currentYear := calendar.StartYear
+	for index, period := range calendar.Periods {
+		if period.YearsPerTurn <= 0 {
+			return 0, importError(ErrorMalformedValue, "DiffDB.txt", 1, "YEARS_PER_TURN", "must be positive")
+		}
+		nextStart := 0
+		if index+1 < len(calendar.Periods) {
+			nextStart = calendar.Periods[index+1].StartTurn
+			spanTurns := nextStart - period.StartTurn
+			if spanTurns < 0 {
+				return 0, importError(ErrorMalformedValue, "DiffDB.txt", 1, "START_TURN", "periods must be source-ordered")
+			}
+			nextYear := currentYear + spanTurns*period.YearsPerTurn
+			if calendar.EndYear <= nextYear {
+				return period.StartTurn + divCeil(calendar.EndYear-currentYear, period.YearsPerTurn), nil
+			}
+			currentYear = nextYear
+			continue
+		}
+		return period.StartTurn + divCeil(calendar.EndYear-currentYear, period.YearsPerTurn), nil
+	}
+	return 0, importError(ErrorMalformedValue, "DiffDB.txt", 1, "TIME_SCALE", "final turn unavailable")
+}
+
+func divCeil(numerator, denominator int) int {
+	if numerator <= 0 {
+		return 0
+	}
+	return (numerator + denominator - 1) / denominator
 }
 
 func loadRetailAILists(directory string) (RetailAILists, error) {

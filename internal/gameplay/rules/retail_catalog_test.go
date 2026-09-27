@@ -35,6 +35,9 @@ func TestLoadRetailRulesFromDirectoryCompilesTypedCatalogs(t *testing.T) {
 	if db.PollutionModel.PopulationStart != 16 || db.PollutionModel.PopulationRatio != 15 || db.PollutionModel.ProductionStart != 300 || db.PollutionModel.ProductionRatio != 1 {
 		t.Fatalf("pollution model = %+v", db.PollutionModel)
 	}
+	if db.Calendar.StartYear != -4000 || db.Calendar.EndYear != 2300 || db.Calendar.EarlyWarningYear != 2200 || db.Calendar.FinalTurn != 1000 || len(db.Calendar.Periods) != 5 {
+		t.Fatalf("calendar = %+v", db.Calendar)
+	}
 	if got, want := len(db.AI.UnitBuildLists), 27; got != want {
 		t.Fatalf("len(AI.UnitBuildLists) = %d, want %d", got, want)
 	}

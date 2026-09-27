@@ -40,6 +40,12 @@ func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 	if runtime.PollutionModel == nil || runtime.PollutionModel.PopulationStart != 16 || runtime.PollutionModel.PopulationRatio != 15 || runtime.PollutionModel.ProductionStart != 300 || runtime.PollutionModel.ProductionRatio != 1 {
 		t.Fatalf("runtime pollution model = %+v", runtime.PollutionModel)
 	}
+	if runtime.Calendar.FinalTurn != 1000 {
+		t.Fatalf("runtime final turn = %d, want retail 2300 AD turn 1000", runtime.Calendar.FinalTurn)
+	}
+	if got, want := runtime.VictoryEvaluatorIDs(), []string{"bloodlust_conquest", "diplomatic_world_union", "score_2300", "science_gaia_controller"}; !sameStringSlices(got, want) {
+		t.Fatalf("runtime victory evaluators = %#v, want %#v", got, want)
+	}
 	if runtime.Gaia.ActivationTurns != 10 || runtime.Gaia.BuildingID != "IMPROVE_GAIA_COMPUTER" || runtime.Gaia.WonderID != "WONDER_THE_SOLARIS_PROJECT" {
 		t.Fatalf("runtime Gaia = %+v", runtime.Gaia)
 	}

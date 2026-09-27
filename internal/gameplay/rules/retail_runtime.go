@@ -15,7 +15,8 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 	runtime := RuntimeRules{
 		CompatibilityVersion: CTP2CompatibilityVersion,
 		ContentHash:          "retail-catalog-projection",
-		Calendar:             RuntimeCalendar{FinalTurn: calendarFinalTurn},
+		Victory:              []RuntimeVictory{{ID: "bloodlust_conquest"}, {ID: "diplomatic_world_union"}, {ID: "score_2300"}, {ID: "science_gaia_controller"}},
+		Calendar:             RuntimeCalendar{FinalTurn: retailRuntimeFinalTurn(db.Calendar)},
 		Movement:             RuntimeMovement{Configured: true, PolicyConfigured: true, OpenAccess: false, ZOCStopsPath: true},
 		PollutionModel:       projectRetailPollutionModel(db.PollutionModel),
 	}
@@ -136,6 +137,13 @@ func projectRetailAILists(lists []RetailAIList) []RuntimeAIList {
 		projected = append(projected, RuntimeAIList{ID: list.ID, Items: append([]string(nil), list.Items...)})
 	}
 	return projected
+}
+
+func retailRuntimeFinalTurn(calendar RetailCalendar) int {
+	if calendar.FinalTurn > 0 {
+		return calendar.FinalTurn
+	}
+	return calendarFinalTurn
 }
 
 func projectRetailPollutionModel(model RetailPollutionModel) *RuntimePollutionModel {
