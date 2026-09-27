@@ -444,6 +444,57 @@ func TestRetailCreateParkCleansPollutedAdjacentTile(t *testing.T) {
 	}
 }
 
+func TestRetailPlantNukeKillsConfiguredNeighborTilesAndRecordsGlobalPollution(t *testing.T) {
+	state := task11State()
+	state.Tiles = []Tile{
+		{ID: "center", X: 0, Y: 0, Terrain: TerrainPlains},
+		{ID: "n1", X: 1, Y: 0, Terrain: TerrainPlains},
+		{ID: "n2", X: 0, Y: 1, Terrain: TerrainForest},
+		{ID: "n3", X: 5, Y: 5, Terrain: TerrainPlains},
+	}
+	state.Cities[0].TileID = "center"
+	state.Cities[0].Population = 8
+	state.Units[0].Effects = []Effect{{ID: "nuke", Kind: EffectSpecialPlantNuke}}
+	runtime := &rules.RuntimeRules{Constants: rules.RuntimeConstants{NukePopulationPercent: 75, NukeKillTiles: 2, PollutionCausedByNuke: 1000000}}
+
+	_, _, err := plantNuke(&state, &state.Units[0], &state.Cities[0], &state.Nations[0], &state.Nations[1], fixtureSources(), runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	killed := 0
+	for _, tile := range state.Tiles {
+		if tile.ID != "center" && tile.Terrain == "TERRAIN_DEAD" {
+			killed++
+		}
+	}
+	if killed != 2 || state.Pollution == nil || len(state.Pollution.History) == 0 || state.Pollution.History[0] != 1000000 {
+		t.Fatalf("nuke killed %d tiles pollution=%+v tiles=%+v", killed, state.Pollution, state.Tiles)
+	}
+}
+
+func TestRetailPlantNukeRemovesCompletedImprovementsInBlastRadius(t *testing.T) {
+	state := task11State()
+	state.Tiles = append(state.Tiles, Tile{ID: "adjacent", X: 1, Y: 1, Terrain: TerrainPlains})
+	state.Overlays = []TileOverlay{
+		{ID: "farm", TileID: "adjacent", Kind: "improvement", OwnerID: "player-b", ImprovementID: "TILEIMP_FARMS", Remaining: 0},
+		{ID: "pending", TileID: "adjacent", Kind: "improvement", OwnerID: "player-b", ImprovementID: "TILEIMP_MINES", Remaining: 2},
+		{ID: "distant", TileID: "home-tile", Kind: "improvement", OwnerID: "player-a", ImprovementID: "TILEIMP_ROADS", Remaining: 0},
+	}
+	state.Units[0].Effects = []Effect{{ID: "nuke", Kind: EffectSpecialPlantNuke}}
+
+	next, _, err := task11Apply(t, state, CommandPlantNuke, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := map[string]bool{}
+	for _, overlay := range next.Overlays {
+		seen[overlay.ID] = true
+	}
+	if seen["farm"] || !seen["pending"] || !seen["distant"] {
+		t.Fatalf("nuke blast overlays = %+v", next.Overlays)
+	}
+}
+
 func TestRetailPlantNukeRemovesUnitsInBlastRadiusAndRecordsDeathEffect(t *testing.T) {
 	state := task11State()
 	state.Tiles = append(state.Tiles, Tile{ID: "c", X: 1, Y: 1, Terrain: TerrainPlains, OwnerID: "player-b", Open: true})

@@ -742,7 +742,10 @@ func plantNuke(state *State, unit *Unit, city *City, actorNation *Nation, target
 	if tile := tilePointer(state, cityTileID); tile != nil {
 		tile.Pollution += nukePollution(runtime)
 	}
+	addNukeGlobalPollution(state, runtime)
 	destroyedUnits := resolveNukeBlastUnits(state, unit.ID, cityTileID)
+	resolveNukeBlastImprovements(state, cityTileID)
+	resolveNukeKilledTiles(state, cityTileID, runtime, sources)
 	resolvePlantNukeEscape(state, unit, sources)
 	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialPlantNuke, sources)
 	payload, _ := json.Marshal(struct {
@@ -766,6 +769,20 @@ func nukePollution(runtime *rules.RuntimeRules) int {
 	return 10
 }
 
+func addNukeGlobalPollution(state *State, runtime *rules.RuntimeRules) {
+	if runtime == nil || runtime.Constants.PollutionCausedByNuke <= 0 {
+		return
+	}
+	if state.Pollution == nil {
+		state.Pollution = &PollutionState{}
+	}
+	if len(state.Pollution.History) == 0 {
+		state.Pollution.History = []int64{0}
+	}
+	state.Pollution.History[0] += int64(runtime.Constants.PollutionCausedByNuke)
+	state.Pollution.LastPollutionLevel = state.Pollution.History[0]
+}
+
 func removeCityByID(state *State, cityID string) {
 	for index := range state.Cities {
 		if state.Cities[index].ID == cityID {
@@ -774,6 +791,77 @@ func removeCityByID(state *State, cityID string) {
 			return
 		}
 	}
+}
+
+func nukeKillTileCount(runtime *rules.RuntimeRules) int {
+	if runtime != nil && runtime.Constants.NukeKillTiles > 0 {
+		return runtime.Constants.NukeKillTiles
+	}
+	return 0
+}
+
+func resolveNukeKilledTiles(state *State, cityTileID string, runtime *rules.RuntimeRules, sources Sources) {
+	count := nukeKillTileCount(runtime)
+	if count <= 0 {
+		return
+	}
+	origin, ok := tileByID(*state, cityTileID)
+	if !ok {
+		return
+	}
+	neighbors := make([]Tile, 0)
+	for _, tile := range state.Tiles {
+		if tile.ID == cityTileID || tileDistance(origin, tile) != 1 {
+			continue
+		}
+		neighbors = append(neighbors, tile)
+	}
+	sort.Slice(neighbors, func(i, j int) bool { return neighbors[i].ID < neighbors[j].ID })
+	if len(neighbors) == 0 {
+		return
+	}
+	next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+	setRNG(state, RNGDomainSpecialAction, next)
+	start := int(roll % uint64(len(neighbors)))
+	killed := 0
+	for offset := 0; offset < len(neighbors) && killed < count; offset++ {
+		tileID := neighbors[(start+offset)%len(neighbors)].ID
+		if tile := tilePointer(state, tileID); tile != nil && tile.Terrain != deadTerrain(runtime) {
+			tile.Terrain = deadTerrain(runtime)
+			removeCompletedImprovementsOnTile(state, tileID)
+			killed++
+		}
+	}
+}
+
+func removeCompletedImprovementsOnTile(state *State, tileID string) {
+	filtered := state.Overlays[:0]
+	for _, overlay := range state.Overlays {
+		if overlay.TileID == tileID && overlay.Kind == "improvement" && overlay.Remaining <= 0 {
+			continue
+		}
+		filtered = append(filtered, overlay)
+	}
+	state.Overlays = filtered
+}
+
+func resolveNukeBlastImprovements(state *State, cityTileID string) {
+	origin, ok := tileByID(*state, cityTileID)
+	if !ok {
+		return
+	}
+	filtered := state.Overlays[:0]
+	for _, overlay := range state.Overlays {
+		if overlay.Kind != "improvement" || overlay.Remaining > 0 {
+			filtered = append(filtered, overlay)
+			continue
+		}
+		tile, ok := tileByID(*state, overlay.TileID)
+		if !ok || tileDistance(origin, tile) > 1 {
+			filtered = append(filtered, overlay)
+		}
+	}
+	state.Overlays = filtered
 }
 
 func resolveNukeBlastUnits(state *State, actingUnitID, cityTileID string) int {

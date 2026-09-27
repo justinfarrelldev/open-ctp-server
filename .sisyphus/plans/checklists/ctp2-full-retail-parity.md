@@ -296,6 +296,10 @@
 - [x] Task 345: Plant-nuke destroys tiny cities below the retail population threshold.
 - [x] Task 346: Plant-nuke removes trade routes attached to a destroyed city.
 - [x] Task 347: Plant-nuke pollution uses retail `POLLUTION_CAUSED_BY_NUKE` when runtime rules provide it.
+- [x] Task 348: Plant-nuke removes completed tile improvements in the retail blast radius.
+- [x] Task 349: Plant-nuke preserves in-progress tile improvements while removing completed blast improvements.
+- [x] Task 350: Retail plant-nuke kills the configured number of neighboring tiles as `TERRAIN_DEAD`.
+- [x] Task 351: Retail plant-nuke records global nuke pollution in canonical pollution history.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
