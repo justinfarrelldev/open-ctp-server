@@ -861,6 +861,21 @@ func TestRetailSpiesEverywhereStopsTechnologyTheftAndKillsAgent(t *testing.T) {
 	}
 }
 
+func TestRetailStealTechnologySpecificChanceStealsRequestedAdvance(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = []Effect{{ID: "steal", Kind: EffectSpecialSteal, Value: 0}, {ID: "specific", Kind: EffectSpecialStealSpecificChance, Value: 100}}
+	state.Nations[0].Advances = []string{"ADVANCE_ALPHA"}
+	state.Nations[1].Advances = []string{"ADVANCE_ALPHA", "ADVANCE_BETA", "ADVANCE_GAMMA"}
+
+	next, events, err := task11Apply(t, state, CommandStealTechnology, SpecialActionPayload{UnitID: "agent", CityID: "target-city", AdvanceID: "ADVANCE_GAMMA"})
+	if err != nil {
+		t.Fatalf("specific steal technology error = %v", err)
+	}
+	if !containsString(next.Nations[0].Advances, "ADVANCE_GAMMA") || containsString(next.Nations[0].Advances, "ADVANCE_BETA") || len(events) != 1 || events[0].Type != EventTechnologyStolen {
+		t.Fatalf("specific steal result advances=%v events=%+v", next.Nations[0].Advances, events)
+	}
+}
+
 func TestTask11StealTechnologySortedRNGFailureCaptureAndDisclosure(t *testing.T) {
 	state := task11State()
 	next, events, err := task11Apply(t, state, CommandStealTechnology, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})

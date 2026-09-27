@@ -256,6 +256,10 @@
 - [x] Task 305: Canonical cities preserve an owned-city good inventory abstraction for retail city-good requirements.
 - [x] Task 306: Unit production enforces retail `NeedsCityGood` runtime requirements.
 - [x] Task 307: Safe owned-city projections and production actions suppress city-good-gated units until the good is present.
+- [x] Task 308: Steal-technology payloads accept optional requested target advances.
+- [x] Task 309: Random steal-technology continues using retail random chance and deterministic eligible selection.
+- [x] Task 310: Targeted steal-technology validates and transfers only the requested advance.
+- [x] Task 311: Targeted steal-technology uses retail `SpecificChance` without projecting hidden target advance lists.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

@@ -70,6 +70,7 @@ type SpecialActionPayload struct {
 	UnitID       string `json:"unit_id"`
 	CityID       string `json:"city_id"`
 	TargetUnitID string `json:"target_unit_id,omitempty"`
+	AdvanceID    string `json:"advance_id,omitempty"`
 }
 
 type PillagePayload struct {
@@ -164,7 +165,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		case CommandSlaveUprising:
 			return slaveUprising(unit, city)
 		case CommandStealTechnology:
-			return stealTechnology(state, unit, city, actorNation, targetNation, sources)
+			return stealTechnology(state, unit, city, actorNation, targetNation, payload.AdvanceID, sources)
 		case CommandConvertCity:
 			return convertCity(state, unit, city, sources)
 		case CommandCreateFranchise:
@@ -1142,10 +1143,22 @@ func stoppedBySpiesEverywhere(state *State, unit *Unit, city *City, sources Sour
 	return true
 }
 
-func stealTechnology(state *State, unit *Unit, city *City, actor, target *Nation, sources Sources) (string, json.RawMessage, error) {
-	chance := effectValue(unit.Effects, EffectSpecialSteal)
-	if chance < 0 || chance > 100 {
-		return "", nil, errors.New("special action is not authorized")
+func stealTechnologyChance(unit *Unit, targetAdvanceID string) int {
+	if targetAdvanceID != "" {
+		return effectValue(unit.Effects, EffectSpecialStealSpecificChance)
+	}
+	return effectValue(unit.Effects, EffectSpecialSteal)
+}
+
+func stealTechnologyEligibleAdvances(actor, target *Nation, targetAdvanceID string) []string {
+	if actor == nil || target == nil {
+		return nil
+	}
+	if targetAdvanceID != "" {
+		if containsString(target.Advances, targetAdvanceID) && !containsString(actor.Advances, targetAdvanceID) {
+			return []string{targetAdvanceID}
+		}
+		return nil
 	}
 	eligible := make([]string, 0, len(target.Advances))
 	for _, advance := range target.Advances {
@@ -1154,6 +1167,15 @@ func stealTechnology(state *State, unit *Unit, city *City, actor, target *Nation
 		}
 	}
 	sort.Strings(eligible)
+	return eligible
+}
+
+func stealTechnology(state *State, unit *Unit, city *City, actor, target *Nation, targetAdvanceID string, sources Sources) (string, json.RawMessage, error) {
+	chance := stealTechnologyChance(unit, targetAdvanceID)
+	if chance < 0 || chance > 100 {
+		return "", nil, errors.New("special action is not authorized")
+	}
+	eligible := stealTechnologyEligibleAdvances(actor, target, targetAdvanceID)
 	if len(eligible) == 0 {
 		return "", nil, errors.New("special action target is unavailable")
 	}
