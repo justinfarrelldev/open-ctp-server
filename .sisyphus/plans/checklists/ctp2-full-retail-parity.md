@@ -260,6 +260,11 @@
 - [x] Task 309: Random steal-technology continues using retail random chance and deterministic eligible selection.
 - [x] Task 310: Targeted steal-technology validates and transfers only the requested advance.
 - [x] Task 311: Targeted steal-technology uses retail `SpecificChance` without projecting hidden target advance lists.
+- [x] Task 312: Incite-revolution no longer transfers revolting cities directly to the acting spy owner.
+- [x] Task 313: Revolting cities honor active `RevoltingCitiesJoinPlayer` wonder ownership when present.
+- [x] Task 314: Revolting cities create deterministic AI rebel player/nation ownership when no join-player wonder applies.
+- [x] Task 315: Revolt ownership clears city queues, removes attached trade routes, and updates city tile ownership.
+- [x] Task 316: Slave-uprising removes slave specialists and uses the rebel ownership transfer path.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

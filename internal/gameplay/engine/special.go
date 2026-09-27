@@ -163,7 +163,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		case CommandIndulgenceSales:
 			return indulgenceSales(state, unit, city, actorNation, targetNation, runtime)
 		case CommandSlaveUprising:
-			return slaveUprising(unit, city)
+			return slaveUprising(state, unit, city)
 		case CommandStealTechnology:
 			return stealTechnology(state, unit, city, actorNation, targetNation, payload.AdvanceID, sources)
 		case CommandConvertCity:
@@ -1045,7 +1045,63 @@ func indulgenceSaleAmounts(runtime *rules.RuntimeRules) (int, int) {
 	return gold, happiness
 }
 
-func slaveUprising(unit *Unit, city *City) (string, json.RawMessage, error) {
+func transferRevoltingCity(state *State, city *City) {
+	if state == nil || city == nil {
+		return
+	}
+	oldOwner := city.OwnerID
+	newOwner := revoltingCitiesJoinPlayer(*state, oldOwner)
+	if newOwner == "" {
+		newOwner = ensureRebelPlayer(state, oldOwner)
+	}
+	if newOwner == "" {
+		return
+	}
+	city.OwnerID = newOwner
+	city.Queue = nil
+	state.TradeRoutes = removeTradeRoutesTouchingCity(state.TradeRoutes, city.ID)
+	for index := range state.Tiles {
+		if state.Tiles[index].ID == city.TileID {
+			state.Tiles[index].OwnerID = newOwner
+			break
+		}
+	}
+}
+
+func revoltingCitiesJoinPlayer(state State, oldOwner string) string {
+	for _, wonder := range state.Wonders {
+		if wonder.Destroyed || wonder.OwnerID == "" || wonder.OwnerID == oldOwner {
+			continue
+		}
+		for _, effect := range wonder.Effects {
+			if effect.Kind == EffectRevoltingCitiesJoinPlayer {
+				return wonder.OwnerID
+			}
+		}
+	}
+	return ""
+}
+
+func ensureRebelPlayer(state *State, oldOwner string) string {
+	if oldOwner == "" {
+		return ""
+	}
+	playerID := "rebels-" + oldOwner
+	if _, ok := playerByID(state, playerID); ok {
+		return playerID
+	}
+	nationID := "rebel-nation-" + oldOwner
+	if nationForID(state, nationID) == nil {
+		state.Nations = append(state.Nations, Nation{ID: nationID})
+	}
+	state.Players = append(state.Players, Player{ID: playerID, NationID: nationID, Lifecycle: PlayerActive, Controller: ControllerAI})
+	if !containsString(state.Phase.ActivePlayerOrder, playerID) {
+		state.Phase.ActivePlayerOrder = append(state.Phase.ActivePlayerOrder, playerID)
+	}
+	return playerID
+}
+
+func slaveUprising(state *State, unit *Unit, city *City) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialSlaveUprising) {
 		return "", nil, errors.New("special action is not authorized")
 	}
@@ -1055,11 +1111,9 @@ func slaveUprising(unit *Unit, city *City) (string, json.RawMessage, error) {
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
 	}
-	city.Specialists["POP_SLAVE"]--
-	if city.Specialists["POP_SLAVE"] <= 0 {
-		delete(city.Specialists, "POP_SLAVE")
-	}
+	delete(city.Specialists, "POP_SLAVE")
 	city.Rioting = true
+	transferRevoltingCity(state, city)
 	return EventSlaveUprising, json.RawMessage(`{"disclosed":true}`), nil
 }
 
@@ -1097,7 +1151,7 @@ func inciteRevolution(state *State, unit *Unit, city *City, sources Sources) (st
 			return EventRevolutionFailed, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
-	city.OwnerID = unit.OwnerID
+	transferRevoltingCity(state, city)
 	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialInciteRevolution, sources)
 	return EventRevolutionIncited, json.RawMessage(`{"disclosed":true}`), nil
 }

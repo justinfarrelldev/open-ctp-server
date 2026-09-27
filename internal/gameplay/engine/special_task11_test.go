@@ -555,7 +555,7 @@ func TestRetailInvestigateCityStoresPrivateCityReport(t *testing.T) {
 	}
 }
 
-func TestRetailSlaveUprisingConsumesSlaveAndRiotMarksCity(t *testing.T) {
+func TestRetailSlaveUprisingTransfersCityToRebels(t *testing.T) {
 	state := task11State()
 	state.Cities[0].Population = 5
 	state.Cities[0].Specialists = map[string]int{"POP_SLAVE": 2}
@@ -565,7 +565,8 @@ func TestRetailSlaveUprisingConsumesSlaveAndRiotMarksCity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if next.Cities[0].Specialists["POP_SLAVE"] != 1 || !next.Cities[0].Rioting || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventSlaveUprising || strings.Contains(string(events[0].Payload), "target-city") {
+	_, rebelPlayerExists := playerByID(&next, "rebels-player-b")
+	if next.Cities[0].OwnerID != "rebels-player-b" || next.Cities[0].Specialists["POP_SLAVE"] != 0 || !next.Cities[0].Rioting || next.Units[0].Movement != 3 || !rebelPlayerExists || nationForID(&next, "rebel-nation-player-b") == nil || len(events) != 1 || events[0].Type != EventSlaveUprising || strings.Contains(string(events[0].Payload), "target-city") {
 		t.Fatalf("slave uprising state/events = city %+v unit %+v events %#v", next.Cities[0], next.Units[0], events)
 	}
 }
@@ -591,7 +592,7 @@ func TestRetailIndulgenceSalesTransferGoldAndTimedHappiness(t *testing.T) {
 	}
 }
 
-func TestRetailInciteRevolutionUsesChanceAndChangesCityOwner(t *testing.T) {
+func TestRetailInciteRevolutionUsesChanceAndTransfersCityToRebels(t *testing.T) {
 	state := task11State()
 	state.Units[0].Effects = []Effect{{ID: "incite", Kind: EffectSpecialInciteRevolution, Value: 100}, {ID: "elite", Kind: EffectSpecialInciteRevolutionEliteChance, Value: 100}, {ID: "death", Kind: EffectSpecialInciteRevolutionDeathChance, Value: 0}}
 
@@ -599,8 +600,26 @@ func TestRetailInciteRevolutionUsesChanceAndChangesCityOwner(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if next.Cities[0].OwnerID != "player-a" || next.Units[0].Movement != 3 || !hasEffect(next.Cities[0].Effects, EffectWatchful) || len(events) != 1 || events[0].Type != EventRevolutionIncited || strings.Contains(string(events[0].Payload), "target-city") {
+	_, rebelPlayerExists := playerByID(&next, "rebels-player-b")
+	if next.Cities[0].OwnerID != "rebels-player-b" || next.Cities[0].Queue != nil || next.Units[0].Movement != 3 || !hasEffect(next.Cities[0].Effects, EffectWatchful) || !rebelPlayerExists || nationForID(&next, "rebel-nation-player-b") == nil || len(events) != 1 || events[0].Type != EventRevolutionIncited || strings.Contains(string(events[0].Payload), "target-city") {
 		t.Fatalf("incite revolution state/events = city %+v unit %+v events %#v", next.Cities[0], next.Units[0], events)
+	}
+}
+
+func TestRetailInciteRevolutionHonorsRevoltingCitiesJoinPlayerWonder(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = []Effect{{ID: "incite", Kind: EffectSpecialInciteRevolution, Value: 100}}
+	state.Wonders = []Wonder{{ID: "WONDER_EGALITARIAN", OwnerID: "player-c", CityID: "ally-city", Effects: []Effect{{ID: "join", Kind: EffectRevoltingCitiesJoinPlayer}}}}
+	state.Players = append(state.Players, Player{ID: "player-c", NationID: "nation-c", Lifecycle: PlayerActive, Controller: ControllerAI})
+	state.Nations = append(state.Nations, Nation{ID: "nation-c"})
+
+	next, _, err := task11Apply(t, state, CommandInciteRevolution, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, rebelPlayerExists := playerByID(&next, "rebels-player-b")
+	if next.Cities[0].OwnerID != "player-c" || rebelPlayerExists {
+		t.Fatalf("revolting city owner = %s players=%+v", next.Cities[0].OwnerID, next.Players)
 	}
 }
 

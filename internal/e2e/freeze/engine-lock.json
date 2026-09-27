@@ -71,7 +71,7 @@
     },
     {
       "path": "internal/gameplay/engine/special.go",
-      "sha256": "58278277975cb98950d72fc27cac368bb8ae3faaa5f3a8736a08b0fc050d5617"
+      "sha256": "de40a2a193388237c719d8f422f0095f21a9ab481305ebcb53cce49e4276240c"
     },
     {
       "path": "internal/gameplay/engine/turns/turns.go",
