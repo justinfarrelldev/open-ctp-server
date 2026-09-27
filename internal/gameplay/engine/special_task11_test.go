@@ -27,6 +27,29 @@ func task11Apply(t *testing.T, state State, kind string, payload any) (State, []
 	return next, events, err
 }
 
+func TestRetailDefendAgainstSpiesStopsAndKillsCitySpy(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = append(state.Units[0].Effects, Effect{ID: "investigate", Kind: EffectSpecialInvestigateCity, Value: 100})
+	state.Units = append(state.Units, Unit{ID: "counterspy", OwnerID: "player-b", TileID: "b", Domain: DomainLand, Movement: 1, Effects: []Effect{{ID: "counterspy", Kind: EffectDefendAgainstSpies, Value: 25}}})
+
+	next, events, err := task11Apply(t, state, CommandInvestigateCity, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatalf("investigate with counterspy: %v", err)
+	}
+	if _, ok := unitByID(next, "agent"); ok {
+		t.Fatalf("acting spy survived spy defense: %#v", next.Units)
+	}
+	if _, ok := unitByID(next, "counterspy"); !ok {
+		t.Fatalf("counterspy should survive spy defense: %#v", next.Units)
+	}
+	if len(events) != 1 || events[0].Type != EventCityInvestigationFailed || !strings.Contains(string(events[0].Payload), "stopped_by_spies") {
+		t.Fatalf("spy defense event = %#v", events)
+	}
+	if hasEffect(next.Cities[0].Effects, EffectWatchful) {
+		t.Fatalf("stopped spy action should not also mark city watchful: %#v", next.Cities[0].Effects)
+	}
+}
+
 func TestRetailWatchfulCityHalvesSpecialSuccessChanceAndExpires(t *testing.T) {
 	city := City{ID: "target", Effects: []Effect{{ID: "watchful", Kind: EffectWatchful, Value: 2}}}
 	unitEffects := []Effect{{ID: "franchise", Kind: EffectSpecialCreateFranchise, Value: 75}}

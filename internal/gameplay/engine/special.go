@@ -36,6 +36,7 @@ const (
 	EffectSpecialCreatePark                    = "special_create_park"
 	EffectSpecialExpel                         = "special_expel"
 	EffectSpecialSue                           = "special_sue"
+	EffectDefendAgainstSpies                   = "defend_against_spies"
 	EffectSpecialConvertCityDeathChance        = EffectSpecialConvertCity + "_death_chance"
 	EffectSpecialCreateFranchiseDeathChance    = EffectSpecialCreateFranchise + "_death_chance"
 	EffectSpecialInvestigateCityDeathChance    = EffectSpecialInvestigateCity + "_death_chance"
@@ -114,6 +115,9 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		unit, city, actorNation, targetNation, err := specialTarget(state, command.ActorPlayerID, payload, command.Type == CommandSue)
 		if err != nil {
 			return "", nil, err
+		}
+		if eventType, payload, stopped := stopSpyByDefenders(state, unit, city, command.Type, sources); stopped {
+			return eventType, payload, nil
 		}
 		switch command.Type {
 		case CommandEstablishEmbassy:
@@ -226,6 +230,63 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		return EventTerraformCancelled, json.RawMessage(`{"disclosed":false}`), nil
 	}
 	return "", nil, fmt.Errorf("unsupported special command %q", command.Type)
+}
+
+func stopSpyByDefenders(state *State, unit *Unit, city *City, commandType string, sources Sources) (string, json.RawMessage, bool) {
+	if !spyDefenseAppliesToCommand(unit, commandType) {
+		return "", nil, false
+	}
+	for _, defender := range state.Units {
+		if defender.OwnerID != city.OwnerID || defender.TileID != city.TileID || defender.TransportID != "" || defender.ID == unit.ID {
+			continue
+		}
+		chance := effectValue(defender.Effects, EffectDefendAgainstSpies)
+		if chance <= 0 {
+			continue
+		}
+		if chance > 100 {
+			chance = 100
+		}
+		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
+		setRNG(state, RNGDomainSpecialAction, next)
+		if int(roll%100) < chance {
+			removeUnitAndCargo(state, unit.ID)
+			return spyDefenseFailureEvent(commandType), json.RawMessage(`{"disclosed":true,"stopped_by_spies":true}`), true
+		}
+	}
+	return "", nil, false
+}
+
+func spyDefenseAppliesToCommand(unit *Unit, commandType string) bool {
+	switch commandType {
+	case CommandStealTechnology:
+		return hasEffect(unit.Effects, EffectSpecialSteal)
+	case CommandConvertCity:
+		return hasEffect(unit.Effects, EffectSpecialConvertCity)
+	case CommandInvestigateCity:
+		return hasEffect(unit.Effects, EffectSpecialInvestigateCity)
+	case CommandPlantNuke:
+		return hasEffect(unit.Effects, EffectSpecialPlantNuke)
+	case CommandAssassinateRuler:
+		return hasEffect(unit.Effects, EffectSpecialAssassinateRuler)
+	default:
+		return false
+	}
+}
+
+func spyDefenseFailureEvent(commandType string) string {
+	switch commandType {
+	case CommandStealTechnology:
+		return EventTechnologyFailed
+	case CommandConvertCity:
+		return EventCityConversionFailed
+	case CommandPlantNuke:
+		return EventNukeFailed
+	case CommandAssassinateRuler:
+		return EventRulerAssassinationFailed
+	default:
+		return EventCityInvestigationFailed
+	}
 }
 
 func buildTerrainImprovement(state *State, actorID string, payload BuildImprovementPayload, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {

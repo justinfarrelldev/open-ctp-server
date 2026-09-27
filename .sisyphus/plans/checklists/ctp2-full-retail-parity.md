@@ -152,6 +152,9 @@
 - [x] Task 201: Retail Const/DiffDB calendar import computes the 2300 AD final score turn.
 - [x] Task 202: Retail runtime projection exposes final turn and natural victory evaluators.
 - [x] Task 203: Retail runtime score victory reaches terminal state at the computed final turn.
+- [x] Task 204: Retail DefendAgainstSpies unit fields import as runtime effects.
+- [x] Task 205: City spy-defense units can stop and kill acting spies before city special actions.
+- [x] Task 206: Spy-defense odds remain hidden from enemy safe projections.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

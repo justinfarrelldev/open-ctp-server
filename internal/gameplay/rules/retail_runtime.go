@@ -451,6 +451,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "EnableCarrierDefenses") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("enable_carrier_defenses"), Kind: "enable_carrier_defenses"})
 	}
+	if value := percentPoints(firstRetailUnitFloat(unit, "DefendAgainstSpies")); value > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("defend_against_spies"), Kind: "defend_against_spies", Value: value})
+	}
 	if retailContainsString(unit.Flags, "AttackWoodenShipBonus") {
 		if value := percentPoints(firstRetailUnitFloat(unit, "WoodenShipBonus")); value > 0 {
 			effects = append(effects, RuntimeStarterEffect{ID: effectID("combat_attack_vs_wooden_ship"), Kind: "combat_attack_vs_wooden_ship_percent", Value: value})
