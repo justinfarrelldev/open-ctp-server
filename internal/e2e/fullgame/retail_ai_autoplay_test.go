@@ -83,6 +83,33 @@ func TestRetailAIAutoPlayMaintainsProductionAndUnitPresence(t *testing.T) {
 	}
 }
 
+func TestRetailAIAutoPlayProgressRecordsCoreMechanics(t *testing.T) {
+	root := localRetailGameDataRoot(t)
+	state, records := runRetailAIAutoPlay(t, root, 24, filepath.Join(t.TempDir(), "retail-ai-metrics.jsonl"))
+	if len(records) < 24 {
+		t.Fatalf("records = %d, want at least 24", len(records))
+	}
+	last := records[len(records)-1]
+	if last.CommandCount != len(last.Commands) {
+		t.Fatalf("command_count = %d, commands = %d", last.CommandCount, len(last.Commands))
+	}
+	if last.NonRoundCommands < 0 || last.NonRoundCommands > last.CommandCount {
+		t.Fatalf("non_round_commands = %d, command_count = %d", last.NonRoundCommands, last.CommandCount)
+	}
+	if last.ActiveQueues == 0 {
+		t.Fatalf("active_queues = 0, want production continuity metric to observe queued work")
+	}
+	if last.ResearchTargets == 0 || last.ResearchProgress == 0 {
+		t.Fatalf("research targets/progress = %d/%d, want active research metrics", last.ResearchTargets, last.ResearchProgress)
+	}
+	if last.PublicWorks == 0 {
+		t.Fatalf("public_works = 0, want public works metric")
+	}
+	if last.TerminalEnded != state.Terminal.Ended || last.TerminalReason != state.Terminal.Reason {
+		t.Fatalf("terminal metrics = %t/%q, state terminal = %t/%q", last.TerminalEnded, last.TerminalReason, state.Terminal.Ended, state.Terminal.Reason)
+	}
+}
+
 func TestRetailAIAutoPlayRecordsAtLeastHundredTurns(t *testing.T) {
 	root := localRetailGameDataRoot(t)
 	transcript := filepath.Join(t.TempDir(), "retail-ai-100-turns.jsonl")
@@ -105,12 +132,25 @@ type retailAITurnRecord struct {
 	Turn             int      `json:"turn"`
 	ActivePlayerID   string   `json:"active_player_id"`
 	Commands         []string `json:"commands"`
+	CommandCount     int      `json:"command_count"`
+	NonRoundCommands int      `json:"non_round_commands"`
+	CombatCommands   int      `json:"combat_commands"`
 	Cities           int      `json:"cities"`
 	Units            int      `json:"units"`
+	ActiveQueues     int      `json:"active_queues"`
 	Advances         int      `json:"advances"`
+	ResearchTargets  int      `json:"research_targets"`
+	ResearchProgress int      `json:"research_progress"`
 	Wonders          int      `json:"wonders"`
+	TreasuryGold     int      `json:"treasury_gold"`
+	PublicWorks      int      `json:"public_works"`
+	TradeRoutes      int      `json:"trade_routes"`
 	TilePollution    int      `json:"tile_pollution"`
+	WorldPollution   int64    `json:"world_pollution"`
 	DiplomacyRecords int      `json:"diplomacy_records"`
+	AtWarRelations   int      `json:"at_war_relations"`
+	TerminalEnded    bool     `json:"terminal_ended"`
+	TerminalReason   string   `json:"terminal_reason,omitempty"`
 	StateHash        string   `json:"state_hash"`
 }
 
@@ -236,15 +276,46 @@ func retailAITurnSummary(t *testing.T, state engine.State, actor string, command
 	if err != nil {
 		t.Fatal(err)
 	}
-	advanceCount := 0
+	advanceCount, researchTargets, researchProgress, treasuryGold, publicWorks := 0, 0, 0, 0, 0
 	for _, nation := range state.Nations {
 		advanceCount += len(nation.Advances)
+		if nation.ResearchTargetID != "" {
+			researchTargets++
+		}
+		researchProgress += nation.ResearchProgress
+		treasuryGold += nation.Gold
+		publicWorks += nation.PublicWorks
 	}
-	pollution := 0
+	activeQueues := 0
+	for _, city := range state.Cities {
+		if len(city.Queue) > 0 {
+			activeQueues++
+		}
+	}
+	tilePollution := 0
 	for _, tile := range state.Tiles {
-		pollution += tile.Pollution
+		tilePollution += tile.Pollution
 	}
-	return retailAITurnRecord{Turn: state.Phase.Turn, ActivePlayerID: actor, Commands: append([]string(nil), commands...), Cities: len(state.Cities), Units: len(state.Units), Advances: advanceCount, Wonders: len(state.Wonders), TilePollution: pollution, DiplomacyRecords: len(state.Diplomacy), StateHash: hash}
+	worldPollution := int64(0)
+	if state.Pollution != nil {
+		worldPollution = state.Pollution.LastPollutionLevel
+	}
+	nonRoundCommands, combatCommands := 0, 0
+	for _, command := range commands {
+		if command != engine.CommandRoundComplete {
+			nonRoundCommands++
+		}
+		if command == engine.CommandCombat || command == engine.CommandBombard {
+			combatCommands++
+		}
+	}
+	atWarRelations := 0
+	for _, relation := range state.Diplomacy {
+		if relation.Treaty == "war" {
+			atWarRelations++
+		}
+	}
+	return retailAITurnRecord{Turn: state.Phase.Turn, ActivePlayerID: actor, Commands: append([]string(nil), commands...), CommandCount: len(commands), NonRoundCommands: nonRoundCommands, CombatCommands: combatCommands, Cities: len(state.Cities), Units: len(state.Units), ActiveQueues: activeQueues, Advances: advanceCount, ResearchTargets: researchTargets, ResearchProgress: researchProgress, Wonders: len(state.Wonders), TreasuryGold: treasuryGold, PublicWorks: publicWorks, TradeRoutes: len(state.TradeRoutes), TilePollution: tilePollution, WorldPollution: worldPollution, DiplomacyRecords: len(state.Diplomacy), AtWarRelations: atWarRelations, TerminalEnded: state.Terminal.Ended, TerminalReason: state.Terminal.Reason, StateHash: hash}
 }
 
 func writeRetailAITranscript(t *testing.T, path string, records []retailAITurnRecord) {

@@ -1,0 +1,5 @@
+=== RUN   TestRetailAIAutoPlayProgressRecordsCoreMechanics
+    retail_ai_autoplay_test.go:88: retail AI transcript: /tmp/TestRetailAIAutoPlayProgressRecordsCoreMechanics1805843213/001/retail-ai-metrics.jsonl
+--- PASS: TestRetailAIAutoPlayProgressRecordsCoreMechanics (4.27s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame	4.345s

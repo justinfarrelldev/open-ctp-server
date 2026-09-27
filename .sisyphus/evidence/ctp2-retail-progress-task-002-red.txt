@@ -1,0 +1,14 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame [github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame.test]
+internal/e2e/fullgame/retail_ai_autoplay_test.go:93:10: last.CommandCount undefined (type retailAITurnRecord has no field or method CommandCount)
+internal/e2e/fullgame/retail_ai_autoplay_test.go:94:54: last.CommandCount undefined (type retailAITurnRecord has no field or method CommandCount)
+internal/e2e/fullgame/retail_ai_autoplay_test.go:96:10: last.NonRoundCommands undefined (type retailAITurnRecord has no field or method NonRoundCommands)
+internal/e2e/fullgame/retail_ai_autoplay_test.go:96:63: last.CommandCount undefined (type retailAITurnRecord has no field or method CommandCount)
+internal/e2e/fullgame/retail_ai_autoplay_test.go:97:64: last.NonRoundCommands undefined (type retailAITurnRecord has no field or method NonRoundCommands)
+internal/e2e/fullgame/retail_ai_autoplay_test.go:97:87: last.CommandCount undefined (type retailAITurnRecord has no field or method CommandCount)
+internal/e2e/fullgame/retail_ai_autoplay_test.go:99:10: last.ActiveQueues undefined (type retailAITurnRecord has no field or method ActiveQueues)
+internal/e2e/fullgame/retail_ai_autoplay_test.go:102:10: last.ResearchTargets undefined (type retailAITurnRecord has no field or method ResearchTargets)
+internal/e2e/fullgame/retail_ai_autoplay_test.go:102:39: last.ResearchProgress undefined (type retailAITurnRecord has no field or method ResearchProgress)
+internal/e2e/fullgame/retail_ai_autoplay_test.go:103:84: last.ResearchTargets undefined (type retailAITurnRecord has no field or method ResearchTargets)
+internal/e2e/fullgame/retail_ai_autoplay_test.go:103:84: too many errors
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame [build failed]
+FAIL

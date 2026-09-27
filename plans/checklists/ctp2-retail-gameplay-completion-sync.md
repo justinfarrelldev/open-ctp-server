@@ -13,11 +13,12 @@
 ## Completed Increments
 
 - [x] Task 001: Long-run retail AI progress test now guards against zero-unit/inert autoplay; AI now queues emergency defenders for populated undefended cities while preserving expansion-settler preference, stale projected combat is suppressed, and combat can target currently visible units without requiring prior fog memory.
+- [x] Task 002: Retail AI progress records now include command throughput, active queues, research targets/progress, treasury/public works, trade/diplomacy/war, pollution, combat, terminal, and state-hash metrics.
 
 ## Full-Game Mechanical Execution First
 
 - [x] Add/restore a RED long-run retail AI progress test that fails when autoplay becomes inert, loses all units, stops producing/researching, or issues only round-complete commands late-game.
-- [ ] Extend the full-game progress record with cities, units, active queues, research progress, advances, gold/treasury, public works, trade routes, diplomacy/war, pollution, combat counts, command throughput, terminal state, and state hash.
+- [x] Extend the full-game progress record with cities, units, active queues, research progress, advances, gold/treasury, public works, trade routes, diplomacy/war, pollution, combat counts, command throughput, terminal state, and state hash.
 - [ ] Make the progress harness checkpoint canonical restart equality.
 - [ ] Fix AI economy/production continuity using only public projections and legal actions.
 - [ ] Fix AI exploration, settling, worker/public-works improvement, transport/cargo/fuel dead ends, and pathing stalls.
