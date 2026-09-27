@@ -130,7 +130,7 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 	for _, unitID := range crashedUnits {
 		removeUnitAndCargo(state, unitID)
 	}
-	advanceTreasury(state)
+	advanceTreasury(state, runtime)
 	advanceResearch(state, runtime)
 }
 
@@ -395,7 +395,11 @@ func advanceResearch(state *State, runtime *rules.RuntimeRules) {
 	}
 }
 
-func advanceTreasury(state *State) {
+func advanceTreasury(state *State, runtimes ...*rules.RuntimeRules) {
+	var runtime *rules.RuntimeRules
+	if len(runtimes) > 0 {
+		runtime = runtimes[0]
+	}
 	for index := range state.Nations {
 		nation := &state.Nations[index]
 		sciencePercent := nationSciencePercent(*nation, maxSciencePercentForNation(*nation))
@@ -404,8 +408,13 @@ func advanceTreasury(state *State) {
 			if nationForPlayer(*state, city.OwnerID) != nation.ID {
 				continue
 			}
-			if city.Yields.Gold > 0 {
-				income += city.Yields.Gold - city.Yields.Gold*sciencePercent/100
+			cityGold := city.Yields.Gold
+			if cityGold > 0 {
+				cityGold -= payConversionGold(state, city, runtime)
+				if cityGold < 0 {
+					cityGold = 0
+				}
+				income += cityGold - cityGold*sciencePercent/100
 			}
 			income -= cityBuildingMaintenanceDeficit(*state, city)
 		}
@@ -416,6 +425,45 @@ func advanceTreasury(state *State) {
 			nation.Gold = 0
 		}
 	}
+}
+
+func payConversionGold(state *State, city City, runtime *rules.RuntimeRules) int {
+	if state == nil || city.ConvertedToPlayerID == "" || city.ConvertedToPlayerID == city.OwnerID || city.Yields.Gold <= 0 {
+		return 0
+	}
+	convertedNationID := nationForPlayer(*state, city.ConvertedToPlayerID)
+	if convertedNationID == "" {
+		return 0
+	}
+	percent := conversionGoldPercent(city, runtime)
+	if percent <= 0 {
+		return 0
+	}
+	amount := city.Yields.Gold * percent / 100
+	if amount < 1 {
+		amount = 1
+	}
+	if amount > city.Yields.Gold {
+		amount = city.Yields.Gold
+	}
+	if nation := nationForID(state, convertedNationID); nation != nil {
+		nation.Gold += amount
+		return amount
+	}
+	return 0
+}
+
+func conversionGoldPercent(city City, runtime *rules.RuntimeRules) int {
+	if city.ConvertedBy == "televangelist" {
+		if runtime != nil && runtime.Constants.TelevangelistConversionPercent > 0 {
+			return runtime.Constants.TelevangelistConversionPercent
+		}
+		return 40
+	}
+	if runtime != nil && runtime.Constants.ClericConversionPercent > 0 {
+		return runtime.Constants.ClericConversionPercent
+	}
+	return 20
 }
 
 type buildingUpkeepCandidate struct {

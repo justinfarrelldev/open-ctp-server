@@ -272,6 +272,10 @@
 - [x] Task 321: Indulgence-sales uses converted-to-seller constants when applicable.
 - [x] Task 322: Indulgence-sales uses other-faith constants when applicable.
 - [x] Task 323: Safe projections expose conversion state only to the city owner or converting player.
+- [x] Task 324: Retail cleric/televangelist conversion factors import as runtime constants.
+- [x] Task 325: Converted-city gold is siphoned to the converted-to nation during treasury advancement.
+- [x] Task 326: Cleric conversion gold uses the retail cleric conversion factor.
+- [x] Task 327: Televangelist conversion gold uses the retail televangelist conversion factor.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

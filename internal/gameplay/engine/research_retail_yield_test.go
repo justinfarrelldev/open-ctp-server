@@ -1,6 +1,10 @@
 package engine
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
+)
 
 func TestRetailResearchRateUsesCityTradeYield(t *testing.T) {
 	state := State{
@@ -146,5 +150,20 @@ func TestRetailResearchRateUsesGovernmentKnowledgeCoefficient(t *testing.T) {
 	}
 	if got, want := researchRate(state, state.Nations[0]), 11; got != want {
 		t.Fatalf("research rate = %d, want base 1 + city trade 5 doubled by government = %d", got, want)
+	}
+}
+
+func TestRetailConversionSiphonsGoldToConvertedOwner(t *testing.T) {
+	zeroScience := 0
+	state := State{
+		Nations: []Nation{{ID: "nation-a", SciencePercent: &zeroScience}, {ID: "nation-b", SciencePercent: &zeroScience}},
+		Players: []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}, {ID: "player-b", NationID: "nation-b", Lifecycle: PlayerActive, Controller: ControllerHuman}},
+		Cities:  []City{{ID: "converted", OwnerID: "player-b", TileID: "tile-b", ConvertedToPlayerID: "player-a", ConvertedBy: "cleric", Yields: Yield{Gold: 10}}},
+	}
+	runtime := &rules.RuntimeRules{Constants: rules.RuntimeConstants{ClericConversionPercent: 20, TelevangelistConversionPercent: 40}}
+
+	advanceTreasury(&state, runtime)
+	if state.Nations[0].Gold != 2 || state.Nations[1].Gold != 8 {
+		t.Fatalf("conversion gold nations = %+v", state.Nations)
 	}
 }

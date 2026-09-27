@@ -281,6 +281,8 @@ type RuntimeConstants struct {
 	ConvertedIndulgenceHappiness   int `json:"converted_indulgence_happiness,omitempty"`
 	OtherFaithIndulgenceGold       int `json:"other_faith_indulgence_gold,omitempty"`
 	OtherFaithIndulgenceHappiness  int `json:"other_faith_indulgence_happiness,omitempty"`
+	ClericConversionPercent        int `json:"cleric_conversion_percent,omitempty"`
+	TelevangelistConversionPercent int `json:"televangelist_conversion_percent,omitempty"`
 }
 
 type RuntimeGaia struct {
