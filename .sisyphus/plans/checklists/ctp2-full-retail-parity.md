@@ -198,6 +198,10 @@
 - [x] Task 247: Retail `GLHidden` unit flags are preserved as runtime/canonical marker effects.
 - [x] Task 248: Retail `HasPopAndCanBuild` unit flags are preserved as runtime/canonical marker effects.
 - [x] Task 249: Retail `ImmuneToHostileTerrain` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 250: Retail `NoIndex` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 251: Retail `OnlyBuildOne` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 252: Retail `ThrowParty` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 253: Retail `VictoryEnslavement` unit flags are preserved as runtime/canonical marker effects.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

@@ -413,6 +413,18 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "ImmuneToHostileTerrain") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("immune_to_hostile_terrain"), Kind: "immune_to_hostile_terrain"})
 	}
+	if retailContainsString(unit.Flags, "NoIndex") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("no_index"), Kind: "no_index"})
+	}
+	if retailContainsString(unit.Flags, "OnlyBuildOne") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("only_build_one"), Kind: "only_build_one"})
+	}
+	if retailContainsString(unit.Flags, "ThrowParty") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("throw_party"), Kind: "throw_party"})
+	}
+	if retailContainsString(unit.Flags, "VictoryEnslavement") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("victory_enslavement"), Kind: "victory_enslavement"})
+	}
 	if retailContainsString(unit.Flags, "CantCaptureCity") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("cant_capture_city"), Kind: "cant_capture_city"})
 	}

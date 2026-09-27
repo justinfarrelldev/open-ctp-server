@@ -216,7 +216,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("warrior runtime = %+v ok=%v", warrior, ok)
 	}
 	settler, ok = runtime.Unit("UNIT_SETTLER")
-	if !ok || !runtimeUnitHasEffect(settler, "civilian") || !runtimeUnitHasEffect(settler, "invisible_for_globe_sat") {
+	if !ok || !runtimeUnitHasEffect(settler, "civilian") || !runtimeUnitHasEffect(settler, "invisible_for_globe_sat") || !runtimeUnitHasEffect(settler, "only_build_one") {
 		t.Fatalf("settler runtime = %+v ok=%v", settler, ok)
 	}
 	if !runtimeUnitHasEffect(abolitionist, "no_slaves") {
@@ -235,8 +235,16 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("corporate branch runtime = %+v ok=%v", corporateBranch, ok)
 	}
 	cityUnit, ok = runtime.Unit("UNIT_CITY")
-	if !ok || !runtimeUnitHasEffect(cityUnit, "gl_hidden") || !runtimeUnitHasEffect(cityUnit, "has_pop_and_can_build") {
+	if !ok || !runtimeUnitHasEffect(cityUnit, "gl_hidden") || !runtimeUnitHasEffect(cityUnit, "has_pop_and_can_build") || !runtimeUnitHasEffect(cityUnit, "no_index") {
 		t.Fatalf("city unit hidden/pop-build markers missing: %+v ok=%v", cityUnit, ok)
+	}
+	diplomat, ok := runtime.Unit("UNIT_DIPLOMAT")
+	if !ok || !runtimeUnitHasEffect(diplomat, "throw_party") {
+		t.Fatalf("diplomat runtime = %+v ok=%v", diplomat, ok)
+	}
+	slaver, ok := runtime.Unit("UNIT_SLAVER")
+	if !ok || !runtimeUnitHasEffect(slaver, "victory_enslavement") {
+		t.Fatalf("slaver runtime = %+v ok=%v", slaver, ok)
 	}
 	cargoHelicopter, ok := runtime.Unit("UNIT_CARGO_HELICOPTER")
 	if !ok || !runtimeUnitHasEffect(cargoHelicopter, "paratrooper_transport") {
