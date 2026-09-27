@@ -209,6 +209,9 @@
 - [x] Task 258: Retail `NoSlaves` units block production of slave-raid units.
 - [x] Task 259: Existing slave-raid units block production of retail `NoSlaves` units.
 - [x] Task 260: Safe production projections suppress mutually-exclusive `NoSlaves`/slaver production actions.
+- [x] Task 261: Retail unit `GovernmentType` is preserved as runtime `required_government_id`.
+- [x] Task 262: Unit production enforces matching current government for government-gated units.
+- [x] Task 263: Safe production projections suppress wrong-government unit production actions.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

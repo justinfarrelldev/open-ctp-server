@@ -59,6 +59,19 @@ func TestRuntimeCantBuildUnitCannotBeQueued(t *testing.T) {
 	}
 }
 
+func TestRuntimeUnitProductionRequiresCurrentGovernment(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_CLERIC", Domain: DomainLand, Movement: 1, Health: 1, RequiredGovernmentID: "GOVERNMENT_THEOCRACY"}}}
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_CLERIC", Kind: ProductionUnit, Cost: 1}}, runtime); err == nil {
+		t.Fatal("government-gated unit production succeeded under wrong government")
+	}
+	state.Nations = []Nation{{ID: "nation-a", GovernmentID: "GOVERNMENT_THEOCRACY"}}
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_CLERIC", Kind: ProductionUnit, Cost: 1}}, runtime); err != nil {
+		t.Fatalf("government-gated unit production under matching government failed: %v", err)
+	}
+}
+
 func TestRuntimeNoSlavesAndSlaverProductionExcludeEachOther(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})

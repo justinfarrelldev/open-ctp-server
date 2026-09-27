@@ -489,6 +489,9 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if payload.Item.Kind == ProductionUnit && HasActiveWonderEffect(*state, actor, EffectProhibitSlavers) && productionHasSlaverEffect(payload.Item, runtime) {
 		return errors.New("production prerequisite is not met")
 	}
+	if payload.Item.Kind == ProductionUnit && productionGovernmentMismatch(*state, actor, payload.Item, runtime) {
+		return errors.New("production prerequisite is not met")
+	}
 	if payload.Item.Kind == ProductionUnit && productionHasSlaverEffect(payload.Item, runtime) && playerHasUnitEffect(*state, actor, EffectNoSlaves) {
 		return errors.New("production prerequisite is not met")
 	}
@@ -511,6 +514,19 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	}
 	city.Queue = append(city.Queue, payload.Item)
 	return nil
+}
+
+func productionGovernmentMismatch(state State, actor string, item ProductionItem, runtime *rules.RuntimeRules) bool {
+	if item.Kind != ProductionUnit || runtime == nil {
+		return false
+	}
+	unit, ok := runtime.Unit(item.ID)
+	if !ok || unit.RequiredGovernmentID == "" {
+		return false
+	}
+	nationID := nationForPlayer(state, actor)
+	nation := nationForID(&state, nationID)
+	return nation == nil || nation.GovernmentID != unit.RequiredGovernmentID
 }
 
 func productionHasCreateParkEffect(item ProductionItem, runtime *rules.RuntimeRules) bool {

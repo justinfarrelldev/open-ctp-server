@@ -144,6 +144,32 @@ func TestProjectionSuppressesCantBuildRuntimeUnitProduction(t *testing.T) {
 	}
 }
 
+func TestProjectionSuppressesWrongGovernmentUnitProduction(t *testing.T) {
+	state := projectionStateWithRuntime(t, rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_CLERIC", Kind: engine.ProductionUnit}, {ID: "UNIT_WORKER", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{
+		{ID: "UNIT_CLERIC", Domain: engine.DomainLand, Movement: 1, Health: 1, RequiredGovernmentID: "GOVERNMENT_THEOCRACY"},
+		{ID: "UNIT_WORKER", Domain: engine.DomainLand, Movement: 1, Health: 1},
+	}})
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if productionActionTarget(projection, engine.CommandQueueProduction, "UNIT_CLERIC") {
+		t.Fatalf("wrong-government unit production leaked: %#v", projection.LegalActions)
+	}
+	if !productionActionTarget(projection, engine.CommandQueueProduction, "UNIT_WORKER") {
+		t.Fatalf("fallback worker production missing after government suppression: %#v", projection.LegalActions)
+	}
+
+	state.Nations = []engine.Nation{{ID: "a", GovernmentID: "GOVERNMENT_THEOCRACY"}}
+	projection, err = Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !productionActionTarget(projection, engine.CommandQueueProduction, "UNIT_CLERIC") {
+		t.Fatalf("matching-government unit production missing: %#v", projection.LegalActions)
+	}
+}
+
 func TestProjectionSuppressesNoSlavesAndSlaverExclusiveProduction(t *testing.T) {
 	state := projectionStateWithRuntime(t, rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_SLAVER", Kind: engine.ProductionUnit}, {ID: "UNIT_WORKER", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{
 		{ID: "UNIT_SLAVER", Domain: engine.DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "slave", Kind: engine.EffectSpecialSlaveRaid}}},

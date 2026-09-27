@@ -47,35 +47,36 @@ type RuntimeAdvanceDefinition struct {
 // server can execute deterministically; unsupported source tags still fail closed
 // during import/runtime compilation.
 type RuntimeUnitDefinition struct {
-	ID                 string                 `json:"id"`
-	Role               string                 `json:"role,omitempty"`
-	Domain             string                 `json:"domain"`
-	Movement           int                    `json:"movement"`
-	Attack             int                    `json:"attack"`
-	Defense            int                    `json:"defense"`
-	Ranged             int                    `json:"ranged,omitempty"`
-	BombardRange       int                    `json:"bombard_range,omitempty"`
-	BombRounds         int                    `json:"bomb_rounds,omitempty"`
-	ActiveDefenseRange int                    `json:"active_defense_range,omitempty"`
-	Strength           int                    `json:"strength"`
-	Armor              int                    `json:"armor"`
-	Firepower          int                    `json:"firepower,omitempty"`
-	Health             int                    `json:"health"`
-	MaxFuel            int                    `json:"max_fuel,omitempty"`
-	ZOC                bool                   `json:"zoc"`
-	TransportCapacity  int                    `json:"transport_capacity,omitempty"`
-	CargoDomains       []string               `json:"cargo_domains,omitempty"`
-	ProductionCost     int                    `json:"production_cost,omitempty"`
-	PowerPoints        int                    `json:"power_points,omitempty"`
-	Upkeep             int                    `json:"upkeep,omitempty"`
-	ShieldHunger       int                    `json:"shield_hunger,omitempty"`
-	NeedsNoSupport     bool                   `json:"needs_no_support,omitempty"`
-	IsSpecialForces    bool                   `json:"is_special_forces,omitempty"`
-	Prerequisites      []string               `json:"prerequisites,omitempty"`
-	ObsoleteBy         []string               `json:"obsolete_by,omitempty"`
-	UpgradeTo          []string               `json:"upgrade_to,omitempty"`
-	VisibilityRange    int                    `json:"visibility_range,omitempty"`
-	Effects            []RuntimeStarterEffect `json:"effects,omitempty"`
+	ID                   string                 `json:"id"`
+	Role                 string                 `json:"role,omitempty"`
+	Domain               string                 `json:"domain"`
+	Movement             int                    `json:"movement"`
+	Attack               int                    `json:"attack"`
+	Defense              int                    `json:"defense"`
+	Ranged               int                    `json:"ranged,omitempty"`
+	BombardRange         int                    `json:"bombard_range,omitempty"`
+	BombRounds           int                    `json:"bomb_rounds,omitempty"`
+	ActiveDefenseRange   int                    `json:"active_defense_range,omitempty"`
+	Strength             int                    `json:"strength"`
+	Armor                int                    `json:"armor"`
+	Firepower            int                    `json:"firepower,omitempty"`
+	Health               int                    `json:"health"`
+	MaxFuel              int                    `json:"max_fuel,omitempty"`
+	ZOC                  bool                   `json:"zoc"`
+	TransportCapacity    int                    `json:"transport_capacity,omitempty"`
+	CargoDomains         []string               `json:"cargo_domains,omitempty"`
+	ProductionCost       int                    `json:"production_cost,omitempty"`
+	PowerPoints          int                    `json:"power_points,omitempty"`
+	Upkeep               int                    `json:"upkeep,omitempty"`
+	ShieldHunger         int                    `json:"shield_hunger,omitempty"`
+	NeedsNoSupport       bool                   `json:"needs_no_support,omitempty"`
+	IsSpecialForces      bool                   `json:"is_special_forces,omitempty"`
+	Prerequisites        []string               `json:"prerequisites,omitempty"`
+	RequiredGovernmentID string                 `json:"required_government_id,omitempty"`
+	ObsoleteBy           []string               `json:"obsolete_by,omitempty"`
+	UpgradeTo            []string               `json:"upgrade_to,omitempty"`
+	VisibilityRange      int                    `json:"visibility_range,omitempty"`
+	Effects              []RuntimeStarterEffect `json:"effects,omitempty"`
 }
 
 type RuntimeTerrainImprovementDefinition struct {
@@ -1225,6 +1226,7 @@ func compileUnitDefinition(record Record) (RuntimeUnitDefinition, error) {
 	if err != nil {
 		return RuntimeUnitDefinition{}, err
 	}
+	requiredGovernmentID := record.Tags["RequiredGovernmentID"]
 	effects, err := unitEffects(record)
 	if err != nil {
 		return RuntimeUnitDefinition{}, err
@@ -1245,7 +1247,7 @@ func compileUnitDefinition(record Record) (RuntimeUnitDefinition, error) {
 	if err != nil {
 		return RuntimeUnitDefinition{}, err
 	}
-	return RuntimeUnitDefinition{ID: record.ID, Role: record.Tags["Role"], Domain: domain, Movement: movement, Attack: attack, Defense: defense, Ranged: ranged, BombardRange: bombardRange, BombRounds: bombRounds, Strength: strength, Armor: armor, Firepower: firepower, Health: health, MaxFuel: maxFuel, ZOC: zoc, TransportCapacity: transportCapacity, CargoDomains: cargoDomains, ProductionCost: productionCost, Upkeep: upkeep, ShieldHunger: shieldHunger, NeedsNoSupport: needsNoSupport, IsSpecialForces: isSpecialForces, Prerequisites: prerequisites, ObsoleteBy: obsoleteBy, UpgradeTo: upgradeTo, VisibilityRange: visibilityRange, Effects: effects}, nil
+	return RuntimeUnitDefinition{ID: record.ID, Role: record.Tags["Role"], Domain: domain, Movement: movement, Attack: attack, Defense: defense, Ranged: ranged, BombardRange: bombardRange, BombRounds: bombRounds, Strength: strength, Armor: armor, Firepower: firepower, Health: health, MaxFuel: maxFuel, ZOC: zoc, TransportCapacity: transportCapacity, CargoDomains: cargoDomains, ProductionCost: productionCost, Upkeep: upkeep, ShieldHunger: shieldHunger, NeedsNoSupport: needsNoSupport, IsSpecialForces: isSpecialForces, Prerequisites: prerequisites, RequiredGovernmentID: requiredGovernmentID, ObsoleteBy: obsoleteBy, UpgradeTo: upgradeTo, VisibilityRange: visibilityRange, Effects: effects}, nil
 }
 
 func unitEffects(record Record) ([]RuntimeStarterEffect, error) {

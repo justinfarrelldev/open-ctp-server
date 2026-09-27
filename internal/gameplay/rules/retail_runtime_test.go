@@ -219,6 +219,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeUnitHasEffect(settler, "civilian") || !runtimeUnitHasEffect(settler, "invisible_for_globe_sat") || !runtimeUnitHasEffect(settler, "only_build_one") {
 		t.Fatalf("settler runtime = %+v ok=%v", settler, ok)
 	}
+	cleric, ok = runtime.Unit("UNIT_CLERIC")
+	if !ok || cleric.RequiredGovernmentID != "GOVERNMENT_THEOCRACY" {
+		t.Fatalf("cleric required government = %+v ok=%v", cleric, ok)
+	}
 	if !runtimeUnitHasEffect(abolitionist, "no_slaves") {
 		t.Fatalf("abolitionist no-slaves marker missing: %+v", abolitionist)
 	}
