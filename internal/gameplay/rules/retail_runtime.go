@@ -445,6 +445,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	for _, target := range retailUnitDefendEffects(unit.RawFields) {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID(target), Kind: target})
 	}
+	if retailContainsString(unit.Flags, "CanCounterBombard") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_counter_bombard"), Kind: "can_counter_bombard"})
+	}
 	if retailContainsString(unit.Flags, "ActiveDefenseOnlyWhenCarryingEnablers") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("active_defense_requires_enabler"), Kind: "active_defense_requires_enabler"})
 	}

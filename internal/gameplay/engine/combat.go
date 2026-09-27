@@ -290,6 +290,7 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 		}
 		targets = livingCombatUnits(targets)
 	}
+	counterBombardHits := counterBombard(state, sources, unit, livingCombatUnits(targets))
 	unit.Movement--
 	destroyed := 0
 	for _, target := range bombardTargets(*state, command.ActorPlayerID, payload.TargetTileID) {
@@ -298,14 +299,42 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 			destroyed++
 		}
 	}
+	if unit.Health <= 0 {
+		removeUnitAndCargo(state, unit.ID)
+	}
 	payloadJSON, _ := json.Marshal(struct {
-		UnitID            string `json:"unit_id"`
-		TargetTileID      string `json:"target_tile_id"`
-		Hits              int    `json:"hits"`
-		Destroyed         int    `json:"destroyed"`
-		ActiveDefenseHits int    `json:"active_defense_hits,omitempty"`
-	}{UnitID: unit.ID, TargetTileID: payload.TargetTileID, Hits: hits, Destroyed: destroyed, ActiveDefenseHits: activeDefenseHits})
+		UnitID             string `json:"unit_id"`
+		TargetTileID       string `json:"target_tile_id"`
+		Hits               int    `json:"hits"`
+		Destroyed          int    `json:"destroyed"`
+		ActiveDefenseHits  int    `json:"active_defense_hits,omitempty"`
+		CounterBombardHits int    `json:"counter_bombard_hits,omitempty"`
+	}{UnitID: unit.ID, TargetTileID: payload.TargetTileID, Hits: hits, Destroyed: destroyed, ActiveDefenseHits: activeDefenseHits, CounterBombardHits: counterBombardHits})
 	return EventBombarded, payloadJSON, nil
+}
+
+func counterBombard(state *State, sources Sources, attacker *Unit, defenders []*Unit) int {
+	hits := 0
+	for _, defender := range defenders {
+		if attacker.Health <= 0 {
+			break
+		}
+		if !hasEffect(defender.Effects, EffectCanCounterBombard) || defender.Ranged <= 0 || defender.BombRounds < 1 || len(bombardEligibleTargets(*defender, []*Unit{attacker})) == 0 {
+			continue
+		}
+		for round := 0; round < defender.BombRounds && attacker.Health > 0; round++ {
+			defense := attacker.Defense + combatDefenseModifier(*state, *attacker, *defender)
+			if defense < 0 {
+				defense = 0
+			}
+			roll := combatRoll(state, sources)
+			if int(roll%1000) < defender.Ranged*1000/(defender.Ranged+defense) {
+				attacker.Health -= combatDamage(*defender, *attacker)
+				hits++
+			}
+		}
+	}
+	return hits
 }
 
 func tileDistance(left, right Tile) int {

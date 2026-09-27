@@ -143,6 +143,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeUnitHasEffect(carrierDefense, "active_defense_requires_enabler") {
 		t.Fatalf("carrier active defense requirement = %+v ok=%v", carrierDefense, ok)
 	}
+	leviathan, ok := runtime.Unit("UNIT_LEVIATHON")
+	if !ok || !runtimeUnitHasEffect(leviathan, "can_counter_bombard") {
+		t.Fatalf("leviathan counter-bombard effect = %+v ok=%v", leviathan, ok)
+	}
 	fighterDefense, ok := runtime.Unit("UNIT_FIGHTER")
 	if !ok || !runtimeUnitHasEffect(fighterDefense, "enable_carrier_defenses") {
 		t.Fatalf("fighter carrier defense enabler = %+v ok=%v", fighterDefense, ok)

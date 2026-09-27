@@ -158,6 +158,9 @@
 - [x] Task 207: Restarted runtime projection rejects unknown victory evaluator IDs.
 - [x] Task 208: Restarted runtime projection rejects duplicated victory evaluator IDs.
 - [x] Task 209: Retail runtime terminal calendar/victory configuration survives canonical runtime restart.
+- [x] Task 210: Retail CanCounterBombard unit fields import as runtime effects.
+- [x] Task 211: Bombardment resolves eligible defender counter-bombard fire against the bombarder.
+- [x] Task 212: Counter-bombard event payloads report safe derived hit counts only.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

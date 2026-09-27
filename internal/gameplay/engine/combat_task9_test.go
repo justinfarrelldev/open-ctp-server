@@ -128,6 +128,30 @@ func TestRetailActiveDefenseHonorsDefendDomains(t *testing.T) {
 	}
 }
 
+func TestRetailCanCounterBombardReturnsFireAfterBombardment(t *testing.T) {
+	state := fixtureState()
+	state.Tiles = []Tile{{ID: "a", X: 0, Y: 0, Terrain: TerrainPlains, Open: true}, {ID: "b", X: 1, Y: 0, Terrain: TerrainPlains, Open: true}}
+	state.Units = []Unit{
+		{ID: "bombarder", OwnerID: "player-a", TileID: "a", Domain: DomainLand, Movement: 1, Ranged: 1, BombardRange: 2, BombRounds: 1, Defense: 1, Strength: 1, Armor: 1, Health: 10, MaxHealth: 10},
+		{ID: "counter", OwnerID: "player-b", TileID: "b", Domain: DomainLand, Movement: 1, Ranged: 100, BombardRange: 1, BombRounds: 1, Defense: 100, Strength: 10, Armor: 1, Firepower: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "counter", Kind: EffectCanCounterBombard}}},
+	}
+	state.Fog = append(state.Fog, FogObservation{PlayerID: "player-a", TileID: "b", Turn: 1})
+	payload := []byte(`{"unit_id":"bombarder","target_tile_id":"b"}`)
+	next, events, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "counter-bombard", ActorPlayerID: "player-a", Type: CommandBombard, Payload: payload}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatalf("Bombard() error = %v", err)
+	}
+	if _, ok := unitByID(next, "bombarder"); ok {
+		t.Fatalf("counter-bombard should destroy bombarder: %#v", next.Units)
+	}
+	if _, ok := unitByID(next, "counter"); !ok {
+		t.Fatalf("counter-bombarder should survive failed incoming bombard: %#v", next.Units)
+	}
+	if len(events) != 1 || events[0].Type != EventBombarded || !strings.Contains(string(events[0].Payload), "counter_bombard_hits") {
+		t.Fatalf("counter-bombard event = %#v", events)
+	}
+}
+
 func TestRetailFirepowerScalesBombardDamage(t *testing.T) {
 	state := combatState()
 	state.Units = []Unit{
