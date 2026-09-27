@@ -555,6 +555,21 @@ func TestRetailInvestigateCityStoresPrivateCityReport(t *testing.T) {
 	}
 }
 
+func TestRetailSlaveUprisingConsumesSlaveAndRiotMarksCity(t *testing.T) {
+	state := task11State()
+	state.Cities[0].Population = 5
+	state.Cities[0].Specialists = map[string]int{"POP_SLAVE": 2}
+	state.Units[0].Effects = []Effect{{ID: "uprising", Kind: EffectSpecialSlaveUprising}}
+
+	next, events, err := task11Apply(t, state, CommandSlaveUprising, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Cities[0].Specialists["POP_SLAVE"] != 1 || !next.Cities[0].Rioting || next.Units[0].Movement != 3 || len(events) != 1 || events[0].Type != EventSlaveUprising || strings.Contains(string(events[0].Payload), "target-city") {
+		t.Fatalf("slave uprising state/events = city %+v unit %+v events %#v", next.Cities[0], next.Units[0], events)
+	}
+}
+
 func TestRetailIndulgenceSalesTransferGoldAndTimedHappiness(t *testing.T) {
 	state := task11State()
 	state.Nations[0].Gold = 1

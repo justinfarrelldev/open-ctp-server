@@ -104,7 +104,7 @@ type ExpelPayload struct {
 
 func isSpecialCommand(kind string) bool {
 	switch kind {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandCauseUnhappiness, CommandInciteRevolution, CommandIndulgenceSales, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandAssassinateRuler, CommandInjoin, CommandReform, CommandUndergroundRailway, CommandSue, CommandCreatePark, CommandExpel, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandCauseUnhappiness, CommandInciteRevolution, CommandIndulgenceSales, CommandSlaveUprising, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandAssassinateRuler, CommandInjoin, CommandReform, CommandUndergroundRailway, CommandSue, CommandCreatePark, CommandExpel, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
 		return true
 	default:
 		return false
@@ -116,7 +116,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		return "", nil, err
 	}
 	switch command.Type {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandCauseUnhappiness, CommandInciteRevolution, CommandIndulgenceSales, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandAssassinateRuler, CommandInjoin, CommandReform, CommandUndergroundRailway, CommandSue:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandCauseUnhappiness, CommandInciteRevolution, CommandIndulgenceSales, CommandSlaveUprising, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandAssassinateRuler, CommandInjoin, CommandReform, CommandUndergroundRailway, CommandSue:
 		var payload SpecialActionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", nil, err
@@ -161,6 +161,8 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			return inciteRevolution(state, unit, city, sources)
 		case CommandIndulgenceSales:
 			return indulgenceSales(state, unit, city, actorNation, targetNation)
+		case CommandSlaveUprising:
+			return slaveUprising(unit, city)
 		case CommandStealTechnology:
 			return stealTechnology(state, unit, city, actorNation, targetNation, sources)
 		case CommandConvertCity:
@@ -283,6 +285,8 @@ func spyDefenseAppliesToCommand(unit *Unit, commandType string) bool {
 		return hasEffect(unit.Effects, EffectSpecialInciteRevolution)
 	case CommandIndulgenceSales:
 		return hasEffect(unit.Effects, EffectSpecialIndulgenceSales)
+	case CommandSlaveUprising:
+		return hasEffect(unit.Effects, EffectSpecialSlaveUprising)
 	case CommandStealTechnology:
 		return hasEffect(unit.Effects, EffectSpecialSteal)
 	case CommandConvertCity:
@@ -1024,6 +1028,24 @@ func convertCity(state *State, unit *Unit, city *City, sources Sources) (string,
 	city.OwnerID = unit.OwnerID
 	maybeResolveSpecialDeath(state, unit.ID, EffectSpecialConvertCity, sources)
 	return EventCityConverted, json.RawMessage(`{"disclosed":true}`), nil
+}
+
+func slaveUprising(unit *Unit, city *City) (string, json.RawMessage, error) {
+	if !hasEffect(unit.Effects, EffectSpecialSlaveUprising) {
+		return "", nil, errors.New("special action is not authorized")
+	}
+	if city.Specialists["POP_SLAVE"] <= 0 {
+		return "", nil, errors.New("special action target is unavailable")
+	}
+	if err := spendSpecialMove(unit); err != nil {
+		return "", nil, err
+	}
+	city.Specialists["POP_SLAVE"]--
+	if city.Specialists["POP_SLAVE"] <= 0 {
+		delete(city.Specialists, "POP_SLAVE")
+	}
+	city.Rioting = true
+	return EventSlaveUprising, json.RawMessage(`{"disclosed":true}`), nil
 }
 
 func indulgenceSales(state *State, unit *Unit, city *City, actorNation *Nation, targetNation *Nation) (string, json.RawMessage, error) {

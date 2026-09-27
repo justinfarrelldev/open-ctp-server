@@ -2640,7 +2640,7 @@ func addYield(a, b Yield) Yield {
 
 func supportedSpecialist(kind string) bool {
 	switch kind {
-	case "POP_ENTERTAINER", "POP_FARMER", "POP_LABORER", "POP_MERCHANT", "POP_SCIENTIST":
+	case "POP_ENTERTAINER", "POP_FARMER", "POP_LABORER", "POP_MERCHANT", "POP_SCIENTIST", "POP_SLAVE":
 		return true
 	default:
 		return false

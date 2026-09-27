@@ -244,6 +244,10 @@
 - [x] Task 293: `IndulgenceSales` applies a timed retail default happiness bonus to the target city.
 - [x] Task 294: Safe projections and HTTP routes expose `indulgence-sales` only from owned capable units.
 - [x] Task 295: AI command scoring recognizes projected indulgence-sales actions.
+- [x] Task 296: `SlaveUprising` special actions execute when target cities contain retail slave specialists.
+- [x] Task 297: `POP_SLAVE` is accepted as canonical city specialist state for slave mechanics.
+- [x] Task 298: Safe projections and HTTP routes expose `slave-uprising` only from owned capable units.
+- [x] Task 299: AI command scoring recognizes projected slave-uprising actions.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
