@@ -454,6 +454,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "CanBeachAssault") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_beach_assault"), Kind: "can_beach_assault"})
 	}
+	if retailContainsString(unit.Flags, "SingleUse") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("single_use"), Kind: "single_use"})
+	}
 	if retailContainsString(unit.Flags, "Paratrooper") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("paratrooper"), Kind: "paratrooper"})
 	}

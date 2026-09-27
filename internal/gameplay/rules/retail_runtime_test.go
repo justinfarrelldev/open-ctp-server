@@ -192,6 +192,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || fighter.Domain != "air" || fighter.MaxFuel != 2400 || !runtimeUnitHasEffect(fighter, "can_beach_assault") {
 		t.Fatalf("fighter runtime = %+v ok=%v", fighter, ok)
 	}
+	cruiseMissile, ok := runtime.Unit("UNIT_CRUISE_MISSILE")
+	if !ok || !runtimeUnitHasEffect(cruiseMissile, "single_use") {
+		t.Fatalf("cruise missile runtime = %+v ok=%v", cruiseMissile, ok)
+	}
 	cargoHelicopter, ok := runtime.Unit("UNIT_CARGO_HELICOPTER")
 	if !ok || !runtimeUnitHasEffect(cargoHelicopter, "paratrooper_transport") {
 		t.Fatalf("cargo helicopter runtime = %+v ok=%v", cargoHelicopter, ok)

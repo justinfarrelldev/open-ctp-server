@@ -128,6 +128,24 @@ func TestRetailActiveDefenseHonorsDefendDomains(t *testing.T) {
 	}
 }
 
+func TestRetailSingleUseBombarderIsConsumedAfterBombardment(t *testing.T) {
+	state := fixtureState()
+	state.Tiles = []Tile{{ID: "a", X: 0, Y: 0, Terrain: TerrainPlains, Open: true}, {ID: "b", X: 1, Y: 0, Terrain: TerrainPlains, Open: true}}
+	state.Units = []Unit{
+		{ID: "missile", OwnerID: "player-a", TileID: "a", Domain: DomainAir, Movement: 1, Ranged: 100, BombardRange: 2, BombRounds: 1, Defense: 1, Strength: 1, Armor: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "single-use", Kind: EffectSingleUse}, {ID: "can-bombard-land", Kind: EffectCanBombardLand}}},
+		{ID: "target", OwnerID: "player-b", TileID: "b", Domain: DomainLand, Movement: 1, Defense: 100, Strength: 1, Armor: 1, Health: 10, MaxHealth: 10},
+	}
+	state.Fog = append(state.Fog, FogObservation{PlayerID: "player-a", TileID: "b", Turn: 1})
+	payload := []byte(`{"unit_id":"missile","target_tile_id":"b"}`)
+	next, _, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "single-use-bombard", ActorPlayerID: "player-a", Type: CommandBombard, Payload: payload}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatalf("Bombard() error = %v", err)
+	}
+	if _, ok := unitByID(next, "missile"); ok {
+		t.Fatalf("single-use bombarder survived: %#v", next.Units)
+	}
+}
+
 func TestRetailCanCounterBombardReturnsFireAfterBombardment(t *testing.T) {
 	state := fixtureState()
 	state.Tiles = []Tile{{ID: "a", X: 0, Y: 0, Terrain: TerrainPlains, Open: true}, {ID: "b", X: 1, Y: 0, Terrain: TerrainPlains, Open: true}}

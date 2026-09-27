@@ -173,6 +173,8 @@
 - [x] Task 222: Safe diplomacy projection exposes trade agreement proposals before foreign trade routes.
 - [x] Task 223: Safe diplomacy projection exposes peace agreement proposals while at war.
 - [x] Task 224: Capturing a city cancels trade routes touching the captured city.
+- [x] Task 225: Retail `SingleUse` unit flags are preserved as runtime unit effects.
+- [x] Task 226: Single-use bombard units are consumed after bombardment.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

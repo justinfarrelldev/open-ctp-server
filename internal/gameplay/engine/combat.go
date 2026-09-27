@@ -299,7 +299,7 @@ func applyBombard(state *State, command Command, sources Sources) (string, json.
 			destroyed++
 		}
 	}
-	if unit.Health <= 0 {
+	if unit.Health <= 0 || hasEffect(unit.Effects, EffectSingleUse) {
 		removeUnitAndCargo(state, unit.ID)
 	}
 	payloadJSON, _ := json.Marshal(struct {
