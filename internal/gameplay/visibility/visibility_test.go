@@ -821,7 +821,7 @@ func TestTask12ProjectionIncludesRulesAndLegalActionMetadata(t *testing.T) {
 	state.Units = []engine.Unit{
 		{ID: "settler", OwnerID: "a", TileID: "site", Domain: engine.DomainLand, Movement: 2, Health: 1, MaxHealth: 1, Effects: []engine.Effect{{ID: "settle", Kind: engine.EffectSettler}}},
 		{ID: "worker", OwnerID: "a", TileID: "home", Domain: engine.DomainLand, Movement: 2, Health: 1, MaxHealth: 1, Effects: []engine.Effect{{ID: "terraform", Kind: engine.EffectSpecialTerraform, Value: 1}, {ID: "turns", Kind: engine.EffectSpecialTerraformTurns, Value: 1}}},
-		{ID: "diplomat", OwnerID: "a", TileID: "home", Domain: engine.DomainLand, Movement: 2, Health: 1, MaxHealth: 1, Effects: []engine.Effect{{ID: "embassy", Kind: engine.EffectSpecialEmbassy}, {ID: "steal", Kind: engine.EffectSpecialSteal}, {ID: "cause", Kind: engine.EffectSpecialCauseUnhappiness}}},
+		{ID: "diplomat", OwnerID: "a", TileID: "home", Domain: engine.DomainLand, Movement: 2, Health: 1, MaxHealth: 1, Effects: []engine.Effect{{ID: "embassy", Kind: engine.EffectSpecialEmbassy}, {ID: "steal", Kind: engine.EffectSpecialSteal}, {ID: "cause", Kind: engine.EffectSpecialCauseUnhappiness}, {ID: "incite", Kind: engine.EffectSpecialInciteRevolution}}},
 		{ID: "cargo", OwnerID: "a", TileID: "home", Domain: engine.DomainLand, Movement: 2, Health: 1, MaxHealth: 1},
 		{ID: "ship", OwnerID: "a", TileID: "home", Domain: engine.DomainSea, Movement: 2, Health: 1, MaxHealth: 1, CargoCapacity: 1, CargoDomains: []string{engine.DomainLand}},
 		{ID: "attacker", OwnerID: "a", TileID: "home", ArmyID: "army-a", Domain: engine.DomainLand, Movement: 2, Attack: 2, Health: 1, MaxHealth: 1},
@@ -840,7 +840,7 @@ func TestTask12ProjectionIncludesRulesAndLegalActionMetadata(t *testing.T) {
 	if projection.Rules == nil || len(projection.Rules.Units) == 0 || len(projection.Rules.Production) == 0 || len(projection.Rules.Advances) == 0 || len(projection.Rules.Governments) == 0 || len(projection.Rules.TerrainImprovements) == 0 || projection.Rules.Movement == nil {
 		t.Fatalf("rules projection incomplete: %#v", projection.Rules)
 	}
-	for _, command := range []string{engine.CommandPass, engine.CommandSetResearch, engine.CommandSetGovernment, engine.CommandProposeAgreement, engine.CommandQueueProduction, engine.CommandFoundCity, engine.CommandArmyCreate, engine.CommandMoveUnit, engine.CommandEmbark, engine.CommandCombat, engine.CommandEstablishEmbassy, engine.CommandStealTechnology, engine.CommandCauseUnhappiness, engine.CommandTerraform, engine.CommandBuildImprovement} {
+	for _, command := range []string{engine.CommandPass, engine.CommandSetResearch, engine.CommandSetGovernment, engine.CommandProposeAgreement, engine.CommandQueueProduction, engine.CommandFoundCity, engine.CommandArmyCreate, engine.CommandMoveUnit, engine.CommandEmbark, engine.CommandCombat, engine.CommandEstablishEmbassy, engine.CommandStealTechnology, engine.CommandCauseUnhappiness, engine.CommandInciteRevolution, engine.CommandTerraform, engine.CommandBuildImprovement} {
 		if !hasAction(projection.LegalActions, command) {
 			t.Fatalf("legal action %q missing from %#v", command, projection.LegalActions)
 		}

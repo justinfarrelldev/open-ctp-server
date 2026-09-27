@@ -555,6 +555,19 @@ func TestRetailInvestigateCityStoresPrivateCityReport(t *testing.T) {
 	}
 }
 
+func TestRetailInciteRevolutionUsesChanceAndChangesCityOwner(t *testing.T) {
+	state := task11State()
+	state.Units[0].Effects = []Effect{{ID: "incite", Kind: EffectSpecialInciteRevolution, Value: 100}, {ID: "elite", Kind: EffectSpecialInciteRevolutionEliteChance, Value: 100}, {ID: "death", Kind: EffectSpecialInciteRevolutionDeathChance, Value: 0}}
+
+	next, events, err := task11Apply(t, state, CommandInciteRevolution, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.Cities[0].OwnerID != "player-a" || next.Units[0].Movement != 3 || !hasEffect(next.Cities[0].Effects, EffectWatchful) || len(events) != 1 || events[0].Type != EventRevolutionIncited || strings.Contains(string(events[0].Payload), "target-city") {
+		t.Fatalf("incite revolution state/events = city %+v unit %+v events %#v", next.Cities[0], next.Units[0], events)
+	}
+}
+
 func TestRetailCauseUnhappinessAddsTimedHappinessAttack(t *testing.T) {
 	state := task11State()
 	state.Units[0].Effects = []Effect{{ID: "cause", Kind: EffectSpecialCauseUnhappiness, Value: 100}, {ID: "timer", Kind: EffectSpecialCauseUnhappinessTimer, Value: 2}, {ID: "amount", Kind: EffectSpecialCauseUnhappinessAmount, Value: 5}}

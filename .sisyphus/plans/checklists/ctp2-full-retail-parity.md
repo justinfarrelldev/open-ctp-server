@@ -236,6 +236,10 @@
 - [x] Task 285: Timed negative happiness effects expire deterministically across city recalculations.
 - [x] Task 286: Safe projections and HTTP routes expose `cause-unhappiness` only from owned capable units.
 - [x] Task 287: AI command scoring recognizes projected cause-unhappiness actions.
+- [x] Task 288: `InciteRevolution` special actions execute from retail chance/elite/death chance metadata.
+- [x] Task 289: Safe projections and HTTP routes expose `incite-revolution` only from owned capable units.
+- [x] Task 290: AI command scoring recognizes projected incite-revolution actions.
+- [x] Task 291: Incite-revolution event payloads avoid leaking canonical city identifiers.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

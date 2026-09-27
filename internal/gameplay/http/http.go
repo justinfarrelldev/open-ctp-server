@@ -87,6 +87,7 @@ var commands = map[string]struct {
 	"establish-embassy":  {engine.CommandEstablishEmbassy, fields("unit_id", "city_id")},
 	"soothsaying":        {engine.CommandSoothsaying, fields("unit_id", "city_id")},
 	"cause-unhappiness":  {engine.CommandCauseUnhappiness, fields("unit_id", "city_id")},
+	"incite-revolution":  {engine.CommandInciteRevolution, fields("unit_id", "city_id")},
 	"steal-technology":   {engine.CommandStealTechnology, fields("unit_id", "city_id")},
 	"terraform":          {engine.CommandTerraform, fields("unit_id", "tile_id", "target_terrain")},
 	"build-improvement":  {engine.CommandBuildImprovement, fields("unit_id", "tile_id", "improvement_id")},
