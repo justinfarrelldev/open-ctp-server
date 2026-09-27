@@ -188,6 +188,12 @@
 - [x] Task 237: Damaged unit movement refresh scales by health unless `loss_move_to_dmg_none` applies.
 - [x] Task 238: Retail `CantBuild` unit flags block production in engine and safe projections.
 - [x] Task 239: Retail `IsTrader` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 240: Retail `CanPirate` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 241: Retail `Civilian` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 242: Retail `InvisibleForGlobeSat` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 243: Retail `NoSlaves` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 244: Retail `IsTelevangelist` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 245: Retail `CanBeGifted` unit flags are preserved as runtime/canonical marker effects.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

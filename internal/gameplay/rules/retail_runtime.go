@@ -398,6 +398,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "CantBuild") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("cant_build"), Kind: "cant_build"})
 	}
+	if retailContainsString(unit.Flags, "CanBeGifted") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_be_gifted"), Kind: "can_be_gifted"})
+	}
 	if retailContainsString(unit.Flags, "CantCaptureCity") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("cant_capture_city"), Kind: "cant_capture_city"})
 	}
@@ -442,6 +445,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailUnitFieldHasValue(unit.RawFields, "CanSee", "Stealth") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_see_stealth"), Kind: "can_see_stealth"})
 	}
+	if retailContainsString(unit.Flags, "InvisibleForGlobeSat") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("invisible_for_globe_sat"), Kind: "invisible_for_globe_sat"})
+	}
 	for _, target := range retailUnitCanAttackEffects(unit.RawFields) {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID(target), Kind: target})
 	}
@@ -469,8 +475,20 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "Explodes") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("explodes"), Kind: "explodes"})
 	}
+	if retailContainsString(unit.Flags, "CanPirate") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_pirate"), Kind: "can_pirate"})
+	}
+	if retailContainsString(unit.Flags, "Civilian") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("civilian"), Kind: "civilian"})
+	}
 	if retailContainsString(unit.Flags, "IsTrader") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("is_trader"), Kind: "is_trader"})
+	}
+	if retailContainsString(unit.Flags, "NoSlaves") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("no_slaves"), Kind: "no_slaves"})
+	}
+	if retailContainsString(unit.Flags, "IsTelevangelist") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("is_televangelist"), Kind: "is_televangelist"})
 	}
 	if retailContainsString(unit.Flags, "Paratrooper") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("paratrooper"), Kind: "paratrooper"})

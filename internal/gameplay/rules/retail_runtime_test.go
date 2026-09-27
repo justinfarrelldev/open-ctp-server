@@ -211,6 +211,25 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !runtimeUnitHasEffect(caravan, "is_trader") {
 		t.Fatalf("caravan runtime = %+v ok=%v", caravan, ok)
 	}
+	warrior, ok := runtime.Unit("UNIT_WARRIOR")
+	if !ok || !runtimeUnitHasEffect(warrior, "can_pirate") {
+		t.Fatalf("warrior runtime = %+v ok=%v", warrior, ok)
+	}
+	settler, ok = runtime.Unit("UNIT_SETTLER")
+	if !ok || !runtimeUnitHasEffect(settler, "civilian") || !runtimeUnitHasEffect(settler, "invisible_for_globe_sat") {
+		t.Fatalf("settler runtime = %+v ok=%v", settler, ok)
+	}
+	if !runtimeUnitHasEffect(abolitionist, "no_slaves") {
+		t.Fatalf("abolitionist no-slaves marker missing: %+v", abolitionist)
+	}
+	televangelist, ok := runtime.Unit("UNIT_TELEVANGELIST")
+	if !ok || !runtimeUnitHasEffect(televangelist, "is_televangelist") {
+		t.Fatalf("televangelist runtime = %+v ok=%v", televangelist, ok)
+	}
+	elephant, ok := runtime.Unit("UNIT_ELEPHANT_WARRIOR")
+	if !ok || !runtimeUnitHasEffect(elephant, "can_be_gifted") {
+		t.Fatalf("elephant warrior runtime = %+v ok=%v", elephant, ok)
+	}
 	cargoHelicopter, ok := runtime.Unit("UNIT_CARGO_HELICOPTER")
 	if !ok || !runtimeUnitHasEffect(cargoHelicopter, "paratrooper_transport") {
 		t.Fatalf("cargo helicopter runtime = %+v ok=%v", cargoHelicopter, ok)
