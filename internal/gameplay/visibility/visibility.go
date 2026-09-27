@@ -22,14 +22,21 @@ const (
 )
 
 type TileProjection struct {
-	ID        string        `json:"id"`
-	X         int           `json:"x"`
-	Y         int           `json:"y"`
-	Terrain   string        `json:"terrain"`
-	Pollution int           `json:"pollution,omitempty"`
-	Stale     bool          `json:"stale"`
-	Observed  int           `json:"observed_turn"`
-	Planning  *TilePlanning `json:"planning,omitempty"`
+	ID        string                  `json:"id"`
+	X         int                     `json:"x"`
+	Y         int                     `json:"y"`
+	Terrain   string                  `json:"terrain"`
+	Pollution int                     `json:"pollution,omitempty"`
+	Stale     bool                    `json:"stale"`
+	Observed  int                     `json:"observed_turn"`
+	Planning  *TilePlanning           `json:"planning,omitempty"`
+	Overlays  []TileOverlayProjection `json:"overlays,omitempty"`
+}
+
+type TileOverlayProjection struct {
+	Kind          string `json:"kind"`
+	ImprovementID string `json:"improvement_id,omitempty"`
+	Remaining     int    `json:"remaining,omitempty"`
 }
 
 type TilePlanning struct {
@@ -251,7 +258,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	}
 	for _, tile := range state.Tiles {
 		if visible[tile.ID] {
-			result.Tiles = append(result.Tiles, TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: tile.Terrain, Pollution: tile.Pollution, Observed: state.Phase.Turn, Planning: planning[tile.ID]})
+			result.Tiles = append(result.Tiles, TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: tile.Terrain, Pollution: tile.Pollution, Observed: state.Phase.Turn, Planning: planning[tile.ID], Overlays: tileOverlayProjections(state, tile.ID)})
 			continue
 		}
 		if observation, ok := memory[tile.ID]; ok {
@@ -518,6 +525,7 @@ func legalActions(state engine.State, projection Projection, playerID string) []
 	actions = append(actions, tradeRouteActions(state, projection, playerID)...)
 	actions = append(actions, specialistActions(projection, playerID)...)
 	actions = append(actions, productionActions(state, projection, playerID)...)
+	actions = append(actions, publicWorksTerrainActions(projection, playerID)...)
 	actions = append(actions, unitActions(projection, playerID)...)
 	sort.Slice(actions, func(i, j int) bool {
 		if actions[i].Command == actions[j].Command {
@@ -868,6 +876,46 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 		actions = append(actions, specialActions(projection, tiles, cities, unit, playerID)...)
 		actions = append(actions, terrainActions(projection, tiles, unit)...)
 		actions = append(actions, createParkActions(projection, tiles, unit)...)
+	}
+	return actions
+}
+
+func publicWorksTerrainActions(projection Projection, playerID string) []ActionProjection {
+	if projection.Diplomacy == nil || projection.Rules == nil || projection.Diplomacy.PublicWorks < 1 || len(projection.Rules.TerrainImprovements) == 0 {
+		return nil
+	}
+	tiles := projectedTiles(projection)
+	actions := make([]ActionProjection, 0)
+	seen := make(map[string]bool)
+	for _, city := range projection.Cities {
+		if city.OwnerID != playerID || city.TileID == "" || city.Stale {
+			continue
+		}
+		cityTile, ok := tiles[city.TileID]
+		if !ok || cityTile.Stale {
+			continue
+		}
+		for _, tile := range projection.Tiles {
+			if tile.Stale || tile.ID == "" || (tile.ID != city.TileID && !adjacentProjection(cityTile, tile)) {
+				continue
+			}
+			for _, improvement := range orderedTerrainImprovements(*projection.Rules) {
+				if terrainImprovementBlockedByAdvance(projection, improvement) || terrainImprovementBlockedByTerrain(improvement, tile.Terrain) || terrainImprovementBlockedByOverlay(*projection.Rules, improvement, tile) {
+					continue
+				}
+				effective := projectedEffectiveTerrainImprovement(*projection.Rules, improvement, tile.Terrain)
+				if effective.PublicWorksCost < 1 || effective.BuildTurns < 1 || projection.Diplomacy.PublicWorks < effective.PublicWorksCost {
+					continue
+				}
+				key := tile.ID + "\x00" + improvement.ID
+				if seen[key] {
+					break
+				}
+				seen[key] = true
+				actions = append(actions, action(engine.CommandBuildImprovement, "build-improvement", city.ID, tile.ID, map[string]string{"tile_id": tile.ID, "improvement_id": improvement.ID}, []string{"tile_id", "improvement_id"}))
+				break
+			}
+		}
 	}
 	return actions
 }
@@ -1247,7 +1295,7 @@ func terrainActions(projection Projection, tiles map[string]TileProjection, unit
 	actions := make([]ActionProjection, 0)
 	terraformCost, terraformTurns := effectValue(unit.Effects, engine.EffectSpecialTerraform), effectValue(unit.Effects, engine.EffectSpecialTerraformTurns)
 	for _, tile := range projection.Tiles {
-		if tile.Stale || !adjacentProjection(origin, tile) {
+		if tile.Stale || !adjacentProjection(origin, tile) || tileHasPendingOverlay(tile) {
 			continue
 		}
 		if tile.Terrain == engine.TerrainForest && terraformCost > 0 && terraformTurns > 0 && projection.Diplomacy.PublicWorks >= terraformCost {
@@ -1255,7 +1303,7 @@ func terrainActions(projection Projection, tiles map[string]TileProjection, unit
 		}
 		if projection.Rules != nil {
 			for _, improvement := range orderedTerrainImprovements(*projection.Rules) {
-				if terrainImprovementBlockedByAdvance(projection, improvement) || terrainImprovementBlockedByTerrain(improvement, tile.Terrain) {
+				if terrainImprovementBlockedByAdvance(projection, improvement) || terrainImprovementBlockedByTerrain(improvement, tile.Terrain) || terrainImprovementBlockedByOverlay(*projection.Rules, improvement, tile) {
 					continue
 				}
 				effective := projectedEffectiveTerrainImprovement(*projection.Rules, improvement, tile.Terrain)
@@ -1272,6 +1320,46 @@ func terrainActions(projection Projection, tiles map[string]TileProjection, unit
 
 func terrainImprovementBlockedByTerrain(improvement rules.RuntimeTerrainImprovementDefinition, terrain string) bool {
 	return len(improvement.AllowedTerrains) > 0 && !containsString(improvement.AllowedTerrains, terrain)
+}
+
+func tileHasPendingOverlay(tile TileProjection) bool {
+	for _, overlay := range tile.Overlays {
+		if overlay.Remaining > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func terrainImprovementBlockedByOverlay(projection RulesProjection, improvement rules.RuntimeTerrainImprovementDefinition, tile TileProjection) bool {
+	for _, overlay := range tile.Overlays {
+		if overlay.Remaining > 0 {
+			return true
+		}
+		if overlay.Kind != "improvement" {
+			continue
+		}
+		if overlay.ImprovementID == improvement.ID || containsString(improvement.Excludes, overlay.ImprovementID) {
+			return true
+		}
+		existing, ok := projectedTerrainImprovementByID(projection, overlay.ImprovementID)
+		if !ok {
+			continue
+		}
+		if existing.Class != "" && containsString(improvement.Excludes, existing.Class) || improvement.Class != "" && containsString(existing.Excludes, improvement.Class) || containsString(existing.Excludes, improvement.ID) {
+			return true
+		}
+	}
+	return false
+}
+
+func projectedTerrainImprovementByID(projection RulesProjection, id string) (rules.RuntimeTerrainImprovementDefinition, bool) {
+	for _, improvement := range projection.TerrainImprovements {
+		if improvement.ID == id {
+			return improvement, true
+		}
+	}
+	return rules.RuntimeTerrainImprovementDefinition{}, false
 }
 
 func terrainImprovementBlockedByAdvance(projection Projection, improvement rules.RuntimeTerrainImprovementDefinition) bool {
@@ -1337,6 +1425,26 @@ func orderedTerrainImprovements(projection RulesProjection) []rules.RuntimeTerra
 func action(command, route, entityID, targetID string, payload any, fields []string) ActionProjection {
 	encoded, _ := json.Marshal(payload)
 	return ActionProjection{Command: command, Route: route, EntityID: entityID, TargetID: targetID, Fields: append([]string(nil), fields...), Payload: encoded}
+}
+
+func tileOverlayProjections(state engine.State, tileID string) []TileOverlayProjection {
+	result := make([]TileOverlayProjection, 0)
+	for _, overlay := range state.Overlays {
+		if overlay.TileID != tileID {
+			continue
+		}
+		result = append(result, TileOverlayProjection{Kind: overlay.Kind, ImprovementID: overlay.ImprovementID, Remaining: overlay.Remaining})
+	}
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].Kind != result[j].Kind {
+			return result[i].Kind < result[j].Kind
+		}
+		if result[i].ImprovementID != result[j].ImprovementID {
+			return result[i].ImprovementID < result[j].ImprovementID
+		}
+		return result[i].Remaining < result[j].Remaining
+	})
+	return result
 }
 
 func projectedTiles(projection Projection) map[string]TileProjection {

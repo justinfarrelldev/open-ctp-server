@@ -333,6 +333,23 @@ func TestPlannerQueuesProjectedRetailLikeUnitProduction(t *testing.T) {
 	t.Fatalf("missing production candidate: %#v", candidates)
 }
 
+func TestPlannerUsesProjectedPublicWorksImprovementWithoutUnit(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		Diplomacy: &visibility.DiplomacyProjection{PublicWorks: 10},
+		LegalActions: []visibility.ActionProjection{
+			{Command: engine.CommandBuildImprovement, EntityID: "city-a", TargetID: "tile", Payload: json.RawMessage(`{"tile_id":"tile","improvement_id":"TILEIMP_FARMS"}`)},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertCandidate(t, candidates, engine.CommandBuildImprovement)
+}
+
 func TestPlannerUsesRetailAIImprovementListOrder(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		Diplomacy: &visibility.DiplomacyProjection{PublicWorks: 10},

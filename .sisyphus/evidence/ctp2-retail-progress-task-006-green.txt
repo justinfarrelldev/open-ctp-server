@@ -1,0 +1,12 @@
+=== RUN   TestPublicWorksCanBuildImprovementWithoutTerraformUnit
+--- PASS: TestPublicWorksCanBuildImprovementWithoutTerraformUnit (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.010s
+=== RUN   TestPublicWorksTerrainActionsDoNotRequireTerraformUnit
+--- PASS: TestPublicWorksTerrainActionsDoNotRequireTerraformUnit (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.003s
+=== RUN   TestPlannerUsesProjectedPublicWorksImprovementWithoutUnit
+--- PASS: TestPlannerUsesProjectedPublicWorksImprovementWithoutUnit (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai	0.004s

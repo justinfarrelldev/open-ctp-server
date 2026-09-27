@@ -326,13 +326,24 @@ func buildTerrainImprovement(state *State, actorID string, payload BuildImprovem
 	if !ok {
 		return "", nil, errors.New("terrain action is not eligible")
 	}
-	unit, err := ownedUnit(state, actorID, payload.UnitID)
-	if err != nil || !hasEffect(unit.Effects, EffectSpecialTerraform) {
-		return "", nil, errors.New("terrain action is not eligible")
+	var unit *Unit
+	if payload.UnitID != "" {
+		candidate, err := ownedUnit(state, actorID, payload.UnitID)
+		if err != nil || !hasEffect(candidate.Effects, EffectSpecialTerraform) {
+			return "", nil, errors.New("terrain action is not eligible")
+		}
+		unit = candidate
 	}
 	tile, ok := tileByID(*state, payload.TileID)
-	unitTile, unitOK := tileByID(*state, unit.TileID)
-	if !ok || !unitOK || !adjacent(tile, unitTile) || pendingOverlayForTile(*state, tile.ID) != nil || !terrainImprovementAllowed(*state, runtime, definition, tile.ID) {
+	if !ok || pendingOverlayForTile(*state, tile.ID) != nil || !terrainImprovementAllowed(*state, runtime, definition, tile.ID) {
+		return "", nil, errors.New("terrain action is not eligible")
+	}
+	if unit != nil {
+		unitTile, unitOK := tileByID(*state, unit.TileID)
+		if !unitOK || !adjacent(tile, unitTile) {
+			return "", nil, errors.New("terrain action is not eligible")
+		}
+	} else if !publicWorksTileEligible(*state, actorID, tile.ID) {
 		return "", nil, errors.New("terrain action is not eligible")
 	}
 	effective := effectiveTerrainImprovement(*state, runtime, definition, tile.ID)
@@ -340,12 +351,37 @@ func buildTerrainImprovement(state *State, actorID string, payload BuildImprovem
 	if actorNation == nil || definition.RequiredAdvanceID != "" && !containsString(actorNation.Advances, definition.RequiredAdvanceID) || effective.PublicWorksCost < 1 || effective.BuildTurns < 1 || actorNation.PublicWorks < effective.PublicWorksCost {
 		return "", nil, errors.New("terrain action is not eligible")
 	}
-	if err := spendSpecialMove(unit); err != nil {
-		return "", nil, err
+	if unit != nil {
+		if err := spendSpecialMove(unit); err != nil {
+			return "", nil, err
+		}
 	}
 	actorNation.PublicWorks -= effective.PublicWorksCost
 	state.Overlays = append(state.Overlays, TileOverlay{ID: "improvement:" + tile.ID + ":" + definition.ID, TileID: tile.ID, Kind: "improvement", OwnerID: actorID, Remaining: effective.BuildTurns, TargetTerrain: effective.TargetTerrain, ImprovementID: definition.ID, MovementCostDelta: effective.MovementCostDelta, YieldFood: effective.YieldFood, YieldProduction: effective.YieldProduction, YieldGold: effective.YieldGold, PollutionDelta: effective.PollutionDelta, DefenseBonusPercent: effective.DefenseBonusPercent, HealRatePercent: effective.HealRatePercent, VisionRange: effective.VisionRange, RadarRange: effective.RadarRange, Airport: effective.Airport, Radar: effective.Radar, ListeningPost: effective.ListeningPost, CanUpgrade: effective.CanUpgrade, Endgame: effective.Endgame})
 	return EventImprovementQueued, json.RawMessage(`{"disclosed":false}`), nil
+}
+
+func publicWorksTileEligible(state State, actorID, tileID string) bool {
+	tile, ok := tileByID(state, tileID)
+	if !ok {
+		return false
+	}
+	if tile.OwnerID == actorID {
+		return true
+	}
+	for _, city := range state.Cities {
+		if city.OwnerID != actorID {
+			continue
+		}
+		cityTile, ok := tileByID(state, city.TileID)
+		if !ok {
+			continue
+		}
+		if city.TileID == tileID || adjacent(cityTile, tile) {
+			return true
+		}
+	}
+	return false
 }
 
 func effectiveTerrainImprovement(state State, runtime *rules.RuntimeRules, definition rules.RuntimeTerrainImprovementDefinition, tileID string) rules.RuntimeTerrainImprovementDefinition {

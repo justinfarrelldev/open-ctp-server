@@ -35,7 +35,7 @@
     },
     {
       "path": "internal/gameplay/ai/ai.go",
-      "sha256": "0d789750e219c6c8c6849987b2b7c8c6296f09ba8ddedafd09ecc71e904312bd"
+      "sha256": "322cbc92e60aa0974f86c9431c5a4cf904bfed0030906a423cd714119a88143b"
     },
     {
       "path": "internal/gameplay/combat/http.go",
@@ -71,7 +71,7 @@
     },
     {
       "path": "internal/gameplay/engine/special.go",
-      "sha256": "adc2f1b2b24225a51b4837c339138aa7a41f5c3685f7b7930e4a25c5628e57bc"
+      "sha256": "0607f298381b290902da82ed19c568a6e58173336178cca0fa7a88106abb98a8"
     },
     {
       "path": "internal/gameplay/engine/turns/turns.go",
@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "fcaa0755161954a97932f2e1f045ff2b5523818d988d5fdbb1bfc75012c43572"
+      "sha256": "3e691db106874edf4c7026a04162a61e0cc9cd614c8cb6a3c1620f7769ebbb87"
     },
     {
       "path": "internal/runtime/runtime.go",

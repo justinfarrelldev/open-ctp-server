@@ -7,6 +7,23 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
+func TestPublicWorksCanBuildImprovementWithoutTerraformUnit(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a"}
+	state.Nations = []Nation{{ID: "nation-a", PublicWorks: 3}}
+	state.Tiles = []Tile{{ID: "city-tile", X: 0, Y: 0, Terrain: TerrainPlains, Open: true}, {ID: "work-tile", X: 1, Y: 0, Terrain: TerrainPlains, Open: true}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "city-tile"}}
+	runtime := &rules.RuntimeRules{TerrainImprovements: []rules.RuntimeTerrainImprovementDefinition{{ID: "TILEIMP_FARMS", BuildTurns: 1, PublicWorksCost: 2, YieldFood: 1}}}
+	event, _, err := buildTerrainImprovement(&state, "player-a", BuildImprovementPayload{TileID: "work-tile", ImprovementID: "TILEIMP_FARMS"}, runtime)
+	if err != nil {
+		t.Fatalf("unitless public works improvement failed: %v", err)
+	}
+	if event != EventImprovementQueued || state.Nations[0].PublicWorks != 1 || len(state.Overlays) != 1 || state.Overlays[0].OwnerID != "player-a" || state.Overlays[0].YieldFood != 1 {
+		t.Fatalf("unitless public works event/nation/overlay = %q/%+v/%+v", event, state.Nations[0], state.Overlays)
+	}
+}
+
 func TestTask8PublicWorksImprovementChangesMovementYieldAndPollution(t *testing.T) {
 	state := runtimeStartedState(t)
 	state.Rules = serverOwnedRulesPin(t)

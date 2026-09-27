@@ -1,0 +1,8 @@
+=== RUN   TestPublicWorksTerrainActionsDoNotRequireTerraformUnit
+--- PASS: TestPublicWorksTerrainActionsDoNotRequireTerraformUnit (0.00s)
+=== RUN   TestPublicWorksTerrainActionsSuppressPendingImprovement
+--- PASS: TestPublicWorksTerrainActionsSuppressPendingImprovement (0.00s)
+=== RUN   TestTerrainActionsSuppressDisallowedTerrainImprovements
+--- PASS: TestTerrainActionsSuppressDisallowedTerrainImprovements (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.005s

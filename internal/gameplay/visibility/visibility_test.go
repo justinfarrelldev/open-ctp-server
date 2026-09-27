@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -968,6 +969,46 @@ func TestRetailSueFranchiseActionProjectsForOwnFranchisedCity(t *testing.T) {
 	}
 	if !hasAction(projection.LegalActions, engine.CommandSue) {
 		t.Fatalf("sue franchise action missing from %#v", projection.LegalActions)
+	}
+}
+
+func TestPublicWorksTerrainActionsDoNotRequireTerraformUnit(t *testing.T) {
+	projection := Projection{
+		Diplomacy: &DiplomacyProjection{PublicWorks: 10},
+		Cities:    []CityProjection{{ID: "city-a", OwnerID: "a", TileID: "home"}},
+		Tiles: []TileProjection{
+			{ID: "home", X: 0, Y: 0, Terrain: engine.TerrainPlains},
+			{ID: "work", X: 1, Y: 0, Terrain: engine.TerrainPlains},
+		},
+		Rules: &RulesProjection{TerrainImprovements: []rules.RuntimeTerrainImprovementDefinition{{ID: "TILEIMP_FARMS", BuildTurns: 1, PublicWorksCost: 1, AllowedTerrains: []string{engine.TerrainPlains}}}},
+	}
+	actions := publicWorksTerrainActions(projection, "a")
+	for _, action := range actions {
+		if action.Command != engine.CommandBuildImprovement || action.EntityID != "city-a" || action.TargetID != "work" {
+			continue
+		}
+		if strings.Contains(string(action.Payload), "unit_id") {
+			t.Fatalf("unitless public works action payload should omit unit_id: %s", action.Payload)
+		}
+		return
+	}
+	t.Fatalf("missing public works terrain action: %#v", actions)
+}
+
+func TestPublicWorksTerrainActionsSuppressPendingImprovement(t *testing.T) {
+	projection := Projection{
+		Diplomacy: &DiplomacyProjection{PublicWorks: 10},
+		Cities:    []CityProjection{{ID: "city-a", OwnerID: "a", TileID: "home"}},
+		Tiles: []TileProjection{
+			{ID: "home", X: 0, Y: 0, Terrain: engine.TerrainPlains},
+			{ID: "work", X: 1, Y: 0, Terrain: engine.TerrainPlains, Overlays: []TileOverlayProjection{{Kind: "improvement", ImprovementID: "TILEIMP_FARMS", Remaining: 1}}},
+		},
+		Rules: &RulesProjection{TerrainImprovements: []rules.RuntimeTerrainImprovementDefinition{{ID: "TILEIMP_FARMS", BuildTurns: 1, PublicWorksCost: 1, AllowedTerrains: []string{engine.TerrainPlains}}}},
+	}
+	for _, action := range publicWorksTerrainActions(projection, "a") {
+		if action.TargetID == "work" {
+			t.Fatalf("pending improvement tile was still actionable: %#v", action)
+		}
 	}
 }
 

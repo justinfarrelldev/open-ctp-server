@@ -648,7 +648,7 @@ func projectedTerrainImprovementActionCandidates(projection visibility.Projectio
 			TileID        string `json:"tile_id"`
 			ImprovementID string `json:"improvement_id"`
 		}
-		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.UnitID == "" || payload.TileID == "" || payload.ImprovementID == "" {
+		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.TileID == "" || payload.ImprovementID == "" {
 			continue
 		}
 		improvement := improvements[payload.ImprovementID]
