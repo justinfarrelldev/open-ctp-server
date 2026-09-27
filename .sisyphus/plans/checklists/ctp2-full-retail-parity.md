@@ -194,6 +194,10 @@
 - [x] Task 243: Retail `NoSlaves` unit flags are preserved as runtime/canonical marker effects.
 - [x] Task 244: Retail `IsTelevangelist` unit flags are preserved as runtime/canonical marker effects.
 - [x] Task 245: Retail `CanBeGifted` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 246: Retail `Advertise` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 247: Retail `GLHidden` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 248: Retail `HasPopAndCanBuild` unit flags are preserved as runtime/canonical marker effects.
+- [x] Task 249: Retail `ImmuneToHostileTerrain` unit flags are preserved as runtime/canonical marker effects.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

@@ -227,8 +227,16 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("televangelist runtime = %+v ok=%v", televangelist, ok)
 	}
 	elephant, ok := runtime.Unit("UNIT_ELEPHANT_WARRIOR")
-	if !ok || !runtimeUnitHasEffect(elephant, "can_be_gifted") {
+	if !ok || !runtimeUnitHasEffect(elephant, "can_be_gifted") || !runtimeUnitHasEffect(elephant, "immune_to_hostile_terrain") {
 		t.Fatalf("elephant warrior runtime = %+v ok=%v", elephant, ok)
+	}
+	corporateBranch, ok = runtime.Unit("UNIT_CORPORATE_BRANCH")
+	if !ok || !runtimeUnitHasEffect(corporateBranch, "advertise") {
+		t.Fatalf("corporate branch runtime = %+v ok=%v", corporateBranch, ok)
+	}
+	cityUnit, ok = runtime.Unit("UNIT_CITY")
+	if !ok || !runtimeUnitHasEffect(cityUnit, "gl_hidden") || !runtimeUnitHasEffect(cityUnit, "has_pop_and_can_build") {
+		t.Fatalf("city unit hidden/pop-build markers missing: %+v ok=%v", cityUnit, ok)
 	}
 	cargoHelicopter, ok := runtime.Unit("UNIT_CARGO_HELICOPTER")
 	if !ok || !runtimeUnitHasEffect(cargoHelicopter, "paratrooper_transport") {

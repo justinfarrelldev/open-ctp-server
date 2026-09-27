@@ -401,6 +401,18 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "CanBeGifted") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_be_gifted"), Kind: "can_be_gifted"})
 	}
+	if retailContainsString(unit.Flags, "Advertise") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("advertise"), Kind: "advertise"})
+	}
+	if retailContainsString(unit.Flags, "GLHidden") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("gl_hidden"), Kind: "gl_hidden"})
+	}
+	if retailContainsString(unit.Flags, "HasPopAndCanBuild") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("has_pop_and_can_build"), Kind: "has_pop_and_can_build"})
+	}
+	if retailContainsString(unit.Flags, "ImmuneToHostileTerrain") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("immune_to_hostile_terrain"), Kind: "immune_to_hostile_terrain"})
+	}
 	if retailContainsString(unit.Flags, "CantCaptureCity") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("cant_capture_city"), Kind: "cant_capture_city"})
 	}
