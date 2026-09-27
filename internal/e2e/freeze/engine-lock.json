@@ -99,7 +99,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_catalog.go",
-      "sha256": "6100a1814979fe125fffed8359789066a635b8450efe1a39b9d8e4915cf67ca6"
+      "sha256": "44680874c8b44973b7655e3cc4a0b13dbaceabd4e65f53ad9ed6e9c9347e23da"
     },
     {
       "path": "internal/gameplay/rules/retail_pollution.go",
@@ -111,7 +111,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_runtime.go",
-      "sha256": "32c5470991d672e6e53f2a52f08cf91f4d3fb56e122cdbd478d5716c65342f3c"
+      "sha256": "533aa9588d2c93f1adeede2bb200bdcd92e853a02243e992dc9f09e90b203a78"
     },
     {
       "path": "internal/gameplay/rules/rules.go",
@@ -119,7 +119,7 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "cac17c2e1eaf3af6ee10ff5e8e7babb7cc6e1c27f911a88cb4a4b2054a83a99e"
+      "sha256": "d6077ab4f546075df05c240156334637b408805b50acab99b3c33e9b323b8825"
     },
     {
       "path": "internal/gameplay/service/ai.go",

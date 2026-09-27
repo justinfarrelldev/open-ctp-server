@@ -32,6 +32,7 @@ type RetailUnit struct {
 	Category           string           `json:"category,omitempty"`
 	EnableAdvance      string           `json:"enable_advance,omitempty"`
 	ObsoleteAdvance    []string         `json:"obsolete_advance,omitempty"`
+	UpgradeTo          []string         `json:"upgrade_to,omitempty"`
 	Attack             int              `json:"attack"`
 	Defense            int              `json:"defense"`
 	ZBRangeAttack      int              `json:"zb_range_attack"`
@@ -604,6 +605,7 @@ func compileRetailUnit(record RetailRawRecord) (RetailUnit, error) {
 	unit.Category = record.FirstValue("Category")
 	unit.EnableAdvance = record.FirstValue("EnableAdvance")
 	unit.ObsoleteAdvance = record.Values("ObsoleteAdvance")
+	unit.UpgradeTo = record.Values("UpgradeTo")
 	unit.MovementTypes = record.Values("MovementType")
 	unit.CanAttack = record.Values("CanAttack")
 	unit.CanCarry = record.Values("CanCarry")

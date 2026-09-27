@@ -72,6 +72,7 @@ type RuntimeUnitDefinition struct {
 	IsSpecialForces    bool                   `json:"is_special_forces,omitempty"`
 	Prerequisites      []string               `json:"prerequisites,omitempty"`
 	ObsoleteBy         []string               `json:"obsolete_by,omitempty"`
+	UpgradeTo          []string               `json:"upgrade_to,omitempty"`
 	VisibilityRange    int                    `json:"visibility_range,omitempty"`
 	Effects            []RuntimeStarterEffect `json:"effects,omitempty"`
 }

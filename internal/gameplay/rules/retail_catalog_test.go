@@ -84,6 +84,10 @@ func TestLoadRetailRulesFromDirectoryPreservesTypedRetailValues(t *testing.T) {
 	if !containsString(carrier.Flags, "CantCaptureCity") || !containsString(carrier.Flags, "CanPillage") {
 		t.Fatalf("carrier flags do not include expected retail bits: %#v", carrier.Flags)
 	}
+	archer, ok := db.Unit("UNIT_ARCHER")
+	if !ok || !sameStringSlices(archer.UpgradeTo, []string{"UNIT_MOUNTED_ARCHER", "UNIT_CAVALRY", "UNIT_TANK", "UNIT_FUSION_TANK"}) {
+		t.Fatalf("archer upgrade chain = %+v ok=%v", archer, ok)
+	}
 
 	railroad, ok := db.Advance("ADVANCE_RAILROAD")
 	if !ok {

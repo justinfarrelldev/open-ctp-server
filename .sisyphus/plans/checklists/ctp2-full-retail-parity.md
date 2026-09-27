@@ -161,6 +161,8 @@
 - [x] Task 210: Retail CanCounterBombard unit fields import as runtime effects.
 - [x] Task 211: Bombardment resolves eligible defender counter-bombard fire against the bombarder.
 - [x] Task 212: Counter-bombard event payloads report safe derived hit counts only.
+- [x] Task 213: Retail typed unit catalog preserves ordered UpgradeTo fields.
+- [x] Task 214: Runtime unit definitions expose ordered UpgradeTo chains for safe clients/AI.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

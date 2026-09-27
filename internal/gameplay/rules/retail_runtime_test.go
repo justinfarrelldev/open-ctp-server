@@ -157,7 +157,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("cavalry runtime = %+v ok=%v", cavalry, ok)
 	}
 	archer, ok := runtime.Unit("UNIT_ARCHER")
-	if !ok || !runtimeUnitHasEffect(archer, "can_entrench") || !runtimeUnitHasEffect(archer, "can_pillage") {
+	if !ok || !runtimeUnitHasEffect(archer, "can_entrench") || !runtimeUnitHasEffect(archer, "can_pillage") || !sameStringSlices(archer.UpgradeTo, []string{"UNIT_MOUNTED_ARCHER", "UNIT_CAVALRY", "UNIT_TANK", "UNIT_FUSION_TANK"}) {
 		t.Fatalf("archer runtime = %+v ok=%v", archer, ok)
 	}
 	bomber, ok := runtime.Unit("UNIT_BOMBER")
