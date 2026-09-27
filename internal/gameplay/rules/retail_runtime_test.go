@@ -153,7 +153,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	}
 
 	cavalry, ok := runtime.Unit("UNIT_CAVALRY")
-	if !ok || !runtimeUnitHasEffect(cavalry, "mounted") {
+	if !ok || !runtimeUnitHasEffect(cavalry, "mounted") || !runtimeUnitHasEffect(cavalry, "is_flanker") {
 		t.Fatalf("cavalry runtime = %+v ok=%v", cavalry, ok)
 	}
 	archer, ok := runtime.Unit("UNIT_ARCHER")
@@ -189,8 +189,20 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("carrier cargo domains = %#v, want %#v", got, want)
 	}
 	fighter, ok := runtime.Unit("UNIT_FIGHTER")
-	if !ok || fighter.Domain != "air" || fighter.MaxFuel != 2400 {
+	if !ok || fighter.Domain != "air" || fighter.MaxFuel != 2400 || !runtimeUnitHasEffect(fighter, "can_beach_assault") {
 		t.Fatalf("fighter runtime = %+v ok=%v", fighter, ok)
+	}
+	cargoHelicopter, ok := runtime.Unit("UNIT_CARGO_HELICOPTER")
+	if !ok || !runtimeUnitHasEffect(cargoHelicopter, "paratrooper_transport") {
+		t.Fatalf("cargo helicopter runtime = %+v ok=%v", cargoHelicopter, ok)
+	}
+	paratrooper, ok := runtime.Unit("UNIT_PARATROOPER")
+	if !ok || !runtimeUnitHasEffect(paratrooper, "paratrooper") {
+		t.Fatalf("paratrooper runtime = %+v ok=%v", paratrooper, ok)
+	}
+	spacePlane, ok := runtime.Unit("UNIT_SPACE_PLANE")
+	if !ok || !runtimeUnitHasEffectValue(spacePlane, "space_launch_turns", 3) {
+		t.Fatalf("space plane runtime = %+v ok=%v", spacePlane, ok)
 	}
 
 	railroad, ok := runtime.Advance("ADVANCE_RAILROAD")

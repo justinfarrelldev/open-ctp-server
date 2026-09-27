@@ -448,6 +448,21 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "CanCounterBombard") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_counter_bombard"), Kind: "can_counter_bombard"})
 	}
+	if retailContainsString(unit.Flags, "IsFlanker") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("is_flanker"), Kind: "is_flanker"})
+	}
+	if retailContainsString(unit.Flags, "CanBeachAssault") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("can_beach_assault"), Kind: "can_beach_assault"})
+	}
+	if retailContainsString(unit.Flags, "Paratrooper") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("paratrooper"), Kind: "paratrooper"})
+	}
+	if retailContainsString(unit.Flags, "ParatrooperTransport") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("paratrooper_transport"), Kind: "paratrooper_transport"})
+	}
+	if turns := firstRetailUnitInt(unit, "SpaceLaunch"); turns > 0 {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("space_launch_turns"), Kind: "space_launch_turns", Value: turns})
+	}
 	if retailContainsString(unit.Flags, "ActiveDefenseOnlyWhenCarryingEnablers") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("active_defense_requires_enabler"), Kind: "active_defense_requires_enabler"})
 	}

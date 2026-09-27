@@ -163,6 +163,11 @@
 - [x] Task 212: Counter-bombard event payloads report safe derived hit counts only.
 - [x] Task 213: Retail typed unit catalog preserves ordered UpgradeTo fields.
 - [x] Task 214: Runtime unit definitions expose ordered UpgradeTo chains for safe clients/AI.
+- [x] Task 215: Retail IsFlanker unit fields import as runtime marker effects.
+- [x] Task 216: Retail CanBeachAssault unit fields import as runtime marker effects.
+- [x] Task 217: Retail Paratrooper unit fields import as runtime marker effects.
+- [x] Task 218: Retail ParatrooperTransport unit fields import as runtime marker effects.
+- [x] Task 219: Retail SpaceLaunch turn values import as runtime marker effects.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
