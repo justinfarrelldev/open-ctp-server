@@ -40,6 +40,7 @@ func applyWarStateCommand(state *State, command Command) (string, json.RawMessag
 		filtered = append(filtered, TurnPolicyWar{A: left, B: right})
 		relation.Treaty = ""
 		relation.Trade = false
+		state.TradeRoutes = removeTradeRoutesBetweenPlayers(*state, command.ActorPlayerID, payload.TargetPlayerID)
 	} else if relation.Treaty == "" {
 		relation.Treaty = "peace"
 	}
@@ -49,4 +50,21 @@ func applyWarStateCommand(state *State, command Command) (string, json.RawMessag
 		return "", nil, err
 	}
 	return EventWarStateChanged, encoded, nil
+}
+
+func removeTradeRoutesBetweenPlayers(state State, playerAID, playerBID string) []TradeRoute {
+	cityOwners := make(map[string]string, len(state.Cities))
+	for _, city := range state.Cities {
+		cityOwners[city.ID] = city.OwnerID
+	}
+	kept := make([]TradeRoute, 0, len(state.TradeRoutes))
+	for _, route := range state.TradeRoutes {
+		sourceOwner, sourceOK := cityOwners[route.SourceCityID]
+		destinationOwner, destinationOK := cityOwners[route.DestinationCityID]
+		if sourceOK && destinationOK && ((sourceOwner == playerAID && destinationOwner == playerBID) || (sourceOwner == playerBID && destinationOwner == playerAID)) {
+			continue
+		}
+		kept = append(kept, route)
+	}
+	return kept
 }

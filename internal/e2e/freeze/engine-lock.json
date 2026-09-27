@@ -83,7 +83,7 @@
     },
     {
       "path": "internal/gameplay/engine/war.go",
-      "sha256": "51ed2336bfdf9ba1a7e411b2af1671f143a8cd54c1b99db62bb4970d47ab99f0"
+      "sha256": "59aa8de40beaca65097a8e7c6e6392fdb3c7a30a7f85893c0a6e039b57b9cbaf"
     },
     {
       "path": "internal/gameplay/events/events.go",

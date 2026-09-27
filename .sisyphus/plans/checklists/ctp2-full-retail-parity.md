@@ -169,6 +169,7 @@
 - [x] Task 218: Retail ParatrooperTransport unit fields import as runtime marker effects.
 - [x] Task 219: Retail SpaceLaunch turn values import as runtime marker effects.
 - [x] Task 220: Retail unit PowerPoints import into runtime unit definitions.
+- [x] Task 221: Declaring war cancels existing trade routes between the new combatants.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

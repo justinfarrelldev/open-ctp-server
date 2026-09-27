@@ -26,6 +26,25 @@ func TestSetWarPersistsNormalizedCanonicalEdge(t *testing.T) {
 	}
 }
 
+func TestSetWarRemovesTradeRoutesBetweenCombatants(t *testing.T) {
+	state := fixtureState()
+	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}, {ID: "player-b", NationID: "nation-b", Lifecycle: PlayerActive, Controller: ControllerHuman}, {ID: "player-c", NationID: "nation-c", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"player-a", "player-b", "player-c"}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}, {ID: "city-b", OwnerID: "player-b", TileID: "tile-b"}, {ID: "city-c", OwnerID: "player-c", TileID: "tile-c"}}
+	state.TradeRoutes = []TradeRoute{
+		{ID: "ab", SourceCityID: "city-a", DestinationCityID: "city-b"},
+		{ID: "ac", SourceCityID: "city-a", DestinationCityID: "city-c"},
+	}
+	command := Command{SchemaVersion: CommandSchemaV1, ID: "war-a-b", ActorPlayerID: "player-a", Type: CommandSetWar, Payload: json.RawMessage(`{"target_player_id":"player-b","at_war":true}`)}
+	next, _, _, err := Apply(state, command, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(next.TradeRoutes) != 1 || next.TradeRoutes[0].ID != "ac" {
+		t.Fatalf("war did not remove only combatant trade routes: %#v", next.TradeRoutes)
+	}
+}
+
 func TestSetWarRejectsInvalidTarget(t *testing.T) {
 	state := fixtureState()
 	_, _, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "bad-war", ActorPlayerID: "player-a", Type: CommandSetWar, Payload: json.RawMessage(`{"target_player_id":"missing","at_war":true}`)}, state.Rules, fixtureSources())
