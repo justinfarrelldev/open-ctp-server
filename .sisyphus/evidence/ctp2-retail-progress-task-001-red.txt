@@ -1,0 +1,7 @@
+=== RUN   TestRetailAIAutoPlayMaintainsProductionAndUnitPresence
+    retail_ai_autoplay_test.go:58: retail AI transcript: /tmp/TestRetailAIAutoPlayMaintainsProductionAndUnitPresence2480635131/001/retail-ai-progress.jsonl
+    retail_ai_autoplay_test.go:67: retail autoplay became inert with zero units at turn 81; full-game mechanics need continuing unit production
+--- FAIL: TestRetailAIAutoPlayMaintainsProductionAndUnitPresence (12.08s)
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame	12.154s
+FAIL

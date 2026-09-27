@@ -112,6 +112,42 @@ func TestPlannerQueuesProjectedRetailSettlerForExpansion(t *testing.T) {
 	t.Fatalf("missing production candidate: %#v", candidates)
 }
 
+func TestPlannerQueuesEmergencyMilitaryForPopulatedUndefendedCities(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		PlanningStatus: visibility.PlanningStatusOpen,
+		Cities:         []visibility.CityProjection{{ID: "capital", OwnerID: "ai", TileID: "capital-tile", Population: 1}},
+		Rules: &visibility.RulesProjection{
+			Units: []rules.RuntimeUnitDefinition{
+				{ID: "UNIT_SETTLER", Domain: engine.DomainLand, Movement: 1, Health: 10, ProductionCost: 40, Effects: []rules.RuntimeStarterEffect{{ID: "settler", Kind: engine.EffectSettler}}},
+				{ID: "UNIT_WARRIOR", Domain: engine.DomainLand, Movement: 1, Attack: 5, Defense: 2, Health: 10, ProductionCost: 20},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type != engine.CommandQueueProduction {
+			continue
+		}
+		var payload struct {
+			Item engine.ProductionItem `json:"item"`
+		}
+		if err := json.Unmarshal(candidate.Payload, &payload); err != nil {
+			t.Fatal(err)
+		}
+		if payload.Item.ID != "UNIT_WARRIOR" || payload.Item.Kind != engine.ProductionUnit {
+			t.Fatalf("production item = %+v, want warrior", payload.Item)
+		}
+		return
+	}
+	t.Fatalf("missing production candidate: %#v", candidates)
+}
+
 func TestPlannerQueuesProjectedRetailMilitaryAfterExpansion(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		PlanningStatus: visibility.PlanningStatusOpen,

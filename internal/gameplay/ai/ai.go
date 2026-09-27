@@ -544,7 +544,7 @@ func combatCandidates(projection visibility.Projection, playerID string) []Candi
 			continue
 		}
 		attackerTile, ok := tiles[attacker.TileID]
-		if !ok {
+		if !ok || attackerTile.Stale {
 			continue
 		}
 		for _, defender := range projection.Units {
@@ -552,7 +552,7 @@ func combatCandidates(projection visibility.Projection, playerID string) []Candi
 				continue
 			}
 			defenderTile, ok := tiles[defender.TileID]
-			if !ok || !adjacent(attackerTile, defenderTile) || !combatDomainsCompatible(attacker, defender) {
+			if !ok || defenderTile.Stale || !adjacent(attackerTile, defenderTile) || !combatDomainsCompatible(attacker, defender) {
 				continue
 			}
 			key := attacker.ArmyID + "\x00" + defender.ArmyID
@@ -702,7 +702,10 @@ func productionCandidates(projection visibility.Projection, playerID string) []C
 			continue
 		}
 		item, ok := engine.ProductionItem{}, false
-		if shouldProduceExpansionSettler(projection, playerID) {
+		if shouldProduceEmergencyMilitaryUnit(projection, playerID) {
+			item, ok = bestProjectedCombatUnitProduction(projection)
+		}
+		if !ok && shouldProduceExpansionSettler(projection, playerID) {
 			item, ok = bestProjectedSettlerProduction(projection)
 		}
 		if !ok && shouldProduceMilitaryUnit(projection, playerID) {
@@ -763,6 +766,28 @@ func bestProjectedGovernment(governments []rules.RuntimeGovernmentDefinition, ow
 	return best, bestScore >= 0
 }
 
+func shouldProduceEmergencyMilitaryUnit(projection visibility.Projection, playerID string) bool {
+	if !aiExpansionEnabled(projection) {
+		return false
+	}
+	populatedCity := false
+	for _, city := range projection.Cities {
+		if city.OwnerID == playerID && !city.Stale && city.Population > 0 {
+			populatedCity = true
+			break
+		}
+	}
+	if !populatedCity {
+		return false
+	}
+	for _, unit := range projection.Units {
+		if unit.OwnerID == playerID && !hasEffect(unit.Effects, engine.EffectSettler) {
+			return false
+		}
+	}
+	return true
+}
+
 func shouldProduceMilitaryUnit(projection visibility.Projection, playerID string) bool {
 	if !aiExpansionEnabled(projection) {
 		return false
@@ -773,7 +798,7 @@ func shouldProduceMilitaryUnit(projection visibility.Projection, playerID string
 			ownedCities++
 		}
 	}
-	if ownedCities < 3 {
+	if ownedCities == 0 {
 		return false
 	}
 	ownedUnits := 0
@@ -781,6 +806,12 @@ func shouldProduceMilitaryUnit(projection visibility.Projection, playerID string
 		if unit.OwnerID == playerID && !hasEffect(unit.Effects, engine.EffectSettler) {
 			ownedUnits++
 		}
+	}
+	if ownedUnits == 0 {
+		return true
+	}
+	if ownedCities < 3 {
+		return false
 	}
 	return ownedUnits < ownedCities
 }

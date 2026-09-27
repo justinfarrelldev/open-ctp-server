@@ -127,6 +127,31 @@ func TestPlannerUsesProjectedScienceRateAction(t *testing.T) {
 	t.Fatalf("science-rate candidate missing: %#v", candidates)
 }
 
+func TestPlannerDoesNotInventCombatAgainstStaleTiles(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		Tiles: []visibility.TileProjection{
+			{ID: "a", X: 0, Y: 0, Terrain: engine.TerrainPlains},
+			{ID: "b", X: 1, Y: 0, Terrain: engine.TerrainPlains, Stale: true},
+		},
+		Units: []visibility.UnitProjection{
+			{ID: "own", OwnerID: "ai", TileID: "a", ArmyID: "own-army", Attack: 1, Domain: engine.DomainLand},
+			{ID: "enemy", OwnerID: "enemy", TileID: "b", ArmyID: "enemy-army", Defense: 1, Domain: engine.DomainLand},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandCombat {
+			t.Fatalf("planner invented combat against stale tile: %#v", candidates)
+		}
+	}
+}
+
 func TestPlannerUsesProjectedTradeRouteAction(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		LegalActions: []visibility.ActionProjection{{Command: engine.CommandCreateTradeRoute, Route: "create-trade-route", EntityID: "home", TargetID: "foreign", Payload: json.RawMessage(`{"source_city_id":"home","destination_city_id":"foreign"}`)}},

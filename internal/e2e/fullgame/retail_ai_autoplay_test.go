@@ -53,6 +53,36 @@ func TestRetailRuntimeScoreVictoryCanReachTerminalFinalTurn(t *testing.T) {
 	}
 }
 
+func TestRetailAIAutoPlayMaintainsProductionAndUnitPresence(t *testing.T) {
+	root := localRetailGameDataRoot(t)
+	state, records := runRetailAIAutoPlay(t, root, 80, filepath.Join(t.TempDir(), "retail-ai-progress.jsonl"))
+	if len(records) < 80 {
+		t.Fatalf("records = %d, want at least 80", len(records))
+	}
+	if state.Terminal.Ended {
+		return
+	}
+	last := records[len(records)-1]
+	if last.Units == 0 {
+		t.Fatalf("retail autoplay became inert with zero units at turn %d; full-game mechanics need continuing unit production", last.Turn)
+	}
+	nonRoundLate := 0
+	start := len(records) - 20
+	if start < 0 {
+		start = 0
+	}
+	for _, record := range records[start:] {
+		for _, command := range record.Commands {
+			if command != engine.CommandRoundComplete {
+				nonRoundLate++
+			}
+		}
+	}
+	if nonRoundLate == 0 {
+		t.Fatalf("retail autoplay late game issued only round-complete commands from record %d onward", start)
+	}
+}
+
 func TestRetailAIAutoPlayRecordsAtLeastHundredTurns(t *testing.T) {
 	root := localRetailGameDataRoot(t)
 	transcript := filepath.Join(t.TempDir(), "retail-ai-100-turns.jsonl")

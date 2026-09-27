@@ -35,7 +35,7 @@
     },
     {
       "path": "internal/gameplay/ai/ai.go",
-      "sha256": "d23174db678b7afee1d41b44ff26b1f9ed9f99434e117498d64ae5db1e0fc16c"
+      "sha256": "0d789750e219c6c8c6849987b2b7c8c6296f09ba8ddedafd09ecc71e904312bd"
     },
     {
       "path": "internal/gameplay/combat/http.go",
@@ -47,7 +47,7 @@
     },
     {
       "path": "internal/gameplay/engine/combat.go",
-      "sha256": "e4f85cbb10490c8437fd552222ee878959f44670413f985aba863d33f7b2139a"
+      "sha256": "cc78b54e180d6b5f4d2a2df0c31b44f96812032ba8591cfd05041a565126d0b3"
     },
     {
       "path": "internal/gameplay/engine/diplomacy.go",

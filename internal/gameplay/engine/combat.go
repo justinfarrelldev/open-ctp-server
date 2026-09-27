@@ -831,14 +831,90 @@ func combatAttackDomainEffectApplies(kind, targetDomain string) bool {
 	}
 }
 
+const combatDefaultSightRadius = 2
+
 func combatVisible(state State, playerID, tileID string) bool {
+	if HasActiveWonderEffect(state, playerID, EffectGlobalRadar) {
+		return true
+	}
 	for _, seen := range state.Fog {
 		if seen.PlayerID == playerID && seen.TileID == tileID {
 			return true
 		}
 	}
+	return combatCurrentlyVisible(state, playerID, tileID)
+}
+
+func combatCurrentlyVisible(state State, playerID, tileID string) bool {
+	target, ok := tileByID(state, tileID)
+	if !ok {
+		return false
+	}
+	for _, unit := range state.Units {
+		if unit.OwnerID != playerID || unit.TileID == "" || unit.TransportID != "" {
+			continue
+		}
+		radius := combatDefaultSightRadius
+		if unit.VisibilityRange > radius {
+			radius = unit.VisibilityRange
+		}
+		if combatTileVisibleFrom(state, unit.TileID, target, radius) {
+			return true
+		}
+	}
+	for _, city := range state.Cities {
+		if city.OwnerID == playerID && combatTileVisibleFrom(state, city.TileID, target, combatDefaultSightRadius) {
+			return true
+		}
+	}
 	return false
 }
+
+func combatTileVisibleFrom(state State, originID string, target Tile, radius int) bool {
+	origin, ok := tileByID(state, originID)
+	if !ok || tileDistance(origin, target) > radius {
+		return false
+	}
+	return combatHasLOS(state, origin, target)
+}
+
+func combatHasLOS(state State, origin, target Tile) bool {
+	x, y := origin.X, origin.Y
+	dx, dy := combatSign(target.X-origin.X), combatSign(target.Y-origin.Y)
+	for x != target.X || y != target.Y {
+		x += dx
+		y += dy
+		if x == target.X && y == target.Y {
+			return true
+		}
+		tile, ok := tileAtXY(state, x, y)
+		if !ok || EffectiveTerrain(state, tile.ID) == TerrainForest {
+			return false
+		}
+	}
+	return true
+}
+
+func tileAtXY(state State, x, y int) (Tile, bool) {
+	for _, tile := range state.Tiles {
+		if tile.X == x && tile.Y == y {
+			return tile, true
+		}
+	}
+	return Tile{}, false
+}
+
+func combatSign(value int) int {
+	switch {
+	case value < 0:
+		return -1
+	case value > 0:
+		return 1
+	default:
+		return 0
+	}
+}
+
 func adjacentTiles(state State, fromID, toID string) bool {
 	from, a := tileByID(state, fromID)
 	to, b := tileByID(state, toID)

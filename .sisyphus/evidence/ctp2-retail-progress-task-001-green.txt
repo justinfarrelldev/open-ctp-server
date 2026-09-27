@@ -1,0 +1,5 @@
+=== RUN   TestRetailAIAutoPlayMaintainsProductionAndUnitPresence
+    retail_ai_autoplay_test.go:58: retail AI transcript: /tmp/TestRetailAIAutoPlayMaintainsProductionAndUnitPresence1733120834/001/retail-ai-progress.jsonl
+--- PASS: TestRetailAIAutoPlayMaintainsProductionAndUnitPresence (19.26s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame	19.330s

@@ -32,6 +32,14 @@ func combatCommand() Command {
 	return Command{SchemaVersion: CommandSchemaV1, ID: "combat-1", ActorPlayerID: "player-a", Type: CommandCombat, Payload: payload}
 }
 
+func TestCombatAllowsCurrentlyVisibleTargetWithoutFogMemory(t *testing.T) {
+	state := combatState()
+	state.Fog = []FogObservation{{PlayerID: "player-a", TileID: "a", Turn: 1}}
+	if _, _, _, err := Apply(state, combatCommand(), state.Rules, fixtureSources()); err != nil {
+		t.Fatalf("combat against currently visible adjacent target without prior fog memory: %v", err)
+	}
+}
+
 func TestRetailFirepowerScalesCombatDamage(t *testing.T) {
 	state := fixtureState()
 	attacker := &Unit{ID: "attacker", OwnerID: "player-a", Attack: 100, Strength: 2, Armor: 1, Firepower: 3, Health: 10, MaxHealth: 10}
@@ -577,6 +585,8 @@ func TestCombatVectorsResolveAtomicallyWithSourceOrderAndCapture(t *testing.T) {
 
 func TestCombatRejectsHiddenAndInvalidTargetsWithoutRNG(t *testing.T) {
 	state := combatState()
+	state.Tiles[1].X = 4
+	state.Tiles[2].X = 5
 	state.Fog = []FogObservation{{PlayerID: "player-a", TileID: "a", Turn: 1}}
 	_, _, _, err := Apply(state, combatCommand(), state.Rules, fixtureSources())
 	if err == nil || !strings.Contains(err.Error(), "combat target is unavailable") {
