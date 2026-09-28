@@ -195,6 +195,29 @@ func TestPlannerUsesProjectedScienceRateAction(t *testing.T) {
 	t.Fatalf("science-rate candidate missing: %#v", candidates)
 }
 
+func TestPlannerPreservesRetailPublicWorksReserve(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		Diplomacy: &visibility.DiplomacyProjection{PublicWorks: 150},
+		Rules: &visibility.RulesProjection{
+			AI:                  &rules.RuntimeAI{Strategies: []rules.RuntimeAIStrategy{{ID: "STRATEGY_DEFAULT", PublicWorksReserve: 100}}},
+			TerrainImprovements: []rules.RuntimeTerrainImprovementDefinition{{ID: "TILEIMP_FARMS", PublicWorksCost: 100, BuildTurns: 1}},
+		},
+		LegalActions: []visibility.ActionProjection{{Command: engine.CommandBuildImprovement, Route: "build-improvement", EntityID: "", TargetID: "tile-a", Payload: json.RawMessage(`{"tile_id":"tile-a","improvement_id":"TILEIMP_FARMS"}`)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandBuildImprovement {
+			t.Fatalf("planner spent public works below retail reserve: %#v", candidates)
+		}
+	}
+}
+
 func TestPlannerDoesNotInventCombatAgainstStaleTiles(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		Tiles: []visibility.TileProjection{

@@ -1,0 +1,2 @@
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai	0.007s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze	0.180s

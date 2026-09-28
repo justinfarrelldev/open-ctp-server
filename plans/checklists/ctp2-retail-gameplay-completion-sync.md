@@ -27,6 +27,7 @@
 - [x] Task 013: AI planners now consume projected legal trade-pact proposal actions so trade agreements can precede goods trade routes without hidden-state shortcuts.
 - [x] Task 014: AI planners now consume projected legal peace proposal actions so combat-created wars have a public-projection treaty recovery path.
 - [x] Task 015: AI planners now consume projected legal bombard actions so bombard-capable units participate in combat planning without hidden-state shortcuts.
+- [x] Task 016: AI terrain-improvement planning now preserves retail `PublicWorksReserve` instead of spending public works/materials down to zero.
 
 ## Full-Game Mechanical Execution First
 

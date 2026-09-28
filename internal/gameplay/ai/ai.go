@@ -753,6 +753,11 @@ func projectedTerrainImprovementActionCandidates(projection visibility.Projectio
 	ranks := retailImprovementRanks(projection)
 	tiles := projectionTiles(projection)
 	improvements := projectedTerrainImprovements(projection)
+	reserve := projectedAIPublicWorksReserve(projection)
+	publicWorks := 0
+	if projection.Diplomacy != nil {
+		publicWorks = projection.Diplomacy.PublicWorks
+	}
 	candidates := make([]Candidate, 0)
 	for _, action := range projection.LegalActions {
 		if action.Command != engine.CommandBuildImprovement || len(action.Payload) == 0 {
@@ -767,6 +772,9 @@ func projectedTerrainImprovementActionCandidates(projection visibility.Projectio
 			continue
 		}
 		improvement := improvements[payload.ImprovementID]
+		if reserve > 0 && improvement.PublicWorksCost > 0 && publicWorks-improvement.PublicWorksCost <= reserve {
+			continue
+		}
 		if improvement.PollutionDelta < 0 {
 			if tile, ok := tiles[payload.TileID]; ok && tile.Pollution <= 0 {
 				continue
@@ -779,6 +787,18 @@ func projectedTerrainImprovementActionCandidates(projection visibility.Projectio
 		candidates = append(candidates, candidate(engine.CommandBuildImprovement, payload.UnitID, payload.TileID, 620-rank, payload))
 	}
 	return candidates
+}
+
+func projectedAIPublicWorksReserve(projection visibility.Projection) int {
+	if projection.Rules == nil || projection.Rules.AI == nil {
+		return 0
+	}
+	for _, strategy := range projection.Rules.AI.Strategies {
+		if strategy.PublicWorksReserve > 0 {
+			return strategy.PublicWorksReserve
+		}
+	}
+	return 0
 }
 
 func projectedTerrainImprovements(projection visibility.Projection) map[string]rules.RuntimeTerrainImprovementDefinition {
