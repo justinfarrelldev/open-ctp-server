@@ -48,6 +48,7 @@ const (
 	CommandFoundCity          = "found-city"
 	CommandQueueProduction    = "queue-production"
 	CommandCancelProduction   = "cancel-production"
+	CommandRushBuy            = "rush-buy"
 	CommandSetSpecialists     = "set-specialists"
 	CommandCreateTradeRoute   = "create-trade-route"
 	CommandSetResearch        = "set-research"
@@ -89,6 +90,7 @@ const (
 	EventContactEstablished       = "diplomacy.contact_established"
 	EventAgreementProposed        = "diplomacy.agreement_proposed"
 	EventAgreementResponded       = "diplomacy.agreement_responded"
+	EventProductionRushed         = "production.rushed"
 	EventGovernmentChanged        = "government.changed"
 	EventScienceRateChanged       = "government.science_rate_changed"
 	EventPublicWorksRateChanged   = "government.public_works_rate_changed"
@@ -609,7 +611,7 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 		eventType = EventCombatResolved
 	case CommandBombard:
 		eventType, eventPayload, err = applyBombard(state, command, sources, runtime)
-	case CommandFoundCity, CommandQueueProduction, CommandCancelProduction, CommandSetSpecialists, CommandCreateTradeRoute:
+	case CommandFoundCity, CommandQueueProduction, CommandCancelProduction, CommandRushBuy, CommandSetSpecialists, CommandCreateTradeRoute:
 		eventType, err = applyCityCommand(state, command, runtime)
 	default:
 		if isSpecialCommand(command.Type) {
@@ -744,7 +746,7 @@ func policyEnvelope(command Command, receiptSequence int64) turns.Command {
 	class := "non_hostile"
 	if command.Type == CommandCombat {
 		class = "hostile"
-	} else if command.Type == CommandFoundCity || command.Type == CommandQueueProduction || command.Type == CommandCancelProduction {
+	} else if command.Type == CommandFoundCity || command.Type == CommandQueueProduction || command.Type == CommandCancelProduction || command.Type == CommandRushBuy {
 		class = "economic"
 	}
 	return turns.Command{Kind: turns.CommandAction, ActorID: command.ActorPlayerID, ActionClass: class, UnitOrArmyID: unitOrArmyID, ReceiptSequence: receiptSequence, Hostile: class == "hostile", TargetPlayerID: metadata.TargetPlayerID, CommandID: persisted.ID, IdempotencyKey: persisted.IdempotencyKey, Payload: payload}

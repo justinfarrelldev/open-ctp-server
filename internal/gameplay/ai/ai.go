@@ -194,6 +194,7 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 	candidates = append(candidates, projectedReadinessCandidates(projection)...)
 	candidates = append(candidates, projectedSpecialistCandidates(projection, playerID)...)
 	candidates = append(candidates, projectedTradeRouteCandidates(projection)...)
+	candidates = append(candidates, projectedRushBuyCandidates(projection)...)
 	candidates = append(candidates, diplomacyCandidates(projection, playerID)...)
 	candidates = append(candidates, projectedUnitSpecialTargetCandidates(projection)...)
 	candidates = append(candidates, combatCandidates(projection, playerID)...)
@@ -398,6 +399,23 @@ func projectedAIPublicWorksPercent(projection visibility.Projection) (int, bool)
 		}
 	}
 	return 0, false
+}
+
+func projectedRushBuyCandidates(projection visibility.Projection) []Candidate {
+	candidates := make([]Candidate, 0)
+	for _, action := range projection.LegalActions {
+		if action.Command != engine.CommandRushBuy || len(action.Payload) == 0 {
+			continue
+		}
+		var payload struct {
+			CityID string `json:"city_id"`
+		}
+		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.CityID == "" {
+			continue
+		}
+		candidates = append(candidates, Candidate{Type: engine.CommandRushBuy, EntityID: action.EntityID, TargetID: action.TargetID, Score: 320, Payload: append(json.RawMessage(nil), action.Payload...)})
+	}
+	return candidates
 }
 
 func projectedTradeRouteCandidates(projection visibility.Projection) []Candidate {

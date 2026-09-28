@@ -97,6 +97,7 @@ var commands = map[string]struct {
 	"cancel-terraform":      {engine.CommandCancelTerraform, fields("tile_id")},
 	"queue-production":      {engine.CommandQueueProduction, fields("city_id", "item")},
 	"cancel-production":     {engine.CommandCancelProduction, fields("city_id", "item_id")},
+	"rush-buy":              {engine.CommandRushBuy, fields("city_id")},
 	"set-specialists":       {engine.CommandSetSpecialists, fields("city_id", "specialists")},
 	"create-trade-route":    {engine.CommandCreateTradeRoute, fields("source_city_id", "destination_city_id")},
 	"leave":                 {engine.CommandLeaveGame, fields()},

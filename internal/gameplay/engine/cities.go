@@ -243,6 +243,10 @@ type CancelProductionPayload struct {
 	ItemID string `json:"item_id"`
 }
 
+type RushBuyPayload struct {
+	CityID string `json:"city_id"`
+}
+
 type SetSpecialistsPayload struct {
 	CityID      string         `json:"city_id"`
 	Specialists map[string]int `json:"specialists"`
@@ -276,6 +280,12 @@ func applyCityCommand(state *State, command Command, runtime *rules.RuntimeRules
 			return "", err
 		}
 		return "production.cancelled", cancelProduction(state, command.ActorPlayerID, payload)
+	case CommandRushBuy:
+		var payload RushBuyPayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", err
+		}
+		return EventProductionRushed, rushBuyProduction(state, command.ActorPlayerID, payload)
 	case CommandSetSpecialists:
 		var payload SetSpecialistsPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -791,6 +801,36 @@ func cancelProduction(state *State, actor string, payload CancelProductionPayloa
 		}
 	}
 	return errors.New("production item is not queued")
+}
+
+func rushBuyProduction(state *State, actor string, payload RushBuyPayload) error {
+	city, ok := cityByID(*state, payload.CityID)
+	if !ok || city.OwnerID != actor || len(city.Queue) == 0 {
+		return errors.New("production item is not owned by actor")
+	}
+	nation := nationForID(state, nationForPlayer(*state, actor))
+	if nation == nil {
+		return errors.New("production item is not owned by actor")
+	}
+	item := city.Queue[0]
+	cost := rushBuyCost(*city, item)
+	if cost < 1 || nation.Gold < cost {
+		return errors.New("insufficient gold for rush buy")
+	}
+	nation.Gold -= cost
+	city.StoredProduction = item.Cost
+	return nil
+}
+
+func rushBuyCost(city City, item ProductionItem) int {
+	remaining := item.Cost - city.StoredProduction
+	if remaining <= 0 {
+		return 0
+	}
+	if item.Cost < 1 {
+		return remaining
+	}
+	return remaining + remaining*remaining/item.Cost
 }
 
 // RecalculateRound applies the city pipeline once for the current resolved turn.

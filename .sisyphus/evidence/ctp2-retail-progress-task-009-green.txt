@@ -1,0 +1,14 @@
+=== RUN   TestRetailRushBuySpendsGoldAndCompletesQueueNextTurn
+--- PASS: TestRetailRushBuySpendsGoldAndCompletesQueueNextTurn (0.01s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.019s
+=== RUN   TestProductionActionsSuppressAlreadyFundedRushBuy
+--- PASS: TestProductionActionsSuppressAlreadyFundedRushBuy (0.00s)
+=== RUN   TestProductionActionsIncludeAffordableRushBuy
+--- PASS: TestProductionActionsIncludeAffordableRushBuy (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.005s
+=== RUN   TestPlannerUsesProjectedRushBuyAction
+--- PASS: TestPlannerUsesProjectedRushBuyAction (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai	0.005s

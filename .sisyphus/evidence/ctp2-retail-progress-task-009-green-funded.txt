@@ -1,0 +1,6 @@
+=== RUN   TestProductionActionsSuppressAlreadyFundedRushBuy
+--- PASS: TestProductionActionsSuppressAlreadyFundedRushBuy (0.00s)
+=== RUN   TestProductionActionsIncludeAffordableRushBuy
+--- PASS: TestProductionActionsIncludeAffordableRushBuy (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.004s

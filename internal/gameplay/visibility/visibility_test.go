@@ -364,6 +364,32 @@ func TestScienceRateLegalActionsTreatUnsetAsDefaultHundred(t *testing.T) {
 	}
 }
 
+func TestProductionActionsSuppressAlreadyFundedRushBuy(t *testing.T) {
+	projection := Projection{
+		Diplomacy: &DiplomacyProjection{Gold: 100},
+		Cities:    []CityProjection{{ID: "city-a", OwnerID: "a", StoredProduction: 100, Queue: []engine.ProductionItem{{ID: "IMPROVE_SYNTHETIC", Kind: engine.ProductionBuilding, Cost: 100}}}},
+	}
+	for _, action := range productionActions(engine.State{}, projection, "a") {
+		if action.Command == engine.CommandRushBuy {
+			t.Fatalf("already funded queue should not expose rush buy: %#v", action)
+		}
+	}
+}
+
+func TestProductionActionsIncludeAffordableRushBuy(t *testing.T) {
+	projection := Projection{
+		Diplomacy: &DiplomacyProjection{Gold: 96},
+		Cities:    []CityProjection{{ID: "city-a", OwnerID: "a", StoredProduction: 40, Queue: []engine.ProductionItem{{ID: "IMPROVE_SYNTHETIC", Kind: engine.ProductionBuilding, Cost: 100}}}},
+	}
+	actions := productionActions(engine.State{}, projection, "a")
+	for _, action := range actions {
+		if action.Command == engine.CommandRushBuy && action.EntityID == "city-a" && action.TargetID == "IMPROVE_SYNTHETIC" && bytes.Contains(action.Payload, []byte(`"city_id":"city-a"`)) {
+			return
+		}
+	}
+	t.Fatalf("rush-buy action missing: %#v", actions)
+}
+
 func TestGovernmentActionsIncludeRetailAIStrategyPublicWorksPercent(t *testing.T) {
 	projection := Projection{
 		Rules:     &RulesProjection{AI: &rules.RuntimeAI{Strategies: []rules.RuntimeAIStrategy{{ID: "STRATEGY_DEFAULT", PublicWorksPercent: 30}}}},

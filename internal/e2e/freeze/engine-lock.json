@@ -35,7 +35,7 @@
     },
     {
       "path": "internal/gameplay/ai/ai.go",
-      "sha256": "9a8cd7d4d7194460f00279f6f6c032065d33b32a768e47ab629a1b48d790f05f"
+      "sha256": "f30efa7f19153df56d5717376a05f119776c03ce0b950b60d731ddf24d4d106f"
     },
     {
       "path": "internal/gameplay/combat/http.go",
@@ -43,7 +43,7 @@
     },
     {
       "path": "internal/gameplay/engine/cities.go",
-      "sha256": "531fedd8c7e32841989c796b74f90e6ebf39cdd3034c33fdd766c7a30ffada49"
+      "sha256": "914461ddc7eee0df4e99701669d72c85e61c0aa3c6a0facdc9273d879dff325d"
     },
     {
       "path": "internal/gameplay/engine/combat.go",
@@ -55,7 +55,7 @@
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "278c7f7edea32d3e3f593bdb0a8aaf4bda3420d5f2e9e98050097e11b4267eb8"
+      "sha256": "2e39a86fd640310570c2a22f504b89d8009e7a29d08ae3ae6870a7172d8bc3f4"
     },
     {
       "path": "internal/gameplay/engine/government.go",
@@ -95,7 +95,7 @@
     },
     {
       "path": "internal/gameplay/http/http.go",
-      "sha256": "7d26ca265df29b56531e387c53693fd69b01802267de8041ba0f69d4873bbd56"
+      "sha256": "5696dab96056f0fbf24d5f09cbe98db3580e4b4e309f8824dda87ae856e46d7f"
     },
     {
       "path": "internal/gameplay/rules/retail_catalog.go",
@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "9c19e63f005703a92ec3c36ec9f5bad6ee801c22dcf775ef2327e71117a6968a"
+      "sha256": "e9cd349b0dd491eb5f1df851111d478322a2564b0030b2fae3b32f3b67a53405"
     },
     {
       "path": "internal/runtime/runtime.go",

@@ -1,0 +1,3 @@
+OPEN_CTP_RECORD_RETAIL_AI_TURNS=/tmp/retail-ai-after-task009.jsonl go test ./internal/e2e/fullgame -run TestRetailAIAutoPlayRecordsAtLeastHundredTurns -count=1 -v
+PASS; final transcript summary:
+{"commands": ["set-specialists", "respond-agreement", "create-army", "move-unit", "round-complete"], "gold": 410, "public_works": 39336, "restart_equal": true, "rush_buys": 32, "trade_routes": 0, "turn": 101}

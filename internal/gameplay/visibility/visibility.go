@@ -845,8 +845,12 @@ func productionActions(state engine.State, projection Projection, playerID strin
 		if city.OwnerID != playerID || city.Stale {
 			continue
 		}
-		for _, queued := range city.Queue {
+		for index, queued := range city.Queue {
 			actions = append(actions, action(engine.CommandCancelProduction, "cancel-production", city.ID, queued.ID, map[string]string{"city_id": city.ID, "item_id": queued.ID}, []string{"city_id", "item_id"}))
+			rushCost := projectedRushBuyCost(city, queued)
+			if index == 0 && rushCost > 0 && projection.Diplomacy != nil && projection.Diplomacy.Gold >= rushCost {
+				actions = append(actions, action(engine.CommandRushBuy, "rush-buy", city.ID, queued.ID, map[string]string{"city_id": city.ID}, []string{"city_id"}))
+			}
 		}
 		if len(city.Queue) != 0 || projection.Rules == nil {
 			continue
@@ -890,6 +894,17 @@ func cityBuildingIDs(city CityProjection) map[string]bool {
 		built[building.ID] = true
 	}
 	return built
+}
+
+func projectedRushBuyCost(city CityProjection, item engine.ProductionItem) int {
+	remaining := item.Cost - city.StoredProduction
+	if remaining <= 0 {
+		return 0
+	}
+	if item.Cost < 1 {
+		return remaining
+	}
+	return remaining + remaining*remaining/item.Cost
 }
 
 func productionActionItem(production rules.RuntimeProduction) engine.ProductionItem {

@@ -20,6 +20,7 @@
 - [x] Task 006: Public-works terrain improvements can be queued without worker units on owned/city-radius tiles, are projected as legal actions, and are selected by AI planners.
 - [x] Task 007: Retail AI strategy economy sliders are imported and the planner uses the strategy science percent instead of forcing 100% science/no-gold economy.
 - [x] Task 008: Public-works rate is a gameplay command, AI uses retail strategy public-works percent, and city production is diverted into nation public works before queue progress.
+- [x] Task 009: Rush-buy is a legal projected economy action; AI can spend accumulated gold to buy queued production front items into completion via the normal turn pipeline.
 
 ## Full-Game Mechanical Execution First
 

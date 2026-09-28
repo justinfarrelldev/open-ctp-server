@@ -108,6 +108,25 @@ func TestPlannerUsesOnlyProjectionAndStableCandidateTuples(t *testing.T) {
 	}
 }
 
+func TestPlannerUsesProjectedRushBuyAction(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		LegalActions: []visibility.ActionProjection{{Command: engine.CommandRushBuy, Route: "rush-buy", EntityID: "city-a", TargetID: "IMPROVE_SYNTHETIC", Payload: json.RawMessage(`{"city_id":"city-a"}`)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandRushBuy && candidate.EntityID == "city-a" && candidate.TargetID == "IMPROVE_SYNTHETIC" {
+			return
+		}
+	}
+	t.Fatalf("rush-buy candidate missing: %#v", candidates)
+}
+
 func TestPlannerUsesRetailAIStrategyPublicWorksRate(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		LegalActions: []visibility.ActionProjection{

@@ -1,0 +1,6 @@
+=== RUN   TestProductionActionsSuppressAlreadyFundedRushBuy
+    visibility_test.go:374: already funded queue should not expose rush buy: visibility.ActionProjection{Command:"rush-buy", Route:"rush-buy", EntityID:"city-a", TargetID:"IMPROVE_SYNTHETIC", Fields:[]string{"city_id"}, Payload:json.RawMessage{0x7b, 0x22, 0x63, 0x69, 0x74, 0x79, 0x5f, 0x69, 0x64, 0x22, 0x3a, 0x22, 0x63, 0x69, 0x74, 0x79, 0x2d, 0x61, 0x22, 0x7d}}
+--- FAIL: TestProductionActionsSuppressAlreadyFundedRushBuy (0.00s)
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.005s
+FAIL
