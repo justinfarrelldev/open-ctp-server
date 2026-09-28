@@ -239,6 +239,25 @@ func TestPlannerUsesProjectedTradeRouteAction(t *testing.T) {
 	t.Fatalf("trade route candidate missing: %#v", candidates)
 }
 
+func TestPlannerUsesProjectedTradeProposalAction(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		LegalActions: []visibility.ActionProjection{{Command: engine.CommandProposeAgreement, Route: "propose-agreement", EntityID: "ai", TargetID: "foreign", Payload: json.RawMessage(`{"proposal_id":"client-trade-ai-foreign","target_player_id":"foreign","kind":"trade"}`)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandProposeAgreement && candidate.TargetID == "foreign" && bytes.Contains(candidate.Payload, []byte(`"kind":"trade"`)) {
+			return
+		}
+	}
+	t.Fatalf("trade proposal candidate missing: %#v", candidates)
+}
+
 func TestPlannerUsesProjectedSpecialistActionForUnhappyCity(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		Cities:       []visibility.CityProjection{{ID: "city-a", OwnerID: "ai", Population: 2, Happiness: 60, Specialists: map[string]int{"POP_SCIENTIST": 1}}},
