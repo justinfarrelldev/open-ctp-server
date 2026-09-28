@@ -31,6 +31,7 @@
 - [x] Task 017: Retail AI `SliderElement` social-policy deltas are imported, projected, exposed as legal actions, and consumed by AI planning.
 - [x] Task 018: AI planners now consume projected legal `upgrade-unit` actions so retail `UpgradeTo` chains can advance autonomous units.
 - [x] Task 019: AI planners now consume projected retail special city/tile actions for soothsaying, park creation, and terraform orders.
+- [x] Task 020: Retail AI social-slider projection now requires visible city fit evidence before changing workday/wages/rations, matching governor fit checks and preserving long-game production.
 
 ## Full-Game Mechanical Execution First
 

@@ -478,6 +478,7 @@ func TestGovernmentActionsIncludeRetailAIStrategySocialPolicy(t *testing.T) {
 			Governments: []rules.RuntimeGovernmentDefinition{{ID: "GOVERNMENT_DEMOCRACY", WorkdayExpectation: 0, WagesExpectation: 1, RationsExpectation: 0}},
 		},
 		Diplomacy: &DiplomacyProjection{GovernmentID: "GOVERNMENT_DEMOCRACY"},
+		Cities:    []CityProjection{{ID: "city-a", OwnerID: "a", Population: 1, StoredFood: 20, Yields: &engine.Yield{Food: 20, Production: 20, Gold: 20}}},
 	}
 	actions := governmentActions(projection, "a")
 	for _, action := range actions {
@@ -486,6 +487,26 @@ func TestGovernmentActionsIncludeRetailAIStrategySocialPolicy(t *testing.T) {
 		}
 	}
 	t.Fatalf("strategy social policy action missing: %#v", actions)
+}
+
+func TestGovernmentActionsKeepCurrentSocialPolicyWithoutRetailSliderCityFit(t *testing.T) {
+	projection := Projection{
+		Rules: &RulesProjection{
+			AI:          &rules.RuntimeAI{Strategies: []rules.RuntimeAIStrategy{{ID: "STRATEGY_DEFAULT", SliderElements: []rules.RuntimeAISliderElement{{Kind: "Food", Delta: 3}}}}},
+			Governments: []rules.RuntimeGovernmentDefinition{{ID: "GOVERNMENT_DEMOCRACY", WorkdayExpectation: 0, WagesExpectation: 1, RationsExpectation: 0}},
+		},
+		Diplomacy: &DiplomacyProjection{GovernmentID: "GOVERNMENT_DEMOCRACY"},
+	}
+	actions := governmentActions(projection, "a")
+	for _, action := range actions {
+		if action.Command == engine.CommandSetSocialPolicy && action.TargetID == "social-policy" {
+			if bytes.Contains(action.Payload, []byte(`"workday":2`)) || bytes.Contains(action.Payload, []byte(`"wages":2`)) || bytes.Contains(action.Payload, []byte(`"rations":-2`)) {
+				t.Fatalf("unsafe strategy social policy applied without city fit evidence: %s", action.Payload)
+			}
+			return
+		}
+	}
+	t.Fatalf("social policy action missing: %#v", actions)
 }
 
 func TestRetailStealthProjectionRequiresStealthDetection(t *testing.T) {

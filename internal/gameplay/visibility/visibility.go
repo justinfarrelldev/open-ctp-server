@@ -593,7 +593,7 @@ func projectedAIStrategyPublicWorksPercent(projection Projection) (int, bool) {
 	return 0, false
 }
 
-func projectedAIStrategySocialPolicy(projection Projection) (workday int, wages int, rations int, ok bool) {
+func projectedAIStrategySocialPolicy(projection Projection, playerID string) (workday int, wages int, rations int, ok bool) {
 	if projection.Rules == nil || projection.Rules.AI == nil {
 		return 0, 0, 0, false
 	}
@@ -614,10 +614,57 @@ func projectedAIStrategySocialPolicy(projection Projection) (workday int, wages 
 			default:
 				continue
 			}
-			return clampSocialPolicy(expectWorkday - deltaProduction), clampSocialPolicy(expectWages - deltaGold), clampSocialPolicy(expectRations - deltaFood), true
+			candidateWorkday := clampSocialPolicy(expectWorkday - deltaProduction)
+			candidateWages := clampSocialPolicy(expectWages - deltaGold)
+			candidateRations := clampSocialPolicy(expectRations - deltaFood)
+			if !strategySocialPolicyFitsVisibleCities(projection, playerID, candidateWorkday, candidateWages, candidateRations) {
+				continue
+			}
+			return candidateWorkday, candidateWages, candidateRations, true
 		}
 	}
 	return 0, 0, 0, false
+}
+
+func strategySocialPolicyFitsVisibleCities(projection Projection, playerID string, workday int, wages int, rations int) bool {
+	checked := false
+	for _, city := range projection.Cities {
+		if city.OwnerID != playerID || city.Stale || city.Yields == nil {
+			continue
+		}
+		checked = true
+		population := city.Population
+		if population < 1 {
+			population = 1
+		}
+		production := city.Yields.Production
+		if production > 0 {
+			percent := 100 - (workday * 15)
+			if percent < 0 {
+				percent = 0
+			}
+			production = (production*percent + 99) / 100
+		}
+		if len(city.Queue) > 0 && production < 1 {
+			return false
+		}
+		wagePerCitizen := 4 + wages
+		if wagePerCitizen < 0 {
+			wagePerCitizen = 0
+		}
+		if city.Yields.Gold-population*wagePerCitizen < 0 {
+			return false
+		}
+		centsPerCitizen := 200 + (rations * 50)
+		if centsPerCitizen < 0 {
+			centsPerCitizen = 0
+		}
+		consumption := (population*centsPerCitizen + 99) / 100
+		if city.StoredFood+city.Yields.Food-consumption < 0 {
+			return false
+		}
+	}
+	return checked
 }
 
 func projectedGovernmentExpectations(projection Projection) (workday int, wages int, rations int) {
@@ -714,7 +761,7 @@ func governmentActions(projection Projection, playerID string) []ActionProjectio
 	if projection.Diplomacy.Rations != nil {
 		rations = *projection.Diplomacy.Rations
 	}
-	if strategyWorkday, strategyWages, strategyRations, ok := projectedAIStrategySocialPolicy(projection); ok {
+	if strategyWorkday, strategyWages, strategyRations, ok := projectedAIStrategySocialPolicy(projection, playerID); ok {
 		workday, wages, rations = strategyWorkday, strategyWages, strategyRations
 	}
 	actions = append(actions, action(engine.CommandSetSocialPolicy, "set-social-policy", playerID, "social-policy", map[string]int{"workday": workday, "wages": wages, "rations": rations}, []string{"workday", "wages", "rations"}))

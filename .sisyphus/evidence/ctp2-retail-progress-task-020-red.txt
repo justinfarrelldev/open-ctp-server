@@ -1,0 +1,5 @@
+--- FAIL: TestGovernmentActionsKeepCurrentSocialPolicyWithoutRetailSliderCityFit (0.00s)
+    visibility_test.go:504: unsafe strategy social policy applied without city fit evidence: {"rations":-2,"wages":2,"workday":2}
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.004s
+FAIL
