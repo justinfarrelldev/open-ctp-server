@@ -319,6 +319,34 @@ func TestPlannerUsesProjectedUpgradeAction(t *testing.T) {
 	t.Fatalf("upgrade candidate missing: %#v", candidates)
 }
 
+func TestPlannerUsesProjectedRetailSpecialTileAndCityActions(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		LegalActions: []visibility.ActionProjection{
+			{Command: engine.CommandSoothsaying, Route: "soothsaying", EntityID: "cleric", TargetID: "city-a", Payload: json.RawMessage(`{"unit_id":"cleric","city_id":"city-a"}`)},
+			{Command: engine.CommandCreatePark, Route: "create-park", EntityID: "eco", TargetID: "tile-a", Payload: json.RawMessage(`{"unit_id":"eco","tile_id":"tile-a"}`)},
+			{Command: engine.CommandTerraform, Route: "terraform", EntityID: "terraformer", TargetID: "tile-b", Payload: json.RawMessage(`{"unit_id":"terraformer","tile_id":"tile-b","target_terrain":"TERRAIN_PLAINS"}`)},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]bool{engine.CommandSoothsaying: false, engine.CommandCreatePark: false, engine.CommandTerraform: false}
+	for _, candidate := range candidates {
+		if _, ok := want[candidate.Type]; ok {
+			want[candidate.Type] = true
+		}
+	}
+	for command, seen := range want {
+		if !seen {
+			t.Fatalf("%s candidate missing: %#v", command, candidates)
+		}
+	}
+}
+
 func TestPlannerUsesProjectedTradeProposalAction(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		LegalActions: []visibility.ActionProjection{{Command: engine.CommandProposeAgreement, Route: "propose-agreement", EntityID: "ai", TargetID: "foreign", Payload: json.RawMessage(`{"proposal_id":"client-trade-ai-foreign","target_player_id":"foreign","kind":"trade"}`)}},

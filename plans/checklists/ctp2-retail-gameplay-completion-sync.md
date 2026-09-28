@@ -30,6 +30,7 @@
 - [x] Task 016: AI terrain-improvement planning now preserves retail `PublicWorksReserve` instead of spending public works/materials down to zero.
 - [x] Task 017: Retail AI `SliderElement` social-policy deltas are imported, projected, exposed as legal actions, and consumed by AI planning.
 - [x] Task 018: AI planners now consume projected legal `upgrade-unit` actions so retail `UpgradeTo` chains can advance autonomous units.
+- [x] Task 019: AI planners now consume projected retail special city/tile actions for soothsaying, park creation, and terraform orders.
 
 ## Full-Game Mechanical Execution First
 

@@ -625,6 +625,7 @@ func projectedUnitSpecialTargetCandidates(projection visibility.Projection) []Ca
 		engine.CommandPlague:             630,
 		engine.CommandCreateFranchise:    625,
 		engine.CommandConvertCity:        620,
+		engine.CommandSoothsaying:        619,
 		engine.CommandCauseUnhappiness:   618,
 		engine.CommandInciteRevolution:   617,
 		engine.CommandIndulgenceSales:    616,
@@ -635,6 +636,7 @@ func projectedUnitSpecialTargetCandidates(projection visibility.Projection) []Ca
 		engine.CommandReform:             600,
 		engine.CommandPlantNuke:          500,
 	}
+	tileTargetScores := map[string]int{engine.CommandCreatePark: 622, engine.CommandTerraform: 618}
 	candidates := make([]Candidate, 0)
 	seen := map[string]bool{}
 	for _, action := range projection.LegalActions {
@@ -648,6 +650,14 @@ func projectedUnitSpecialTargetCandidates(projection visibility.Projection) []Ca
 		}
 		if score, ok := cityTargetScores[action.Command]; ok {
 			candidate, ok := projectedCityTargetActionCandidate(action, score)
+			if ok && !seen[candidate.Type+"\x00"+candidate.EntityID+"\x00"+candidate.TargetID] {
+				seen[candidate.Type+"\x00"+candidate.EntityID+"\x00"+candidate.TargetID] = true
+				candidates = append(candidates, candidate)
+			}
+			continue
+		}
+		if score, ok := tileTargetScores[action.Command]; ok {
+			candidate, ok := projectedTileTargetActionCandidate(action, score)
 			if ok && !seen[candidate.Type+"\x00"+candidate.EntityID+"\x00"+candidate.TargetID] {
 				seen[candidate.Type+"\x00"+candidate.EntityID+"\x00"+candidate.TargetID] = true
 				candidates = append(candidates, candidate)
@@ -683,6 +693,20 @@ func projectedCityTargetActionCandidate(action visibility.ActionProjection, scor
 		return Candidate{}, false
 	}
 	return Candidate{Type: action.Command, EntityID: payload.UnitID, TargetID: payload.CityID, Score: score, Payload: append(json.RawMessage(nil), action.Payload...)}, true
+}
+
+func projectedTileTargetActionCandidate(action visibility.ActionProjection, score int) (Candidate, bool) {
+	if len(action.Payload) == 0 {
+		return Candidate{}, false
+	}
+	var payload struct {
+		UnitID string `json:"unit_id"`
+		TileID string `json:"tile_id"`
+	}
+	if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.UnitID == "" || payload.TileID == "" {
+		return Candidate{}, false
+	}
+	return Candidate{Type: action.Command, EntityID: payload.UnitID, TargetID: payload.TileID, Score: score, Payload: append(json.RawMessage(nil), action.Payload...)}, true
 }
 
 func projectedEstablishContactCandidates(projection visibility.Projection) []Candidate {
