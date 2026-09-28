@@ -63,10 +63,10 @@
 
 ## Verification and Review
 
-- [ ] Run targeted RED/GREEN/REFACTOR evidence for every behavior slice.
-- [ ] Run package tests for changed packages after each slice.
-- [ ] Run freeze guard after production `.go` changes.
-- [ ] Run `git diff --check` before every commit.
-- [ ] Run long retail AI artifact recording after full-game progress fixes.
+- [x] Run targeted RED/GREEN/REFACTOR evidence for every behavior slice.
+- [x] Run package tests for changed packages after each slice.
+- [x] Run freeze guard after production `.go` changes.
+- [x] Run `git diff --check` before every commit.
+- [x] Run long retail AI artifact recording after full-game progress fixes.
 - [x] Run full repository validation where feasible before final review.
-- [ ] Complete and record a final maintainability/source-parity code review.
+- [x] Complete and record a final maintainability/source-parity code review.
