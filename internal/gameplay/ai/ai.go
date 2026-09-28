@@ -198,6 +198,7 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 	candidates = append(candidates, projectedRushBuyCandidates(projection)...)
 	candidates = append(candidates, diplomacyCandidates(projection, playerID)...)
 	candidates = append(candidates, projectedUnitSpecialTargetCandidates(projection)...)
+	candidates = append(candidates, projectedBombardCandidates(projection)...)
 	candidates = append(candidates, combatCandidates(projection, playerID)...)
 	candidates = append(candidates, transportCandidates(projection, playerID)...)
 	candidates = append(candidates, terrainImprovementCandidates(projection, playerID)...)
@@ -439,6 +440,24 @@ func projectedAgreementProposalCandidates(projection visibility.Projection) []Ca
 			continue
 		}
 		candidates = append(candidates, Candidate{Type: engine.CommandProposeAgreement, EntityID: action.EntityID, TargetID: action.TargetID, Score: score, Payload: append(json.RawMessage(nil), action.Payload...)})
+	}
+	return candidates
+}
+
+func projectedBombardCandidates(projection visibility.Projection) []Candidate {
+	candidates := make([]Candidate, 0)
+	for _, action := range projection.LegalActions {
+		if action.Command != engine.CommandBombard || len(action.Payload) == 0 {
+			continue
+		}
+		var payload struct {
+			UnitID       string `json:"unit_id"`
+			TargetTileID string `json:"target_tile_id"`
+		}
+		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.UnitID == "" || payload.TargetTileID == "" {
+			continue
+		}
+		candidates = append(candidates, Candidate{Type: engine.CommandBombard, EntityID: action.EntityID, TargetID: action.TargetID, Score: 698, Payload: append(json.RawMessage(nil), action.Payload...)})
 	}
 	return candidates
 }

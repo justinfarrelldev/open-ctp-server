@@ -26,6 +26,7 @@
 - [x] Task 012: Retail government rush-buy coefficients now project from `govern.txt`, engine rush-buy costs use the active government/item type modifier, and legal actions suppress unaffordable retail-modified rush buys.
 - [x] Task 013: AI planners now consume projected legal trade-pact proposal actions so trade agreements can precede goods trade routes without hidden-state shortcuts.
 - [x] Task 014: AI planners now consume projected legal peace proposal actions so combat-created wars have a public-projection treaty recovery path.
+- [x] Task 015: AI planners now consume projected legal bombard actions so bombard-capable units participate in combat planning without hidden-state shortcuts.
 
 ## Full-Game Mechanical Execution First
 

@@ -1,0 +1,5 @@
+--- FAIL: TestPlannerUsesProjectedBombardAction (0.00s)
+    ai_test.go:258: bombard candidate missing: []ai.Candidate{ai.Candidate{Type:"pass", EntityID:"ai", TargetID:"", Score:100, Payload:json.RawMessage{0x7b, 0x7d}}}
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai	0.004s
+FAIL

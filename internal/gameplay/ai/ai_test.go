@@ -239,6 +239,25 @@ func TestPlannerUsesProjectedTradeRouteAction(t *testing.T) {
 	t.Fatalf("trade route candidate missing: %#v", candidates)
 }
 
+func TestPlannerUsesProjectedBombardAction(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		LegalActions: []visibility.ActionProjection{{Command: engine.CommandBombard, Route: "bombard", EntityID: "artillery", TargetID: "target-tile", Payload: json.RawMessage(`{"unit_id":"artillery","target_tile_id":"target-tile"}`)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandBombard && candidate.EntityID == "artillery" && candidate.TargetID == "target-tile" {
+			return
+		}
+	}
+	t.Fatalf("bombard candidate missing: %#v", candidates)
+}
+
 func TestPlannerUsesProjectedTradeProposalAction(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		LegalActions: []visibility.ActionProjection{{Command: engine.CommandProposeAgreement, Route: "propose-agreement", EntityID: "ai", TargetID: "foreign", Payload: json.RawMessage(`{"proposal_id":"client-trade-ai-foreign","target_player_id":"foreign","kind":"trade"}`)}},
