@@ -297,13 +297,13 @@ func applyCityCommand(state *State, command Command, runtime *rules.RuntimeRules
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", err
 		}
-		return EventTradeRouteCreated, createTradeRoute(state, command.ActorPlayerID, payload)
+		return EventTradeRouteCreated, createTradeRoute(state, command.ActorPlayerID, payload, runtime)
 	default:
 		return "", fmt.Errorf("unsupported command type %q", command.Type)
 	}
 }
 
-func createTradeRoute(state *State, actor string, payload CreateTradeRoutePayload) error {
+func createTradeRoute(state *State, actor string, payload CreateTradeRoutePayload, runtime *rules.RuntimeRules) error {
 	if payload.SourceCityID == "" || payload.DestinationCityID == "" || payload.SourceCityID == payload.DestinationCityID {
 		return errors.New("trade route payload is invalid")
 	}
@@ -323,6 +323,13 @@ func createTradeRoute(state *State, actor string, payload CreateTradeRoutePayloa
 			return errors.New("trade route already exists")
 		}
 	}
+	maxOutgoing, maxIncoming := tradeRouteCaps(*state, actor, runtime)
+	if maxOutgoing > 0 && tradeRouteOutgoingCount(*state, source.ID) >= maxOutgoing {
+		return errors.New("outgoing trade cap reached")
+	}
+	if maxIncoming > 0 && tradeRouteIncomingCount(*state, destination.ID) >= maxIncoming {
+		return errors.New("incoming trade cap reached")
+	}
 	routeID := "trade:" + source.ID + ":" + destination.ID
 	if tradeRouteIDExists(*state, routeID) {
 		return errors.New("trade route already exists")
@@ -330,6 +337,51 @@ func createTradeRoute(state *State, actor string, payload CreateTradeRoutePayloa
 	goodID := tradeRouteGoodID(*source, *destination)
 	state.TradeRoutes = append(state.TradeRoutes, TradeRoute{ID: routeID, SourceCityID: source.ID, DestinationCityID: destination.ID, GoodID: goodID, Gold: tradeRouteGold(goodID), CrossesWater: tradeRouteCrossesWater(*state, *source, *destination)})
 	return nil
+}
+
+func tradeRouteCaps(state State, actor string, runtime *rules.RuntimeRules) (maxOutgoing, maxIncoming int) {
+	if runtime == nil {
+		return 0, 0
+	}
+	nationID := nationForPlayer(state, actor)
+	if nationID == "" {
+		return 0, 0
+	}
+	governmentID := ""
+	for _, nation := range state.Nations {
+		if nation.ID == nationID {
+			governmentID = nation.GovernmentID
+			break
+		}
+	}
+	if governmentID == "" {
+		return 0, 0
+	}
+	government, ok := runtime.Government(governmentID)
+	if !ok {
+		return 0, 0
+	}
+	return government.MaxOutgoingTrade, government.MaxIncomingTrade
+}
+
+func tradeRouteOutgoingCount(state State, cityID string) int {
+	count := 0
+	for _, route := range state.TradeRoutes {
+		if route.SourceCityID == cityID {
+			count++
+		}
+	}
+	return count
+}
+
+func tradeRouteIncomingCount(state State, cityID string) int {
+	count := 0
+	for _, route := range state.TradeRoutes {
+		if route.DestinationCityID == cityID {
+			count++
+		}
+	}
+	return count
 }
 
 func tradeRouteGoodID(source, destination City) string {

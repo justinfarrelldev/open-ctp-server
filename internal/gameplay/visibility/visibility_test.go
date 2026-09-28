@@ -115,6 +115,33 @@ func TestVisibleCitiesSuppressForeignTradeRouteActionWithoutTradeAgreement(t *te
 	}
 }
 
+func TestVisibleCitiesSuppressTradeRouteActionsAtGovernmentCaps(t *testing.T) {
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: engine.DomainLand, Movement: 1, Health: 1}}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: engine.ProductionUnit, Cost: 1}}, Governments: []rules.RuntimeGovernmentDefinition{{ID: "GOVERNMENT_LIMITED_TRADE", MaxOutgoingTrade: 1, MaxIncomingTrade: 1}}}
+	definitions, hash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := fixtureState()
+	state.Rules = engine.RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: hash, Definitions: definitions}
+	state.Players = []engine.Player{{ID: "a", NationID: "na", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"a"}
+	state.Nations = []engine.Nation{{ID: "na", GovernmentID: "GOVERNMENT_LIMITED_TRADE"}}
+	state.Tiles = []engine.Tile{{ID: "0,0", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "1,0", X: 1, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "2,0", X: 2, Y: 0, Terrain: engine.TerrainPlains, Open: true}}
+	state.Units = nil
+	state.Cities = []engine.City{{ID: "home", OwnerID: "a", TileID: "0,0"}, {ID: "target", OwnerID: "a", TileID: "1,0"}, {ID: "other", OwnerID: "a", TileID: "2,0"}}
+	state.TradeRoutes = []engine.TradeRoute{{ID: "existing", SourceCityID: "home", DestinationCityID: "other"}}
+
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, action := range projection.LegalActions {
+		if action.Command == engine.CommandCreateTradeRoute && action.EntityID == "home" && action.TargetID == "target" {
+			t.Fatalf("trade route action leaked at outgoing cap: %#v", action)
+		}
+	}
+}
+
 func TestProjectionSuppressesCantBuildRuntimeUnitProduction(t *testing.T) {
 	state := fixtureState()
 	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_OK", Kind: engine.ProductionUnit}, {ID: "UNIT_CITY", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_OK", Domain: engine.DomainLand, Movement: 1, Health: 1}, {ID: "UNIT_CITY", Domain: engine.DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "cant-build", Kind: engine.EffectCantBuild}}}}}

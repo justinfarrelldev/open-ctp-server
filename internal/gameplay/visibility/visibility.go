@@ -793,16 +793,55 @@ func tradeRouteActions(state engine.State, projection Projection, playerID strin
 		}
 		destinations = append(destinations, city)
 	}
+	maxOutgoing, maxIncoming := projectedTradeRouteCaps(projection)
 	actions := make([]ActionProjection, 0)
 	for _, source := range owned {
+		if maxOutgoing > 0 && projectedTradeRouteOutgoingCount(state, source.ID) >= maxOutgoing {
+			continue
+		}
 		for _, destination := range destinations {
 			if source.ID == destination.ID || existing[source.ID+"\x00"+destination.ID] || !projectedTradeAgreementAllows(projection, playerID, destination.OwnerID) {
+				continue
+			}
+			if maxIncoming > 0 && projectedTradeRouteIncomingCount(state, destination.ID) >= maxIncoming {
 				continue
 			}
 			actions = append(actions, action(engine.CommandCreateTradeRoute, "create-trade-route", source.ID, destination.ID, map[string]string{"source_city_id": source.ID, "destination_city_id": destination.ID}, []string{"source_city_id", "destination_city_id"}))
 		}
 	}
 	return actions
+}
+
+func projectedTradeRouteCaps(projection Projection) (maxOutgoing, maxIncoming int) {
+	if projection.Diplomacy == nil || projection.Rules == nil || projection.Diplomacy.GovernmentID == "" {
+		return 0, 0
+	}
+	for _, government := range projection.Rules.Governments {
+		if government.ID == projection.Diplomacy.GovernmentID {
+			return government.MaxOutgoingTrade, government.MaxIncomingTrade
+		}
+	}
+	return 0, 0
+}
+
+func projectedTradeRouteOutgoingCount(state engine.State, cityID string) int {
+	count := 0
+	for _, route := range state.TradeRoutes {
+		if route.SourceCityID == cityID {
+			count++
+		}
+	}
+	return count
+}
+
+func projectedTradeRouteIncomingCount(state engine.State, cityID string) int {
+	count := 0
+	for _, route := range state.TradeRoutes {
+		if route.DestinationCityID == cityID {
+			count++
+		}
+	}
+	return count
 }
 
 func projectedTradeAgreementAllows(projection Projection, playerID, destinationOwnerID string) bool {

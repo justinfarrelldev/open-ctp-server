@@ -102,6 +102,8 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 			MartialLawMaxUnits:       government.IntValues["MaxMartialLawUnits"],
 			MartialLawEffect:         int(government.FloatValues["MartialLawEffect"]),
 			MartialLawThreshold:      government.IntValues["MartialLawThreshold"],
+			MaxIncomingTrade:         government.IntValues["MaxIncomingTrade"],
+			MaxOutgoingTrade:         government.IntValues["MaxOutgoingTrade"],
 			MaxSciencePercent:        &maxSciencePercent,
 		})
 	}

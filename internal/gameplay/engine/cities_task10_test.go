@@ -122,6 +122,33 @@ func TestCreateTradeRouteRejectsDuplicatePair(t *testing.T) {
 	}
 }
 
+func TestCreateTradeRouteRejectsRetailGovernmentTradeCaps(t *testing.T) {
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: DomainLand, Movement: 1, Health: 1}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainLand, Movement: 1, Health: 1}}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}, Governments: []rules.RuntimeGovernmentDefinition{{ID: "GOVERNMENT_LIMITED_TRADE", MaxOutgoingTrade: 1, MaxIncomingTrade: 1}}}
+	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	base := fixtureState()
+	base.Rules = RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: contentHash, Definitions: definitions}
+	base.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}
+	base.Phase.ActivePlayerOrder = []string{"player-a"}
+	base.Nations = []Nation{{ID: "nation-a", GovernmentID: "GOVERNMENT_LIMITED_TRADE"}}
+	base.Tiles = []Tile{{ID: "home-tile", Terrain: TerrainPlains, Open: true}, {ID: "target-tile", Terrain: TerrainPlains, Open: true}, {ID: "other-tile", Terrain: TerrainPlains, Open: true}}
+	base.Cities = []City{{ID: "home", OwnerID: "player-a", TileID: "home-tile"}, {ID: "target", OwnerID: "player-a", TileID: "target-tile"}, {ID: "other", OwnerID: "player-a", TileID: "other-tile"}}
+
+	outgoing := base
+	outgoing.TradeRoutes = []TradeRoute{{ID: "existing-out", SourceCityID: "home", DestinationCityID: "other"}}
+	if err := runtimeApplyExpectError(t, outgoing, "player-a", CommandCreateTradeRoute, CreateTradeRoutePayload{SourceCityID: "home", DestinationCityID: "target"}); err == nil || !strings.Contains(err.Error(), "outgoing trade cap") {
+		t.Fatalf("outgoing cap error = %v, want outgoing trade cap", err)
+	}
+
+	incoming := base
+	incoming.TradeRoutes = []TradeRoute{{ID: "existing-in", SourceCityID: "other", DestinationCityID: "target"}}
+	if err := runtimeApplyExpectError(t, incoming, "player-a", CommandCreateTradeRoute, CreateTradeRoutePayload{SourceCityID: "home", DestinationCityID: "target"}); err == nil || !strings.Contains(err.Error(), "incoming trade cap") {
+		t.Fatalf("incoming cap error = %v, want incoming trade cap", err)
+	}
+}
+
 func TestRetailCityHappinessDefaultsToBaseContentment(t *testing.T) {
 	state := fixtureState()
 	state.Players = []Player{{ID: "player-a", NationID: "nation-a"}}

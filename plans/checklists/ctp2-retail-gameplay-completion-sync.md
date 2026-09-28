@@ -22,6 +22,7 @@
 - [x] Task 008: Public-works rate is a gameplay command, AI uses retail strategy public-works percent, and city production is diverted into nation public works before queue progress.
 - [x] Task 009: Rush-buy is a legal projected economy action; AI can spend accumulated gold to buy queued production front items into completion via the normal turn pipeline.
 - [x] Task 010: Science-rate commands now persist the government-capped science percentage, matching retail tax-rate clamping.
+- [x] Task 011: Government trade caps from retail `govern.txt` are projected into runtime rules, enforced when creating trade routes, and suppress invalid projected legal actions.
 
 ## Full-Game Mechanical Execution First
 
