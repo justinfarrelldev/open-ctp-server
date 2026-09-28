@@ -1,0 +1,6 @@
+=== RUN   TestRetailSetScienceRateCommandCapsAtGovernmentMaximum
+    government_retail_effects_test.go:170: science percent = 0xc000150ad0, want capped government max 60
+--- FAIL: TestRetailSetScienceRateCommandCapsAtGovernmentMaximum (0.00s)
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

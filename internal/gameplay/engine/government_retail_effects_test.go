@@ -158,6 +158,19 @@ func TestRetailPublicWorksRateDivertsProductionToMaterials(t *testing.T) {
 	}
 }
 
+func TestRetailSetScienceRateCommandCapsAtGovernmentMaximum(t *testing.T) {
+	state := fixtureState()
+	state.Nations = []Nation{{ID: "nation-a", Effects: []Effect{{ID: "max-science", Kind: EffectMaxSciencePercent, Value: 60}}}, {ID: "nation-b"}}
+	body := json.RawMessage(`{"science_percent":100}`)
+	next, _, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "science-max", ActorPlayerID: "player-a", Type: CommandSetScienceRate, Payload: body}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatalf("set science rate: %v", err)
+	}
+	if next.Nations[0].SciencePercent == nil || *next.Nations[0].SciencePercent != 60 {
+		t.Fatalf("science percent = %v, want capped government max 60", next.Nations[0].SciencePercent)
+	}
+}
+
 func TestRetailSetScienceRateCommandPersistsExplicitZero(t *testing.T) {
 	state := fixtureState()
 	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}

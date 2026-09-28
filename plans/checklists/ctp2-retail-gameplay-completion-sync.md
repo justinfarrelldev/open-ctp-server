@@ -21,6 +21,7 @@
 - [x] Task 007: Retail AI strategy economy sliders are imported and the planner uses the strategy science percent instead of forcing 100% science/no-gold economy.
 - [x] Task 008: Public-works rate is a gameplay command, AI uses retail strategy public-works percent, and city production is diverted into nation public works before queue progress.
 - [x] Task 009: Rush-buy is a legal projected economy action; AI can spend accumulated gold to buy queued production front items into completion via the normal turn pipeline.
+- [x] Task 010: Science-rate commands now persist the government-capped science percentage, matching retail tax-rate clamping.
 
 ## Full-Game Mechanical Execution First
 

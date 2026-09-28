@@ -1,0 +1,6 @@
+=== RUN   TestRetailSetScienceRateCommandCapsAtGovernmentMaximum
+--- PASS: TestRetailSetScienceRateCommandCapsAtGovernmentMaximum (0.00s)
+=== RUN   TestRetailSetScienceRateCommandPersistsExplicitZero
+--- PASS: TestRetailSetScienceRateCommandPersistsExplicitZero (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.008s

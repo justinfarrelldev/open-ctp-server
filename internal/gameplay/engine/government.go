@@ -128,7 +128,7 @@ func applyScienceRateCommand(state *State, command Command) (string, json.RawMes
 	if nation == nil {
 		return "", nil, errors.New("government is unavailable")
 	}
-	science := payload.SciencePercent
+	science := nationSciencePercent(Nation{SciencePercent: &payload.SciencePercent}, maxSciencePercentForNation(*nation))
 	nation.SciencePercent = &science
 	encoded, _ := json.Marshal(payload)
 	return EventScienceRateChanged, encoded, nil

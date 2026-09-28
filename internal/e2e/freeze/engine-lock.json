@@ -59,7 +59,7 @@
     },
     {
       "path": "internal/gameplay/engine/government.go",
-      "sha256": "7accf4700a5604cf8a99bb14bbec0147802dfc476b09e2b06e6aa3f905208b9d"
+      "sha256": "0b3dce891bfb44ff7a364457f68139add3d506edbbffeeb11199adb7dea668cb"
     },
     {
       "path": "internal/gameplay/engine/lifecycle.go",
