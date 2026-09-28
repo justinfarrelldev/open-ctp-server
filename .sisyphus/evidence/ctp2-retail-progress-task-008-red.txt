@@ -1,0 +1,13 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai.test]
+internal/gameplay/ai/ai_test.go:114:21: undefined: engine.CommandSetPublicWorksRate
+internal/gameplay/ai/ai_test.go:126:31: undefined: engine.CommandSetPublicWorksRate
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility.test]
+internal/gameplay/visibility/visibility_test.go:374:31: undefined: engine.CommandSetPublicWorksRate
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/government_retail_effects_test.go:147:141: undefined: CommandSetPublicWorksRate
+internal/gameplay/engine/government_retail_effects_test.go:151:25: withRate.Nations[0].PublicWorksPercent undefined (type Nation has no field or method PublicWorksPercent)
+internal/gameplay/engine/government_retail_effects_test.go:151:141: undefined: EventPublicWorksRateChanged
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility [build failed]
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai [build failed]
+FAIL

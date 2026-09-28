@@ -32,6 +32,7 @@ const (
 	CommandRespondAgreement   = "respond-agreement"
 	CommandSetGovernment      = "set-government"
 	CommandSetScienceRate     = "set-science-rate"
+	CommandSetPublicWorksRate = "set-public-works-rate"
 	CommandSetSocialPolicy    = "set-social-policy"
 	CommandSetReadiness       = "set-readiness"
 	CommandPass               = "pass"
@@ -90,6 +91,7 @@ const (
 	EventAgreementResponded       = "diplomacy.agreement_responded"
 	EventGovernmentChanged        = "government.changed"
 	EventScienceRateChanged       = "government.science_rate_changed"
+	EventPublicWorksRateChanged   = "government.public_works_rate_changed"
 	EventSocialPolicyChanged      = "government.social_policy_changed"
 	EventReadinessChanged         = "government.readiness_changed"
 	EventUnitMoved                = "unit.moved"
@@ -310,6 +312,7 @@ type Nation struct {
 	Gold                int                 `json:"gold,omitempty"`
 	FranchiseProduction int                 `json:"franchise_production,omitempty"`
 	SciencePercent      *int                `json:"science_percent,omitempty"`
+	PublicWorksPercent  *int                `json:"public_works_percent,omitempty"`
 	Workday             *int                `json:"workday,omitempty"`
 	Wages               *int                `json:"wages,omitempty"`
 	Rations             *int                `json:"rations,omitempty"`
@@ -597,7 +600,7 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 	switch command.Type {
 	case CommandSetWar, CommandEstablishContact, CommandProposeAgreement, CommandRespondAgreement:
 		eventType, eventPayload, err = applyDiplomacyCommand(state, command)
-	case CommandSetGovernment, CommandSetScienceRate, CommandSetSocialPolicy, CommandSetReadiness:
+	case CommandSetGovernment, CommandSetScienceRate, CommandSetPublicWorksRate, CommandSetSocialPolicy, CommandSetReadiness:
 		eventType, eventPayload, err = applyGovernmentCommand(state, command, runtime)
 	case CommandSetResearch, CommandRoundComplete, CommandEndGame, CommandLeaveGame, CommandTakeoverAI:
 		eventType, eventPayload, err = applyLifecycleCommand(state, command, runtime)
@@ -910,6 +913,9 @@ func ValidateState(state State) error {
 	for _, nation := range state.Nations {
 		if nation.GaiaCompletionTurn < 0 || nation.ResearchProgress < 0 {
 			return errors.New("nation counters must be nonnegative")
+		}
+		if nation.PublicWorksPercent != nil && (*nation.PublicWorksPercent < 0 || *nation.PublicWorksPercent > 100) {
+			return errors.New("nation public works percent is out of range")
 		}
 		if nation.PeaceMovement != nil && (nation.PeaceMovement.RawOverseasDefeat < 0 || nation.PeaceMovement.RawHomeDefeat < 0 || nation.PeaceMovement.UnitsLostOverseas < 0 || nation.PeaceMovement.UnitsLostHome < 0) {
 			return errors.New("nation counters must be nonnegative")

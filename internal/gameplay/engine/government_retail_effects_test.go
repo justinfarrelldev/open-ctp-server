@@ -139,6 +139,25 @@ func TestRetailSetSocialPolicyCommandPersistsSliders(t *testing.T) {
 	}
 }
 
+func TestRetailPublicWorksRateDivertsProductionToMaterials(t *testing.T) {
+	state := fixtureState()
+	state.Nations = []Nation{{ID: "nation-a"}, {ID: "nation-b"}}
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Effects: []Effect{{ID: "workshop", Kind: EffectYieldProduction, Value: 7}}, Queue: []ProductionItem{{ID: "UNIT_WARRIOR", Kind: ProductionUnit, Cost: 100}}}}
+	state.Tiles = []Tile{{ID: "tile-a", Terrain: TerrainPlains, Open: true}}
+	body := json.RawMessage(`{"public_works_percent":30}`)
+	withRate, events, _, err := Apply(state, Command{SchemaVersion: CommandSchemaV1, ID: "public-works-rate", ActorPlayerID: "player-a", Type: CommandSetPublicWorksRate, Payload: body}, state.Rules, fixtureSources())
+	if err != nil {
+		t.Fatalf("set public works rate: %v", err)
+	}
+	if withRate.Nations[0].PublicWorksPercent == nil || *withRate.Nations[0].PublicWorksPercent != 30 || len(events) != 1 || events[0].Type != EventPublicWorksRateChanged {
+		t.Fatalf("public works rate command = nation:%+v events:%+v", withRate.Nations[0], events)
+	}
+	next := runtimeApply(t, withRate, "player-a", CommandRoundComplete, struct{}{})
+	if next.Nations[0].PublicWorks != 3 || next.Cities[0].StoredProduction != 7 {
+		t.Fatalf("public works/production = %d/%d, want 3/7", next.Nations[0].PublicWorks, next.Cities[0].StoredProduction)
+	}
+}
+
 func TestRetailSetScienceRateCommandPersistsExplicitZero(t *testing.T) {
 	state := fixtureState()
 	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}}

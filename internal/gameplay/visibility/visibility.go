@@ -135,16 +135,17 @@ type DiplomacyProposalProjection struct {
 }
 
 type DiplomacyProjection struct {
-	GovernmentID   string                        `json:"government_id,omitempty"`
-	PublicWorks    int                           `json:"public_works,omitempty"`
-	Gold           int                           `json:"gold,omitempty"`
-	SciencePercent *int                          `json:"science_percent,omitempty"`
-	Workday        *int                          `json:"workday,omitempty"`
-	Wages          *int                          `json:"wages,omitempty"`
-	Rations        *int                          `json:"rations,omitempty"`
-	Readiness      string                        `json:"readiness,omitempty"`
-	Relations      []DiplomacyRelationProjection `json:"relations,omitempty"`
-	Proposals      []DiplomacyProposalProjection `json:"proposals,omitempty"`
+	GovernmentID       string                        `json:"government_id,omitempty"`
+	PublicWorks        int                           `json:"public_works,omitempty"`
+	Gold               int                           `json:"gold,omitempty"`
+	SciencePercent     *int                          `json:"science_percent,omitempty"`
+	PublicWorksPercent *int                          `json:"public_works_percent,omitempty"`
+	Workday            *int                          `json:"workday,omitempty"`
+	Wages              *int                          `json:"wages,omitempty"`
+	Rations            *int                          `json:"rations,omitempty"`
+	Readiness          string                        `json:"readiness,omitempty"`
+	Relations          []DiplomacyRelationProjection `json:"relations,omitempty"`
+	Proposals          []DiplomacyProposalProjection `json:"proposals,omitempty"`
 }
 
 type RulesProjection struct {
@@ -329,6 +330,10 @@ func diplomacyProjection(state engine.State, playerID string, nation engine.Nati
 		science := *nation.SciencePercent
 		projection.SciencePercent = &science
 	}
+	if nation.PublicWorksPercent != nil {
+		publicWorks := *nation.PublicWorksPercent
+		projection.PublicWorksPercent = &publicWorks
+	}
 	if nation.Workday != nil {
 		workday := *nation.Workday
 		projection.Workday = &workday
@@ -360,7 +365,7 @@ func diplomacyProjection(state engine.State, playerID string, nation engine.Nati
 		return projection.Relations[i].TargetPlayerID < projection.Relations[j].TargetPlayerID
 	})
 	sort.Slice(projection.Proposals, func(i, j int) bool { return projection.Proposals[i].ID < projection.Proposals[j].ID })
-	if projection.GovernmentID == "" && projection.PublicWorks == 0 && projection.Gold == 0 && projection.SciencePercent == nil && projection.Workday == nil && projection.Wages == nil && projection.Rations == nil && projection.Readiness == "" && len(projection.Relations) == 0 && len(projection.Proposals) == 0 {
+	if projection.GovernmentID == "" && projection.PublicWorks == 0 && projection.Gold == 0 && projection.SciencePercent == nil && projection.PublicWorksPercent == nil && projection.Workday == nil && projection.Wages == nil && projection.Rations == nil && projection.Readiness == "" && len(projection.Relations) == 0 && len(projection.Proposals) == 0 {
 		return nil
 	}
 	return projection
@@ -576,6 +581,18 @@ func projectedAIStrategySciencePercent(projection Projection) (int, bool) {
 	return 0, false
 }
 
+func projectedAIStrategyPublicWorksPercent(projection Projection) (int, bool) {
+	if projection.Rules == nil || projection.Rules.AI == nil {
+		return 0, false
+	}
+	for _, strategy := range projection.Rules.AI.Strategies {
+		if strategy.PublicWorksPercent > 0 {
+			return clampPercent(strategy.PublicWorksPercent), true
+		}
+	}
+	return 0, false
+}
+
 func appendUniqueInt(values []int, value int) []int {
 	for _, existing := range values {
 		if existing == value {
@@ -629,6 +646,13 @@ func governmentActions(projection Projection, playerID string) []ActionProjectio
 			continue
 		}
 		actions = append(actions, action(engine.CommandSetScienceRate, "set-science-rate", playerID, strconv.Itoa(percent), map[string]int{"science_percent": percent}, []string{"science_percent"}))
+	}
+	currentPublicWorksPercent := 0
+	if projection.Diplomacy.PublicWorksPercent != nil {
+		currentPublicWorksPercent = *projection.Diplomacy.PublicWorksPercent
+	}
+	if strategyPublicWorks, ok := projectedAIStrategyPublicWorksPercent(projection); ok && currentPublicWorksPercent != strategyPublicWorks {
+		actions = append(actions, action(engine.CommandSetPublicWorksRate, "set-public-works-rate", playerID, strconv.Itoa(strategyPublicWorks), map[string]int{"public_works_percent": strategyPublicWorks}, []string{"public_works_percent"}))
 	}
 	workday, wages, rations := 0, 0, 0
 	if projection.Diplomacy.Workday != nil {

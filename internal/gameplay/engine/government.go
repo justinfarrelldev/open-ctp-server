@@ -15,6 +15,10 @@ type setScienceRatePayload struct {
 	SciencePercent int `json:"science_percent"`
 }
 
+type setPublicWorksRatePayload struct {
+	PublicWorksPercent int `json:"public_works_percent"`
+}
+
 type setSocialPolicyPayload struct {
 	Workday int `json:"workday"`
 	Wages   int `json:"wages"`
@@ -28,6 +32,9 @@ type setReadinessPayload struct {
 func applyGovernmentCommand(state *State, command Command, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if command.Type == CommandSetScienceRate {
 		return applyScienceRateCommand(state, command)
+	}
+	if command.Type == CommandSetPublicWorksRate {
+		return applyPublicWorksRateCommand(state, command)
 	}
 	if command.Type == CommandSetSocialPolicy {
 		return applySocialPolicyCommand(state, command)
@@ -125,6 +132,25 @@ func applyScienceRateCommand(state *State, command Command) (string, json.RawMes
 	nation.SciencePercent = &science
 	encoded, _ := json.Marshal(payload)
 	return EventScienceRateChanged, encoded, nil
+}
+
+func applyPublicWorksRateCommand(state *State, command Command) (string, json.RawMessage, error) {
+	var payload setPublicWorksRatePayload
+	if err := json.Unmarshal(command.Payload, &payload); err != nil || payload.PublicWorksPercent < 0 || payload.PublicWorksPercent > 100 {
+		return "", nil, errors.New("public works rate payload is invalid")
+	}
+	player, ok := playerByID(state, command.ActorPlayerID)
+	if !ok {
+		return "", nil, errors.New("owner is not a game player")
+	}
+	nation := nationForID(state, player.NationID)
+	if nation == nil {
+		return "", nil, errors.New("government is unavailable")
+	}
+	publicWorks := payload.PublicWorksPercent
+	nation.PublicWorksPercent = &publicWorks
+	encoded, _ := json.Marshal(payload)
+	return EventPublicWorksRateChanged, encoded, nil
 }
 
 func upsertGovernmentEffects(nation *Nation, government rules.RuntimeGovernmentDefinition) {

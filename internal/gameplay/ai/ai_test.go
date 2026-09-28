@@ -108,6 +108,28 @@ func TestPlannerUsesOnlyProjectionAndStableCandidateTuples(t *testing.T) {
 	}
 }
 
+func TestPlannerUsesRetailAIStrategyPublicWorksRate(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		LegalActions: []visibility.ActionProjection{
+			{Command: engine.CommandSetPublicWorksRate, Route: "set-public-works-rate", EntityID: "ai", TargetID: "30", Payload: json.RawMessage(`{"public_works_percent":30}`)},
+		},
+		Rules: &visibility.RulesProjection{AI: &rules.RuntimeAI{Strategies: []rules.RuntimeAIStrategy{{ID: "STRATEGY_DEFAULT", PublicWorksPercent: 30}}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandSetPublicWorksRate && candidate.TargetID == "30" {
+			return
+		}
+	}
+	t.Fatalf("public-works-rate candidate missing: %#v", candidates)
+}
+
 func TestPlannerUsesRetailAIStrategyScienceRate(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		LegalActions: []visibility.ActionProjection{

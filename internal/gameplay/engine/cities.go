@@ -2098,7 +2098,18 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 	if err != nil {
 		return err
 	}
-	city.StoredProduction += yield.Production
+	production := yield.Production
+	if nation := nationForID(state, nationForPlayer(*state, city.OwnerID)); nation != nil && production > 0 {
+		publicWorks := production * publicWorksPercentForNation(*nation) / 100
+		if publicWorks > production {
+			publicWorks = production
+		}
+		if publicWorks > 0 {
+			nation.PublicWorks += publicWorks
+			production -= publicWorks
+		}
+	}
+	city.StoredProduction += production
 	item := city.Queue[0]
 	if city.StoredProduction < item.Cost {
 		return nil
@@ -2124,6 +2135,19 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 	default:
 		return errors.New("unsupported production kind")
 	}
+}
+
+func publicWorksPercentForNation(nation Nation) int {
+	if nation.PublicWorksPercent == nil {
+		return 0
+	}
+	if *nation.PublicWorksPercent < 0 {
+		return 0
+	}
+	if *nation.PublicWorksPercent > 100 {
+		return 100
+	}
+	return *nation.PublicWorksPercent
 }
 
 func productionCompletionConsumesQueue(queue []ProductionItem, item ProductionItem, runtime *rules.RuntimeRules) bool {

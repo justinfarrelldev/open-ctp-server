@@ -1,0 +1,12 @@
+=== RUN   TestRetailPublicWorksRateDivertsProductionToMaterials
+--- PASS: TestRetailPublicWorksRateDivertsProductionToMaterials (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.009s
+=== RUN   TestGovernmentActionsIncludeRetailAIStrategyPublicWorksPercent
+--- PASS: TestGovernmentActionsIncludeRetailAIStrategyPublicWorksPercent (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.004s
+=== RUN   TestPlannerUsesRetailAIStrategyPublicWorksRate
+--- PASS: TestPlannerUsesRetailAIStrategyPublicWorksRate (0.00s)
+PASS
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai	0.005s

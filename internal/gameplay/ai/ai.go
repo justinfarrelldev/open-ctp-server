@@ -190,6 +190,7 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 	candidates = append(candidates, researchCandidates(projection, playerID)...)
 	candidates = append(candidates, governmentCandidates(projection, playerID)...)
 	candidates = append(candidates, projectedScienceRateCandidates(projection)...)
+	candidates = append(candidates, projectedPublicWorksRateCandidates(projection)...)
 	candidates = append(candidates, projectedReadinessCandidates(projection)...)
 	candidates = append(candidates, projectedSpecialistCandidates(projection, playerID)...)
 	candidates = append(candidates, projectedTradeRouteCandidates(projection)...)
@@ -361,6 +362,42 @@ func projectedAISciencePercent(projection visibility.Projection) int {
 		}
 	}
 	return 100
+}
+
+func projectedPublicWorksRateCandidates(projection visibility.Projection) []Candidate {
+	desiredPercent, ok := projectedAIPublicWorksPercent(projection)
+	if !ok {
+		return nil
+	}
+	candidates := make([]Candidate, 0)
+	for _, action := range projection.LegalActions {
+		if action.Command != engine.CommandSetPublicWorksRate || len(action.Payload) == 0 {
+			continue
+		}
+		var payload struct {
+			PublicWorksPercent int `json:"public_works_percent"`
+		}
+		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.PublicWorksPercent != desiredPercent {
+			continue
+		}
+		candidates = append(candidates, Candidate{Type: engine.CommandSetPublicWorksRate, EntityID: action.EntityID, TargetID: action.TargetID, Score: 754, Payload: append(json.RawMessage(nil), action.Payload...)})
+	}
+	return candidates
+}
+
+func projectedAIPublicWorksPercent(projection visibility.Projection) (int, bool) {
+	if projection.Rules != nil && projection.Rules.AI != nil {
+		for _, strategy := range projection.Rules.AI.Strategies {
+			if strategy.PublicWorksPercent <= 0 {
+				continue
+			}
+			if strategy.PublicWorksPercent > 100 {
+				return 100, true
+			}
+			return strategy.PublicWorksPercent, true
+		}
+	}
+	return 0, false
 }
 
 func projectedTradeRouteCandidates(projection visibility.Projection) []Candidate {
