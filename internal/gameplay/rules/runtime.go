@@ -346,13 +346,19 @@ type RuntimeAI struct {
 	Strategies         []RuntimeAIStrategy `json:"strategies,omitempty"`
 }
 
-// RuntimeAIStrategy carries retail AI economy slider preferences that can be
+// RuntimeAIStrategy carries retail AI economy/social slider preferences that can be
 // used from projections without exposing hidden world state.
 type RuntimeAIStrategy struct {
-	ID                 string `json:"id"`
-	SciencePercent     int    `json:"science_percent,omitempty"`
-	PublicWorksPercent int    `json:"public_works_percent,omitempty"`
-	PublicWorksReserve int    `json:"public_works_reserve,omitempty"`
+	ID                 string                   `json:"id"`
+	SciencePercent     int                      `json:"science_percent,omitempty"`
+	PublicWorksPercent int                      `json:"public_works_percent,omitempty"`
+	PublicWorksReserve int                      `json:"public_works_reserve,omitempty"`
+	SliderElements     []RuntimeAISliderElement `json:"slider_elements,omitempty"`
+}
+
+type RuntimeAISliderElement struct {
+	Kind  string `json:"kind"`
+	Delta int    `json:"delta,omitempty"`
 }
 
 type RuntimeAIList struct {

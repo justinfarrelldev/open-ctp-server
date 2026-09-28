@@ -1,0 +1,13 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules.test]
+internal/gameplay/rules/retail_runtime_test.go:65:19: strategy.SliderElements undefined (type RuntimeAIStrategy has no field or method SliderElements)
+internal/gameplay/rules/retail_runtime_test.go:66:71: strategy.SliderElements undefined (type RuntimeAIStrategy has no field or method SliderElements)
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [build failed]
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility.test]
+internal/gameplay/visibility/visibility_test.go:477:97: unknown field SliderElements in struct literal of type struct{ID string "json:\"id\""; SciencePercent int "json:\"science_percent,omitempty\""; PublicWorksPercent int "json:\"public_works_percent,omitempty\""; PublicWorksReserve int "json:\"public_works_reserve,omitempty\""}
+internal/gameplay/visibility/visibility_test.go:477:121: undefined: rules.RuntimeAISliderElement
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility [build failed]
+--- FAIL: TestPlannerUsesProjectedSocialPolicyAction (0.00s)
+    ai_test.go:237: social-policy candidate missing: []ai.Candidate{ai.Candidate{Type:"pass", EntityID:"ai", TargetID:"", Score:100, Payload:json.RawMessage{0x7b, 0x7d}}}
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai	0.005s
+FAIL

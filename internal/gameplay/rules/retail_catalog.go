@@ -222,10 +222,16 @@ type RetailAILists struct {
 // RetailAIStrategy preserves the released AI strategy economy sliders used by
 // retail to set science tax and public-works/material allocation.
 type RetailAIStrategy struct {
-	ID                 string `json:"id"`
-	SciencePercent     int    `json:"science_percent,omitempty"`
-	PublicWorksPercent int    `json:"public_works_percent,omitempty"`
-	PublicWorksReserve int    `json:"public_works_reserve,omitempty"`
+	ID                 string                  `json:"id"`
+	SciencePercent     int                     `json:"science_percent,omitempty"`
+	PublicWorksPercent int                     `json:"public_works_percent,omitempty"`
+	PublicWorksReserve int                     `json:"public_works_reserve,omitempty"`
+	SliderElements     []RetailAISliderElement `json:"slider_elements,omitempty"`
+}
+
+type RetailAISliderElement struct {
+	Kind  string `json:"kind"`
+	Delta int    `json:"delta,omitempty"`
 }
 
 type RetailAIList struct {
@@ -629,7 +635,7 @@ func parseRetailAIStrategyFile(path string) ([]RetailAIStrategy, error) {
 	for _, record := range records {
 		strategy := RetailAIStrategy{ID: record.ID}
 		for _, field := range record.Fields {
-			if len(field.Values) == 0 {
+			if len(field.Values) == 0 && field.Key != "SliderElement" {
 				continue
 			}
 			switch field.Key {
@@ -639,6 +645,14 @@ func parseRetailAIStrategyFile(path string) ([]RetailAIStrategy, error) {
 				strategy.PublicWorksPercent, err = retailParseInt(record.ID, field.Key, field.Values[0])
 			case "PublicWorksReserve":
 				strategy.PublicWorksReserve, err = retailParseInt(record.ID, field.Key, field.Values[0])
+			case "SliderElement":
+				element, elementErr := parseRetailAISliderElement(record.ID, field)
+				if elementErr != nil {
+					return nil, elementErr
+				}
+				if element.Kind != "" {
+					strategy.SliderElements = append(strategy.SliderElements, element)
+				}
 			}
 			if err != nil {
 				return nil, err
@@ -647,6 +661,26 @@ func parseRetailAIStrategyFile(path string) ([]RetailAIStrategy, error) {
 		strategies = append(strategies, strategy)
 	}
 	return strategies, nil
+}
+
+func parseRetailAISliderElement(recordID string, field RetailRawField) (RetailAISliderElement, error) {
+	for _, child := range field.Fields {
+		if child.Key != "Delta" || len(child.Values) < 2 {
+			continue
+		}
+		delta, err := retailParseInt(recordID, "SliderElement.Delta", child.Values[0])
+		if err != nil {
+			return RetailAISliderElement{}, err
+		}
+		kind := child.Values[1]
+		switch kind {
+		case "Food", "Production", "Gold":
+			return RetailAISliderElement{Kind: kind, Delta: delta}, nil
+		default:
+			return RetailAISliderElement{}, importError(ErrorUnsupportedMechanic, "strategies.txt", 1, recordID, "unsupported SliderElement kind "+kind)
+		}
+	}
+	return RetailAISliderElement{}, nil
 }
 
 func stripRetailAIComments(data []byte) []byte {

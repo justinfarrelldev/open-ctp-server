@@ -62,6 +62,9 @@ func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 		if strategy.SciencePercent != 60 || strategy.PublicWorksPercent != 30 || strategy.PublicWorksReserve != 100 {
 			t.Fatalf("STRATEGY_DEFAULT economy sliders = %+v", strategy)
 		}
+		if len(strategy.SliderElements) < 3 || strategy.SliderElements[0].Kind != "Food" || strategy.SliderElements[0].Delta != 3 || strategy.SliderElements[1].Kind != "Production" || strategy.SliderElements[1].Delta != 3 || strategy.SliderElements[2].Kind != "Gold" || strategy.SliderElements[2].Delta != 3 {
+			t.Fatalf("STRATEGY_DEFAULT social slider elements = %+v", strategy.SliderElements)
+		}
 		return
 	}
 	t.Fatalf("STRATEGY_DEFAULT missing from AI strategies")

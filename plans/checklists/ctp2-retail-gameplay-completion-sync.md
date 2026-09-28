@@ -28,6 +28,7 @@
 - [x] Task 014: AI planners now consume projected legal peace proposal actions so combat-created wars have a public-projection treaty recovery path.
 - [x] Task 015: AI planners now consume projected legal bombard actions so bombard-capable units participate in combat planning without hidden-state shortcuts.
 - [x] Task 016: AI terrain-improvement planning now preserves retail `PublicWorksReserve` instead of spending public works/materials down to zero.
+- [x] Task 017: Retail AI `SliderElement` social-policy deltas are imported, projected, exposed as legal actions, and consumed by AI planning.
 
 ## Full-Game Mechanical Execution First
 

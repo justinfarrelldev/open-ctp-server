@@ -191,6 +191,7 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 	candidates = append(candidates, governmentCandidates(projection, playerID)...)
 	candidates = append(candidates, projectedScienceRateCandidates(projection)...)
 	candidates = append(candidates, projectedPublicWorksRateCandidates(projection)...)
+	candidates = append(candidates, projectedSocialPolicyCandidates(projection)...)
 	candidates = append(candidates, projectedReadinessCandidates(projection)...)
 	candidates = append(candidates, projectedSpecialistCandidates(projection, playerID)...)
 	candidates = append(candidates, projectedAgreementProposalCandidates(projection)...)
@@ -384,6 +385,40 @@ func projectedPublicWorksRateCandidates(projection visibility.Projection) []Cand
 			continue
 		}
 		candidates = append(candidates, Candidate{Type: engine.CommandSetPublicWorksRate, EntityID: action.EntityID, TargetID: action.TargetID, Score: 754, Payload: append(json.RawMessage(nil), action.Payload...)})
+	}
+	return candidates
+}
+
+func projectedSocialPolicyCandidates(projection visibility.Projection) []Candidate {
+	currentWorkday, currentWages, currentRations := 0, 0, 0
+	if projection.Diplomacy != nil {
+		if projection.Diplomacy.Workday != nil {
+			currentWorkday = *projection.Diplomacy.Workday
+		}
+		if projection.Diplomacy.Wages != nil {
+			currentWages = *projection.Diplomacy.Wages
+		}
+		if projection.Diplomacy.Rations != nil {
+			currentRations = *projection.Diplomacy.Rations
+		}
+	}
+	candidates := make([]Candidate, 0)
+	for _, action := range projection.LegalActions {
+		if action.Command != engine.CommandSetSocialPolicy || len(action.Payload) == 0 {
+			continue
+		}
+		var payload struct {
+			Workday int `json:"workday"`
+			Wages   int `json:"wages"`
+			Rations int `json:"rations"`
+		}
+		if err := json.Unmarshal(action.Payload, &payload); err != nil {
+			continue
+		}
+		if payload.Workday == currentWorkday && payload.Wages == currentWages && payload.Rations == currentRations {
+			continue
+		}
+		candidates = append(candidates, Candidate{Type: engine.CommandSetSocialPolicy, EntityID: action.EntityID, TargetID: action.TargetID, Score: 754, Payload: append(json.RawMessage(nil), action.Payload...)})
 	}
 	return candidates
 }

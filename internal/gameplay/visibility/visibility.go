@@ -593,6 +593,46 @@ func projectedAIStrategyPublicWorksPercent(projection Projection) (int, bool) {
 	return 0, false
 }
 
+func projectedAIStrategySocialPolicy(projection Projection) (workday int, wages int, rations int, ok bool) {
+	if projection.Rules == nil || projection.Rules.AI == nil {
+		return 0, 0, 0, false
+	}
+	expectWorkday, expectWages, expectRations := projectedGovernmentExpectations(projection)
+	for _, strategy := range projection.Rules.AI.Strategies {
+		for _, element := range strategy.SliderElements {
+			if element.Delta == 0 {
+				continue
+			}
+			deltaProduction, deltaGold, deltaFood := 0, 0, 0
+			switch element.Kind {
+			case "Production":
+				deltaProduction, deltaGold, deltaFood = element.Delta, -element.Delta, -element.Delta
+			case "Gold":
+				deltaProduction, deltaGold, deltaFood = -element.Delta, element.Delta, -element.Delta
+			case "Food":
+				deltaProduction, deltaGold, deltaFood = -element.Delta, -element.Delta, element.Delta
+			default:
+				continue
+			}
+			return clampSocialPolicy(expectWorkday - deltaProduction), clampSocialPolicy(expectWages - deltaGold), clampSocialPolicy(expectRations - deltaFood), true
+		}
+	}
+	return 0, 0, 0, false
+}
+
+func projectedGovernmentExpectations(projection Projection) (workday int, wages int, rations int) {
+	if projection.Rules == nil || projection.Diplomacy == nil {
+		return 0, 0, 0
+	}
+	for _, government := range projection.Rules.Governments {
+		if government.ID != projection.Diplomacy.GovernmentID {
+			continue
+		}
+		return government.WorkdayExpectation, government.WagesExpectation, government.RationsExpectation
+	}
+	return 0, 0, 0
+}
+
 func appendUniqueInt(values []int, value int) []int {
 	for _, existing := range values {
 		if existing == value {
@@ -608,6 +648,16 @@ func clampPercent(value int) int {
 	}
 	if value > 100 {
 		return 100
+	}
+	return value
+}
+
+func clampSocialPolicy(value int) int {
+	if value < -2 {
+		return -2
+	}
+	if value > 2 {
+		return 2
 	}
 	return value
 }
@@ -663,6 +713,9 @@ func governmentActions(projection Projection, playerID string) []ActionProjectio
 	}
 	if projection.Diplomacy.Rations != nil {
 		rations = *projection.Diplomacy.Rations
+	}
+	if strategyWorkday, strategyWages, strategyRations, ok := projectedAIStrategySocialPolicy(projection); ok {
+		workday, wages, rations = strategyWorkday, strategyWages, strategyRations
 	}
 	actions = append(actions, action(engine.CommandSetSocialPolicy, "set-social-policy", playerID, "social-policy", map[string]int{"workday": workday, "wages": wages, "rations": rations}, []string{"workday", "wages", "rations"}))
 	currentReadiness := projection.Diplomacy.Readiness

@@ -142,7 +142,18 @@ func projectRetailAIStrategies(strategies []RetailAIStrategy) []RuntimeAIStrateg
 		if strategy.ID == "" {
 			continue
 		}
-		projected = append(projected, RuntimeAIStrategy{ID: strategy.ID, SciencePercent: strategy.SciencePercent, PublicWorksPercent: strategy.PublicWorksPercent, PublicWorksReserve: strategy.PublicWorksReserve})
+		projected = append(projected, RuntimeAIStrategy{ID: strategy.ID, SciencePercent: strategy.SciencePercent, PublicWorksPercent: strategy.PublicWorksPercent, PublicWorksReserve: strategy.PublicWorksReserve, SliderElements: projectRetailAISliderElements(strategy.SliderElements)})
+	}
+	return projected
+}
+
+func projectRetailAISliderElements(elements []RetailAISliderElement) []RuntimeAISliderElement {
+	projected := make([]RuntimeAISliderElement, 0, len(elements))
+	for _, element := range elements {
+		if element.Kind == "" {
+			continue
+		}
+		projected = append(projected, RuntimeAISliderElement{Kind: element.Kind, Delta: element.Delta})
 	}
 	return projected
 }

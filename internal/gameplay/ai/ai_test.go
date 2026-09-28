@@ -218,6 +218,25 @@ func TestPlannerPreservesRetailPublicWorksReserve(t *testing.T) {
 	}
 }
 
+func TestPlannerUsesProjectedSocialPolicyAction(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		LegalActions: []visibility.ActionProjection{{Command: engine.CommandSetSocialPolicy, Route: "set-social-policy", EntityID: "ai", TargetID: "social-policy", Payload: json.RawMessage(`{"workday":2,"wages":2,"rations":-2}`)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandSetSocialPolicy && candidate.EntityID == "ai" && candidate.TargetID == "social-policy" {
+			return
+		}
+	}
+	t.Fatalf("social-policy candidate missing: %#v", candidates)
+}
+
 func TestPlannerDoesNotInventCombatAgainstStaleTiles(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		Tiles: []visibility.TileProjection{

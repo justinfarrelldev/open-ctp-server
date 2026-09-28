@@ -471,6 +471,23 @@ func TestGovernmentActionsIncludeRetailAIStrategySciencePercent(t *testing.T) {
 	t.Fatalf("strategy science percent action missing: %#v", actions)
 }
 
+func TestGovernmentActionsIncludeRetailAIStrategySocialPolicy(t *testing.T) {
+	projection := Projection{
+		Rules: &RulesProjection{
+			AI:          &rules.RuntimeAI{Strategies: []rules.RuntimeAIStrategy{{ID: "STRATEGY_DEFAULT", SliderElements: []rules.RuntimeAISliderElement{{Kind: "Food", Delta: 3}}}}},
+			Governments: []rules.RuntimeGovernmentDefinition{{ID: "GOVERNMENT_DEMOCRACY", WorkdayExpectation: 0, WagesExpectation: 1, RationsExpectation: 0}},
+		},
+		Diplomacy: &DiplomacyProjection{GovernmentID: "GOVERNMENT_DEMOCRACY"},
+	}
+	actions := governmentActions(projection, "a")
+	for _, action := range actions {
+		if action.Command == engine.CommandSetSocialPolicy && action.TargetID == "social-policy" && bytes.Contains(action.Payload, []byte(`"workday":2`)) && bytes.Contains(action.Payload, []byte(`"wages":2`)) && bytes.Contains(action.Payload, []byte(`"rations":-2`)) {
+			return
+		}
+	}
+	t.Fatalf("strategy social policy action missing: %#v", actions)
+}
+
 func TestRetailStealthProjectionRequiresStealthDetection(t *testing.T) {
 	state := fixtureState()
 	state.Cities = []engine.City{{ID: "home", OwnerID: "a", TileID: "0,0"}}
