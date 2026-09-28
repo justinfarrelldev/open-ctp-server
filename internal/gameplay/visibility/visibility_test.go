@@ -74,6 +74,18 @@ func TestSocialPolicyProjectsOwnSliderValuesAndLegalAction(t *testing.T) {
 	t.Fatalf("social policy action missing: %#v", actions)
 }
 
+func TestTerrainImprovementVisionRangeRevealsTiles(t *testing.T) {
+	state := engine.State{
+		Players:  []engine.Player{{ID: "a", NationID: "na", Lifecycle: engine.PlayerActive}},
+		Tiles:    []engine.Tile{{ID: "center", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "near", X: 1, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "mid", X: 2, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "far", X: 3, Y: 0, Terrain: engine.TerrainPlains, Open: true}},
+		Overlays: []engine.TileOverlay{{ID: "watch", TileID: "center", Kind: "improvement", OwnerID: "a", ImprovementID: "TILEIMP_WATCH", VisionRange: 3}},
+	}
+	visible := visibleTiles(state)
+	if !visible["a"]["far"] {
+		t.Fatalf("vision-range improvement did not reveal far tile: %#v", visible["a"])
+	}
+}
+
 func TestVisibleCitiesProjectCreateTradeRouteAction(t *testing.T) {
 	state := fixtureState()
 	state.Players = []engine.Player{{ID: "a", NationID: "na", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}, {ID: "b", NationID: "nb", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}}

@@ -2211,6 +2211,21 @@ func visibleTiles(state engine.State) map[string]map[string]bool {
 	for _, city := range state.Cities {
 		addSight(result[city.OwnerID], state, city.TileID, defaultSightRadius)
 	}
+	for _, overlay := range state.Overlays {
+		if overlay.OwnerID == "" || overlay.TileID == "" || overlay.Remaining > 0 || overlay.Kind != "improvement" {
+			continue
+		}
+		radius := overlay.VisionRange
+		if overlay.RadarRange > radius {
+			radius = overlay.RadarRange
+		}
+		if overlay.ListeningPost && radius < defaultSightRadius {
+			radius = defaultSightRadius
+		}
+		if radius > 0 {
+			addSight(result[overlay.OwnerID], state, overlay.TileID, radius)
+		}
+	}
 	for _, player := range state.Players {
 		if playerHasGlobalRadar(state, player.ID) {
 			for _, tile := range state.Tiles {

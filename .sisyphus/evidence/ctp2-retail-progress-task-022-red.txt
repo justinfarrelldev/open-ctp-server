@@ -1,0 +1,5 @@
+--- FAIL: TestTerrainImprovementVisionRangeRevealsTiles (0.00s)
+    visibility_test.go:85: vision-range improvement did not reveal far tile: map[string]bool{}
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.003s
+FAIL
