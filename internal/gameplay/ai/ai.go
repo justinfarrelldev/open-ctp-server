@@ -193,7 +193,7 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 	candidates = append(candidates, projectedPublicWorksRateCandidates(projection)...)
 	candidates = append(candidates, projectedReadinessCandidates(projection)...)
 	candidates = append(candidates, projectedSpecialistCandidates(projection, playerID)...)
-	candidates = append(candidates, projectedTradeProposalCandidates(projection)...)
+	candidates = append(candidates, projectedAgreementProposalCandidates(projection)...)
 	candidates = append(candidates, projectedTradeRouteCandidates(projection)...)
 	candidates = append(candidates, projectedRushBuyCandidates(projection)...)
 	candidates = append(candidates, diplomacyCandidates(projection, playerID)...)
@@ -419,7 +419,8 @@ func projectedRushBuyCandidates(projection visibility.Projection) []Candidate {
 	return candidates
 }
 
-func projectedTradeProposalCandidates(projection visibility.Projection) []Candidate {
+func projectedAgreementProposalCandidates(projection visibility.Projection) []Candidate {
+	scores := map[string]int{"peace": 739, "trade": 738}
 	candidates := make([]Candidate, 0)
 	for _, action := range projection.LegalActions {
 		if action.Command != engine.CommandProposeAgreement || len(action.Payload) == 0 {
@@ -430,10 +431,14 @@ func projectedTradeProposalCandidates(projection visibility.Projection) []Candid
 			TargetPlayerID string `json:"target_player_id"`
 			Kind           string `json:"kind"`
 		}
-		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.ProposalID == "" || payload.TargetPlayerID == "" || payload.Kind != "trade" {
+		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.ProposalID == "" || payload.TargetPlayerID == "" {
 			continue
 		}
-		candidates = append(candidates, Candidate{Type: engine.CommandProposeAgreement, EntityID: action.EntityID, TargetID: action.TargetID, Score: 741, Payload: append(json.RawMessage(nil), action.Payload...)})
+		score, supported := scores[payload.Kind]
+		if !supported {
+			continue
+		}
+		candidates = append(candidates, Candidate{Type: engine.CommandProposeAgreement, EntityID: action.EntityID, TargetID: action.TargetID, Score: score, Payload: append(json.RawMessage(nil), action.Payload...)})
 	}
 	return candidates
 }
