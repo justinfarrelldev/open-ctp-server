@@ -30,11 +30,12 @@
 - [x] Task 016: AI terrain-improvement planning now preserves retail `PublicWorksReserve` instead of spending public works/materials down to zero.
 - [x] Task 017: Retail AI `SliderElement` social-policy deltas are imported, projected, exposed as legal actions, and consumed by AI planning.
 - [x] Task 018: AI planners now consume projected legal `upgrade-unit` actions so retail `UpgradeTo` chains can advance autonomous units.
-- [x] Task 019: AI planners now consume projected retail special city/tile actions for soothsaying, park creation, and terraform orders.
+- [x] Task 019: AI planners now consume projected retail special city/tile actions for soothsaying and park creation.
 - [x] Task 020: Retail AI social-slider projection now requires visible city fit evidence before changing workday/wages/rations, matching governor fit checks and preserving long-game production.
 - [x] Task 021: Terrain improvement `HealRate` now executes during round advancement by healing owner-compatible units on completed improvement overlays.
 - [x] Task 022: Terrain improvement `VisionRange`/`RadarRange`/`ListeningPost` now extend player visibility from completed improvement overlays.
 - [x] Task 023: Terrain improvement `Airport` now acts as an owner-compatible refuel point during round advancement.
+- [x] Task 024: AI now suppresses fragile legacy `terraform` unit commands and relies on validated public-works `build-improvement` terraform paths instead.
 
 ## Full-Game Mechanical Execution First
 

@@ -324,7 +324,6 @@ func TestPlannerUsesProjectedRetailSpecialTileAndCityActions(t *testing.T) {
 		LegalActions: []visibility.ActionProjection{
 			{Command: engine.CommandSoothsaying, Route: "soothsaying", EntityID: "cleric", TargetID: "city-a", Payload: json.RawMessage(`{"unit_id":"cleric","city_id":"city-a"}`)},
 			{Command: engine.CommandCreatePark, Route: "create-park", EntityID: "eco", TargetID: "tile-a", Payload: json.RawMessage(`{"unit_id":"eco","tile_id":"tile-a"}`)},
-			{Command: engine.CommandTerraform, Route: "terraform", EntityID: "terraformer", TargetID: "tile-b", Payload: json.RawMessage(`{"unit_id":"terraformer","tile_id":"tile-b","target_terrain":"TERRAIN_PLAINS"}`)},
 		},
 	})
 	if err != nil {
@@ -334,7 +333,7 @@ func TestPlannerUsesProjectedRetailSpecialTileAndCityActions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := map[string]bool{engine.CommandSoothsaying: false, engine.CommandCreatePark: false, engine.CommandTerraform: false}
+	want := map[string]bool{engine.CommandSoothsaying: false, engine.CommandCreatePark: false}
 	for _, candidate := range candidates {
 		if _, ok := want[candidate.Type]; ok {
 			want[candidate.Type] = true
@@ -343,6 +342,25 @@ func TestPlannerUsesProjectedRetailSpecialTileAndCityActions(t *testing.T) {
 	for command, seen := range want {
 		if !seen {
 			t.Fatalf("%s candidate missing: %#v", command, candidates)
+		}
+	}
+}
+
+func TestPlannerSkipsProjectedTerraformActions(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		Tiles:        []visibility.TileProjection{{ID: "tile-b", Terrain: engine.TerrainForest}},
+		LegalActions: []visibility.ActionProjection{{Command: engine.CommandTerraform, Route: "terraform", EntityID: "terraformer", TargetID: "tile-b", Payload: json.RawMessage(`{"unit_id":"terraformer","tile_id":"tile-b","target_terrain":"plains"}`)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandTerraform {
+			t.Fatalf("terraform candidate leaked despite build-improvement/public-works replacement path: %#v", candidates)
 		}
 	}
 }

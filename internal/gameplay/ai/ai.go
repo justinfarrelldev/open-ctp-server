@@ -636,7 +636,7 @@ func projectedUnitSpecialTargetCandidates(projection visibility.Projection) []Ca
 		engine.CommandReform:             600,
 		engine.CommandPlantNuke:          500,
 	}
-	tileTargetScores := map[string]int{engine.CommandCreatePark: 622, engine.CommandTerraform: 618}
+	tileTargetScores := map[string]int{engine.CommandCreatePark: 622}
 	candidates := make([]Candidate, 0)
 	seen := map[string]bool{}
 	for _, action := range projection.LegalActions {
