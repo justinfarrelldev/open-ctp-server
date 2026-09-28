@@ -34,6 +34,7 @@
 - [x] Task 020: Retail AI social-slider projection now requires visible city fit evidence before changing workday/wages/rations, matching governor fit checks and preserving long-game production.
 - [x] Task 021: Terrain improvement `HealRate` now executes during round advancement by healing owner-compatible units on completed improvement overlays.
 - [x] Task 022: Terrain improvement `VisionRange`/`RadarRange`/`ListeningPost` now extend player visibility from completed improvement overlays.
+- [x] Task 023: Terrain improvement `Airport` now acts as an owner-compatible refuel point during round advancement.
 
 ## Full-Game Mechanical Execution First
 

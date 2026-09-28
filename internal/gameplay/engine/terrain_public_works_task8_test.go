@@ -159,6 +159,19 @@ func TestRetailTerrainImprovementHealRateHealsUnitsOnRoundComplete(t *testing.T)
 	}
 }
 
+func TestRetailTerrainImprovementAirportRefuelsUnitsOnRoundComplete(t *testing.T) {
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: DomainLand, Movement: 1, Strength: 1, Armor: 1, Health: 10}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainLand, Movement: 1, Health: 10}}}
+	state := runtimeStartedState(t)
+	state.Tiles = []Tile{{ID: "tile-a", X: 0, Y: 0, Terrain: TerrainPlains, OwnerID: "player-a", Open: true}}
+	state.Units = []Unit{{ID: "unit-a", OwnerID: "player-a", TileID: "tile-a", Domain: DomainAir, Movement: 0, MaxMovement: 1, Fuel: 1, MaxFuel: 5, Health: 10, MaxHealth: 10}}
+	state.Overlays = []TileOverlay{{ID: "airport", TileID: "tile-a", Kind: "improvement", OwnerID: "player-a", ImprovementID: "TILEIMP_AIRBASE", Airport: true}}
+
+	advanceRound(&state, &runtime)
+	if len(state.Units) != 1 || state.Units[0].Fuel != 5 {
+		t.Fatalf("unit fuel after airport overlay = %#v, want refueled", state.Units)
+	}
+}
+
 func TestRetailTerrainImprovementRequiresAllowedTerrain(t *testing.T) {
 	state := runtimeStartedState(t)
 	state.Nations[0].PublicWorks = 10

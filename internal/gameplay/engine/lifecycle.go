@@ -171,6 +171,11 @@ func unitCanRefuel(state State, unit Unit) bool {
 			return true
 		}
 	}
+	for _, overlay := range state.Overlays {
+		if overlay.TileID == unit.TileID && overlay.Kind == "improvement" && overlay.Remaining <= 0 && overlay.Airport && (overlay.OwnerID == "" || overlay.OwnerID == unit.OwnerID) {
+			return true
+		}
+	}
 	return false
 }
 

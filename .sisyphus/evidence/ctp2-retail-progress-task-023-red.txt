@@ -1,0 +1,5 @@
+--- FAIL: TestRetailTerrainImprovementAirportRefuelsUnitsOnRoundComplete (0.00s)
+    terrain_public_works_task8_test.go:171: unit fuel after airport overlay = []engine.Unit{engine.Unit{ID:"unit-a", TypeID:"", OwnerID:"player-a", TileID:"tile-a", ArmyID:"", TransportID:"", Domain:"air", Movement:1, MaxMovement:1, Fuel:1, MaxFuel:5, CargoCapacity:0, CargoDomains:[]string(nil), Upkeep:0, ShieldHunger:0, FoodHunger:0, NeedsNoSupport:false, IsProfessional:false, IsSpecialForces:false, ZOC:false, Fortified:false, Veteran:false, Effects:[]engine.Effect(nil), Attack:0, Defense:0, Ranged:0, BombardRange:0, BombRounds:0, ActiveDefenseRange:0, Strength:0, Armor:0, Firepower:0, Health:10, MaxHealth:10, VisibilityRange:0, SettleCityTypeID:""}}, want refueled
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.004s
+FAIL
