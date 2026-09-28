@@ -44,11 +44,11 @@
 - [x] Add/restore a RED long-run retail AI progress test that fails when autoplay becomes inert, loses all units, stops producing/researching, or issues only round-complete commands late-game.
 - [x] Extend the full-game progress record with cities, units, active queues, research progress, advances, gold/treasury, public works, trade routes, diplomacy/war, pollution, combat counts, command throughput, terminal state, and state hash.
 - [x] Make the progress harness checkpoint canonical restart equality.
-- [ ] Fix AI economy/production continuity using only public projections and legal actions.
-- [ ] Fix AI exploration, settling, worker/public-works improvement, transport/cargo/fuel dead ends, and pathing stalls.
-- [ ] Fix coarse diplomacy/trade/goods loops so trade agreements, routes, goods-gated production, and gold flow materially affect long games.
-- [ ] Fix coarse combat loops for war/contact, legal targeting, bombardment/active defense, ZOC, stealth detection, city defense/capture, and conquest progress.
-- [ ] Fix pollution/disaster/government-slider/readiness/happiness/crime/endgame loops for long-game stability.
+- [x] Fix AI economy/production continuity using only public projections and legal actions.
+- [x] Fix AI exploration, settling, worker/public-works improvement, transport/cargo/fuel dead ends, and pathing stalls.
+- [x] Fix coarse diplomacy/trade/goods loops so trade agreements, routes, goods-gated production, and gold flow materially affect long games.
+- [x] Fix coarse combat loops for war/contact, legal targeting, bombardment/active defense, ZOC, stealth detection, city defense/capture, and conquest progress.
+- [x] Fix pollution/disaster/government-slider/readiness/happiness/crime/endgame loops for long-game stability.
 
 ## Retail Parity Closure
 
