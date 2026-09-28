@@ -61,6 +61,23 @@ func TestTask17ProjectionExposesPlanningOnlyForCurrentlyVisibleTiles(t *testing.
 	}
 }
 
+func TestPlanKnownRoutesLandUnitsThroughRememberedLand(t *testing.T) {
+	projection := Projection{
+		Tiles: []TileProjection{
+			{ID: "a", X: 0, Y: 0, Terrain: "plains", Planning: &TilePlanning{Cost: 1, Domains: []string{"land"}, Accessible: true}},
+			{ID: "b", X: 1, Y: 0, Terrain: "plains", Stale: true},
+		},
+		Units: []UnitProjection{{ID: "unit-a", OwnerID: "player-a", TileID: "a", Domain: "land", Movement: 1}},
+	}
+	path, err := PlanKnown(projection, "unit-a", "b")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(path) != 1 || path[0] != "b" {
+		t.Fatalf("known path = %v, want [b]", path)
+	}
+}
+
 func TestTask17PlanUsesOnlyVisibleProjectionData(t *testing.T) {
 	projection := Projection{
 		Tiles: []TileProjection{

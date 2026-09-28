@@ -2107,12 +2107,12 @@ func PlanKnown(projection Projection, unitID, targetTileID string) ([]string, er
 		if !tile.Stale || tile.Planning != nil {
 			continue
 		}
-		planning := TilePlanning{Cost: 1, Domains: []string{"land", "amphibious"}, Accessible: true}
+		planning := TilePlanning{Cost: 1, Domains: []string{"amphibious", "land"}, Accessible: true}
 		if tile.Terrain == "forest" {
 			planning.Cost = 2
 		}
 		if tile.Terrain == "ocean" {
-			planning.Domains = []string{"sea", "amphibious"}
+			planning.Domains = []string{"amphibious", "sea"}
 		}
 		tile.Stale = false
 		tile.Planning = &planning

@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility"
 )
 
@@ -79,7 +80,7 @@ func (r PublicConquestRunner) Execute(ctx context.Context, unitID, attackerArmyI
 	if err != nil {
 		return PublicConquestResult{}, fmt.Errorf("bootstrap: %w", err)
 	}
-	unitIDs, err := visibleArmyUnitIDs(bootstrapProjection, unitID)
+	unitIDs, err := visibleAttackerArmyUnitIDs(bootstrapProjection, unitID)
 	if err != nil {
 		return PublicConquestResult{}, fmt.Errorf("army units: %w", err)
 	}
@@ -185,6 +186,17 @@ func (r PublicConquestRunner) finishTerminal(ctx context.Context, cursor int64) 
 	return PublicConquestResult{Terminal: terminal, Audit: audit, Cursor: sequence}, nil
 }
 
+func visibleAttackerArmyUnitIDs(raw []byte, selectedUnitID string) ([]string, error) {
+	_, selected, err := explorationInputs(raw, selectedUnitID)
+	if err != nil {
+		return nil, err
+	}
+	if selected.Domain == "" || selected.TileID == "" {
+		return nil, ErrNoVisibleFrontier
+	}
+	return []string{selected.ID}, nil
+}
+
 func visibleArmyUnitIDs(raw []byte, selectedUnitID string) ([]string, error) {
 	projection, selected, err := explorationInputs(raw, selectedUnitID)
 	if err != nil {
@@ -211,9 +223,13 @@ func captureAfterCombat(ctx context.Context, combat CombatTransition, fallback f
 }
 
 func farthestKnownLandTile(projection visibility.Projection, origin visibility.TileProjection) (visibility.TileProjection, bool) {
+	return farthestKnownLandTileExcluding(projection, origin, nil)
+}
+
+func farthestKnownLandTileExcluding(projection visibility.Projection, origin visibility.TileProjection, excluded map[string]bool) (visibility.TileProjection, bool) {
 	candidates := make([]visibility.TileProjection, 0, len(projection.Tiles))
 	for _, tile := range projection.Tiles {
-		if tile.Terrain != "ocean" {
+		if tile.Terrain != "ocean" && !excluded[tile.ID] {
 			candidates = append(candidates, tile)
 		}
 	}
@@ -238,7 +254,7 @@ func visibleBacktrack(raw []byte, unitID string, trail []string) ([]string, []st
 	}
 	for index := len(trail) - 1; index >= 0; index-- {
 		path, err := visibility.Plan(projection, unitID, trail[index])
-		if err == nil && len(path) > 0 {
+		if err == nil && len(path) > 0 && projectedMoveStepLegal(projection, unitID, path[0]) {
 			remaining := append([]string(nil), trail[:index]...)
 			return path[:1], remaining, true
 		}
@@ -266,30 +282,144 @@ func moveKnownCityStep(ctx context.Context, transport ExplorationTransport, budg
 	return len(path) == 1, nil
 }
 
+func projectedMoveStepLegal(projection visibility.Projection, unitID, step string) bool {
+	if len(projection.LegalActions) == 0 {
+		return true
+	}
+	for _, action := range projection.LegalActions {
+		if action.Command != engine.CommandMoveUnit || action.EntityID != unitID || len(action.Payload) == 0 {
+			continue
+		}
+		var payload struct {
+			UnitID string   `json:"unit_id"`
+			Path   []string `json:"path"`
+		}
+		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.UnitID != unitID || len(payload.Path) != 1 {
+			continue
+		}
+		if payload.Path[0] == step {
+			return true
+		}
+	}
+	return false
+}
+
+func captureMoverUnit(projection visibility.Projection, preferredUnitID string) (string, visibility.UnitProjection, bool) {
+	preferred, ok := projectionUnit(projection, preferredUnitID)
+	if !ok {
+		return "", visibility.UnitProjection{}, false
+	}
+	if captureMoverCanAdvance(projection, preferred) {
+		return preferred.ID, preferred, true
+	}
+	units := append([]visibility.UnitProjection(nil), projection.Units...)
+	sort.Slice(units, func(i, j int) bool { return units[i].ID < units[j].ID })
+	for _, unit := range units {
+		if unit.ID == preferred.ID || unit.OwnerID != preferred.OwnerID || unit.TileID != preferred.TileID || unit.Domain == "" || !captureMoverCanAdvance(projection, unit) {
+			continue
+		}
+		return unit.ID, unit, true
+	}
+	for _, unit := range units {
+		if unit.ID == preferred.ID || unit.OwnerID != preferred.OwnerID || unit.Domain == "" || !captureMoverCanAdvance(projection, unit) {
+			continue
+		}
+		return unit.ID, unit, true
+	}
+	return preferred.ID, preferred, true
+}
+
+func captureMoverCanAdvance(projection visibility.Projection, unit visibility.UnitProjection) bool {
+	return unit.Movement > 0 || projectedMoveActionAvailable(projection, unit.ID)
+}
+
+func projectedMoveActionAvailable(projection visibility.Projection, unitID string) bool {
+	for _, action := range projection.LegalActions {
+		if action.Command == engine.CommandMoveUnit && action.EntityID == unitID {
+			return true
+		}
+	}
+	return false
+}
+
+func projectionUnit(projection visibility.Projection, unitID string) (visibility.UnitProjection, bool) {
+	for _, unit := range projection.Units {
+		if unit.ID == unitID && unit.Domain != "" && unit.TileID != "" {
+			return unit, true
+		}
+	}
+	return visibility.UnitProjection{}, false
+}
+
+const captureKnownRoutePlanningMovement = 10000 // planning-only multi-turn ceiling; execution still requires the first projected legal step
+
+func knownCaptureTargetStep(projection visibility.Projection, unitID string, target visibility.TileProjection) ([]string, bool) {
+	planningProjection := projection
+	planningProjection.Units = append([]visibility.UnitProjection(nil), projection.Units...)
+	for index := range planningProjection.Units {
+		if planningProjection.Units[index].ID == unitID && planningProjection.Units[index].Movement < captureKnownRoutePlanningMovement {
+			planningProjection.Units[index].Movement = captureKnownRoutePlanningMovement
+			break
+		}
+	}
+	path, err := visibility.PlanKnown(planningProjection, unitID, target.ID)
+	if err != nil || len(path) == 0 || !projectedMoveStepLegal(projection, unitID, path[0]) {
+		return nil, false
+	}
+	return path[:1], true
+}
+
+func recoverCaptureFrontier(projection visibility.Projection, mover visibility.UnitProjection, unitID string, target *visibility.TileProjection) ([]string, bool) {
+	visited := map[string]bool{mover.TileID: true}
+	if target != nil {
+		if path, ok := knownCaptureTargetStep(projection, unitID, *target); ok {
+			return path, true
+		}
+		_, path, ok := nextReachableFrontierToward(projection, mover, visited, unitID, *target)
+		return path, ok
+	}
+	_, path, ok := nextReachableFrontier(projection, mover, visited, unitID)
+	return path, ok
+}
+
 func (r PublicConquestRunner) captureVisibleForeignCity(ctx context.Context, unitID string, budget *conquestBudget) error {
 	if budget == nil {
 		return errors.New("public conquest budget is required")
 	}
+	activeUnitID := unitID
 	visited := make(map[string]bool)
 	trail := make([]string, 0)
 	var origin visibility.TileProjection
 	hasOrigin := false
+	moveTrace := make([]string, 0, 32)
 	for {
 		for budget.actions > 0 {
 			projection, err := r.Transport.Projection(ctx)
 			if err != nil {
 				return err
 			}
-			decoded, mover, err := explorationInputs(projection, unitID)
+			decoded, _, err := explorationInputs(projection, activeUnitID)
 			if err != nil {
 				return err
 			}
-			if !hasOrigin {
-				for _, tile := range decoded.Tiles {
-					if tile.ID == mover.TileID {
+			selectedUnitID, mover, moverOK := captureMoverUnit(decoded, activeUnitID)
+			if !moverOK {
+				return ErrNoVisibleFrontier
+			}
+			if selectedUnitID != activeUnitID {
+				activeUnitID = selectedUnitID
+				visited = make(map[string]bool)
+				trail = trail[:0]
+			}
+			var moverTile visibility.TileProjection
+			hasMoverTile := false
+			for _, tile := range decoded.Tiles {
+				if tile.ID == mover.TileID {
+					moverTile, hasMoverTile = tile, true
+					if !hasOrigin {
 						origin, hasOrigin = tile, true
-						break
 					}
+					break
 				}
 			}
 			cities := append([]visibility.CityProjection(nil), decoded.Cities...)
@@ -300,11 +430,11 @@ func (r PublicConquestRunner) captureVisibleForeignCity(ctx context.Context, uni
 					continue
 				}
 				if !city.Stale {
-					path, err := visibility.PlanKnown(decoded, unitID, city.TileID)
-					if err == nil && len(path) > 0 {
-						reached, err := moveKnownCityStep(ctx, r.Transport, budget, unitID, path)
+					path, err := visibility.PlanKnown(decoded, activeUnitID, city.TileID)
+					if err == nil && len(path) > 0 && projectedMoveStepLegal(decoded, activeUnitID, path[0]) {
+						reached, err := moveKnownCityStep(ctx, r.Transport, budget, activeUnitID, path)
 						if err != nil {
-							return err
+							return fmt.Errorf("known city move unit=%s from=%s path=%v projection=%s: %w", activeUnitID, mover.TileID, path[:1], projection, err)
 						}
 						if reached {
 							return nil
@@ -327,33 +457,60 @@ func (r PublicConquestRunner) captureVisibleForeignCity(ctx context.Context, uni
 			var path []string
 			var ok bool
 			searchTarget := cityTarget
-			if searchTarget == nil && hasOrigin {
-				if target, found := farthestKnownLandTile(decoded, origin); found {
-					searchTarget = &target
+			searchTargetKnownRoute := cityTarget != nil
+			if searchTarget == nil {
+				targetOrigin, ok := moverTile, hasMoverTile
+				if !ok {
+					targetOrigin, ok = origin, hasOrigin
+				}
+				if ok {
+					if target, found := farthestKnownLandTileExcluding(decoded, targetOrigin, visited); found {
+						searchTarget = &target
+					}
 				}
 			}
 			if searchTarget != nil {
-				_, path, ok = nextReachableFrontierToward(decoded, mover, visited, unitID, *searchTarget)
+				if searchTargetKnownRoute {
+					path, ok = knownCaptureTargetStep(decoded, activeUnitID, *searchTarget)
+				}
+				if !ok {
+					_, path, ok = nextReachableFrontierToward(decoded, mover, visited, activeUnitID, *searchTarget)
+				}
 			} else {
-				_, path, ok = nextReachableFrontier(decoded, mover, visited, unitID)
+				_, path, ok = nextReachableFrontier(decoded, mover, visited, activeUnitID)
 			}
 			if ok {
 				trail = append(trail, mover.TileID)
 			} else {
-				path, trail, ok = visibleBacktrack(projection, unitID, trail)
+				path, trail, ok = visibleBacktrack(projection, activeUnitID, trail)
+			}
+			if !ok {
+				recoveryTarget := searchTarget
+				if !searchTargetKnownRoute {
+					recoveryTarget = nil
+				}
+				if recovered, recoveredOK := recoverCaptureFrontier(decoded, mover, activeUnitID, recoveryTarget); recoveredOK {
+					visited = map[string]bool{mover.TileID: true}
+					trail = trail[:0]
+					path, ok = recovered, true
+				}
 			}
 			if !ok {
 				break
 			}
-			if _, err := budget.move(ctx, r.Transport, unitID, path[:1]); err != nil {
-				return err
+			moveTrace = append(moveTrace, fmt.Sprintf("%s:%s->%s", activeUnitID, mover.TileID, path[0]))
+			if len(moveTrace) > 32 {
+				moveTrace = append([]string(nil), moveTrace[len(moveTrace)-32:]...)
+			}
+			if _, err := budget.move(ctx, r.Transport, activeUnitID, path[:1]); err != nil {
+				return fmt.Errorf("capture frontier move unit=%s from=%s path=%v trace=%v projection=%s: %w", activeUnitID, mover.TileID, path[:1], moveTrace, projection, err)
 			}
 		}
 		if budget.actions < 1 {
-			return fmt.Errorf("visible city exploration action budget exhausted: %w; safe projection=%s", ErrExplorationBudget, r.Transport.InitialProjection)
+			return fmt.Errorf("visible city exploration action budget exhausted: %w; trace=%v; safe projection=%s", ErrExplorationBudget, moveTrace, r.Transport.InitialProjection)
 		}
 		if err := budget.advance(ctx, r.Advance); err != nil {
-			return fmt.Errorf("no visible foreign city capture route: %w; safe projection=%s", err, r.Transport.InitialProjection)
+			return fmt.Errorf("no visible foreign city capture route: %w; trace=%v; safe projection=%s", err, moveTrace, r.Transport.InitialProjection)
 		}
 	}
 }

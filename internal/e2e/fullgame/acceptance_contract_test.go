@@ -201,7 +201,7 @@ func TestAcceptanceFixturesAreCatalogIndependentAndPinned(t *testing.T) {
 	if one.Name == two.Name || one.HumanPolicy.Name() == two.HumanPolicy.Name() {
 		t.Fatal("acceptance fixtures are not independently pinned")
 	}
-	if one.ExpectedStateHash != "175d05b9e1b881c4c13801537ed92a0b13a88681f385777b9410b48b7c12b8a0" || one.ExpectedEventHash != "100cdb6b0f94131469f2af12aec4df4542024f5bc6e7c510c7dc401afa811ccf" {
+	if one.ExpectedStateHash != "21407d478695aa8d92f297d6dec402697ad30baa7fac0d6ce7c605abb7448490" || one.ExpectedEventHash != "9d01453176673740a3658ff4711d131155df42e94bf1c58325088730e9e114db" {
 		t.Fatal("row one accepted artifacts changed")
 	}
 	for _, config := range []AcceptanceConfig{one, two} {

@@ -25,6 +25,28 @@ func TestCaptureAfterCombatHonorsPublicCapturedCityResult(t *testing.T) {
 	}
 }
 
+func TestConquestAttackerArmyKeepsCoLocatedReservePubliclyAvailable(t *testing.T) {
+	projection := []byte(`{"units":[{"id":"selected","owner_id":"human","tile_id":"spawn","domain":"land"},{"id":"reserve","owner_id":"human","tile_id":"spawn","domain":"land"}]}`)
+	unitIDs, err := visibleAttackerArmyUnitIDs(projection, "selected")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(unitIDs) != 1 || unitIDs[0] != "selected" {
+		t.Fatalf("attacker army units = %v, want only selected unit so reserve can capture after combat", unitIDs)
+	}
+}
+
+func TestVisibleAttackerArmyUnitIDsAllowsAlreadyAssignedSelectedUnit(t *testing.T) {
+	projection := []byte(`{"units":[{"id":"selected","owner_id":"human","tile_id":"spawn","army_id":"army","domain":"land"},{"id":"reserve","owner_id":"human","tile_id":"spawn","domain":"land"}]}`)
+	unitIDs, err := visibleAttackerArmyUnitIDs(projection, "selected")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(unitIDs) != 1 || unitIDs[0] != "selected" {
+		t.Fatalf("attacker army units = %v, want only already assigned selected unit", unitIDs)
+	}
+}
+
 func TestVisibleArmyUnitIDsIncludesEligiblePublicCoLocatedUnits(t *testing.T) {
 	projection := []byte(`{"units":[{"id":"unit-b","owner_id":"human","tile_id":"spawn","domain":"land"},{"id":"unit-a","owner_id":"human","tile_id":"spawn","domain":"land"},{"id":"assigned","owner_id":"human","tile_id":"spawn","army_id":"other","domain":"land"},{"id":"away","owner_id":"human","tile_id":"elsewhere","domain":"land"},{"id":"enemy","owner_id":"ai","tile_id":"spawn","domain":"land"}]}`)
 	unitIDs, err := visibleArmyUnitIDs(projection, "unit-b")
@@ -57,6 +79,103 @@ func TestFarthestKnownLandTileUsesPublicTerrainAndStableTieBreak(t *testing.T) {
 	tile, ok := farthestKnownLandTile(projection, visibility.TileProjection{ID: "origin", X: 0, Y: 0})
 	if !ok || tile.ID != "far-a" {
 		t.Fatalf("farthest land tile = %#v, ok=%v, want far-a", tile, ok)
+	}
+}
+
+func TestFarthestKnownLandTileExcludingSkipsVisitedEdgeToAvoidOscillation(t *testing.T) {
+	projection := visibility.Projection{Tiles: []visibility.TileProjection{
+		{ID: "origin", X: 0, Y: 0, Terrain: "plains"},
+		{ID: "visited-edge", X: 5, Y: 0, Terrain: "plains"},
+		{ID: "next-edge", X: 4, Y: 0, Terrain: "plains"},
+		{ID: "ocean", X: 6, Y: 0, Terrain: "ocean"},
+	}}
+	tile, ok := farthestKnownLandTileExcluding(projection, projection.Tiles[0], map[string]bool{"visited-edge": true})
+	if !ok || tile.ID != "next-edge" {
+		t.Fatalf("farthest unvisited land tile = %#v, ok=%v, want next-edge", tile, ok)
+	}
+}
+
+func TestCaptureMoverSwitchesToMobileCoLocatedArmyMember(t *testing.T) {
+	projection := visibility.Projection{Units: []visibility.UnitProjection{
+		{ID: "spent", OwnerID: "account-1", TileID: "origin", Domain: "land", Movement: 0},
+		{ID: "mobile", OwnerID: "account-1", TileID: "origin", Domain: "land", Movement: 1},
+		{ID: "elsewhere", OwnerID: "account-1", TileID: "other", Domain: "land", Movement: 2},
+	}}
+	unitID, mover, ok := captureMoverUnit(projection, "spent")
+	if !ok || unitID != "mobile" || mover.ID != "mobile" {
+		t.Fatalf("capture mover = %q/%#v ok=%v, want mobile", unitID, mover, ok)
+	}
+}
+
+func TestCaptureMoverSwitchesToVisibleLegalReserveWhenPreferredArmyCannotMove(t *testing.T) {
+	projection := visibility.Projection{
+		Units: []visibility.UnitProjection{
+			{ID: "army-bound", OwnerID: "account-1", TileID: "origin", Domain: "land", Movement: 0},
+			{ID: "reserve", OwnerID: "account-1", TileID: "reserve-origin", Domain: "land", Movement: 2},
+			{ID: "enemy", OwnerID: "account-2", TileID: "reserve-origin", Domain: "land", Movement: 2},
+		},
+		LegalActions: []visibility.ActionProjection{
+			{Command: engine.CommandMoveUnit, EntityID: "reserve", Payload: []byte(`{"unit_id":"reserve","path":["next"]}`)},
+		},
+	}
+	unitID, mover, ok := captureMoverUnit(projection, "army-bound")
+	if !ok || unitID != "reserve" || mover.ID != "reserve" {
+		t.Fatalf("capture mover = %q/%#v ok=%v, want visible reserve", unitID, mover, ok)
+	}
+}
+
+func TestCaptureFrontierUsesOnlyProjectedLegalMoveSteps(t *testing.T) {
+	projection := visibility.Projection{
+		Tiles: []visibility.TileProjection{
+			{ID: "origin", X: 0, Y: 0, Terrain: "plains", Planning: &visibility.TilePlanning{Cost: 1, Accessible: true, Domains: []string{"land"}}},
+			{ID: "blocked-by-movement", X: 1, Y: 0, Terrain: "forest", Planning: &visibility.TilePlanning{Cost: 1, Accessible: true, Domains: []string{"land"}}},
+			{ID: "legal-step", X: 0, Y: 1, Terrain: "plains", Planning: &visibility.TilePlanning{Cost: 1, Accessible: true, Domains: []string{"land"}}},
+		},
+		Units: []visibility.UnitProjection{{ID: "mover", OwnerID: "human", TileID: "origin", Domain: "land", Movement: 1}},
+		LegalActions: []visibility.ActionProjection{
+			{Command: engine.CommandMoveUnit, EntityID: "mover", Payload: []byte(`{"unit_id":"mover","path":["legal-step"]}`)},
+		},
+	}
+	_, path, ok := nextReachableFrontierToward(projection, projection.Units[0], map[string]bool{"origin": true}, "mover", visibility.TileProjection{ID: "target", X: 2, Y: 0})
+	if !ok || len(path) == 0 || path[0] != "legal-step" {
+		t.Fatalf("frontier path = %v ok=%v, want legal-step", path, ok)
+	}
+}
+
+func TestCaptureKnownTargetStepUsesPublicMemoryRoute(t *testing.T) {
+	projection := visibility.Projection{
+		Tiles: []visibility.TileProjection{
+			{ID: "origin", X: 0, Y: 0, Terrain: "plains", Planning: &visibility.TilePlanning{Cost: 1, Accessible: true, Domains: []string{"land"}}},
+			{ID: "east", X: 1, Y: 0, Terrain: "plains", Planning: &visibility.TilePlanning{Cost: 1, Accessible: true, Domains: []string{"land"}}},
+			{ID: "local", X: 0, Y: 1, Terrain: "plains", Planning: &visibility.TilePlanning{Cost: 1, Accessible: true, Domains: []string{"land"}}},
+			{ID: "remembered-target", X: 2, Y: 0, Terrain: "plains", Stale: true},
+		},
+		Units: []visibility.UnitProjection{{ID: "mover", OwnerID: "human", TileID: "origin", Domain: "land", Movement: 1}},
+		LegalActions: []visibility.ActionProjection{
+			{Command: engine.CommandMoveUnit, EntityID: "mover", Payload: []byte(`{"unit_id":"mover","path":["east"]}`)},
+			{Command: engine.CommandMoveUnit, EntityID: "mover", Payload: []byte(`{"unit_id":"mover","path":["local"]}`)},
+		},
+	}
+	path, ok := knownCaptureTargetStep(projection, "mover", visibility.TileProjection{ID: "remembered-target"})
+	if !ok || len(path) != 1 || path[0] != "east" {
+		t.Fatalf("known target step = %v ok=%v, want east", path, ok)
+	}
+}
+
+func TestRecoverCaptureFrontierResetsStaleVisitedDeadEnd(t *testing.T) {
+	projection := visibility.Projection{Tiles: []visibility.TileProjection{
+		{ID: "origin", X: 0, Y: 0, Terrain: "plains", Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{"land"}, Accessible: true}},
+		{ID: "east", X: 1, Y: 0, Terrain: "plains", Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{"land"}, Accessible: true}},
+		{ID: "west", X: -1, Y: 0, Terrain: "plains", Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{"land"}, Accessible: true}},
+	}, Units: []visibility.UnitProjection{{ID: "scout", OwnerID: "account-1", TileID: "origin", Domain: "land", Movement: 1}}}
+	mover := projection.Units[0]
+	blockedVisited := map[string]bool{"origin": true, "east": true, "west": true}
+	if _, _, ok := nextReachableFrontierToward(projection, mover, blockedVisited, "scout", projection.Tiles[1]); ok {
+		t.Fatal("test setup unexpectedly had a route before visited reset")
+	}
+	path, ok := recoverCaptureFrontier(projection, mover, "scout", &projection.Tiles[1])
+	if !ok || len(path) != 1 || path[0] != "east" {
+		t.Fatalf("recovered capture frontier = %v, ok=%v, want [east]", path, ok)
 	}
 }
 

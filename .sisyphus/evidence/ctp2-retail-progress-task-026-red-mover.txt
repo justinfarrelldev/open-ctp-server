@@ -1,0 +1,4 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame [github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame.test]
+internal/e2e/fullgame/runner_test.go:69:23: undefined: captureMoverUnit
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame [build failed]
+FAIL

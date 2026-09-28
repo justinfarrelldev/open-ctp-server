@@ -132,7 +132,7 @@ func nextReachableFrontier(projection visibility.Projection, mover visibility.Un
 	})
 	for _, candidate := range candidates {
 		path, err := visibility.Plan(projection, unitID, candidate.ID)
-		if err == nil && len(path) > 0 {
+		if err == nil && len(path) > 0 && projectedMoveStepLegal(projection, unitID, path[0]) {
 			return candidate, path, true
 		}
 	}
@@ -169,7 +169,7 @@ func nextReachableFrontierToward(projection visibility.Projection, mover visibil
 	})
 	for _, candidate := range candidates {
 		path, err := visibility.Plan(projection, unitID, candidate.ID)
-		if err == nil && len(path) > 0 {
+		if err == nil && len(path) > 0 && projectedMoveStepLegal(projection, unitID, path[0]) {
 			return candidate, path, true
 		}
 	}

@@ -37,6 +37,7 @@
 - [x] Task 023: Terrain improvement `Airport` now acts as an owner-compatible refuel point during round advancement.
 - [x] Task 024: AI now suppresses fragile legacy `terraform` unit commands and relies on validated public-works `build-improvement` terraform paths instead.
 - [x] Task 025: Trade-route legal actions now require current visible source/destination cities, preventing stale fog-memory routes from reaching AI submission.
+- [x] Task 026: Public conquest capture recovery now keeps reserve capture units out of combat, switches to visible mobile legal reserves when needed, routes remembered city targets one projected legal step at a time, and avoids stale-memory frontier oscillation.
 
 ## Full-Game Mechanical Execution First
 
@@ -67,5 +68,5 @@
 - [ ] Run freeze guard after production `.go` changes.
 - [ ] Run `git diff --check` before every commit.
 - [ ] Run long retail AI artifact recording after full-game progress fixes.
-- [ ] Run full repository validation where feasible before final review.
+- [x] Run full repository validation where feasible before final review.
 - [ ] Complete and record a final maintainability/source-parity code review.
