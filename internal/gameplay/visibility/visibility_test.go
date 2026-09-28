@@ -74,6 +74,25 @@ func TestSocialPolicyProjectsOwnSliderValuesAndLegalAction(t *testing.T) {
 	t.Fatalf("social policy action missing: %#v", actions)
 }
 
+func TestTradeRouteActionsSuppressStaleCityMemory(t *testing.T) {
+	projection := Projection{
+		Cities: []CityProjection{
+			{ID: "old-source", OwnerID: "a", TileID: "old-tile", Stale: true, Observed: 1},
+			{ID: "fresh-source", OwnerID: "a", TileID: "fresh-tile", Observed: 3},
+			{ID: "old-destination", OwnerID: "b", TileID: "old-dest", Stale: true, Observed: 1},
+			{ID: "fresh-destination", OwnerID: "b", TileID: "fresh-dest", Observed: 3},
+		},
+		Diplomacy: &DiplomacyProjection{Relations: []DiplomacyRelationProjection{{TargetPlayerID: "b", Trade: true}}},
+	}
+	actions := tradeRouteActions(engine.State{}, projection, "a")
+	if len(actions) != 1 {
+		t.Fatalf("trade route actions = %#v, want only fresh source/destination", actions)
+	}
+	if actions[0].EntityID != "fresh-source" || actions[0].TargetID != "fresh-destination" {
+		t.Fatalf("stale city memory leaked into trade route action: %#v", actions[0])
+	}
+}
+
 func TestTerrainImprovementVisionRangeRevealsTiles(t *testing.T) {
 	state := engine.State{
 		Players:  []engine.Player{{ID: "a", NationID: "na", Lifecycle: engine.PlayerActive}},

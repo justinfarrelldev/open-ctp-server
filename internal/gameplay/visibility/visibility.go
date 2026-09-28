@@ -885,7 +885,7 @@ func tradeRouteActions(state engine.State, projection Projection, playerID strin
 	owned := make([]CityProjection, 0)
 	destinations := make([]CityProjection, 0)
 	for _, city := range projection.Cities {
-		if city.ID == "" {
+		if city.ID == "" || city.Stale {
 			continue
 		}
 		if city.OwnerID == playerID {

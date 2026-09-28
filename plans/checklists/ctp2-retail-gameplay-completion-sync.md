@@ -36,6 +36,7 @@
 - [x] Task 022: Terrain improvement `VisionRange`/`RadarRange`/`ListeningPost` now extend player visibility from completed improvement overlays.
 - [x] Task 023: Terrain improvement `Airport` now acts as an owner-compatible refuel point during round advancement.
 - [x] Task 024: AI now suppresses fragile legacy `terraform` unit commands and relies on validated public-works `build-improvement` terraform paths instead.
+- [x] Task 025: Trade-route legal actions now require current visible source/destination cities, preventing stale fog-memory routes from reaching AI submission.
 
 ## Full-Game Mechanical Execution First
 
