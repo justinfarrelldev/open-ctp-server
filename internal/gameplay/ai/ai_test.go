@@ -300,6 +300,25 @@ func TestPlannerUsesProjectedBombardAction(t *testing.T) {
 	t.Fatalf("bombard candidate missing: %#v", candidates)
 }
 
+func TestPlannerUsesProjectedUpgradeAction(t *testing.T) {
+	input, err := json.Marshal(visibility.Projection{
+		LegalActions: []visibility.ActionProjection{{Command: engine.CommandUpgradeUnit, Route: "upgrade-unit", EntityID: "old-unit", TargetID: "UNIT_NEW", Payload: json.RawMessage(`{"unit_id":"old-unit","upgrade_to":"UNIT_NEW"}`)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := Plan(input, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if candidate.Type == engine.CommandUpgradeUnit && candidate.EntityID == "old-unit" && candidate.TargetID == "UNIT_NEW" {
+			return
+		}
+	}
+	t.Fatalf("upgrade candidate missing: %#v", candidates)
+}
+
 func TestPlannerUsesProjectedTradeProposalAction(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		LegalActions: []visibility.ActionProjection{{Command: engine.CommandProposeAgreement, Route: "propose-agreement", EntityID: "ai", TargetID: "foreign", Payload: json.RawMessage(`{"proposal_id":"client-trade-ai-foreign","target_player_id":"foreign","kind":"trade"}`)}},

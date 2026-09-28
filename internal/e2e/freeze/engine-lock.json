@@ -35,7 +35,7 @@
     },
     {
       "path": "internal/gameplay/ai/ai.go",
-      "sha256": "b29597604c20b7293e6e50411c348b11aaec587cf13edeb12be36b66ea9caeac"
+      "sha256": "223c56a0445cbd70267f34791b60683155e170932086a1dd4d3c9d9d8c797eed"
     },
     {
       "path": "internal/gameplay/combat/http.go",

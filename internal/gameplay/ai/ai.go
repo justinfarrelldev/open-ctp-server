@@ -200,6 +200,7 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 	candidates = append(candidates, diplomacyCandidates(projection, playerID)...)
 	candidates = append(candidates, projectedUnitSpecialTargetCandidates(projection)...)
 	candidates = append(candidates, projectedBombardCandidates(projection)...)
+	candidates = append(candidates, projectedUpgradeCandidates(projection)...)
 	candidates = append(candidates, combatCandidates(projection, playerID)...)
 	candidates = append(candidates, transportCandidates(projection, playerID)...)
 	candidates = append(candidates, terrainImprovementCandidates(projection, playerID)...)
@@ -493,6 +494,24 @@ func projectedBombardCandidates(projection visibility.Projection) []Candidate {
 			continue
 		}
 		candidates = append(candidates, Candidate{Type: engine.CommandBombard, EntityID: action.EntityID, TargetID: action.TargetID, Score: 698, Payload: append(json.RawMessage(nil), action.Payload...)})
+	}
+	return candidates
+}
+
+func projectedUpgradeCandidates(projection visibility.Projection) []Candidate {
+	candidates := make([]Candidate, 0)
+	for _, action := range projection.LegalActions {
+		if action.Command != engine.CommandUpgradeUnit || len(action.Payload) == 0 {
+			continue
+		}
+		var payload struct {
+			UnitID    string `json:"unit_id"`
+			UpgradeTo string `json:"upgrade_to"`
+		}
+		if err := json.Unmarshal(action.Payload, &payload); err != nil || payload.UnitID == "" || payload.UpgradeTo == "" {
+			continue
+		}
+		candidates = append(candidates, Candidate{Type: engine.CommandUpgradeUnit, EntityID: action.EntityID, TargetID: action.TargetID, Score: 735, Payload: append(json.RawMessage(nil), action.Payload...)})
 	}
 	return candidates
 }
