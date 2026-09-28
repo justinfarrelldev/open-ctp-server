@@ -189,6 +189,10 @@ type RuntimeGovernmentDefinition struct {
 	MartialLawMaxUnits       int     `json:"martial_law_max_units,omitempty"`
 	MartialLawEffect         int     `json:"martial_law_effect,omitempty"`
 	MartialLawThreshold      int     `json:"martial_law_threshold,omitempty"`
+	UnitRushModifier         float64 `json:"unit_rush_modifier,omitempty"`
+	BuildingRushModifier     float64 `json:"building_rush_modifier,omitempty"`
+	WonderRushModifier       float64 `json:"wonder_rush_modifier,omitempty"`
+	EndGameRushModifier      float64 `json:"endgame_rush_modifier,omitempty"`
 	MaxIncomingTrade         int     `json:"max_incoming_trade,omitempty"`
 	MaxOutgoingTrade         int     `json:"max_outgoing_trade,omitempty"`
 	MaxSciencePercent        *int    `json:"max_science_percent,omitempty"`

@@ -373,7 +373,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("granary production = %+v ok=%v", granary, ok)
 	}
 	democracy, ok := runtime.Government("GOVERNMENT_DEMOCRACY")
-	if !ok || democracy.EnableAdvanceID != "ADVANCE_DEMOCRACY" || democracy.ResearchPercent != 100 || democracy.FoodPercent != 25 || democracy.ProductionPercent != 15 || democracy.GoldPercent != 25 || democracy.PollutionPercent != -20 || democracy.MaxSciencePercent == nil || *democracy.MaxSciencePercent != 80 || democracy.MaxIncomingTrade != 100000 || democracy.MaxOutgoingTrade != 100000 {
+	if !ok || democracy.EnableAdvanceID != "ADVANCE_DEMOCRACY" || democracy.ResearchPercent != 100 || democracy.FoodPercent != 25 || democracy.ProductionPercent != 15 || democracy.GoldPercent != 25 || democracy.PollutionPercent != -20 || democracy.MaxSciencePercent == nil || *democracy.MaxSciencePercent != 80 || democracy.MaxIncomingTrade != 100000 || democracy.MaxOutgoingTrade != 100000 || democracy.UnitRushModifier != 5 || democracy.BuildingRushModifier != 4 || democracy.WonderRushModifier != 7 || democracy.EndGameRushModifier != 7 {
 		t.Fatalf("democracy government = %+v ok=%v", democracy, ok)
 	}
 	if democracy.WagesExpectation != 1 || democracy.WorkdayExpectation != 0 || democracy.RationsExpectation != 0 || democracy.PositiveWagesCoef != 1 || democracy.NegativeWorkdayCoef != 1 || democracy.PositiveRationsCoef != 1 {

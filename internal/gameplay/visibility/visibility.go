@@ -886,7 +886,7 @@ func productionActions(state engine.State, projection Projection, playerID strin
 		}
 		for index, queued := range city.Queue {
 			actions = append(actions, action(engine.CommandCancelProduction, "cancel-production", city.ID, queued.ID, map[string]string{"city_id": city.ID, "item_id": queued.ID}, []string{"city_id", "item_id"}))
-			rushCost := projectedRushBuyCost(city, queued)
+			rushCost := projectedRushBuyCost(projection, city, queued)
 			if index == 0 && rushCost > 0 && projection.Diplomacy != nil && projection.Diplomacy.Gold >= rushCost {
 				actions = append(actions, action(engine.CommandRushBuy, "rush-buy", city.ID, queued.ID, map[string]string{"city_id": city.ID}, []string{"city_id"}))
 			}
@@ -935,7 +935,7 @@ func cityBuildingIDs(city CityProjection) map[string]bool {
 	return built
 }
 
-func projectedRushBuyCost(city CityProjection, item engine.ProductionItem) int {
+func projectedRushBuyCost(projection Projection, city CityProjection, item engine.ProductionItem) int {
 	remaining := item.Cost - city.StoredProduction
 	if remaining <= 0 {
 		return 0
@@ -943,7 +943,38 @@ func projectedRushBuyCost(city CityProjection, item engine.ProductionItem) int {
 	if item.Cost < 1 {
 		return remaining
 	}
-	return remaining + remaining*remaining/item.Cost
+	typeCoefficient := projectedRushBuyTypeCoefficient(projection, item)
+	percentRemaining := float64(remaining) / float64(item.Cost)
+	return int(typeCoefficient * (1 + percentRemaining) * float64(remaining))
+}
+
+func projectedRushBuyTypeCoefficient(projection Projection, item engine.ProductionItem) float64 {
+	if projection.Diplomacy == nil || projection.Rules == nil || projection.Diplomacy.GovernmentID == "" {
+		return 1
+	}
+	for _, government := range projection.Rules.Governments {
+		if government.ID != projection.Diplomacy.GovernmentID {
+			continue
+		}
+		switch item.Kind {
+		case engine.ProductionUnit:
+			return positiveProjectedRushBuyCoefficient(government.UnitRushModifier)
+		case engine.ProductionBuilding:
+			return positiveProjectedRushBuyCoefficient(government.BuildingRushModifier)
+		case engine.ProductionWonder:
+			return positiveProjectedRushBuyCoefficient(government.WonderRushModifier)
+		default:
+			return positiveProjectedRushBuyCoefficient(government.EndGameRushModifier)
+		}
+	}
+	return 1
+}
+
+func positiveProjectedRushBuyCoefficient(value float64) float64 {
+	if value <= 0 {
+		return 1
+	}
+	return value
 }
 
 func productionActionItem(production rules.RuntimeProduction) engine.ProductionItem {

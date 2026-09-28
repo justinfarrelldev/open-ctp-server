@@ -23,6 +23,7 @@
 - [x] Task 009: Rush-buy is a legal projected economy action; AI can spend accumulated gold to buy queued production front items into completion via the normal turn pipeline.
 - [x] Task 010: Science-rate commands now persist the government-capped science percentage, matching retail tax-rate clamping.
 - [x] Task 011: Government trade caps from retail `govern.txt` are projected into runtime rules, enforced when creating trade routes, and suppress invalid projected legal actions.
+- [x] Task 012: Retail government rush-buy coefficients now project from `govern.txt`, engine rush-buy costs use the active government/item type modifier, and legal actions suppress unaffordable retail-modified rush buys.
 
 ## Full-Game Mechanical Execution First
 

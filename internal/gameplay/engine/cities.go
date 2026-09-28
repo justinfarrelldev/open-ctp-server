@@ -285,7 +285,7 @@ func applyCityCommand(state *State, command Command, runtime *rules.RuntimeRules
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", err
 		}
-		return EventProductionRushed, rushBuyProduction(state, command.ActorPlayerID, payload)
+		return EventProductionRushed, rushBuyProduction(state, command.ActorPlayerID, payload, runtime)
 	case CommandSetSpecialists:
 		var payload SetSpecialistsPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -855,7 +855,7 @@ func cancelProduction(state *State, actor string, payload CancelProductionPayloa
 	return errors.New("production item is not queued")
 }
 
-func rushBuyProduction(state *State, actor string, payload RushBuyPayload) error {
+func rushBuyProduction(state *State, actor string, payload RushBuyPayload, runtime *rules.RuntimeRules) error {
 	city, ok := cityByID(*state, payload.CityID)
 	if !ok || city.OwnerID != actor || len(city.Queue) == 0 {
 		return errors.New("production item is not owned by actor")
@@ -865,7 +865,7 @@ func rushBuyProduction(state *State, actor string, payload RushBuyPayload) error
 		return errors.New("production item is not owned by actor")
 	}
 	item := city.Queue[0]
-	cost := rushBuyCost(*city, item)
+	cost := rushBuyCost(*city, item, rushBuyTypeCoefficient(*state, actor, item, runtime))
 	if cost < 1 || nation.Gold < cost {
 		return errors.New("insufficient gold for rush buy")
 	}
@@ -874,7 +874,7 @@ func rushBuyProduction(state *State, actor string, payload RushBuyPayload) error
 	return nil
 }
 
-func rushBuyCost(city City, item ProductionItem) int {
+func rushBuyCost(city City, item ProductionItem, typeCoefficient float64) int {
 	remaining := item.Cost - city.StoredProduction
 	if remaining <= 0 {
 		return 0
@@ -882,7 +882,52 @@ func rushBuyCost(city City, item ProductionItem) int {
 	if item.Cost < 1 {
 		return remaining
 	}
-	return remaining + remaining*remaining/item.Cost
+	if typeCoefficient <= 0 {
+		typeCoefficient = 1
+	}
+	percentRemaining := float64(remaining) / float64(item.Cost)
+	return int(typeCoefficient * (1 + percentRemaining) * float64(remaining))
+}
+
+func rushBuyTypeCoefficient(state State, actor string, item ProductionItem, runtime *rules.RuntimeRules) float64 {
+	if runtime == nil {
+		return 1
+	}
+	nationID := nationForPlayer(state, actor)
+	if nationID == "" {
+		return 1
+	}
+	governmentID := ""
+	for _, nation := range state.Nations {
+		if nation.ID == nationID {
+			governmentID = nation.GovernmentID
+			break
+		}
+	}
+	if governmentID == "" {
+		return 1
+	}
+	government, ok := runtime.Government(governmentID)
+	if !ok {
+		return 1
+	}
+	switch item.Kind {
+	case ProductionUnit:
+		return positiveRushBuyCoefficient(government.UnitRushModifier)
+	case ProductionBuilding:
+		return positiveRushBuyCoefficient(government.BuildingRushModifier)
+	case ProductionWonder:
+		return positiveRushBuyCoefficient(government.WonderRushModifier)
+	default:
+		return positiveRushBuyCoefficient(government.EndGameRushModifier)
+	}
+}
+
+func positiveRushBuyCoefficient(value float64) float64 {
+	if value <= 0 {
+		return 1
+	}
+	return value
 }
 
 // RecalculateRound applies the city pipeline once for the current resolved turn.

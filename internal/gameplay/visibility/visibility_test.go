@@ -142,6 +142,32 @@ func TestVisibleCitiesSuppressTradeRouteActionsAtGovernmentCaps(t *testing.T) {
 	}
 }
 
+func TestRushBuyActionUsesGovernmentModifier(t *testing.T) {
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: engine.DomainLand, Movement: 1, Health: 1}}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: engine.ProductionUnit, Cost: 1}}, Governments: []rules.RuntimeGovernmentDefinition{{ID: "GOVERNMENT_RETAIL", BuildingRushModifier: 4}}}
+	definitions, hash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := fixtureState()
+	state.Rules = engine.RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: hash, Definitions: definitions}
+	state.Players = []engine.Player{{ID: "a", NationID: "na", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"a"}
+	state.Nations = []engine.Nation{{ID: "na", GovernmentID: "GOVERNMENT_RETAIL", Gold: 383}}
+	state.Tiles = []engine.Tile{{ID: "0,0", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true}}
+	state.Units = nil
+	state.Cities = []engine.City{{ID: "city", OwnerID: "a", TileID: "0,0", StoredProduction: 40, Queue: []engine.ProductionItem{{ID: "IMPROVE_SYNTHETIC", Kind: engine.ProductionBuilding, Cost: 100}}}}
+
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, action := range projection.LegalActions {
+		if action.Command == engine.CommandRushBuy && action.EntityID == "city" {
+			t.Fatalf("rush-buy action leaked below government-modified cost: %#v", action)
+		}
+	}
+}
+
 func TestProjectionSuppressesCantBuildRuntimeUnitProduction(t *testing.T) {
 	state := fixtureState()
 	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_OK", Kind: engine.ProductionUnit}, {ID: "UNIT_CITY", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_OK", Domain: engine.DomainLand, Movement: 1, Health: 1}, {ID: "UNIT_CITY", Domain: engine.DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "cant-build", Kind: engine.EffectCantBuild}}}}}
