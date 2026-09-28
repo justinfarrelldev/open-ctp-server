@@ -802,7 +802,8 @@ func refreshStarterMovement(state *State, runtime *rules.RuntimeRules) {
 	}
 	for index := range state.Units {
 		if state.Units[index].TransportID == "" {
-			state.Units[index].Movement = runtime.Starter.Movement
+			healUnitFromTerrainImprovements(state, &state.Units[index])
+			state.Units[index].Movement = refreshedUnitMovement(*state, state.Units[index], runtime.Starter.Movement)
 		}
 	}
 }

@@ -141,6 +141,24 @@ func TestRetailTerrainImprovementBuildPreservesDefenseMetadata(t *testing.T) {
 	}
 }
 
+func TestRetailTerrainImprovementHealRateHealsUnitsOnRoundComplete(t *testing.T) {
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: DomainLand, Movement: 1, Strength: 1, Armor: 1, Health: 10}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainLand, Movement: 1, Health: 10}}}
+	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := runtimeStartedState(t)
+	state.Rules = RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: contentHash, Definitions: definitions}
+	state.Tiles = []Tile{{ID: "tile-a", X: 0, Y: 0, Terrain: TerrainPlains, OwnerID: "player-a", Open: true}}
+	state.Units = []Unit{{ID: "unit-a", OwnerID: "player-a", TileID: "tile-a", Domain: DomainLand, Movement: 0, MaxMovement: 1, Health: 4, MaxHealth: 10}}
+	state.Overlays = []TileOverlay{{ID: "fort", TileID: "tile-a", Kind: "improvement", OwnerID: "player-a", ImprovementID: "TILEIMP_FORT", HealRatePercent: 50}}
+
+	advanceRound(&state, &runtime)
+	if len(state.Units) != 1 || state.Units[0].Health != 9 {
+		t.Fatalf("unit health after heal-rate overlay = %#v, want 9/10", state.Units)
+	}
+}
+
 func TestRetailTerrainImprovementRequiresAllowedTerrain(t *testing.T) {
 	state := runtimeStartedState(t)
 	state.Nations[0].PublicWorks = 10

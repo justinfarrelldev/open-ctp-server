@@ -32,6 +32,7 @@
 - [x] Task 018: AI planners now consume projected legal `upgrade-unit` actions so retail `UpgradeTo` chains can advance autonomous units.
 - [x] Task 019: AI planners now consume projected retail special city/tile actions for soothsaying, park creation, and terraform orders.
 - [x] Task 020: Retail AI social-slider projection now requires visible city fit evidence before changing workday/wages/rations, matching governor fit checks and preserving long-game production.
+- [x] Task 021: Terrain improvement `HealRate` now executes during round advancement by healing owner-compatible units on completed improvement overlays.
 
 ## Full-Game Mechanical Execution First
 

@@ -118,6 +118,7 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 	crashedUnits := make([]string, 0)
 	for index := range state.Units {
 		if state.Units[index].TransportID == "" {
+			healUnitFromTerrainImprovements(state, &state.Units[index])
 			state.Units[index].Movement = refreshedUnitMovement(*state, state.Units[index], runtime.Starter.Movement)
 		}
 		if state.Units[index].MaxFuel > 0 && unitCanRefuel(*state, state.Units[index]) {
@@ -132,6 +133,33 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 	}
 	advanceTreasury(state, runtime)
 	advanceResearch(state, runtime)
+}
+
+func healUnitFromTerrainImprovements(state *State, unit *Unit) {
+	if unit == nil || unit.TileID == "" || unit.Health <= 0 || unit.MaxHealth <= 0 || unit.Health >= unit.MaxHealth {
+		return
+	}
+	bestPercent := 0
+	for _, overlay := range state.Overlays {
+		if overlay.TileID != unit.TileID || overlay.Kind != "improvement" || overlay.Remaining > 0 || overlay.HealRatePercent <= bestPercent {
+			continue
+		}
+		if overlay.OwnerID != "" && overlay.OwnerID != unit.OwnerID {
+			continue
+		}
+		bestPercent = overlay.HealRatePercent
+	}
+	if bestPercent <= 0 {
+		return
+	}
+	heal := unit.MaxHealth * bestPercent / 100
+	if heal < 1 {
+		heal = 1
+	}
+	unit.Health += heal
+	if unit.Health > unit.MaxHealth {
+		unit.Health = unit.MaxHealth
+	}
 }
 
 func unitCanRefuel(state State, unit Unit) bool {
