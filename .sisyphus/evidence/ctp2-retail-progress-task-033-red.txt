@@ -1,0 +1,5 @@
+--- FAIL: TestNationFeatIncreaseHitPointsAppliesToProducedUnits (0.00s)
+    feat_hitpoints_task33_test.go:23: produced unit hp = 10/10, want 11/11 from active hit-point feat
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.004s
+FAIL

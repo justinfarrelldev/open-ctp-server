@@ -326,6 +326,7 @@
 - [x] Task 375: Retail building-triggered feats apply when the released `feat.txt` building thresholds are reached.
 - [x] Task 376: Retail conquered-by-force feats apply when a qualifying civilization loses its final city.
 - [x] Task 377: Retail boat-movement feat effects are executed for sea/amphibious unit movement refresh.
+- [x] Task 378: Retail feat hit-point effects apply to produced unit hit points while active.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

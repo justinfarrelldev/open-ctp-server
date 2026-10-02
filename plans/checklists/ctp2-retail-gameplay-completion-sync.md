@@ -44,6 +44,7 @@
 - [x] Task 030: Retail building-triggered feats now import `Building` thresholds and apply timed nation effects when city production completes the required building count.
 - [x] Task 031: Retail `FEAT_CONQUERED_BY_FORCE` now imports `MinimumSizeOfCiv`, tracks nation max city count, and applies the hit-point feat when a qualifying civilization loses its final city.
 - [x] Task 032: Retail feat boat-movement effects now contribute to sea/amphibious movement refresh alongside wonder boat-movement bonuses.
+- [x] Task 033: Retail feat hit-point effects now add to produced units' current and maximum hit points while active.
 
 ## Full-Game Mechanical Execution First
 

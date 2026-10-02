@@ -2728,7 +2728,7 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 	if !ok {
 		return nil
 	}
-	health := definition.Health + ownerWonderEffectSum(*state, city.OwnerID, EffectIncreaseHP)
+	health := definition.Health + ownerWonderEffectSum(*state, city.OwnerID, EffectIncreaseHP) + ownerEffectSum(*state, city.OwnerID, EffectIncreaseHP)
 	if health < 1 {
 		health = 1
 	}
