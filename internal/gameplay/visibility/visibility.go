@@ -1036,6 +1036,9 @@ func cityBuildingIDs(city CityProjection) map[string]bool {
 }
 
 func projectedRushBuyCost(projection Projection, city CityProjection, item engine.ProductionItem) int {
+	if item.Kind == engine.ProductionCapitalization || item.Kind == engine.ProductionInfrastructure {
+		return 0
+	}
 	remaining := item.Cost - city.StoredProduction
 	if remaining <= 0 {
 		return 0

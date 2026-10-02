@@ -320,6 +320,7 @@
 - [x] Task 369: Retail terrain `EnvBase.Defense` imports as runtime terrain defense metadata.
 - [x] Task 370: Combat defense uses runtime terrain defense percentages with synthetic forest fallback retained.
 - [x] Task 371: Bombard, active-defense, and counter-bombard defense paths use the same runtime terrain defense modifier.
+- [x] Task 372: Advance-enabled capitalization and infrastructure production use retail government coefficients and safe projected prerequisites.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

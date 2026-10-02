@@ -25,7 +25,7 @@ func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 	if got, want := len(runtime.Advances), 107; got != want {
 		t.Fatalf("runtime advances = %d, want %d", got, want)
 	}
-	if got, want := len(runtime.Production), 156; got != want {
+	if got, want := len(runtime.Production), 158; got != want {
 		t.Fatalf("runtime production = %d, want %d", got, want)
 	}
 	if got, want := len(runtime.Movement.Terrains), 26; got != want {
@@ -335,6 +335,22 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	globalEconomics, ok := runtime.Advance("ADVANCE_GLOBAL_ECONOMICS")
 	if !ok || !globalEconomics.EnablesCapitalization {
 		t.Fatalf("global economics advance = %+v ok=%v", globalEconomics, ok)
+	}
+	capitalization, ok := runtime.ProductionDefinition("CAPITALIZATION")
+	if !ok || capitalization.Kind != "capitalization" || capitalization.Cost != 1 || !sameStringSlices(capitalization.Prerequisites, []string{"ADVANCE_GLOBAL_ECONOMICS"}) {
+		t.Fatalf("capitalization production = %+v ok=%v", capitalization, ok)
+	}
+	infrastructure, ok := runtime.ProductionDefinition("INFRASTRUCTURE")
+	if !ok || infrastructure.Kind != "infrastructure" || infrastructure.Cost != 1 || !sameStringSlices(infrastructure.Prerequisites, []string{"ADVANCE_MASS_PRODUCTION"}) {
+		t.Fatalf("infrastructure production = %+v ok=%v", infrastructure, ok)
+	}
+	anarchyCoefficients, ok := runtime.Government("GOVERNMENT_ANARCHY")
+	if !ok || anarchyCoefficients.InfrastructureCoefficient != 0.25 || anarchyCoefficients.CapitalizationCoefficient != 0.25 {
+		t.Fatalf("anarchy coefficients = %+v ok=%v", anarchyCoefficients, ok)
+	}
+	democracyCoefficients, ok := runtime.Government("GOVERNMENT_DEMOCRACY")
+	if !ok || democracyCoefficients.InfrastructureCoefficient != 0.5 || democracyCoefficients.CapitalizationCoefficient != 0.5 {
+		t.Fatalf("democracy coefficients = %+v ok=%v", democracyCoefficients, ok)
 	}
 
 	plains, ok := runtime.Movement.Terrain("TERRAIN_PLAINS")

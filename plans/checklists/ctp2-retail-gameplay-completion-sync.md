@@ -38,6 +38,7 @@
 - [x] Task 024: AI now suppresses fragile legacy `terraform` unit commands and relies on validated public-works `build-improvement` terraform paths instead.
 - [x] Task 025: Trade-route legal actions now require current visible source/destination cities, preventing stale fog-memory routes from reaching AI submission.
 - [x] Task 026: Public conquest capture recovery now keeps reserve capture units out of combat, switches to visible mobile legal reserves when needed, routes remembered city targets one projected legal step at a time, and avoids stale-memory frontier oscillation.
+- [x] Task 027: Advance-enabled capitalization and infrastructure production now projects from retail advances/government coefficients, remains public-advance gated, and converts city production into gold or public works with retail ceiling semantics.
 
 ## Full-Game Mechanical Execution First
 

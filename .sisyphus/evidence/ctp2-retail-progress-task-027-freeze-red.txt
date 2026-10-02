@@ -1,0 +1,15 @@
+--- FAIL: TestEngineLock (0.00s)
+    lock_test.go:19: manifest path "internal/gameplay/engine/cities.go": hash mismatch: manifest a3c0f62e6792e60a4c9f4130a82428cabbf19a963dfb9ae49a08e7fff992de8e, actual 377f855a3ebfb04fea9a7fca03d6a3396d3440dd523d197baba45a6dd723bd58
+--- FAIL: TestLockRejectsNegativeCasesInTemporaryRoots (0.07s)
+    --- FAIL: TestLockRejectsNegativeCasesInTemporaryRoots/added (0.01s)
+        lock_test.go:72: error = manifest path "internal/gameplay/engine/cities.go": hash mismatch: manifest a3c0f62e6792e60a4c9f4130a82428cabbf19a963dfb9ae49a08e7fff992de8e, actual 377f855a3ebfb04fea9a7fca03d6a3396d3440dd523d197baba45a6dd723bd58, want substring "undeclared production file"
+    --- FAIL: TestLockRejectsNegativeCasesInTemporaryRoots/forbidden-import (0.01s)
+        lock_test.go:72: error = manifest path "internal/gameplay/engine/cities.go": hash mismatch: manifest a3c0f62e6792e60a4c9f4130a82428cabbf19a963dfb9ae49a08e7fff992de8e, actual 377f855a3ebfb04fea9a7fca03d6a3396d3440dd523d197baba45a6dd723bd58, want substring "imports E2E package"
+--- FAIL: TestRequiredPathsCannotBeOmitted (0.01s)
+    --- FAIL: TestRequiredPathsCannotBeOmitted/deleted_and_manifest_entry_removed (0.01s)
+        lock_test.go:126: error = manifest path "internal/gameplay/engine/cities.go": hash mismatch: manifest a3c0f62e6792e60a4c9f4130a82428cabbf19a963dfb9ae49a08e7fff992de8e, actual 377f855a3ebfb04fea9a7fca03d6a3396d3440dd523d197baba45a6dd723bd58, want missing required path "internal/world/config.go"
+--- FAIL: TestSymlinkCannotSatisfyRequiredManifestPath (0.01s)
+    lock_test.go:143: error = manifest path "internal/gameplay/engine/cities.go": hash mismatch: manifest a3c0f62e6792e60a4c9f4130a82428cabbf19a963dfb9ae49a08e7fff992de8e, actual 377f855a3ebfb04fea9a7fca03d6a3396d3440dd523d197baba45a6dd723bd58, want symlink rejection for "internal/world/config.go"
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze	0.160s
+FAIL

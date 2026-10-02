@@ -12,9 +12,11 @@ import (
 )
 
 const (
-	ProductionUnit     = "unit"
-	ProductionBuilding = "building"
-	ProductionWonder   = "wonder"
+	ProductionUnit           = "unit"
+	ProductionBuilding       = "building"
+	ProductionWonder         = "wonder"
+	ProductionCapitalization = "capitalization"
+	ProductionInfrastructure = "infrastructure"
 
 	retailBaseContentment    = 75
 	retailRiotLevel          = 73
@@ -865,6 +867,9 @@ func rushBuyProduction(state *State, actor string, payload RushBuyPayload, runti
 		return errors.New("production item is not owned by actor")
 	}
 	item := city.Queue[0]
+	if item.Kind == ProductionCapitalization || item.Kind == ProductionInfrastructure {
+		return errors.New("production item cannot be rushed")
+	}
 	cost := rushBuyCost(*city, item, rushBuyTypeCoefficient(*state, actor, item, runtime))
 	if cost < 1 || nation.Gold < cost {
 		return errors.New("insufficient gold for rush buy")
@@ -2248,6 +2253,10 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 	}
 	city.StoredProduction += production
 	item := city.Queue[0]
+	if item.Kind == ProductionCapitalization || item.Kind == ProductionInfrastructure {
+		completeAdvanceProduction(state, city, item, runtime)
+		return nil
+	}
 	if city.StoredProduction < item.Cost {
 		return nil
 	}
@@ -2271,6 +2280,46 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 		return nil
 	default:
 		return errors.New("unsupported production kind")
+	}
+}
+
+func completeAdvanceProduction(state *State, city *City, item ProductionItem, runtime *rules.RuntimeRules) {
+	if state == nil || city == nil || city.StoredProduction < 1 {
+		return
+	}
+	nation := nationForID(state, nationForPlayer(*state, city.OwnerID))
+	if nation == nil {
+		city.StoredProduction = 0
+		return
+	}
+	coefficient := advanceProductionCoefficient(*nation, item.Kind, runtime)
+	if coefficient > 0 {
+		converted := int(math.Ceil(float64(city.StoredProduction) * coefficient))
+		switch item.Kind {
+		case ProductionCapitalization:
+			nation.Gold += converted
+		case ProductionInfrastructure:
+			nation.PublicWorks += converted
+		}
+	}
+	city.StoredProduction = 0
+}
+
+func advanceProductionCoefficient(nation Nation, kind string, runtime *rules.RuntimeRules) float64 {
+	if runtime == nil || nation.GovernmentID == "" {
+		return 0
+	}
+	government, ok := runtime.Government(nation.GovernmentID)
+	if !ok {
+		return 0
+	}
+	switch kind {
+	case ProductionCapitalization:
+		return government.CapitalizationCoefficient
+	case ProductionInfrastructure:
+		return government.InfrastructureCoefficient
+	default:
+		return 0
 	}
 }
 
@@ -2997,7 +3046,7 @@ func supportedSpecialist(kind string) bool {
 }
 
 func validateProductionItem(item ProductionItem) error {
-	if item.ID == "" || item.Cost < 1 || item.Upkeep < 0 || (item.Scope != "" && item.Scope != "city" && item.Scope != "nation" && item.Scope != "global") || (item.Kind != ProductionUnit && item.Kind != ProductionBuilding && item.Kind != ProductionWonder) {
+	if item.ID == "" || item.Cost < 1 || item.Upkeep < 0 || (item.Scope != "" && item.Scope != "city" && item.Scope != "nation" && item.Scope != "global") || (item.Kind != ProductionUnit && item.Kind != ProductionBuilding && item.Kind != ProductionWonder && item.Kind != ProductionCapitalization && item.Kind != ProductionInfrastructure) {
 		return errors.New("production item is invalid")
 	}
 	return validateEffects(item.Effects)

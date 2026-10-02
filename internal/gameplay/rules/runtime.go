@@ -140,62 +140,64 @@ type RuntimePollutionModel struct {
 }
 
 type RuntimeGovernmentDefinition struct {
-	ID                       string  `json:"id"`
-	EnableAdvanceID          string  `json:"enable_advance_id,omitempty"`
-	ResearchBonus            int     `json:"research_bonus,omitempty"`
-	ResearchPercent          int     `json:"research_percent,omitempty"`
-	PublicWorksBonus         int     `json:"public_works_bonus,omitempty"`
-	FoodPercent              int     `json:"food_percent,omitempty"`
-	ProductionPercent        int     `json:"production_percent,omitempty"`
-	GoldPercent              int     `json:"gold_percent,omitempty"`
-	PollutionPercent         int     `json:"pollution_percent,omitempty"`
-	PollutionUnhappyCoef     float64 `json:"pollution_unhappy_coef,omitempty"`
-	CrimeCoef                float64 `json:"crime_coef,omitempty"`
-	CrimeOffset              int     `json:"crime_offset,omitempty"`
-	WorkdayExpectation       int     `json:"workday_expectation,omitempty"`
-	PositiveWorkdayCoef      float64 `json:"positive_workday_coef,omitempty"`
-	NegativeWorkdayCoef      float64 `json:"negative_workday_coef,omitempty"`
-	WagesExpectation         int     `json:"wages_expectation,omitempty"`
-	PositiveWagesCoef        float64 `json:"positive_wages_coef,omitempty"`
-	NegativeWagesCoef        float64 `json:"negative_wages_coef,omitempty"`
-	RationsExpectation       int     `json:"rations_expectation,omitempty"`
-	PositiveRationsCoef      float64 `json:"positive_rations_coef,omitempty"`
-	NegativeRationsCoef      float64 `json:"negative_rations_coef,omitempty"`
-	SupportCoef              float64 `json:"support_coef,omitempty"`
-	DefenseCoef              float64 `json:"defense_coef,omitempty"`
-	ProfessionalUnits        int     `json:"professional_units,omitempty"`
-	TurnsToNewReadiness      int     `json:"turns_to_new_readiness,omitempty"`
-	ReadyPeaceCoef           float64 `json:"ready_peace_coef,omitempty"`
-	ReadyPeaceHP             float64 `json:"ready_peace_hp,omitempty"`
-	ReadyAlertCoef           float64 `json:"ready_alert_coef,omitempty"`
-	ReadyAlertHP             float64 `json:"ready_alert_hp,omitempty"`
-	ReadyWarCoef             float64 `json:"ready_war_coef,omitempty"`
-	ReadyWarHP               float64 `json:"ready_war_hp,omitempty"`
-	WarDiscontentMaxUnits    int     `json:"war_discontent_max_units,omitempty"`
-	WarDiscontentPerUnit     float64 `json:"war_discontent_per_unit,omitempty"`
-	ConquestDistress         float64 `json:"conquest_distress,omitempty"`
-	ConquestDistressDecay    float64 `json:"conquest_distress_decay,omitempty"`
-	AtHomeRadius             int     `json:"at_home_radius,omitempty"`
-	OverseasCoef             float64 `json:"overseas_coef,omitempty"`
-	OverseasDefeatDecay      float64 `json:"overseas_defeat_decay,omitempty"`
-	OverseasDefeatCoef       float64 `json:"overseas_defeat_coef,omitempty"`
-	HomeDefeatDecay          float64 `json:"home_defeat_decay,omitempty"`
-	HomeDefeatCoef           float64 `json:"home_defeat_coef,omitempty"`
-	EmpireDistanceScale      float64 `json:"empire_distance_scale,omitempty"`
-	MinEmpireDistance        int     `json:"min_empire_distance,omitempty"`
-	MaxEmpireDistance        int     `json:"max_empire_distance,omitempty"`
-	TooManyCitiesThreshold   int     `json:"too_many_cities_threshold,omitempty"`
-	TooManyCitiesCoefficient float64 `json:"too_many_cities_coefficient,omitempty"`
-	MartialLawMaxUnits       int     `json:"martial_law_max_units,omitempty"`
-	MartialLawEffect         int     `json:"martial_law_effect,omitempty"`
-	MartialLawThreshold      int     `json:"martial_law_threshold,omitempty"`
-	UnitRushModifier         float64 `json:"unit_rush_modifier,omitempty"`
-	BuildingRushModifier     float64 `json:"building_rush_modifier,omitempty"`
-	WonderRushModifier       float64 `json:"wonder_rush_modifier,omitempty"`
-	EndGameRushModifier      float64 `json:"endgame_rush_modifier,omitempty"`
-	MaxIncomingTrade         int     `json:"max_incoming_trade,omitempty"`
-	MaxOutgoingTrade         int     `json:"max_outgoing_trade,omitempty"`
-	MaxSciencePercent        *int    `json:"max_science_percent,omitempty"`
+	ID                        string  `json:"id"`
+	EnableAdvanceID           string  `json:"enable_advance_id,omitempty"`
+	ResearchBonus             int     `json:"research_bonus,omitempty"`
+	ResearchPercent           int     `json:"research_percent,omitempty"`
+	PublicWorksBonus          int     `json:"public_works_bonus,omitempty"`
+	InfrastructureCoefficient float64 `json:"infrastructure_coefficient,omitempty"`
+	CapitalizationCoefficient float64 `json:"capitalization_coefficient,omitempty"`
+	FoodPercent               int     `json:"food_percent,omitempty"`
+	ProductionPercent         int     `json:"production_percent,omitempty"`
+	GoldPercent               int     `json:"gold_percent,omitempty"`
+	PollutionPercent          int     `json:"pollution_percent,omitempty"`
+	PollutionUnhappyCoef      float64 `json:"pollution_unhappy_coef,omitempty"`
+	CrimeCoef                 float64 `json:"crime_coef,omitempty"`
+	CrimeOffset               int     `json:"crime_offset,omitempty"`
+	WorkdayExpectation        int     `json:"workday_expectation,omitempty"`
+	PositiveWorkdayCoef       float64 `json:"positive_workday_coef,omitempty"`
+	NegativeWorkdayCoef       float64 `json:"negative_workday_coef,omitempty"`
+	WagesExpectation          int     `json:"wages_expectation,omitempty"`
+	PositiveWagesCoef         float64 `json:"positive_wages_coef,omitempty"`
+	NegativeWagesCoef         float64 `json:"negative_wages_coef,omitempty"`
+	RationsExpectation        int     `json:"rations_expectation,omitempty"`
+	PositiveRationsCoef       float64 `json:"positive_rations_coef,omitempty"`
+	NegativeRationsCoef       float64 `json:"negative_rations_coef,omitempty"`
+	SupportCoef               float64 `json:"support_coef,omitempty"`
+	DefenseCoef               float64 `json:"defense_coef,omitempty"`
+	ProfessionalUnits         int     `json:"professional_units,omitempty"`
+	TurnsToNewReadiness       int     `json:"turns_to_new_readiness,omitempty"`
+	ReadyPeaceCoef            float64 `json:"ready_peace_coef,omitempty"`
+	ReadyPeaceHP              float64 `json:"ready_peace_hp,omitempty"`
+	ReadyAlertCoef            float64 `json:"ready_alert_coef,omitempty"`
+	ReadyAlertHP              float64 `json:"ready_alert_hp,omitempty"`
+	ReadyWarCoef              float64 `json:"ready_war_coef,omitempty"`
+	ReadyWarHP                float64 `json:"ready_war_hp,omitempty"`
+	WarDiscontentMaxUnits     int     `json:"war_discontent_max_units,omitempty"`
+	WarDiscontentPerUnit      float64 `json:"war_discontent_per_unit,omitempty"`
+	ConquestDistress          float64 `json:"conquest_distress,omitempty"`
+	ConquestDistressDecay     float64 `json:"conquest_distress_decay,omitempty"`
+	AtHomeRadius              int     `json:"at_home_radius,omitempty"`
+	OverseasCoef              float64 `json:"overseas_coef,omitempty"`
+	OverseasDefeatDecay       float64 `json:"overseas_defeat_decay,omitempty"`
+	OverseasDefeatCoef        float64 `json:"overseas_defeat_coef,omitempty"`
+	HomeDefeatDecay           float64 `json:"home_defeat_decay,omitempty"`
+	HomeDefeatCoef            float64 `json:"home_defeat_coef,omitempty"`
+	EmpireDistanceScale       float64 `json:"empire_distance_scale,omitempty"`
+	MinEmpireDistance         int     `json:"min_empire_distance,omitempty"`
+	MaxEmpireDistance         int     `json:"max_empire_distance,omitempty"`
+	TooManyCitiesThreshold    int     `json:"too_many_cities_threshold,omitempty"`
+	TooManyCitiesCoefficient  float64 `json:"too_many_cities_coefficient,omitempty"`
+	MartialLawMaxUnits        int     `json:"martial_law_max_units,omitempty"`
+	MartialLawEffect          int     `json:"martial_law_effect,omitempty"`
+	MartialLawThreshold       int     `json:"martial_law_threshold,omitempty"`
+	UnitRushModifier          float64 `json:"unit_rush_modifier,omitempty"`
+	BuildingRushModifier      float64 `json:"building_rush_modifier,omitempty"`
+	WonderRushModifier        float64 `json:"wonder_rush_modifier,omitempty"`
+	EndGameRushModifier       float64 `json:"endgame_rush_modifier,omitempty"`
+	MaxIncomingTrade          int     `json:"max_incoming_trade,omitempty"`
+	MaxOutgoingTrade          int     `json:"max_outgoing_trade,omitempty"`
+	MaxSciencePercent         *int    `json:"max_science_percent,omitempty"`
 }
 
 type RuntimeMovement struct {
@@ -1043,6 +1045,14 @@ func compileGovernmentDefinition(record Record) (RuntimeGovernmentDefinition, er
 	if err != nil {
 		return RuntimeGovernmentDefinition{}, err
 	}
+	infrastructureCoefficient, err := optionalFloat(record, "InfrastructureCoefficient", 0)
+	if err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
+	capitalizationCoefficient, err := optionalFloat(record, "CapitalizationCoefficient", 0)
+	if err != nil {
+		return RuntimeGovernmentDefinition{}, err
+	}
 	researchPercent, err := optionalInteger(record, "ResearchPercent", 0)
 	if err != nil {
 		return RuntimeGovernmentDefinition{}, err
@@ -1120,6 +1130,8 @@ func compileGovernmentDefinition(record Record) (RuntimeGovernmentDefinition, er
 	definition.ResearchBonus = researchBonus
 	definition.ResearchPercent = researchPercent
 	definition.PublicWorksBonus = publicWorksBonus
+	definition.InfrastructureCoefficient = infrastructureCoefficient
+	definition.CapitalizationCoefficient = capitalizationCoefficient
 	definition.FoodPercent = foodPercent
 	definition.ProductionPercent = productionPercent
 	definition.GoldPercent = goldPercent

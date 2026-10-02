@@ -1,0 +1,27 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules.test]
+internal/gameplay/rules/retail_runtime_test.go:348:20: anarchy.InfrastructureCoefficient undefined (type RuntimeGovernmentDefinition has no field or method InfrastructureCoefficient)
+internal/gameplay/rules/retail_runtime_test.go:348:65: anarchy.CapitalizationCoefficient undefined (type RuntimeGovernmentDefinition has no field or method CapitalizationCoefficient)
+internal/gameplay/rules/retail_runtime_test.go:352:22: democracy.InfrastructureCoefficient undefined (type RuntimeGovernmentDefinition has no field or method InfrastructureCoefficient)
+internal/gameplay/rules/retail_runtime_test.go:352:68: democracy.CapitalizationCoefficient undefined (type RuntimeGovernmentDefinition has no field or method CapitalizationCoefficient)
+internal/gameplay/rules/retail_runtime_test.go:394:16: no new variables on left side of :=
+internal/gameplay/rules/retail_runtime_test.go:410:14: no new variables on left side of :=
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [build failed]
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/advance_production_task27_test.go:10:94: unknown field InfrastructureCoefficient in struct literal of type rules.RuntimeGovernmentDefinition
+internal/gameplay/engine/advance_production_task27_test.go:12:72: undefined: ProductionInfrastructure
+internal/gameplay/engine/advance_production_task27_test.go:18:111: undefined: ProductionInfrastructure
+internal/gameplay/engine/advance_production_task27_test.go:24:94: unknown field CapitalizationCoefficient in struct literal of type rules.RuntimeGovernmentDefinition
+internal/gameplay/engine/advance_production_task27_test.go:26:72: undefined: ProductionCapitalization
+internal/gameplay/engine/advance_production_task27_test.go:32:111: undefined: ProductionCapitalization
+internal/gameplay/engine/advance_production_task27_test.go:38:94: unknown field InfrastructureCoefficient in struct literal of type rules.RuntimeGovernmentDefinition
+internal/gameplay/engine/advance_production_task27_test.go:39:169: undefined: ProductionInfrastructure
+internal/gameplay/engine/advance_production_task27_test.go:55:33: undefined: ProductionCapitalization
+internal/gameplay/engine/advance_production_task27_test.go:56:33: undefined: ProductionInfrastructure
+internal/gameplay/engine/advance_production_task27_test.go:56:33: too many errors
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility.test]
+internal/gameplay/visibility/advance_production_task27_test.go:15:40: undefined: engine.ProductionCapitalization
+internal/gameplay/visibility/advance_production_task27_test.go:16:40: undefined: engine.ProductionInfrastructure
+internal/gameplay/visibility/advance_production_task27_test.go:29:33: undefined: engine.ProductionCapitalization
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility [build failed]
+FAIL
