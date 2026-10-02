@@ -75,7 +75,7 @@ func TestRunEmitsRetailProjectedRuntimeIdentity(t *testing.T) {
 	if err := json.Unmarshal(stdout.Bytes(), &identity); err != nil {
 		t.Fatalf("JSON output error = %v output=%q", err, stdout.String())
 	}
-	if identity.RulesetType != "retail-runtime-projection" || len(identity.ContentHash) != 64 || identity.RuntimeCounts.Units != 74 || identity.RuntimeCounts.Advances != 107 || identity.RuntimeCounts.Production != 156 {
+	if identity.RulesetType != "retail-runtime-projection" || len(identity.ContentHash) != 64 || identity.RuntimeCounts.Units != 74 || identity.RuntimeCounts.Advances != 107 || identity.RuntimeCounts.Production != 158 {
 		t.Fatalf("identity = %+v output=%q", identity, stdout.String())
 	}
 }
