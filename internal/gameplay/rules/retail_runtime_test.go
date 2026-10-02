@@ -347,6 +347,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || gunpowderFeat.Duration != 25 || !runtimeStarterEffectValue(gunpowderFeat.Effects, "reduce_city_walls", -5) {
 		t.Fatalf("gunpowder feat = %+v ok=%v", gunpowderFeat, ok)
 	}
+	theatersFeat, ok := runtime.Feat("FEAT_THEATERS")
+	if !ok || theatersFeat.BuildingID != "IMPROVE_THEATER" || theatersFeat.BuildingCount != 8 {
+		t.Fatalf("theaters feat trigger = %+v ok=%v", theatersFeat, ok)
+	}
 	globalEconomics, ok := runtime.Advance("ADVANCE_GLOBAL_ECONOMICS")
 	if !ok || !globalEconomics.EnablesCapitalization {
 		t.Fatalf("global economics advance = %+v ok=%v", globalEconomics, ok)

@@ -2270,6 +2270,7 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 		return completeUnitProduction(state, city, item, runtime)
 	case ProductionBuilding:
 		city.Buildings = append(city.Buildings, Building{ID: item.ID, Upkeep: item.Upkeep, ObsoletedBy: item.ObsoletedBy, Effects: item.Effects})
+		applyBuildingTriggerFeats(state, city.OwnerID, item.ID, runtime)
 		return nil
 	case ProductionWonder:
 		if wonderExists(*state, item.ID) {
@@ -2282,6 +2283,48 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 	default:
 		return errors.New("unsupported production kind")
 	}
+}
+
+func applyBuildingTriggerFeats(state *State, ownerID, buildingID string, runtime *rules.RuntimeRules) {
+	if state == nil || runtime == nil || buildingID == "" {
+		return
+	}
+	nation := nationForID(state, nationForPlayer(*state, ownerID))
+	if nation == nil {
+		return
+	}
+	ownedCities, matchingBuildings := 0, 0
+	for _, city := range state.Cities {
+		if city.OwnerID != ownerID {
+			continue
+		}
+		ownedCities++
+		if cityHasBuilding(city, buildingID) {
+			matchingBuildings++
+		}
+	}
+	if matchingBuildings == 0 {
+		return
+	}
+	for _, feat := range runtime.Feats {
+		if feat.BuildingID != buildingID {
+			continue
+		}
+		if feat.BuildingCount > 0 && matchingBuildings >= feat.BuildingCount {
+			applyRuntimeFeat(nation, buildingFeatPostRoundDuration(feat))
+			continue
+		}
+		if feat.BuildingPercent > 0 && ownedCities > 0 && matchingBuildings*100/ownedCities >= feat.BuildingPercent {
+			applyRuntimeFeat(nation, buildingFeatPostRoundDuration(feat))
+		}
+	}
+}
+
+func buildingFeatPostRoundDuration(feat rules.RuntimeFeatDefinition) rules.RuntimeFeatDefinition {
+	if feat.Duration > 0 {
+		feat.Duration++
+	}
+	return feat
 }
 
 func completeAdvanceProduction(state *State, city *City, item ProductionItem, runtime *rules.RuntimeRules) {

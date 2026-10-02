@@ -451,14 +451,34 @@ func applyAdvanceTriggerFeat(nation *Nation, advance rules.RuntimeAdvanceDefinit
 		return
 	}
 	feat, ok := runtime.Feat(advance.TriggerFeatID)
-	if !ok || feat.Duration < 1 || len(feat.Effects) == 0 {
+	if !ok {
+		return
+	}
+	applyRuntimeFeat(nation, feat)
+}
+
+func applyRuntimeFeat(nation *Nation, feat rules.RuntimeFeatDefinition) {
+	if nation == nil || feat.Duration < 1 || len(feat.Effects) == 0 {
 		return
 	}
 	for _, effect := range feat.Effects {
 		if effect.Kind == "" {
 			continue
 		}
-		nation.Effects = append(nation.Effects, Effect{ID: "feat:" + feat.ID + ":" + effect.Kind, Kind: effect.Kind, Value: effect.Value, Turns: feat.Duration})
+		effectID := "feat:" + feat.ID + ":" + effect.Kind
+		refreshed := false
+		for index := range nation.Effects {
+			if nation.Effects[index].ID == effectID {
+				nation.Effects[index].Kind = effect.Kind
+				nation.Effects[index].Value = effect.Value
+				nation.Effects[index].Turns = feat.Duration
+				refreshed = true
+				break
+			}
+		}
+		if !refreshed {
+			nation.Effects = append(nation.Effects, Effect{ID: effectID, Kind: effect.Kind, Value: effect.Value, Turns: feat.Duration})
+		}
 	}
 	normalizeEffects(nation.Effects)
 }

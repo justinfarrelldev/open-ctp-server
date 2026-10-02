@@ -60,9 +60,12 @@ type RuntimeAdvanceDefinition struct {
 // server can execute deterministically; unsupported source tags still fail closed
 // during import/runtime compilation.
 type RuntimeFeatDefinition struct {
-	ID       string                 `json:"id"`
-	Duration int                    `json:"duration,omitempty"`
-	Effects  []RuntimeStarterEffect `json:"effects,omitempty"`
+	ID              string                 `json:"id"`
+	Duration        int                    `json:"duration,omitempty"`
+	BuildingID      string                 `json:"building_id,omitempty"`
+	BuildingCount   int                    `json:"building_count,omitempty"`
+	BuildingPercent int                    `json:"building_percent,omitempty"`
+	Effects         []RuntimeStarterEffect `json:"effects,omitempty"`
 }
 
 type RuntimeUnitDefinition struct {

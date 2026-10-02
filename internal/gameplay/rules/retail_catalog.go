@@ -75,12 +75,15 @@ type RetailAdvance struct {
 }
 
 type RetailFeat struct {
-	ID          string             `json:"id"`
-	Duration    int                `json:"duration,omitempty"`
-	IntValues   map[string]int     `json:"int_values,omitempty"`
-	FloatValues map[string]float64 `json:"float_values,omitempty"`
-	Flags       []string           `json:"flags,omitempty"`
-	RawFields   []RetailRawField   `json:"raw_fields"`
+	ID              string             `json:"id"`
+	Duration        int                `json:"duration,omitempty"`
+	BuildingID      string             `json:"building_id,omitempty"`
+	BuildingCount   int                `json:"building_count,omitempty"`
+	BuildingPercent int                `json:"building_percent,omitempty"`
+	IntValues       map[string]int     `json:"int_values,omitempty"`
+	FloatValues     map[string]float64 `json:"float_values,omitempty"`
+	Flags           []string           `json:"flags,omitempty"`
+	RawFields       []RetailRawField   `json:"raw_fields"`
 }
 
 type RetailWonder struct {
@@ -825,7 +828,60 @@ func compileRetailFeat(record RetailRawRecord) (RetailFeat, error) {
 	if err != nil {
 		return RetailFeat{}, err
 	}
-	return RetailFeat{ID: record.ID, Duration: duration, IntValues: retailIntValues(record.Fields), FloatValues: retailFloatValues(record.Fields), Flags: retailFlags(record.Fields), RawFields: cloneRetailFields(record.Fields)}, nil
+	buildingID, buildingCount, buildingPercent, err := retailFeatBuilding(record)
+	if err != nil {
+		return RetailFeat{}, err
+	}
+	return RetailFeat{ID: record.ID, Duration: duration, BuildingID: buildingID, BuildingCount: buildingCount, BuildingPercent: buildingPercent, IntValues: retailIntValues(record.Fields), FloatValues: retailFloatValues(record.Fields), Flags: retailFlags(record.Fields), RawFields: cloneRetailFields(record.Fields)}, nil
+}
+
+func retailFeatBuilding(record RetailRawRecord) (string, int, int, error) {
+	block, ok := record.FirstBlock("Building")
+	if !ok {
+		return "", 0, 0, nil
+	}
+	buildingID := ""
+	count, percent := 0, 0
+	for _, field := range block.Fields {
+		switch field.Key {
+		case "Building":
+			if len(field.Values) > 0 {
+				buildingID = field.Values[0]
+			}
+			for index := 1; index+1 < len(field.Values); index += 2 {
+				value, err := strconv.Atoi(field.Values[index+1])
+				if err != nil {
+					return "", 0, 0, importError(ErrorMalformedValue, "feat.txt", 1, record.ID, "invalid building feat value")
+				}
+				switch field.Values[index] {
+				case "Num":
+					count = value
+				case "PercentCities":
+					percent = value
+				}
+			}
+		case "Num":
+			if len(field.Values) > 0 {
+				value, err := strconv.Atoi(field.Values[0])
+				if err != nil {
+					return "", 0, 0, importError(ErrorMalformedValue, "feat.txt", 1, record.ID, "invalid building feat Num")
+				}
+				count = value
+			}
+		case "PercentCities":
+			if len(field.Values) > 0 {
+				value, err := strconv.Atoi(field.Values[0])
+				if err != nil {
+					return "", 0, 0, importError(ErrorMalformedValue, "feat.txt", 1, record.ID, "invalid building feat PercentCities")
+				}
+				percent = value
+			}
+		}
+	}
+	if buildingID == "" {
+		return "", 0, 0, importError(ErrorMalformedValue, "feat.txt", 1, record.ID, "building feat requires a building id")
+	}
+	return buildingID, count, percent, nil
 }
 
 func compileRetailWonder(record RetailRawRecord) (RetailWonder, error) {

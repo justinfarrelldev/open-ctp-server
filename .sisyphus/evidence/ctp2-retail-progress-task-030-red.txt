@@ -1,0 +1,9 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules.test]
+internal/gameplay/rules/retail_runtime_test.go:351:25: theatersFeat.BuildingID undefined (type RuntimeFeatDefinition has no field or method BuildingID)
+internal/gameplay/rules/retail_runtime_test.go:351:73: theatersFeat.BuildingCount undefined (type RuntimeFeatDefinition has no field or method BuildingCount)
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [build failed]
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/building_feat_task30_test.go:26:91: unknown field BuildingID in struct literal of type struct{ID string "json:\"id\""; Duration int "json:\"duration,omitempty\""; Effects []rules.RuntimeStarterEffect "json:\"effects,omitempty\""}
+internal/gameplay/engine/building_feat_task30_test.go:26:122: unknown field BuildingCount in struct literal of type struct{ID string "json:\"id\""; Duration int "json:\"duration,omitempty\""; Effects []rules.RuntimeStarterEffect "json:\"effects,omitempty\""}
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL
