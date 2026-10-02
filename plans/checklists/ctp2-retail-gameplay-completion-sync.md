@@ -48,6 +48,7 @@
 - [x] Task 034: Retail city founder identity is preserved and `FEAT_CITY_RECAPTURED` is awarded when a founder retakes a city.
 - [x] Task 035: Retail feats now record global achievement IDs and cannot be awarded repeatedly after first success.
 - [x] Task 036: Retail `FEAT_SAILED_AROUND_WORLD` now triggers from sea/amphibious unit circumnavigation columns.
+- [x] Task 037: Retail unit `SpaceLaunch` now launches units to owned cities and resolves delayed reentry/failed reentry.
 
 ## Full-Game Mechanical Execution First
 

@@ -79,6 +79,9 @@ type UnitProjection struct {
 	Health             int             `json:"health,omitempty"`
 	MaxHealth          int             `json:"max_health,omitempty"`
 	VisibilityRange    int             `json:"visibility_range,omitempty"`
+	InSpace            bool            `json:"in_space,omitempty"`
+	ReentryTileID      string          `json:"reentry_tile_id,omitempty"`
+	ReentryTurns       int             `json:"reentry_turns,omitempty"`
 	SettleCityTypeID   string          `json:"settle_city_type_id,omitempty"`
 	Effects            []engine.Effect `json:"effects,omitempty"`
 }
@@ -290,6 +293,9 @@ func Project(state engine.State, playerID string) (Projection, error) {
 				projected.Attack, projected.Defense, projected.Ranged, projected.BombardRange, projected.BombRounds, projected.ActiveDefenseRange, projected.Strength, projected.Armor, projected.Firepower = unit.Attack, unit.Defense, unit.Ranged, unit.BombardRange, unit.BombRounds, unit.ActiveDefenseRange, unit.Strength, unit.Armor, unit.Firepower
 				projected.Health, projected.MaxHealth = unit.Health, unit.MaxHealth
 				projected.VisibilityRange = unit.VisibilityRange
+				projected.InSpace = unit.InSpace
+				projected.ReentryTileID = unit.ReentryTileID
+				projected.ReentryTurns = unit.ReentryTurns
 				projected.SettleCityTypeID = unit.SettleCityTypeID
 				projected.Effects = append([]engine.Effect(nil), unit.Effects...)
 			}
@@ -1128,6 +1134,7 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 		actions = append(actions, embarkActions(projection, unit)...)
 		actions = append(actions, combatActions(projection, tiles, unit)...)
 		actions = append(actions, bombardActions(projection, tiles, unit)...)
+		actions = append(actions, spaceLaunchActions(cities, unit)...)
 		actions = append(actions, expelActions(projection, tiles, unit)...)
 		actions = append(actions, sueUnitActions(projection, tiles, unit)...)
 		actions = append(actions, specialActions(projection, tiles, cities, unit, playerID)...)
@@ -1213,6 +1220,20 @@ func publicTargetEffects(effects []engine.Effect) []engine.Effect {
 		}
 	}
 	return projected
+}
+
+func spaceLaunchActions(cities map[string]CityProjection, unit UnitProjection) []ActionProjection {
+	if unit.InSpace || !effectHasKind(unit.Effects, engine.EffectSpaceLaunchTurns) {
+		return nil
+	}
+	actions := make([]ActionProjection, 0)
+	for _, city := range cities {
+		if city.Stale || city.OwnerID != unit.OwnerID {
+			continue
+		}
+		actions = append(actions, action(engine.CommandSpaceLaunch, "space-launch", unit.ID, city.TileID, map[string]string{"unit_id": unit.ID, "target_tile_id": city.TileID}, []string{"unit_id", "target_tile_id"}))
+	}
+	return actions
 }
 
 func expelActions(projection Projection, tiles map[string]TileProjection, unit UnitProjection) []ActionProjection {

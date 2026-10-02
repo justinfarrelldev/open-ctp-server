@@ -1,0 +1,14 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/space_launch_task37_test.go:14:59: undefined: CommandSpaceLaunch
+internal/gameplay/engine/space_launch_task37_test.go:14:115: undefined: mustPayload
+internal/gameplay/engine/space_launch_task37_test.go:14:130: undefined: spaceLaunchPayload
+internal/gameplay/engine/space_launch_task37_test.go:18:18: undefined: EventUnitLaunched
+internal/gameplay/engine/space_launch_task37_test.go:19:51: undefined: EventUnitLaunched
+internal/gameplay/engine/space_launch_task37_test.go:22:11: unit.InSpace undefined (type Unit has no field or method InSpace)
+internal/gameplay/engine/space_launch_task37_test.go:22:48: unit.ReentryTileID undefined (type Unit has no field or method ReentryTileID)
+internal/gameplay/engine/space_launch_task37_test.go:22:82: unit.ReentryTurns undefined (type Unit has no field or method ReentryTurns)
+internal/gameplay/engine/space_launch_task37_test.go:28:35: unit.InSpace undefined (type Unit has no field or method InSpace)
+internal/gameplay/engine/space_launch_task37_test.go:28:51: unit.ReentryTurns undefined (type Unit has no field or method ReentryTurns)
+internal/gameplay/engine/space_launch_task37_test.go:28:51: too many errors
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL

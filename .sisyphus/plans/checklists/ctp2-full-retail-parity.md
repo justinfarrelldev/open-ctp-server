@@ -330,6 +330,7 @@
 - [x] Task 379: Retail city founder tracking and `FEAT_CITY_RECAPTURED` execution are implemented for conquest recaptures.
 - [x] Task 380: Retail feat achievement gating prevents repeated awards after first success.
 - [x] Task 381: Retail sailed-around-world feat triggers from sea/amphibious unit map-column circumnavigation.
+- [x] Task 382: Retail unit `SpaceLaunch` actions execute with owned-city targeting and delayed reentry.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

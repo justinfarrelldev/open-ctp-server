@@ -113,11 +113,15 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 		advancePollution(state, runtime)
 	}
 	advanceTemporaryNationEffects(state)
+	advanceSpaceReentry(state)
 	if runtime == nil || runtime.Starter.Movement < 1 {
 		return
 	}
 	crashedUnits := make([]string, 0)
 	for index := range state.Units {
+		if state.Units[index].InSpace {
+			continue
+		}
 		if state.Units[index].TransportID == "" {
 			healUnitFromTerrainImprovements(state, &state.Units[index])
 			state.Units[index].Movement = refreshedUnitMovement(*state, state.Units[index], runtime.Starter.Movement)
@@ -134,6 +138,57 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 	}
 	advanceTreasury(state, runtime)
 	advanceResearch(state, runtime)
+}
+
+func advanceSpaceReentry(state *State) {
+	if state == nil {
+		return
+	}
+	remove := map[string]bool{}
+	for index := range state.Units {
+		unit := &state.Units[index]
+		if !unit.InSpace {
+			continue
+		}
+		if unit.ReentryTurns > 0 {
+			unit.ReentryTurns--
+		}
+		if unit.ReentryTurns > 0 {
+			continue
+		}
+		city, ok := cityByTile(*state, unit.ReentryTileID)
+		if !ok || city.OwnerID != unit.OwnerID {
+			remove[unit.ID] = true
+			continue
+		}
+		if unitsOnTileCount(*state, unit.ReentryTileID) >= maxArmySize {
+			continue
+		}
+		unit.TileID = unit.ReentryTileID
+		unit.InSpace = false
+		unit.ReentryTileID = ""
+		unit.ReentryTurns = 0
+	}
+	if len(remove) == 0 {
+		return
+	}
+	units := state.Units[:0]
+	for _, unit := range state.Units {
+		if !remove[unit.ID] {
+			units = append(units, unit)
+		}
+	}
+	state.Units = units
+}
+
+func unitsOnTileCount(state State, tileID string) int {
+	count := 0
+	for _, unit := range state.Units {
+		if unit.TileID == tileID {
+			count++
+		}
+	}
+	return count
 }
 
 func advanceTemporaryNationEffects(state *State) {

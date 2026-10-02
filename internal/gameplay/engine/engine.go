@@ -42,6 +42,7 @@ const (
 	CommandUpgradeUnit        = "upgrade-unit"
 	CommandEmbark             = "embark-unit"
 	CommandDisembark          = "disembark-unit"
+	CommandSpaceLaunch        = "space-launch"
 	CommandArmyCreate         = "create-army"
 	CommandArmyJoin           = "join-army"
 	CommandArmyLeave          = "leave-army"
@@ -101,6 +102,7 @@ const (
 	EventBombarded                = "bombard.resolved"
 	EventUnitDisbanded            = "unit.disbanded"
 	EventUnitUpgraded             = "unit.upgraded"
+	EventUnitLaunched             = "unit.launched"
 	EventEmbassyEstablished       = "embassy.established"
 	EventSoothsayingApplied       = "soothsaying.applied"
 	EventCauseUnhappinessApplied  = "city.unhappiness_applied"
@@ -262,6 +264,9 @@ type Unit struct {
 	MaxHealth              int      `json:"max_health,omitempty"`
 	VisibilityRange        int      `json:"visibility_range,omitempty"`
 	CircumnavigatedColumns []int    `json:"circumnavigated_columns,omitempty"`
+	InSpace                bool     `json:"in_space,omitempty"`
+	ReentryTileID          string   `json:"reentry_tile_id,omitempty"`
+	ReentryTurns           int      `json:"reentry_turns,omitempty"`
 	SettleCityTypeID       string   `json:"settle_city_type_id,omitempty"`
 }
 

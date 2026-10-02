@@ -38,6 +38,11 @@ type disembarkPayload struct {
 	TileID string `json:"tile_id"`
 }
 
+type spaceLaunchPayload struct {
+	UnitID       string `json:"unit_id"`
+	TargetTileID string `json:"target_tile_id"`
+}
+
 type armyCreatePayload struct {
 	ArmyID  string   `json:"army_id"`
 	UnitIDs []string `json:"unit_ids"`
@@ -98,6 +103,12 @@ func applyUnitCommand(state *State, command Command, runtime *rules.RuntimeRules
 			return "", err
 		}
 		return "unit.disembarked", disembark(state, command.ActorPlayerID, payload, runtime)
+	case CommandSpaceLaunch:
+		var payload spaceLaunchPayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", err
+		}
+		return EventUnitLaunched, spaceLaunch(state, command.ActorPlayerID, payload)
 	case CommandArmyCreate:
 		var payload armyCreatePayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -258,6 +269,50 @@ func unitCanFortify(unit Unit) bool {
 		return true
 	}
 	return !unitHasRetailCapabilityMetadata(unit)
+}
+
+func spaceLaunch(state *State, actorID string, payload spaceLaunchPayload) error {
+	unit, err := ownedUnit(state, actorID, payload.UnitID)
+	turns := unitSpaceLaunchTurns(unit)
+	if err != nil || payload.TargetTileID == "" || unit.TransportID != "" || unit.InSpace || turns < 1 {
+		return invalidUnitAction(err)
+	}
+	if unit.ArmyID != "" {
+		leaveUnitArmy(state, unit.ID)
+	}
+	city, ok := cityByTile(*state, payload.TargetTileID)
+	if !ok || city.OwnerID != actorID {
+		return errors.New("space launch destination must be an owned city")
+	}
+	unit.TileID = ""
+	unit.Movement = 0
+	unit.Fortified = false
+	unit.InSpace = true
+	unit.ReentryTileID = payload.TargetTileID
+	unit.ReentryTurns = turns
+	return nil
+}
+
+func unitSpaceLaunchTurns(unit *Unit) int {
+	if unit == nil {
+		return 0
+	}
+	turns := 0
+	for _, effect := range unit.Effects {
+		if effect.Kind == EffectSpaceLaunchTurns && effect.Value > turns {
+			turns = effect.Value
+		}
+	}
+	return turns
+}
+
+func cityByTile(state State, tileID string) (City, bool) {
+	for _, city := range state.Cities {
+		if city.TileID == tileID {
+			return city, true
+		}
+	}
+	return City{}, false
 }
 
 func unitHasRetailCapabilityMetadata(unit Unit) bool {
@@ -553,6 +608,23 @@ func joinArmy(state *State, actorID string, payload armyUnitPayload) error {
 	return nil
 }
 
+func leaveUnitArmy(state *State, unitID string) {
+	unit, ok := unitByID(*state, unitID)
+	if !ok || unit.ArmyID == "" {
+		return
+	}
+	army, ok := armyByID(state, unit.ArmyID)
+	if !ok {
+		unit.ArmyID = ""
+		return
+	}
+	army.UnitIDs = removeString(army.UnitIDs, unit.ID)
+	unit.ArmyID = ""
+	if len(army.UnitIDs) == 0 {
+		state.Armies = removeArmy(state.Armies, army.ID)
+	}
+}
+
 func leaveArmy(state *State, actorID string, payload armyUnitPayload) error {
 	army, ok := armyByID(state, payload.ArmyID)
 	unit, err := ownedUnit(state, actorID, payload.UnitID)
@@ -623,8 +695,11 @@ func validateUnitState(state State) error {
 		}
 	}
 	for _, unit := range state.Units {
-		if unit.ID == "" || unit.OwnerID == "" || (unit.Domain != "" && !supportedDomain(unit.Domain)) || unit.Movement < 0 || unit.MaxMovement < 0 || unit.Fuel < 0 || unit.MaxFuel < 0 || (unit.MaxFuel == 0 && unit.Fuel != 0) || (unit.MaxFuel > 0 && unit.Fuel > unit.MaxFuel) || unit.CargoCapacity < 0 || unit.Upkeep < 0 || unit.ShieldHunger < 0 || unit.FoodHunger < 0 || unit.BombardRange < 0 || unit.BombRounds < 0 || unit.ActiveDefenseRange < 0 || unit.VisibilityRange < 0 || unit.Firepower < 0 {
+		if unit.ID == "" || unit.OwnerID == "" || (unit.Domain != "" && !supportedDomain(unit.Domain)) || unit.Movement < 0 || unit.MaxMovement < 0 || unit.Fuel < 0 || unit.MaxFuel < 0 || (unit.MaxFuel == 0 && unit.Fuel != 0) || (unit.MaxFuel > 0 && unit.Fuel > unit.MaxFuel) || unit.CargoCapacity < 0 || unit.Upkeep < 0 || unit.ShieldHunger < 0 || unit.FoodHunger < 0 || unit.BombardRange < 0 || unit.BombRounds < 0 || unit.ActiveDefenseRange < 0 || unit.VisibilityRange < 0 || unit.Firepower < 0 || unit.ReentryTurns < 0 {
 			return errors.New("unit capability is invalid")
+		}
+		if unit.InSpace && (unit.TileID != "" || unit.TransportID != "" || unit.ReentryTileID == "") {
+			return errors.New("space unit reentry state is invalid")
 		}
 		if unit.TransportID != "" {
 			if unit.TileID != "" || unit.ArmyID != "" {
