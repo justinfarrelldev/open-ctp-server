@@ -2327,11 +2327,11 @@ func applyBuildingTriggerFeats(state *State, ownerID, buildingID string, runtime
 			continue
 		}
 		if feat.BuildingCount > 0 && matchingBuildings >= feat.BuildingCount {
-			applyRuntimeFeat(nation, buildingFeatPostRoundDuration(feat))
+			applyRuntimeFeat(state, nation, buildingFeatPostRoundDuration(feat))
 			continue
 		}
 		if feat.BuildingPercent > 0 && ownedCities > 0 && matchingBuildings*100/ownedCities >= feat.BuildingPercent {
-			applyRuntimeFeat(nation, buildingFeatPostRoundDuration(feat))
+			applyRuntimeFeat(state, nation, buildingFeatPostRoundDuration(feat))
 		}
 	}
 }

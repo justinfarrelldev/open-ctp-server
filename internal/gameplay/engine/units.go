@@ -389,7 +389,7 @@ func applyConqueredByForceFeat(state *State, conquerorPlayerID, defeatedPlayerID
 		if feat.ID != "FEAT_CONQUERED_BY_FORCE" || feat.MinimumCivSize < 1 || maxCityCount < feat.MinimumCivSize {
 			continue
 		}
-		applyRuntimeFeat(conquerorNation, feat)
+		applyRuntimeFeat(state, conquerorNation, feat)
 		return
 	}
 }
@@ -406,7 +406,7 @@ func applyCityRecapturedFeat(state *State, founderPlayerID string, runtime *rule
 		if feat.ID != "FEAT_CITY_RECAPTURED" {
 			continue
 		}
-		applyRuntimeFeat(founderNation, feat)
+		applyRuntimeFeat(state, founderNation, feat)
 		return
 	}
 }

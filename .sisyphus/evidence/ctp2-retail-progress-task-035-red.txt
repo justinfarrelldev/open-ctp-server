@@ -1,0 +1,5 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/feat_achievement_task35_test.go:24:30: state.AchievedFeatIDs undefined (type State has no field or method AchievedFeatIDs)
+internal/gameplay/engine/feat_achievement_task35_test.go:25:80: state.AchievedFeatIDs undefined (type State has no field or method AchievedFeatIDs)
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL

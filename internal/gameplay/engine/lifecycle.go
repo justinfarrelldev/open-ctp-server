@@ -437,7 +437,7 @@ func advanceResearch(state *State, runtime *rules.RuntimeRules) {
 			nation.ResearchProgress -= advance.Cost
 			nation.Advances = append(nation.Advances, advance.ID)
 			sort.Strings(nation.Advances)
-			applyAdvanceTriggerFeat(nation, advance, runtime)
+			applyAdvanceTriggerFeat(state, nation, advance, runtime)
 			nation.ResearchTargetID = nextResearchAdvance(*nation, *runtime)
 			if nation.ResearchTargetID == "" {
 				nation.ResearchProgress = 0
@@ -446,7 +446,7 @@ func advanceResearch(state *State, runtime *rules.RuntimeRules) {
 	}
 }
 
-func applyAdvanceTriggerFeat(nation *Nation, advance rules.RuntimeAdvanceDefinition, runtime *rules.RuntimeRules) {
+func applyAdvanceTriggerFeat(state *State, nation *Nation, advance rules.RuntimeAdvanceDefinition, runtime *rules.RuntimeRules) {
 	if nation == nil || runtime == nil || advance.TriggerFeatID == "" {
 		return
 	}
@@ -454,12 +454,19 @@ func applyAdvanceTriggerFeat(nation *Nation, advance rules.RuntimeAdvanceDefinit
 	if !ok {
 		return
 	}
-	applyRuntimeFeat(nation, feat)
+	applyRuntimeFeat(state, nation, feat)
 }
 
-func applyRuntimeFeat(nation *Nation, feat rules.RuntimeFeatDefinition) {
-	if nation == nil || feat.Duration < 1 || len(feat.Effects) == 0 {
-		return
+func applyRuntimeFeat(state *State, nation *Nation, feat rules.RuntimeFeatDefinition) bool {
+	if nation == nil || feat.Duration < 1 || len(feat.Effects) == 0 || feat.ID == "" {
+		return false
+	}
+	if state != nil {
+		if containsString(state.AchievedFeatIDs, feat.ID) {
+			return false
+		}
+		state.AchievedFeatIDs = append(state.AchievedFeatIDs, feat.ID)
+		sort.Strings(state.AchievedFeatIDs)
 	}
 	for _, effect := range feat.Effects {
 		if effect.Kind == "" {
@@ -481,6 +488,7 @@ func applyRuntimeFeat(nation *Nation, feat rules.RuntimeFeatDefinition) {
 		}
 	}
 	normalizeEffects(nation.Effects)
+	return true
 }
 
 func advanceTreasury(state *State, runtimes ...*rules.RuntimeRules) {

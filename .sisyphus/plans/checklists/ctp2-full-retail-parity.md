@@ -328,6 +328,7 @@
 - [x] Task 377: Retail boat-movement feat effects are executed for sea/amphibious unit movement refresh.
 - [x] Task 378: Retail feat hit-point effects apply to produced unit hit points while active.
 - [x] Task 379: Retail city founder tracking and `FEAT_CITY_RECAPTURED` execution are implemented for conquest recaptures.
+- [x] Task 380: Retail feat achievement gating prevents repeated awards after first success.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

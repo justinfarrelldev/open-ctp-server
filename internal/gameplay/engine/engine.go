@@ -485,6 +485,7 @@ type State struct {
 	Cities           []City               `json:"cities"`
 	Armies           []Army               `json:"armies"`
 	Nations          []Nation             `json:"nations"`
+	AchievedFeatIDs  []string             `json:"achieved_feat_ids,omitempty"`
 	Wonders          []Wonder             `json:"wonders,omitempty"`
 	Pollution        *PollutionState      `json:"pollution,omitempty"`
 	Diplomacy        []DiplomaticRelation `json:"diplomacy,omitempty"`
