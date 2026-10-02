@@ -49,6 +49,7 @@
 - [x] Task 035: Retail feats now record global achievement IDs and cannot be awarded repeatedly after first success.
 - [x] Task 036: Retail `FEAT_SAILED_AROUND_WORLD` now triggers from sea/amphibious unit circumnavigation columns.
 - [x] Task 037: Retail unit `SpaceLaunch` now launches units to owned cities and resolves delayed reentry/failed reentry.
+- [x] Task 038: Space-launch commands are exposed through the authenticated HTTP gameplay route with safe payload fields.
 
 ## Full-Game Mechanical Execution First
 

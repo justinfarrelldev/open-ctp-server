@@ -1,0 +1,17 @@
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/http	0.005s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/service	0.038s
+--- FAIL: TestEngineLock (0.00s)
+    lock_test.go:19: manifest path "internal/gameplay/http/http.go": hash mismatch: manifest 5696dab96056f0fbf24d5f09cbe98db3580e4b4e309f8824dda87ae856e46d7f, actual 29e079d89c9c2929f841b108d693b318d23a7bf03266984aff36ac1ecf3fac99
+--- FAIL: TestLockRejectsNegativeCasesInTemporaryRoots (0.10s)
+    --- FAIL: TestLockRejectsNegativeCasesInTemporaryRoots/added (0.02s)
+        lock_test.go:72: error = manifest path "internal/gameplay/http/http.go": hash mismatch: manifest 5696dab96056f0fbf24d5f09cbe98db3580e4b4e309f8824dda87ae856e46d7f, actual 29e079d89c9c2929f841b108d693b318d23a7bf03266984aff36ac1ecf3fac99, want substring "undeclared production file"
+    --- FAIL: TestLockRejectsNegativeCasesInTemporaryRoots/forbidden-import (0.01s)
+        lock_test.go:72: error = manifest path "internal/gameplay/http/http.go": hash mismatch: manifest 5696dab96056f0fbf24d5f09cbe98db3580e4b4e309f8824dda87ae856e46d7f, actual 29e079d89c9c2929f841b108d693b318d23a7bf03266984aff36ac1ecf3fac99, want substring "imports E2E package"
+--- FAIL: TestRequiredPathsCannotBeOmitted (0.01s)
+    --- FAIL: TestRequiredPathsCannotBeOmitted/deleted_and_manifest_entry_removed (0.01s)
+        lock_test.go:126: error = manifest path "internal/gameplay/http/http.go": hash mismatch: manifest 5696dab96056f0fbf24d5f09cbe98db3580e4b4e309f8824dda87ae856e46d7f, actual 29e079d89c9c2929f841b108d693b318d23a7bf03266984aff36ac1ecf3fac99, want missing required path "internal/world/config.go"
+--- FAIL: TestSymlinkCannotSatisfyRequiredManifestPath (0.01s)
+    lock_test.go:143: error = manifest path "internal/gameplay/http/http.go": hash mismatch: manifest 5696dab96056f0fbf24d5f09cbe98db3580e4b4e309f8824dda87ae856e46d7f, actual 29e079d89c9c2929f841b108d693b318d23a7bf03266984aff36ac1ecf3fac99, want symlink rejection for "internal/world/config.go"
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze	0.208s
+FAIL

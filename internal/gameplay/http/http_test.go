@@ -62,6 +62,15 @@ func TestTask10HandlerDelegatesCombatRoute(t *testing.T) {
 	}
 }
 
+func TestHandlerDelegatesSpaceLaunchRoute(t *testing.T) {
+	executor := &recordingExecutor{}
+	recorder := httptest.NewRecorder()
+	authenticatedHandler(executor).ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/game/9/space-launch", strings.NewReader(`{"session_id":1,"expected_revision":2,"idempotency_key":"key","command_id":"launch","unit_id":"space-plane","target_tile_id":"city-tile"}`)))
+	if recorder.Code != http.StatusOK || executor.request.Type != engine.CommandSpaceLaunch || !strings.Contains(string(executor.request.Payload), "target_tile_id") {
+		t.Fatalf("space-launch route failed: status=%d request=%#v body=%s", recorder.Code, executor.request, recorder.Body.String())
+	}
+}
+
 func TestHandlerRejectsUnknownAuthorityAndHidesGatewayDetails(t *testing.T) {
 	executor := &recordingExecutor{err: &service.Error{Status: http.StatusUnprocessableEntity, Message: "hidden foreign unit target"}}
 	handler := authenticatedHandler(executor)
