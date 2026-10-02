@@ -347,11 +347,15 @@ func captureCityAt(state *State, actorID, tileID string, runtimes ...*rules.Runt
 			cityID := state.Cities[i].ID
 			defeatedOwnerID := state.Cities[i].OwnerID
 			defeatedCityCount := ownerCityCount(*state, defeatedOwnerID)
+			recapturedByFounder := state.Cities[i].FounderID != "" && state.Cities[i].FounderID == actorID
 			state.Cities[i].OwnerID = actorID
 			normalizeCityConversionOwner(&state.Cities[i])
 			state.Cities[i].ConquestDistress = conquestDistressForOwner(*state, actorID)
 			state.TradeRoutes = removeTradeRoutesTouchingCity(state.TradeRoutes, cityID)
 			applyConqueredByForceFeat(state, actorID, defeatedOwnerID, defeatedCityCount, runtime)
+			if recapturedByFounder {
+				applyCityRecapturedFeat(state, actorID, runtime)
+			}
 			return cityID
 		}
 	}
@@ -386,6 +390,23 @@ func applyConqueredByForceFeat(state *State, conquerorPlayerID, defeatedPlayerID
 			continue
 		}
 		applyRuntimeFeat(conquerorNation, feat)
+		return
+	}
+}
+
+func applyCityRecapturedFeat(state *State, founderPlayerID string, runtime *rules.RuntimeRules) {
+	if state == nil || runtime == nil {
+		return
+	}
+	founderNation := nationForID(state, nationForPlayer(*state, founderPlayerID))
+	if founderNation == nil {
+		return
+	}
+	for _, feat := range runtime.Feats {
+		if feat.ID != "FEAT_CITY_RECAPTURED" {
+			continue
+		}
+		applyRuntimeFeat(founderNation, feat)
 		return
 	}
 }

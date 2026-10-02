@@ -269,6 +269,7 @@ type City struct {
 	TypeID              string           `json:"type_id,omitempty"`
 	Name                string           `json:"name,omitempty"`
 	OwnerID             string           `json:"owner_id"`
+	FounderID           string           `json:"founder_id,omitempty"`
 	TileID              string           `json:"tile_id"`
 	Population          int              `json:"population,omitempty"`
 	Happiness           int              `json:"happiness,omitempty"`

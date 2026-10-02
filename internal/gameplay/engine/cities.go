@@ -538,7 +538,7 @@ func foundCity(state *State, actor string, payload FoundCityPayload) error {
 	cityTypeID := unit.SettleCityTypeID
 	population, buildings := foundedCitySeed(unit.Effects)
 	removeUnitAndCargo(state, unit.ID)
-	state.Cities = append(state.Cities, City{ID: payload.CityID, TypeID: cityTypeID, Name: payload.Name, OwnerID: actor, TileID: tileID, Population: population, Buildings: buildings, Goods: cityGoodsInRadius(*state, tileID)})
+	state.Cities = append(state.Cities, City{ID: payload.CityID, TypeID: cityTypeID, Name: payload.Name, OwnerID: actor, FounderID: actor, TileID: tileID, Population: population, Buildings: buildings, Goods: cityGoodsInRadius(*state, tileID)})
 	return nil
 }
 
