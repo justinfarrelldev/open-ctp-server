@@ -2765,6 +2765,11 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 		VisibilityRange:    definition.VisibilityRange,
 		SettleCityTypeID:   definition.SettleCityTypeID,
 	}
+	if unit.Domain == DomainSea || unit.Domain == DomainAmphibious {
+		if tile, ok := tileByID(*state, city.TileID); ok {
+			unit.CircumnavigatedColumns = []int{tile.X}
+		}
+	}
 	state.Units = append(state.Units, unit)
 	if hasEffect(unit.Effects, EffectBuildingRemovesPopulation) && city.Population > 1 {
 		city.Population--

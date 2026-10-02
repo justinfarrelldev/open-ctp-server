@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
@@ -302,6 +303,7 @@ func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *ru
 		}
 	}
 	remaining := unit.Movement
+	visitedColumns := []int{from.X}
 	for index, tileID := range payload.Path {
 		to, ok := tileByID(*state, tileID)
 		if !ok || !adjacent(from, to) || !canAccessTile(runtime, actorID, to) || !domainCanEnter(runtime, domains, EffectiveTerrain(*state, to.ID)) || occupiedByEnemy(*state, actorID, to.ID) {
@@ -315,6 +317,7 @@ func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *ru
 			return ErrObstructed
 		}
 		remaining -= cost
+		visitedColumns = append(visitedColumns, to.X)
 		if !moversIgnoreZOC(movers) && inEnemyZOC(*state, runtime, actorID, to.ID, domains) && index != len(payload.Path)-1 {
 			return ErrObstructed
 		}
@@ -331,10 +334,58 @@ func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *ru
 		if mover.MaxFuel > 0 {
 			mover.Fuel -= spent
 		}
+		recordCircumnavigationColumns(state, mover, visitedColumns, runtime)
 	}
 	captureCityAt(state, actorID, from.ID, runtime)
 	state.Fog = append(state.Fog, FogObservation{PlayerID: actorID, TileID: from.ID, Turn: state.Phase.Turn})
 	return nil
+}
+
+func recordCircumnavigationColumns(state *State, unit *Unit, columns []int, runtime *rules.RuntimeRules) {
+	if state == nil || unit == nil || (unit.Domain != DomainSea && unit.Domain != DomainAmphibious) || len(columns) == 0 {
+		return
+	}
+	for _, column := range columns {
+		if !containsInt(unit.CircumnavigatedColumns, column) {
+			unit.CircumnavigatedColumns = append(unit.CircumnavigatedColumns, column)
+		}
+	}
+	sort.Ints(unit.CircumnavigatedColumns)
+	if runtime == nil || !hasEveryMapColumn(*state, unit.CircumnavigatedColumns) {
+		return
+	}
+	nation := nationForID(state, nationForPlayer(*state, unit.OwnerID))
+	if nation == nil {
+		return
+	}
+	feat, ok := runtime.Feat("FEAT_SAILED_AROUND_WORLD")
+	if !ok {
+		return
+	}
+	applyRuntimeFeat(state, nation, feat)
+}
+
+func hasEveryMapColumn(state State, columns []int) bool {
+	if len(state.Tiles) == 0 || len(columns) == 0 {
+		return false
+	}
+	required := map[int]bool{}
+	for _, tile := range state.Tiles {
+		required[tile.X] = true
+	}
+	for _, column := range columns {
+		delete(required, column)
+	}
+	return len(required) == 0
+}
+
+func containsInt(values []int, target int) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
 }
 
 func captureCityAt(state *State, actorID, tileID string, runtimes ...*rules.RuntimeRules) string {

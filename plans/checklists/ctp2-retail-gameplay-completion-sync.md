@@ -47,6 +47,7 @@
 - [x] Task 033: Retail feat hit-point effects now add to produced units' current and maximum hit points while active.
 - [x] Task 034: Retail city founder identity is preserved and `FEAT_CITY_RECAPTURED` is awarded when a founder retakes a city.
 - [x] Task 035: Retail feats now record global achievement IDs and cannot be awarded repeatedly after first success.
+- [x] Task 036: Retail `FEAT_SAILED_AROUND_WORLD` now triggers from sea/amphibious unit circumnavigation columns.
 
 ## Full-Game Mechanical Execution First
 

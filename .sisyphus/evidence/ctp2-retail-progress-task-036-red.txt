@@ -1,0 +1,5 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/feat_sailed_task36_test.go:22:39: state.Units[0].CircumnavigatedColumns undefined (type Unit has no field or method CircumnavigatedColumns)
+internal/gameplay/engine/feat_sailed_task36_test.go:23:74: state.Units[0].CircumnavigatedColumns undefined (type Unit has no field or method CircumnavigatedColumns)
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL
