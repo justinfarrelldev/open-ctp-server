@@ -396,7 +396,7 @@ func refreshedUnitMovement(state State, unit Unit, fallback int) int {
 }
 
 func boatMovementBonus(state State, ownerID string) int {
-	bonus := 0
+	bonus := ownerEffectSum(state, ownerID, EffectIncreaseBoatMovement)
 	for _, wonder := range state.Wonders {
 		if !wonderAppliesToPlayer(state, wonder, ownerID) {
 			continue

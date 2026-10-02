@@ -43,6 +43,7 @@
 - [x] Task 029: Retail feat catalog fields are included in the field inventory snapshot and coverage report now that `feat.txt` is parsed for advance-triggered feats.
 - [x] Task 030: Retail building-triggered feats now import `Building` thresholds and apply timed nation effects when city production completes the required building count.
 - [x] Task 031: Retail `FEAT_CONQUERED_BY_FORCE` now imports `MinimumSizeOfCiv`, tracks nation max city count, and applies the hit-point feat when a qualifying civilization loses its final city.
+- [x] Task 032: Retail feat boat-movement effects now contribute to sea/amphibious movement refresh alongside wonder boat-movement bonuses.
 
 ## Full-Game Mechanical Execution First
 

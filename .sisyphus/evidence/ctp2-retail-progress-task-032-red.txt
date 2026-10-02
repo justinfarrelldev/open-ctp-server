@@ -1,0 +1,5 @@
+--- FAIL: TestNationFeatBoatMovementRefreshesSeaUnits (0.00s)
+    feat_movement_task32_test.go:17: sea unit movement with feat boat bonus = 400, want 500
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

@@ -1,0 +1,15 @@
+--- FAIL: TestEngineLock (0.00s)
+    lock_test.go:19: manifest path "internal/gameplay/engine/lifecycle.go": hash mismatch: manifest 365308d0c9f3d53427058c0819d9be3eb602f1d03e4e0079cf222a5eb9a50a1c, actual 70cba6c5ea33376ce5a8baffd9ce6c4ecf450762468947ba090d5f19185e6317
+--- FAIL: TestLockRejectsNegativeCasesInTemporaryRoots (0.08s)
+    --- FAIL: TestLockRejectsNegativeCasesInTemporaryRoots/added (0.01s)
+        lock_test.go:72: error = manifest path "internal/gameplay/engine/lifecycle.go": hash mismatch: manifest 365308d0c9f3d53427058c0819d9be3eb602f1d03e4e0079cf222a5eb9a50a1c, actual 70cba6c5ea33376ce5a8baffd9ce6c4ecf450762468947ba090d5f19185e6317, want substring "undeclared production file"
+    --- FAIL: TestLockRejectsNegativeCasesInTemporaryRoots/forbidden-import (0.01s)
+        lock_test.go:72: error = manifest path "internal/gameplay/engine/lifecycle.go": hash mismatch: manifest 365308d0c9f3d53427058c0819d9be3eb602f1d03e4e0079cf222a5eb9a50a1c, actual 70cba6c5ea33376ce5a8baffd9ce6c4ecf450762468947ba090d5f19185e6317, want substring "imports E2E package"
+--- FAIL: TestRequiredPathsCannotBeOmitted (0.01s)
+    --- FAIL: TestRequiredPathsCannotBeOmitted/deleted_and_manifest_entry_removed (0.01s)
+        lock_test.go:126: error = manifest path "internal/gameplay/engine/lifecycle.go": hash mismatch: manifest 365308d0c9f3d53427058c0819d9be3eb602f1d03e4e0079cf222a5eb9a50a1c, actual 70cba6c5ea33376ce5a8baffd9ce6c4ecf450762468947ba090d5f19185e6317, want missing required path "internal/world/config.go"
+--- FAIL: TestSymlinkCannotSatisfyRequiredManifestPath (0.01s)
+    lock_test.go:143: error = manifest path "internal/gameplay/engine/lifecycle.go": hash mismatch: manifest 365308d0c9f3d53427058c0819d9be3eb602f1d03e4e0079cf222a5eb9a50a1c, actual 70cba6c5ea33376ce5a8baffd9ce6c4ecf450762468947ba090d5f19185e6317, want symlink rejection for "internal/world/config.go"
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze	0.177s
+FAIL
