@@ -978,6 +978,22 @@ func TestSSEResyncAndTerminalUseViewerProjection(t *testing.T) {
 	}
 }
 
+func TestNuclearAttackProjectsVisibleForeignCityTargets(t *testing.T) {
+	state := fixtureState()
+	state.Units = []engine.Unit{{ID: "missile", OwnerID: "a", TileID: "0,0", Domain: engine.DomainAir, Effects: []engine.Effect{{ID: "nuke", Kind: engine.EffectNuclearAttack}}}}
+	state.Cities = []engine.City{{ID: "target", OwnerID: "b", TileID: "1,0"}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, action := range projection.LegalActions {
+		if action.Command == engine.CommandNuclearAttack && action.EntityID == "missile" && action.TargetID == "1,0" && bytes.Contains(action.Payload, []byte(`"target_tile_id":"1,0"`)) {
+			return
+		}
+	}
+	t.Fatalf("nuclear attack action missing from %#v", projection.LegalActions)
+}
+
 func TestTask12ProjectionIncludesRulesAndLegalActionMetadata(t *testing.T) {
 	ruleset, err := rules.ServerOwnedSyntheticRuleset()
 	if err != nil {

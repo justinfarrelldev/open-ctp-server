@@ -71,6 +71,15 @@ func TestHandlerDelegatesSpaceLaunchRoute(t *testing.T) {
 	}
 }
 
+func TestHandlerDelegatesNuclearAttackRoute(t *testing.T) {
+	executor := &recordingExecutor{}
+	recorder := httptest.NewRecorder()
+	authenticatedHandler(executor).ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/game/9/nuclear-attack", strings.NewReader(`{"session_id":1,"expected_revision":2,"idempotency_key":"key","command_id":"nuke","unit_id":"missile","target_tile_id":"city-tile"}`)))
+	if recorder.Code != http.StatusOK || executor.request.Type != engine.CommandNuclearAttack || !strings.Contains(string(executor.request.Payload), "target_tile_id") {
+		t.Fatalf("nuclear-attack route failed: status=%d request=%#v body=%s", recorder.Code, executor.request, recorder.Body.String())
+	}
+}
+
 func TestHandlerRejectsUnknownAuthorityAndHidesGatewayDetails(t *testing.T) {
 	executor := &recordingExecutor{err: &service.Error{Status: http.StatusUnprocessableEntity, Message: "hidden foreign unit target"}}
 	handler := authenticatedHandler(executor)

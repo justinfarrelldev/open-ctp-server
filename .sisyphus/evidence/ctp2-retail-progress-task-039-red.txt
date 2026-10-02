@@ -1,0 +1,11 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/nuclear_attack_task39_test.go:13:59: undefined: CommandNuclearAttack
+internal/gameplay/engine/nuclear_attack_task39_test.go:13:132: undefined: nuclearAttackPayload
+internal/gameplay/engine/nuclear_attack_task39_test.go:17:18: undefined: EventNuclearAttack
+internal/gameplay/engine/nuclear_attack_task39_test.go:18:51: undefined: EventNuclearAttack
+internal/gameplay/engine/nuclear_attack_task39_test.go:36:59: undefined: CommandNuclearAttack
+internal/gameplay/engine/nuclear_attack_task39_test.go:36:132: undefined: nuclearAttackPayload
+internal/gameplay/engine/nuclear_attack_task39_test.go:40:18: undefined: EventNuclearAttackFailed
+internal/gameplay/engine/nuclear_attack_task39_test.go:41:51: undefined: EventNuclearAttackFailed
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL

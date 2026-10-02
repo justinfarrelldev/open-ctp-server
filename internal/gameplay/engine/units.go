@@ -43,6 +43,11 @@ type spaceLaunchPayload struct {
 	TargetTileID string `json:"target_tile_id"`
 }
 
+type nuclearAttackPayload struct {
+	UnitID       string `json:"unit_id"`
+	TargetTileID string `json:"target_tile_id"`
+}
+
 type armyCreatePayload struct {
 	ArmyID  string   `json:"army_id"`
 	UnitIDs []string `json:"unit_ids"`
@@ -109,6 +114,12 @@ func applyUnitCommand(state *State, command Command, runtime *rules.RuntimeRules
 			return "", err
 		}
 		return EventUnitLaunched, spaceLaunch(state, command.ActorPlayerID, payload)
+	case CommandNuclearAttack:
+		var payload nuclearAttackPayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", err
+		}
+		return nuclearAttack(state, command.ActorPlayerID, payload, runtime)
 	case CommandArmyCreate:
 		var payload armyCreatePayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -291,6 +302,55 @@ func spaceLaunch(state *State, actorID string, payload spaceLaunchPayload) error
 	unit.ReentryTileID = payload.TargetTileID
 	unit.ReentryTurns = turns
 	return nil
+}
+
+func nuclearAttack(state *State, actorID string, payload nuclearAttackPayload, runtime *rules.RuntimeRules) (string, error) {
+	unit, err := ownedUnit(state, actorID, payload.UnitID)
+	if err != nil || payload.TargetTileID == "" || unit.TransportID != "" || unit.InSpace || !hasEffect(unit.Effects, EffectNuclearAttack) {
+		return "", invalidUnitAction(err)
+	}
+	city, ok := cityByTile(*state, payload.TargetTileID)
+	if !ok || city.OwnerID == actorID {
+		return "", errors.New("nuclear attack target must be a foreign city")
+	}
+	if cityProtectedFromNuclearAttack(*state, city) {
+		removeUnitAndCargo(state, unit.ID)
+		return EventNuclearAttackFailed, nil
+	}
+	detonateNukeAtCity(state, city.ID, unit.ID, runtime)
+	removeUnitAndCargo(state, unit.ID)
+	return EventNuclearAttack, nil
+}
+
+func cityProtectedFromNuclearAttack(state State, city City) bool {
+	effects := cityEffects(state, city)
+	return hasEffect(effects, EffectProtectFromNukes) || hasEffect(effects, EffectForceField)
+}
+
+func detonateNukeAtCity(state *State, cityID, sourceUnitID string, runtime *rules.RuntimeRules) {
+	city, ok := cityByID(*state, cityID)
+	if !ok {
+		return
+	}
+	cityTileID := city.TileID
+	if city.Population >= 3 {
+		killed := city.Population * nukePopulationPercent(runtime) / 100
+		if killed < 1 {
+			killed = 1
+		}
+		city.Population -= killed
+		if city.Population < 1 {
+			city.Population = 1
+		}
+	} else {
+		removeCityByID(state, cityID)
+	}
+	if tile := tilePointer(state, cityTileID); tile != nil {
+		tile.Pollution += nukePollution(runtime)
+	}
+	addNukeGlobalPollution(state, runtime)
+	resolveNukeBlastUnits(state, sourceUnitID, cityTileID)
+	resolveNukeBlastImprovements(state, cityTileID)
 }
 
 func unitSpaceLaunchTurns(unit *Unit) int {

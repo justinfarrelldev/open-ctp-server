@@ -86,6 +86,7 @@ var commands = map[string]struct {
 	"army-join":             {engine.CommandArmyJoin, fields("army_id", "unit_id")},
 	"army-leave":            {engine.CommandArmyLeave, fields("army_id", "unit_id")},
 	"combat":                {engine.CommandCombat, fields("attacker_army_id", "defender_army_id")},
+	"nuclear-attack":        {engine.CommandNuclearAttack, fields("unit_id", "target_tile_id")},
 	"establish-embassy":     {engine.CommandEstablishEmbassy, fields("unit_id", "city_id")},
 	"soothsaying":           {engine.CommandSoothsaying, fields("unit_id", "city_id")},
 	"cause-unhappiness":     {engine.CommandCauseUnhappiness, fields("unit_id", "city_id")},

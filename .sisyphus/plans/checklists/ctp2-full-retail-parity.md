@@ -332,6 +332,7 @@
 - [x] Task 381: Retail sailed-around-world feat triggers from sea/amphibious unit map-column circumnavigation.
 - [x] Task 382: Retail unit `SpaceLaunch` actions execute with owned-city targeting and delayed reentry.
 - [x] Task 383: Retail `SpaceLaunch` actions are wired through the authenticated gameplay HTTP gateway.
+- [x] Task 384: Retail direct `NuclearAttack` units execute city nuke attacks and are consumed after launch.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

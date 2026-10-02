@@ -1134,6 +1134,7 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 		actions = append(actions, embarkActions(projection, unit)...)
 		actions = append(actions, combatActions(projection, tiles, unit)...)
 		actions = append(actions, bombardActions(projection, tiles, unit)...)
+		actions = append(actions, nuclearAttackActions(cities, unit)...)
 		actions = append(actions, spaceLaunchActions(cities, unit)...)
 		actions = append(actions, expelActions(projection, tiles, unit)...)
 		actions = append(actions, sueUnitActions(projection, tiles, unit)...)
@@ -1220,6 +1221,20 @@ func publicTargetEffects(effects []engine.Effect) []engine.Effect {
 		}
 	}
 	return projected
+}
+
+func nuclearAttackActions(cities map[string]CityProjection, unit UnitProjection) []ActionProjection {
+	if unit.InSpace || !effectHasKind(unit.Effects, engine.EffectNuclearAttack) {
+		return nil
+	}
+	actions := make([]ActionProjection, 0)
+	for _, city := range cities {
+		if city.Stale || city.OwnerID == unit.OwnerID {
+			continue
+		}
+		actions = append(actions, action(engine.CommandNuclearAttack, "nuclear-attack", unit.ID, city.TileID, map[string]string{"unit_id": unit.ID, "target_tile_id": city.TileID}, []string{"unit_id", "target_tile_id"}))
+	}
+	return actions
 }
 
 func spaceLaunchActions(cities map[string]CityProjection, unit UnitProjection) []ActionProjection {
