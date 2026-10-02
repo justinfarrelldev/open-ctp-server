@@ -708,8 +708,11 @@ func combatDefenseModifier(state State, unit Unit, attacker Unit) int {
 func combatDefenseModifierWithRuntime(state State, runtime *rules.RuntimeRules, unit Unit, attacker Unit) int {
 	modifier := combatModifierWithRuntime(state, runtime, unit, false)
 	modifier += tileImprovementDefenseModifier(state, unit)
+	cityWallDefense := cityWallDefenseAt(state, unit.TileID)
 	if hasEffect(attacker.Effects, EffectIgnoreCityWalls) {
-		modifier -= cityWallDefenseAt(state, unit.TileID)
+		modifier -= cityWallDefense
+	} else if cityWallDefense != 0 {
+		modifier += ownerEffectSum(state, attacker.OwnerID, EffectReduceCityWalls)
 	}
 	if hasEffect(attacker.Effects, EffectMounted) {
 		modifier += unit.Defense * effectValue(unit.Effects, EffectCombatDefenseVsMountedPercent) / 100

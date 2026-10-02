@@ -112,6 +112,7 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 	if runtime != nil {
 		advancePollution(state, runtime)
 	}
+	advanceTemporaryNationEffects(state)
 	if runtime == nil || runtime.Starter.Movement < 1 {
 		return
 	}
@@ -133,6 +134,22 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 	}
 	advanceTreasury(state, runtime)
 	advanceResearch(state, runtime)
+}
+
+func advanceTemporaryNationEffects(state *State) {
+	for nationIndex := range state.Nations {
+		effects := state.Nations[nationIndex].Effects[:0]
+		for _, effect := range state.Nations[nationIndex].Effects {
+			if effect.Turns > 0 {
+				effect.Turns--
+				if effect.Turns == 0 {
+					continue
+				}
+			}
+			effects = append(effects, effect)
+		}
+		state.Nations[nationIndex].Effects = effects
+	}
 }
 
 func healUnitFromTerrainImprovements(state *State, unit *Unit) {
@@ -420,12 +437,30 @@ func advanceResearch(state *State, runtime *rules.RuntimeRules) {
 			nation.ResearchProgress -= advance.Cost
 			nation.Advances = append(nation.Advances, advance.ID)
 			sort.Strings(nation.Advances)
+			applyAdvanceTriggerFeat(nation, advance, runtime)
 			nation.ResearchTargetID = nextResearchAdvance(*nation, *runtime)
 			if nation.ResearchTargetID == "" {
 				nation.ResearchProgress = 0
 			}
 		}
 	}
+}
+
+func applyAdvanceTriggerFeat(nation *Nation, advance rules.RuntimeAdvanceDefinition, runtime *rules.RuntimeRules) {
+	if nation == nil || runtime == nil || advance.TriggerFeatID == "" {
+		return
+	}
+	feat, ok := runtime.Feat(advance.TriggerFeatID)
+	if !ok || feat.Duration < 1 || len(feat.Effects) == 0 {
+		return
+	}
+	for _, effect := range feat.Effects {
+		if effect.Kind == "" {
+			continue
+		}
+		nation.Effects = append(nation.Effects, Effect{ID: "feat:" + feat.ID + ":" + effect.Kind, Kind: effect.Kind, Value: effect.Value, Turns: feat.Duration})
+	}
+	normalizeEffects(nation.Effects)
 }
 
 func advanceTreasury(state *State, runtimes ...*rules.RuntimeRules) {

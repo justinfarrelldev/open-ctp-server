@@ -1,0 +1,13 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules.test]
+internal/gameplay/rules/retail_runtime_test.go:28:30: runtime.Feats undefined (type RuntimeRules has no field or method Feats)
+internal/gameplay/rules/retail_runtime_test.go:339:22: computers.TriggerFeatID undefined (type RuntimeAdvanceDefinition has no field or method TriggerFeatID)
+internal/gameplay/rules/retail_runtime_test.go:342:31: runtime.Feat undefined (type RuntimeRules has no field or method Feat)
+internal/gameplay/rules/retail_runtime_test.go:346:31: runtime.Feat undefined (type RuntimeRules has no field or method Feat)
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [build failed]
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/advance_feat_task28_test.go:29:67: undefined: EffectReduceCityWalls
+internal/gameplay/engine/advance_feat_task28_test.go:43:91: unknown field TriggerFeatID in struct literal of type struct{ID string "json:\"id\""; Cost int "json:\"cost\""; Prerequisites []string "json:\"prerequisites,omitempty\""; AllowsPlantNuke bool "json:\"allows_plant_nuke,omitempty\""; EnablesCapitalization bool "json:\"enables_capitalization,omitempty\""; EnablesInfrastructure bool "json:\"enables_infrastructure,omitempty\""; EnablesTransform bool "json:\"enables_transform,omitempty\""; EnablesRoads bool "json:\"enables_roads,omitempty\""; EnablesRailroads bool "json:\"enables_railroads,omitempty\""; EnablesMagLev bool "json:\"enables_maglev,omitempty\""; EnablesTunnels bool "json:\"enables_tunnels,omitempty\""; EnablesDeepOcean bool "json:\"enables_deep_ocean,omitempty\""; PollutionSizeModifier int "json:\"pollution_size_modifier,omitempty\""; PollutionProductionModifier int "json:\"pollution_production_modifier,omitempty\""}
+internal/gameplay/engine/advance_feat_task28_test.go:44:3: unknown field Feats in struct literal of type rules.RuntimeRules
+internal/gameplay/engine/advance_feat_task28_test.go:44:32: undefined: rules.RuntimeFeatDefinition
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL

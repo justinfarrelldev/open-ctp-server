@@ -20,6 +20,7 @@ type RuntimeRules struct {
 	Calendar             RuntimeCalendar                       `json:"calendar"`
 	Constants            RuntimeConstants                      `json:"constants,omitempty"`
 	Gaia                 RuntimeGaia                           `json:"gaia"`
+	Feats                []RuntimeFeatDefinition               `json:"feats,omitempty"`
 	Production           []RuntimeProduction                   `json:"production"`
 	Effects              []RuntimeEffect                       `json:"effects"`
 	Starter              RuntimeStarter                        `json:"starter"`
@@ -40,6 +41,7 @@ type RuntimeAdvanceDefinition struct {
 	ID                          string   `json:"id"`
 	Cost                        int      `json:"cost"`
 	Prerequisites               []string `json:"prerequisites,omitempty"`
+	TriggerFeatID               string   `json:"trigger_feat_id,omitempty"`
 	AllowsPlantNuke             bool     `json:"allows_plant_nuke,omitempty"`
 	EnablesCapitalization       bool     `json:"enables_capitalization,omitempty"`
 	EnablesInfrastructure       bool     `json:"enables_infrastructure,omitempty"`
@@ -57,6 +59,12 @@ type RuntimeAdvanceDefinition struct {
 // from synthetic CTP2 unit records. It intentionally models only mechanics the
 // server can execute deterministically; unsupported source tags still fail closed
 // during import/runtime compilation.
+type RuntimeFeatDefinition struct {
+	ID       string                 `json:"id"`
+	Duration int                    `json:"duration,omitempty"`
+	Effects  []RuntimeStarterEffect `json:"effects,omitempty"`
+}
+
 type RuntimeUnitDefinition struct {
 	ID                           string                 `json:"id"`
 	Role                         string                 `json:"role,omitempty"`
@@ -236,6 +244,14 @@ func (movement RuntimeMovement) Terrain(id string) (RuntimeTerrain, bool) {
 func (terrain RuntimeTerrain) Allows(domain string) bool {
 	index := sort.SearchStrings(terrain.Domains, domain)
 	return index < len(terrain.Domains) && terrain.Domains[index] == domain
+}
+
+func (runtime RuntimeRules) Feat(id string) (RuntimeFeatDefinition, bool) {
+	index := sort.Search(len(runtime.Feats), func(index int) bool { return runtime.Feats[index].ID >= id })
+	if index == len(runtime.Feats) || runtime.Feats[index].ID != id {
+		return RuntimeFeatDefinition{}, false
+	}
+	return runtime.Feats[index], true
 }
 
 func (runtime RuntimeRules) Advance(id string) (RuntimeAdvanceDefinition, bool) {
@@ -523,6 +539,7 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 		return RuntimeRules{}, errors.New("rules definitions require complete synthetic movement definitions")
 	}
 	sort.Slice(runtime.Advances, func(i, j int) bool { return runtime.Advances[i].ID < runtime.Advances[j].ID })
+	sort.Slice(runtime.Feats, func(i, j int) bool { return runtime.Feats[i].ID < runtime.Feats[j].ID })
 	if err := validateRuntimeAdvances(runtime.Advances); err != nil {
 		return RuntimeRules{}, err
 	}
@@ -893,6 +910,7 @@ func compileAdvanceDefinition(record Record) (RuntimeAdvanceDefinition, error) {
 	if err != nil {
 		return RuntimeAdvanceDefinition{}, err
 	}
+	triggerFeatID := record.Tags["TriggerFeatID"]
 	allowsPlantNuke, err := optionalBool(record, "AllowsPlantNuke", false)
 	if err != nil {
 		return RuntimeAdvanceDefinition{}, err
@@ -937,7 +955,7 @@ func compileAdvanceDefinition(record Record) (RuntimeAdvanceDefinition, error) {
 	if err != nil {
 		return RuntimeAdvanceDefinition{}, err
 	}
-	return RuntimeAdvanceDefinition{ID: record.ID, Cost: cost, Prerequisites: prerequisites, AllowsPlantNuke: allowsPlantNuke, EnablesCapitalization: capitalization, EnablesInfrastructure: infrastructure, EnablesTransform: transform, EnablesRoads: roads, EnablesRailroads: railroads, EnablesMagLev: maglev, EnablesTunnels: tunnels, EnablesDeepOcean: deepOcean, PollutionSizeModifier: pollutionSizeModifier, PollutionProductionModifier: pollutionProductionModifier}, nil
+	return RuntimeAdvanceDefinition{ID: record.ID, Cost: cost, Prerequisites: prerequisites, TriggerFeatID: triggerFeatID, AllowsPlantNuke: allowsPlantNuke, EnablesCapitalization: capitalization, EnablesInfrastructure: infrastructure, EnablesTransform: transform, EnablesRoads: roads, EnablesRailroads: railroads, EnablesMagLev: maglev, EnablesTunnels: tunnels, EnablesDeepOcean: deepOcean, PollutionSizeModifier: pollutionSizeModifier, PollutionProductionModifier: pollutionProductionModifier}, nil
 }
 
 func compileTerrainImprovementDefinition(record Record) (RuntimeTerrainImprovementDefinition, error) {

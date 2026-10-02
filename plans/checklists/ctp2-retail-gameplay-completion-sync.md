@@ -39,6 +39,7 @@
 - [x] Task 025: Trade-route legal actions now require current visible source/destination cities, preventing stale fog-memory routes from reaching AI submission.
 - [x] Task 026: Public conquest capture recovery now keeps reserve capture units out of combat, switches to visible mobile legal reserves when needed, routes remembered city targets one projected legal step at a time, and avoids stale-memory frontier oscillation.
 - [x] Task 027: Advance-enabled capitalization and infrastructure production now projects from retail advances/government coefficients, remains public-advance gated, and converts city production into gold or public works with retail ceiling semantics.
+- [x] Task 028: Retail `TriggerFeat` advances now import feat definitions, apply timed nation effects on research completion, and execute the gunpowder city-wall reduction path.
 
 ## Full-Game Mechanical Execution First
 

@@ -25,6 +25,9 @@ func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 	if got, want := len(runtime.Advances), 107; got != want {
 		t.Fatalf("runtime advances = %d, want %d", got, want)
 	}
+	if got, want := len(runtime.Feats), 14; got != want {
+		t.Fatalf("runtime feats = %d, want %d", got, want)
+	}
 	if got, want := len(runtime.Production), 158; got != want {
 		t.Fatalf("runtime production = %d, want %d", got, want)
 	}
@@ -332,6 +335,18 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || !nanoAssembly.EnablesTunnels {
 		t.Fatalf("nano assembly advance = %+v ok=%v", nanoAssembly, ok)
 	}
+	computers, ok := runtime.Advance("ADVANCE_COMPUTER")
+	if !ok || computers.TriggerFeatID != "FEAT_ADVANCE_COMPUTERS" {
+		t.Fatalf("computers advance trigger feat = %+v ok=%v", computers, ok)
+	}
+	computersFeat, ok := runtime.Feat("FEAT_ADVANCE_COMPUTERS")
+	if !ok || computersFeat.Duration != 15 || !runtimeStarterEffectValue(computersFeat.Effects, "research_percent", 5) {
+		t.Fatalf("computers feat = %+v ok=%v", computersFeat, ok)
+	}
+	gunpowderFeat, ok := runtime.Feat("FEAT_ADVANCE_GUNPOWDER")
+	if !ok || gunpowderFeat.Duration != 25 || !runtimeStarterEffectValue(gunpowderFeat.Effects, "reduce_city_walls", -5) {
+		t.Fatalf("gunpowder feat = %+v ok=%v", gunpowderFeat, ok)
+	}
 	globalEconomics, ok := runtime.Advance("ADVANCE_GLOBAL_ECONOMICS")
 	if !ok || !globalEconomics.EnablesCapitalization {
 		t.Fatalf("global economics advance = %+v ok=%v", globalEconomics, ok)
@@ -551,6 +566,15 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || len(pyramids.Effects) != 1 || pyramids.Effects[0].Kind != "yield_gold" || pyramids.Effects[0].Value != 100 {
 		t.Fatalf("Pyramids effects = %+v ok=%v", pyramids, ok)
 	}
+}
+
+func runtimeStarterEffectValue(effects []RuntimeStarterEffect, kind string, value int) bool {
+	for _, effect := range effects {
+		if effect.Kind == kind && effect.Value == value {
+			return true
+		}
+	}
+	return false
 }
 
 func runtimeProductionHasEffect(production RuntimeProduction, kind string) bool {

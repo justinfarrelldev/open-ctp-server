@@ -15,6 +15,7 @@ import (
 type RetailRules struct {
 	Units                 []RetailUnit                 `json:"units"`
 	Advances              []RetailAdvance              `json:"advances"`
+	Feats                 []RetailFeat                 `json:"feats,omitempty"`
 	Wonders               []RetailWonder               `json:"wonders"`
 	Buildings             []RetailBuilding             `json:"buildings"`
 	TerrainImprovements   []RetailTerrainImprovement   `json:"terrain_improvements"`
@@ -67,9 +68,19 @@ type RetailAdvance struct {
 	ID            string             `json:"id"`
 	Cost          int                `json:"cost"`
 	Prerequisites []string           `json:"prerequisites,omitempty"`
+	TriggerFeatID string             `json:"trigger_feat_id,omitempty"`
 	FloatValues   map[string]float64 `json:"float_values,omitempty"`
 	Flags         []string           `json:"flags,omitempty"`
 	RawFields     []RetailRawField   `json:"raw_fields"`
+}
+
+type RetailFeat struct {
+	ID          string             `json:"id"`
+	Duration    int                `json:"duration,omitempty"`
+	IntValues   map[string]int     `json:"int_values,omitempty"`
+	FloatValues map[string]float64 `json:"float_values,omitempty"`
+	Flags       []string           `json:"flags,omitempty"`
+	RawFields   []RetailRawField   `json:"raw_fields"`
 }
 
 type RetailWonder struct {
@@ -243,6 +254,7 @@ func RetailGameCatalogs() []RetailCatalog {
 	return []RetailCatalog{
 		{Filename: "Units.txt", Kind: "unit", Prefixes: []string{"UNIT_"}},
 		{Filename: "Advance.txt", Kind: "advance", Prefixes: []string{"ADVANCE_"}},
+		{Filename: "feat.txt", Kind: "feat", Prefixes: []string{"FEAT_"}},
 		{Filename: "Wonder.txt", Kind: "wonder", Prefixes: []string{"WONDER_"}},
 		{Filename: "buildings.txt", Kind: "building", Prefixes: []string{"IMPROVE_"}},
 		{Filename: "tileimp.txt", Kind: "terrain_improvement", Prefixes: []string{"TILEIMP_"}},
@@ -298,6 +310,12 @@ func LoadRetailRulesFromDirectory(directory string) (RetailRules, error) {
 					return RetailRules{}, err
 				}
 				result.Advances = append(result.Advances, compiled)
+			case "feat":
+				compiled, err := compileRetailFeat(record)
+				if err != nil {
+					return RetailRules{}, err
+				}
+				result.Feats = append(result.Feats, compiled)
 			case "wonder":
 				compiled, err := compileRetailWonder(record)
 				if err != nil {
@@ -799,7 +817,15 @@ func compileRetailAdvance(record RetailRawRecord) (RetailAdvance, error) {
 	if err != nil {
 		return RetailAdvance{}, err
 	}
-	return RetailAdvance{ID: record.ID, Cost: cost, Prerequisites: record.Values("Prerequisites"), FloatValues: retailFloatValues(record.Fields), Flags: retailFlags(record.Fields), RawFields: cloneRetailFields(record.Fields)}, nil
+	return RetailAdvance{ID: record.ID, Cost: cost, Prerequisites: record.Values("Prerequisites"), TriggerFeatID: record.FirstValue("TriggerFeat"), FloatValues: retailFloatValues(record.Fields), Flags: retailFlags(record.Fields), RawFields: cloneRetailFields(record.Fields)}, nil
+}
+
+func compileRetailFeat(record RetailRawRecord) (RetailFeat, error) {
+	duration, err := retailRecordInt(record, "Duration")
+	if err != nil {
+		return RetailFeat{}, err
+	}
+	return RetailFeat{ID: record.ID, Duration: duration, IntValues: retailIntValues(record.Fields), FloatValues: retailFloatValues(record.Fields), Flags: retailFlags(record.Fields), RawFields: cloneRetailFields(record.Fields)}, nil
 }
 
 func compileRetailWonder(record RetailRawRecord) (RetailWonder, error) {

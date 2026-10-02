@@ -31,6 +31,9 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 			runtime.Production = append(runtime.Production, RuntimeProduction{ID: "INFRASTRUCTURE", Kind: "infrastructure", Cost: 1, Prerequisites: []string{projected.ID}})
 		}
 	}
+	for _, feat := range db.Feats {
+		runtime.Feats = append(runtime.Feats, projectRetailFeat(feat))
+	}
 	for _, unit := range db.Units {
 		projected := projectRetailUnit(unit)
 		runtime.Units = append(runtime.Units, projected)
@@ -197,6 +200,7 @@ func projectRetailAdvance(advance RetailAdvance) RuntimeAdvanceDefinition {
 		ID:                          advance.ID,
 		Cost:                        advance.Cost,
 		Prerequisites:               append([]string(nil), advance.Prerequisites...),
+		TriggerFeatID:               advance.TriggerFeatID,
 		AllowsPlantNuke:             retailContainsString(advance.Flags, "PlantNuke"),
 		EnablesCapitalization:       retailContainsString(advance.Flags, "Capitalization"),
 		EnablesInfrastructure:       retailContainsString(advance.Flags, "Infrastructure"),
@@ -209,6 +213,47 @@ func projectRetailAdvance(advance RetailAdvance) RuntimeAdvanceDefinition {
 		PollutionSizeModifier:       signedPercentPointsValue(advance.FloatValues["PollutionSizeModifier"]),
 		PollutionProductionModifier: signedPercentPointsValue(advance.FloatValues["PollutionProductionModifier"]),
 	}
+}
+
+func projectRetailFeat(feat RetailFeat) RuntimeFeatDefinition {
+	return RuntimeFeatDefinition{ID: feat.ID, Duration: feat.Duration, Effects: retailFeatRuntimeEffects(feat)}
+}
+
+func retailFeatRuntimeEffects(feat RetailFeat) []RuntimeStarterEffect {
+	effects := make([]RuntimeStarterEffect, 0)
+	for _, mapping := range []struct{ field, kind string }{
+		{"EffectIncreaseProduction", "yield_production_percent"},
+		{"EffectIncreaseCommerce", "yield_gold_percent"},
+		{"EffectIncreaseScience", "research_percent"},
+		{"EffectIncreaseHappiness", "happiness"},
+		{"EffectReduceCityWalls", "reduce_city_walls"},
+		{"EffectBoatMovement", "increase_boat_movement"},
+		{"EffectCityDefenseBonus", "combat_defense"},
+		{"EffectIncreaseCityVision", "vision"},
+		{"EffectIncreaseBoatVision", "vision"},
+		{"EffectIncreaseHitPoints", "increase_hp"},
+	} {
+		if value, ok := feat.IntValues[mapping.field]; ok {
+			effects = append(effects, RuntimeStarterEffect{ID: feat.ID + ":" + mapping.kind, Kind: mapping.kind, Value: value})
+		}
+	}
+	for _, mapping := range []struct{ field, kind string }{
+		{"EffectGiveMaps", "give_maps"},
+		{"EffectEliminateDistancePenalty", "eliminate_distance_penalty"},
+		{"EffectScriptedTurn", "scripted_turn"},
+		{"EffectScriptedCity", "scripted_city"},
+	} {
+		if retailContainsString(feat.Flags, mapping.field) || len(retailFieldValues(feat.RawFields, mapping.field)) > 0 {
+			effects = append(effects, RuntimeStarterEffect{ID: feat.ID + ":" + mapping.kind, Kind: mapping.kind})
+		}
+	}
+	sort.Slice(effects, func(i, j int) bool {
+		if effects[i].Kind != effects[j].Kind {
+			return effects[i].Kind < effects[j].Kind
+		}
+		return effects[i].ID < effects[j].ID
+	})
+	return effects
 }
 
 func retailBuildingRuntimeEffects(building RetailBuilding) []RuntimeStarterEffect {
@@ -966,6 +1011,7 @@ func positiveOrOne(value int) int {
 
 func sortRuntimeProjection(runtime *RuntimeRules) {
 	sort.Slice(runtime.Advances, func(i, j int) bool { return runtime.Advances[i].ID < runtime.Advances[j].ID })
+	sort.Slice(runtime.Feats, func(i, j int) bool { return runtime.Feats[i].ID < runtime.Feats[j].ID })
 	sort.Slice(runtime.Units, func(i, j int) bool { return runtime.Units[i].ID < runtime.Units[j].ID })
 	sort.Slice(runtime.Production, func(i, j int) bool { return runtime.Production[i].ID < runtime.Production[j].ID })
 	sort.Slice(runtime.Effects, func(i, j int) bool { return runtime.Effects[i].ID < runtime.Effects[j].ID })
