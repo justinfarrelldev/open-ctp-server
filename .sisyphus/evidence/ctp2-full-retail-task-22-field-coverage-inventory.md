@@ -14,7 +14,8 @@ Regression guard:
 | Catalog | Records | Unique fields, including nested fields | Current coverage summary |
 | --- | ---: | ---: | --- |
 | Units | 74 | 194 | Core cost/prereq/obsolete/combat/move/fuel/ranged/bombard fields are partially projected/executed. Many special actions, cargo/vision classes, stealth, active defense, upgrades, support, and sound/UI fields remain pending. |
-| Advances | 107 | 19 | Cost/prerequisites/unlocks are partially executed. Infrastructure/capitalization, pollution modifiers, feat triggers, and movement/terraform flags remain pending. |
+| Advances | 107 | 19 | Cost/prerequisites, research unlocks, production obsolescence, plant-nuke unlocks, pollution modifiers, capitalization/infrastructure unlocks, terrain-improvement transport/terraform gates, and advance-triggered feats are executed; Age/Branch/Icon/GLHidden/advice are presentation metadata. |
+| Feats | 14 | 13 | Advance-triggered feat effects for production, science, happiness, boat movement, hit points, and city-wall reduction are imported as timed runtime effects; building/conquest/recapture trigger conditions are covered by later building/combat feat work. |
 | Wonders | 30 | 39 | Cost/prereq/obsolete metadata is projected; selected effects are still incomplete. Gaia and global effects require more execution coverage. |
 | Buildings | 52 | 42 | Cost/upkeep/prereq/obsolete and production/gold percent effects are projected/executed. Science, happiness, crime, population, pollution, protection, combat, trade, and growth effects remain pending. |
 | Terrain improvements | 40 | 36 | Class, construction cost/time, movement/yield effects, CantBuildOn, and Excludes are partially supported. Vision/radar/heal/terraform/endgame/listening-post behavior remains pending. |
@@ -33,6 +34,12 @@ ActiveDefenseOnlyWhenCarryingEnablers, ActiveDefenseRange, Advertise, Armor, Ass
 <details><summary>Advances (19)</summary>
 
 Age, Branch, Capitalization, Cost, DeepOcean, GLHidden, Icon, Infrastructure, KeyAdvanceAdvice, MagLev, PlantNuke, PollutionProductionModifier, PollutionSizeModifier, Prerequisites, Railroads, Roads, Transform, TriggerFeat, Tunnels
+
+</details>
+
+<details><summary>Feats (13)</summary>
+
+Building, Building.Building, Description, Duration, EffectBoatMovement, EffectIncreaseCommerce, EffectIncreaseHappiness, EffectIncreaseHitPoints, EffectIncreaseProduction, EffectIncreaseScience, EffectReduceCityWalls, MinimumSizeOfCiv, SlicMessage
 
 </details>
 

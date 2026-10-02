@@ -20,6 +20,7 @@ func TestRetailFieldInventorySnapshot(t *testing.T) {
 	}{
 		{catalog: "unit", fields: retailUnitFieldInventory(db.Units), wantCount: 194, mustHave: []string{"Attack", "CargoData.MaxCargo", "MaxFuel", "NoFuelThenCrash", "PlantNuke.EscapeChance", "UpgradeTo"}},
 		{catalog: "advance", fields: retailAdvanceFieldInventory(db.Advances), wantCount: 19, mustHave: []string{"Cost", "Prerequisites", "PollutionProductionModifier", "TriggerFeat"}},
+		{catalog: "feat", fields: retailFeatFieldInventory(db.Feats), wantCount: 13, mustHave: []string{"Duration", "EffectIncreaseProduction", "EffectReduceCityWalls", "Building.Building"}},
 		{catalog: "wonder", fields: retailWonderFieldInventory(db.Wonders), wantCount: 39, mustHave: []string{"ProductionCost", "StartGaiaController", "PollutersToParks", "IncreaseScientists"}},
 		{catalog: "building", fields: retailBuildingFieldInventory(db.Buildings), wantCount: 42, mustHave: []string{"ProductionCost", "PopulationPollutionPercent", "ProductionPollutionPercent", "SciencePercent"}},
 		{catalog: "terrain_improvement", fields: retailTerrainImprovementFieldInventory(db.TerrainImprovements), wantCount: 36, mustHave: []string{"CantBuildOn", "Excludes", "TerrainEffect.BonusProduction", "TerrainEffect.ProductionTime"}},
@@ -49,6 +50,14 @@ func retailUnitFieldInventory(values []RetailUnit) []string {
 }
 
 func retailAdvanceFieldInventory(values []RetailAdvance) []string {
+	fields := make([][]RetailRawField, 0, len(values))
+	for _, value := range values {
+		fields = append(fields, value.RawFields)
+	}
+	return retailFieldInventory(fields)
+}
+
+func retailFeatFieldInventory(values []RetailFeat) []string {
 	fields := make([][]RetailRawField, 0, len(values))
 	for _, value := range values {
 		fields = append(fields, value.RawFields)
