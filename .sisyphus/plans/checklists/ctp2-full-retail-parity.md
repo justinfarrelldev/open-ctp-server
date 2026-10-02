@@ -324,6 +324,7 @@
 - [x] Task 373: Retail advance-triggered feats import, apply timed effects, and reduce city-wall defense for gunpowder-style feats.
 - [x] Task 374: Retail feat fields are included in the released-game field coverage inventory.
 - [x] Task 375: Retail building-triggered feats apply when the released `feat.txt` building thresholds are reached.
+- [x] Task 376: Retail conquered-by-force feats apply when a qualifying civilization loses its final city.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

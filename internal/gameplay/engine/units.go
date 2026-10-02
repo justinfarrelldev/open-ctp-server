@@ -332,23 +332,62 @@ func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *ru
 			mover.Fuel -= spent
 		}
 	}
-	captureCityAt(state, actorID, from.ID)
+	captureCityAt(state, actorID, from.ID, runtime)
 	state.Fog = append(state.Fog, FogObservation{PlayerID: actorID, TileID: from.ID, Turn: state.Phase.Turn})
 	return nil
 }
 
-func captureCityAt(state *State, actorID, tileID string) string {
+func captureCityAt(state *State, actorID, tileID string, runtimes ...*rules.RuntimeRules) string {
+	var runtime *rules.RuntimeRules
+	if len(runtimes) > 0 {
+		runtime = runtimes[0]
+	}
 	for i := range state.Cities {
 		if state.Cities[i].TileID == tileID && state.Cities[i].OwnerID != actorID {
 			cityID := state.Cities[i].ID
+			defeatedOwnerID := state.Cities[i].OwnerID
+			defeatedCityCount := ownerCityCount(*state, defeatedOwnerID)
 			state.Cities[i].OwnerID = actorID
 			normalizeCityConversionOwner(&state.Cities[i])
 			state.Cities[i].ConquestDistress = conquestDistressForOwner(*state, actorID)
 			state.TradeRoutes = removeTradeRoutesTouchingCity(state.TradeRoutes, cityID)
+			applyConqueredByForceFeat(state, actorID, defeatedOwnerID, defeatedCityCount, runtime)
 			return cityID
 		}
 	}
 	return ""
+}
+
+func ownerCityCount(state State, ownerID string) int {
+	count := 0
+	for _, city := range state.Cities {
+		if city.OwnerID == ownerID {
+			count++
+		}
+	}
+	return count
+}
+
+func applyConqueredByForceFeat(state *State, conquerorPlayerID, defeatedPlayerID string, defeatedCityCount int, runtime *rules.RuntimeRules) {
+	if state == nil || runtime == nil || defeatedCityCount != 1 {
+		return
+	}
+	conquerorNation := nationForID(state, nationForPlayer(*state, conquerorPlayerID))
+	defeatedNation := nationForID(state, nationForPlayer(*state, defeatedPlayerID))
+	if conquerorNation == nil || defeatedNation == nil {
+		return
+	}
+	maxCityCount := defeatedNation.MaxCityCount
+	if defeatedCityCount > maxCityCount {
+		maxCityCount = defeatedCityCount
+	}
+	for _, feat := range runtime.Feats {
+		if feat.ID != "FEAT_CONQUERED_BY_FORCE" || feat.MinimumCivSize < 1 || maxCityCount < feat.MinimumCivSize {
+			continue
+		}
+		applyRuntimeFeat(conquerorNation, feat)
+		return
+	}
 }
 
 func removeTradeRoutesTouchingCity(routes []TradeRoute, cityID string) []TradeRoute {

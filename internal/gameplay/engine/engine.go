@@ -323,6 +323,7 @@ type Nation struct {
 	ResearchTargetID    string              `json:"research_target_id,omitempty"`
 	ResearchProgress    int                 `json:"research_progress,omitempty"`
 	GaiaCompletionTurn  int                 `json:"gaia_completion_turn,omitempty"`
+	MaxCityCount        int                 `json:"max_city_count,omitempty"`
 	PeaceMovement       *PeaceMovementState `json:"peace_movement,omitempty"`
 }
 
@@ -914,7 +915,7 @@ func ValidateState(state State) error {
 		}
 	}
 	for _, nation := range state.Nations {
-		if nation.GaiaCompletionTurn < 0 || nation.ResearchProgress < 0 {
+		if nation.GaiaCompletionTurn < 0 || nation.ResearchProgress < 0 || nation.MaxCityCount < 0 {
 			return errors.New("nation counters must be nonnegative")
 		}
 		if nation.PublicWorksPercent != nil && (*nation.PublicWorksPercent < 0 || *nation.PublicWorksPercent > 100) {

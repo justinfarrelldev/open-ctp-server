@@ -216,7 +216,7 @@ func projectRetailAdvance(advance RetailAdvance) RuntimeAdvanceDefinition {
 }
 
 func projectRetailFeat(feat RetailFeat) RuntimeFeatDefinition {
-	return RuntimeFeatDefinition{ID: feat.ID, Duration: feat.Duration, BuildingID: feat.BuildingID, BuildingCount: feat.BuildingCount, BuildingPercent: feat.BuildingPercent, Effects: retailFeatRuntimeEffects(feat)}
+	return RuntimeFeatDefinition{ID: feat.ID, Duration: feat.Duration, BuildingID: feat.BuildingID, BuildingCount: feat.BuildingCount, BuildingPercent: feat.BuildingPercent, MinimumCivSize: feat.IntValues["MinimumSizeOfCiv"], Effects: retailFeatRuntimeEffects(feat)}
 }
 
 func retailFeatRuntimeEffects(feat RetailFeat) []RuntimeStarterEffect {

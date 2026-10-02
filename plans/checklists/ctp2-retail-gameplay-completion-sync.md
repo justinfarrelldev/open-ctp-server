@@ -42,6 +42,7 @@
 - [x] Task 028: Retail `TriggerFeat` advances now import feat definitions, apply timed nation effects on research completion, and execute the gunpowder city-wall reduction path.
 - [x] Task 029: Retail feat catalog fields are included in the field inventory snapshot and coverage report now that `feat.txt` is parsed for advance-triggered feats.
 - [x] Task 030: Retail building-triggered feats now import `Building` thresholds and apply timed nation effects when city production completes the required building count.
+- [x] Task 031: Retail `FEAT_CONQUERED_BY_FORCE` now imports `MinimumSizeOfCiv`, tracks nation max city count, and applies the hit-point feat when a qualifying civilization loses its final city.
 
 ## Full-Game Mechanical Execution First
 

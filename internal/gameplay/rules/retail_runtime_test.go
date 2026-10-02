@@ -351,6 +351,10 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if !ok || theatersFeat.BuildingID != "IMPROVE_THEATER" || theatersFeat.BuildingCount != 8 {
 		t.Fatalf("theaters feat trigger = %+v ok=%v", theatersFeat, ok)
 	}
+	conqueredFeat, ok := runtime.Feat("FEAT_CONQUERED_BY_FORCE")
+	if !ok || conqueredFeat.MinimumCivSize != 5 || !runtimeStarterEffectValue(conqueredFeat.Effects, "increase_hp", 1) {
+		t.Fatalf("conquered-by-force feat = %+v ok=%v", conqueredFeat, ok)
+	}
 	globalEconomics, ok := runtime.Advance("ADVANCE_GLOBAL_ECONOMICS")
 	if !ok || !globalEconomics.EnablesCapitalization {
 		t.Fatalf("global economics advance = %+v ok=%v", globalEconomics, ok)

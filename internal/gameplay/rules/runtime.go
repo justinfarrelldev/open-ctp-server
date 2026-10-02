@@ -65,6 +65,7 @@ type RuntimeFeatDefinition struct {
 	BuildingID      string                 `json:"building_id,omitempty"`
 	BuildingCount   int                    `json:"building_count,omitempty"`
 	BuildingPercent int                    `json:"building_percent,omitempty"`
+	MinimumCivSize  int                    `json:"minimum_civ_size,omitempty"`
 	Effects         []RuntimeStarterEffect `json:"effects,omitempty"`
 }
 

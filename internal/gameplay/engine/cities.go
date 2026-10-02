@@ -994,8 +994,24 @@ func RecalculateRound(state State) (State, error) {
 		}
 	}
 	applyReadinessSupportTax(&next, runtime)
+	updateNationMaxCityCounts(&next)
 	next.RecalculatedTurn = next.Phase.Turn
 	return next, nil
+}
+
+func updateNationMaxCityCounts(state *State) {
+	if state == nil {
+		return
+	}
+	counts := make(map[string]int, len(state.Nations))
+	for _, city := range state.Cities {
+		counts[nationForPlayer(*state, city.OwnerID)]++
+	}
+	for index := range state.Nations {
+		if count := counts[state.Nations[index].ID]; count > state.Nations[index].MaxCityCount {
+			state.Nations[index].MaxCityCount = count
+		}
+	}
 }
 
 func applyReadinessSupportTax(state *State, runtime *rules.RuntimeRules) {

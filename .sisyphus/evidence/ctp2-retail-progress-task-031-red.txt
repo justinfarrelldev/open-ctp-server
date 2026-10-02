@@ -1,0 +1,20 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules.test]
+internal/gameplay/rules/retail_runtime_test.go:355:26: conqueredFeat.MinimumCivSize undefined (type RuntimeFeatDefinition has no field or method MinimumCivSize)
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [build failed]
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/conquer_feat_task31_test.go:12:19: state.Nations[1].MaxCityCount undefined (type Nation has no field or method MaxCityCount)
+internal/gameplay/engine/conquer_feat_task31_test.go:13:116: unknown field MinimumCivSize in struct literal of type struct{ID string "json:\"id\""; Duration int "json:\"duration,omitempty\""; BuildingID string "json:\"building_id,omitempty\""; BuildingCount int "json:\"building_count,omitempty\""; BuildingPercent int "json:\"building_percent,omitempty\""; Effects []rules.RuntimeStarterEffect "json:\"effects,omitempty\""}
+internal/gameplay/engine/conquer_feat_task31_test.go:15:58: too many arguments in call to captureCityAt
+	have (*State, string, string, *rules.RuntimeRules)
+	want (*State, string, string)
+internal/gameplay/engine/conquer_feat_task31_test.go:27:19: state.Nations[1].MaxCityCount undefined (type Nation has no field or method MaxCityCount)
+internal/gameplay/engine/conquer_feat_task31_test.go:28:116: unknown field MinimumCivSize in struct literal of type struct{ID string "json:\"id\""; Duration int "json:\"duration,omitempty\""; BuildingID string "json:\"building_id,omitempty\""; BuildingCount int "json:\"building_count,omitempty\""; BuildingPercent int "json:\"building_percent,omitempty\""; Effects []rules.RuntimeStarterEffect "json:\"effects,omitempty\""}
+internal/gameplay/engine/conquer_feat_task31_test.go:30:46: too many arguments in call to captureCityAt
+	have (*State, string, string, *rules.RuntimeRules)
+	want (*State, string, string)
+internal/gameplay/engine/conquer_feat_task31_test.go:35:19: state.Nations[1].MaxCityCount undefined (type Nation has no field or method MaxCityCount)
+internal/gameplay/engine/conquer_feat_task31_test.go:36:46: too many arguments in call to captureCityAt
+	have (*State, string, string, *rules.RuntimeRules)
+	want (*State, string, string)
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL

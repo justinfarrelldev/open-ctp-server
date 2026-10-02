@@ -122,7 +122,7 @@ func applyCombat(state *State, command Command, sources Sources, runtime *rules.
 		result.EnslavedPopulation = applyVictoryEnslavement(state, attackers.ID)
 		if armyCanCaptureTargetCity(*state, *attackers, targetTileID) {
 			moveArmyToTile(state, attackers.ID, targetTileID)
-			result.CapturedCityID = captureCityAt(state, command.ActorPlayerID, targetTileID)
+			result.CapturedCityID = captureCityAt(state, command.ActorPlayerID, targetTileID, runtime)
 		}
 		promoteArmyVeterans(state, attackers.ID)
 	} else {
