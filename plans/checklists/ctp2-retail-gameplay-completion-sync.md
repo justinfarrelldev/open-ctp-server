@@ -73,6 +73,7 @@
 - [x] Task 059: Retail wonder `BuildingEverywhere`/`ActualBuildingEverywhere` now provide effective buildings for owner city building prerequisites.
 - [x] Task 060: Retail `GoldPerTelevision` wonder income now counts television effects from effective buildings, including building-everywhere wonders.
 - [x] Task 061: Retail city capture now transfers built wonders to the conqueror and reapplies owner-facing wonder add effects.
+- [x] Task 062: Retail city capture now destroys captured Capitol buildings while preserving other improvements.
 
 ## Full-Game Mechanical Execution First
 

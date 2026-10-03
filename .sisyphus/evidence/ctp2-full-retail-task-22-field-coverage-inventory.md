@@ -147,3 +147,6 @@ Task 060 update:
 
 Task 061 update:
 - Retail city capture now transfers built wonders in the captured city to the conqueror and reapplies owner-facing wonder add effects such as hit points and effective-building ownership.
+
+Task 062 update:
+- Retail city capture now destroys captured `Capitol` buildings before owner transfer, matching `CityData::DestroyCapitol()`.

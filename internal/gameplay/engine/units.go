@@ -536,6 +536,7 @@ func captureCityAt(state *State, actorID, tileID string, runtimes ...*rules.Runt
 			defeatedOwnerID := state.Cities[i].OwnerID
 			defeatedCityCount := ownerCityCount(*state, defeatedOwnerID)
 			recapturedByFounder := state.Cities[i].FounderID != "" && state.Cities[i].FounderID == actorID
+			removeCapturedCapitolBuildings(&state.Cities[i])
 			state.Cities[i].OwnerID = actorID
 			normalizeCityConversionOwner(&state.Cities[i])
 			state.Cities[i].ConquestDistress = conquestDistressForOwner(*state, actorID)
@@ -549,6 +550,17 @@ func captureCityAt(state *State, actorID, tileID string, runtimes ...*rules.Runt
 		}
 	}
 	return ""
+}
+
+func removeCapturedCapitolBuildings(city *City) {
+	kept := city.Buildings[:0]
+	for _, building := range city.Buildings {
+		if hasEffect(building.Effects, EffectCapitol) {
+			continue
+		}
+		kept = append(kept, building)
+	}
+	city.Buildings = kept
 }
 
 func transferCityWondersToOwner(state *State, cityID, newOwnerID string, runtime *rules.RuntimeRules) {

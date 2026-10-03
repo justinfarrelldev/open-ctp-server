@@ -1,0 +1,5 @@
+--- FAIL: TestRetailCityCaptureDestroysCapturedCapitolBuilding (0.00s)
+    city_capture_capitol_task62_test.go:14: captured city retained capitol building: [{ID:IMPROVE_CAPITOL Upkeep:0 ObsoletedBy: Effects:[{ID:capitol Kind:capitol Value:0 Turns:0}]} {ID:IMPROVE_GRANARY Upkeep:0 ObsoletedBy: Effects:[{ID:food Kind:yield_food Value:1 Turns:0}]}]
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.002s
+FAIL
