@@ -69,6 +69,7 @@
 - [x] Task 055: Retail wonder gold (`BonusGold`, route gold, and television gold) now pays owner treasury once at begin turn instead of inflating city yields.
 - [x] Task 056: Retail `CanPirate` units now mark trade routes as pirated and earn route-value piracy gold at begin turn.
 - [x] Task 057: Retail Gaia countdown now requires configured computers, satellites, processing towers, and tower coverage.
+- [x] Task 058: Retail `VETERAN_COEF` now increases veteran melee, bombard, active-defense, and counter-bombard hit strength.
 
 ## Full-Game Mechanical Execution First
 

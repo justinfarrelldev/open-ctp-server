@@ -13,7 +13,7 @@ Regression guard:
 
 | Catalog | Records | Unique fields, including nested fields | Current coverage summary |
 | --- | ---: | ---: | --- |
-| Units | 79 | 194 | Core cost/prereq/obsolete/combat/move/fuel/ranged/bombard plus `SpaceLaunch`, `NuclearAttack`, `ThrowParty`, `Advertise`, `CanBeGifted`, `CanPirate`, `DeathEffectsHappy`, `InvisibleForGlobeSat`, and beach-assault unload movement behavior are partially projected/executed. Many special actions, cargo/vision classes, stealth, active defense, upgrades, support, and sound/UI fields remain pending. |
+| Units | 79 | 194 | Core cost/prereq/obsolete/combat/move/fuel/ranged/bombard plus retail veteran attack odds, `SpaceLaunch`, `NuclearAttack`, `ThrowParty`, `Advertise`, `CanBeGifted`, `CanPirate`, `DeathEffectsHappy`, `InvisibleForGlobeSat`, and beach-assault unload movement behavior are partially projected/executed. Many special actions, cargo/vision classes, stealth, active defense, upgrades, support, and sound/UI fields remain pending. |
 | Advances | 107 | 19 | Cost/prerequisites, research unlocks, production obsolescence, plant-nuke unlocks, pollution modifiers, capitalization/infrastructure unlocks, terrain-improvement transport/terraform gates, and advance-triggered feats are executed; Age/Branch/Icon/GLHidden/advice are presentation metadata. |
 | Feats | 14 | 13 | Advance-triggered feat effects for production, science, happiness, boat movement, hit points, and city-wall reduction are imported as timed runtime effects; building thresholds, sailed-around-world, conquered-by-force, and founder city-recapture triggers now execute as timed nation effects with retail one-time achievement gating. |
 | Wonders | 30 | 39 | Cost/prereq/obsolete metadata plus selected effects including `IncreaseBoatMovement`, `IncreaseHp`, `IncreaseScientists`, `IncreaseBrokerages`, `IncreaseRegard`, treasury-level gold (`BonusGold`, route gold, television gold), `EnableParkRangers`, `EliminateNukes`, `FreeSlaves`, and `StartGaiaController` countdown requirements are projected/executed; remaining global effects require more execution coverage. |
@@ -135,3 +135,6 @@ Task 056 update:
 
 Task 057 update:
 - Retail `StartGaiaController`/endgame object prerequisites now gate countdown/victory on Gaia computer count, power satellite count, processing tower count, and processing-tower map coverage.
+
+Task 058 update:
+- Retail `VETERAN_COEF` from `Const.txt` now increases veteran melee attack and ranged bombard/active-defense/counter-bombard hit strength using the released 50% default.

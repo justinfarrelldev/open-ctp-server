@@ -218,6 +218,7 @@ type RetailConstants struct {
 	NukeKillTiles                  int `json:"nuke_kill_tiles"`
 	PollutionCausedByNuke          int `json:"pollution_caused_by_nuke"`
 	PiracyWastePercent             int `json:"piracy_waste_percent"`
+	VeteranCoefPercent             int `json:"veteran_coef_percent"`
 }
 
 type RetailCalendarPeriod struct {
@@ -455,7 +456,7 @@ func loadRetailConstants(path string) (RetailConstants, error) {
 	floatValues := map[string]int{}
 	for index := 0; index+1 < len(tokens); index++ {
 		switch tokens[index].value {
-		case "CITY_GROWTH_COEFFICIENT", "UNCONVERTED_INDULGENCE_GOLD", "UNCONVERTED_INDULGENCE_HAPPINESS", "CONVERTED_INDULGENCE_GOLD", "CONVERTED_INDULGENCE_HAPPINESS", "OTHER_FAITH_INDULGENCE_GOLD", "OTHER_FAITH_INDULGENCE_HAPPINESS", "EMANCIPATION_UNHAPPINESS_TURNS", "NUKE_KILL_TILES", "POLLUTION_CAUSED_BY_NUKE":
+		case "CITY_GROWTH_COEFFICIENT", "UNCONVERTED_INDULGENCE_GOLD", "UNCONVERTED_INDULGENCE_HAPPINESS", "CONVERTED_INDULGENCE_GOLD", "CONVERTED_INDULGENCE_HAPPINESS", "OTHER_FAITH_INDULGENCE_GOLD", "OTHER_FAITH_INDULGENCE_HAPPINESS", "EMANCIPATION_UNHAPPINESS_TURNS", "NUKE_KILL_TILES", "POLLUTION_CAUSED_BY_NUKE", "VETERAN_COEF":
 			value, err := retailParseInt("CONST", tokens[index].value, tokens[index+1].value)
 			if err != nil {
 				return RetailConstants{}, err
@@ -475,7 +476,7 @@ func loadRetailConstants(path string) (RetailConstants, error) {
 			floatValues[tokens[index].value] = int(value)
 		}
 	}
-	return RetailConstants{CityGrowthCoefficient: values["CITY_GROWTH_COEFFICIENT"], UnconvertedIndulgenceGold: values["UNCONVERTED_INDULGENCE_GOLD"], UnconvertedIndulgenceHappiness: values["UNCONVERTED_INDULGENCE_HAPPINESS"], ConvertedIndulgenceGold: values["CONVERTED_INDULGENCE_GOLD"], ConvertedIndulgenceHappiness: values["CONVERTED_INDULGENCE_HAPPINESS"], OtherFaithIndulgenceGold: values["OTHER_FAITH_INDULGENCE_GOLD"], OtherFaithIndulgenceHappiness: values["OTHER_FAITH_INDULGENCE_HAPPINESS"], ClericConversionPercent: floatValues["CLERIC_CONVERSION_FACTOR"], TelevangelistConversionPercent: floatValues["TELEVANGELIST_CONVERSION_FACTOR"], EmancipationUnhappinessTurns: values["EMANCIPATION_UNHAPPINESS_TURNS"], EmancipationUnhappinessAmount: floatValues["EMANCIPATION_UNHAPPINESS_AMOUNT"], NukePopulationPercent: floatValues["NUKE_POPULATION_PERCENTAGE"], NukeKillTiles: values["NUKE_KILL_TILES"], PollutionCausedByNuke: values["POLLUTION_CAUSED_BY_NUKE"], PiracyWastePercent: floatValues["PIRACY_WASTE_COEFFICIENT"]}, nil
+	return RetailConstants{CityGrowthCoefficient: values["CITY_GROWTH_COEFFICIENT"], UnconvertedIndulgenceGold: values["UNCONVERTED_INDULGENCE_GOLD"], UnconvertedIndulgenceHappiness: values["UNCONVERTED_INDULGENCE_HAPPINESS"], ConvertedIndulgenceGold: values["CONVERTED_INDULGENCE_GOLD"], ConvertedIndulgenceHappiness: values["CONVERTED_INDULGENCE_HAPPINESS"], OtherFaithIndulgenceGold: values["OTHER_FAITH_INDULGENCE_GOLD"], OtherFaithIndulgenceHappiness: values["OTHER_FAITH_INDULGENCE_HAPPINESS"], ClericConversionPercent: floatValues["CLERIC_CONVERSION_FACTOR"], TelevangelistConversionPercent: floatValues["TELEVANGELIST_CONVERSION_FACTOR"], EmancipationUnhappinessTurns: values["EMANCIPATION_UNHAPPINESS_TURNS"], EmancipationUnhappinessAmount: floatValues["EMANCIPATION_UNHAPPINESS_AMOUNT"], NukePopulationPercent: floatValues["NUKE_POPULATION_PERCENTAGE"], NukeKillTiles: values["NUKE_KILL_TILES"], PollutionCausedByNuke: values["POLLUTION_CAUSED_BY_NUKE"], PiracyWastePercent: floatValues["PIRACY_WASTE_COEFFICIENT"], VeteranCoefPercent: values["VETERAN_COEF"]}, nil
 }
 
 func loadRetailEndGameYears(path string) (int, int, error) {

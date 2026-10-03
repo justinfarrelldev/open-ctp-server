@@ -317,7 +317,8 @@ func applyBombard(state *State, command Command, sources Sources, runtime *rules
 			defense = 0
 		}
 		roll := combatRoll(state, sources)
-		if int(roll%1000) < interceptor.Ranged*1000/(interceptor.Ranged+defense) {
+		attack := combatAttackValueWithRuntime(runtime, *interceptor, true)
+		if int(roll%1000) < attack*1000/(attack+defense) {
 			unit.Health -= combatDamage(*interceptor, *unit)
 			activeDefenseHits++
 		}
@@ -345,7 +346,8 @@ func applyBombard(state *State, command Command, sources Sources, runtime *rules
 			defense = 0
 		}
 		roll := combatRoll(state, sources)
-		if int(roll%1000) < unit.Ranged*1000/(unit.Ranged+defense) {
+		attack := combatAttackValueWithRuntime(runtime, *unit, true)
+		if int(roll%1000) < attack*1000/(attack+defense) {
 			target.Health -= combatDamage(*unit, *target)
 			hits++
 		}
@@ -389,7 +391,8 @@ func counterBombard(state *State, sources Sources, attacker *Unit, defenders []*
 				defense = 0
 			}
 			roll := combatRoll(state, sources)
-			if int(roll%1000) < defender.Ranged*1000/(defender.Ranged+defense) {
+			attack := combatAttackValueWithRuntime(runtime, *defender, true)
+			if int(roll%1000) < attack*1000/(attack+defense) {
 				attacker.Health -= combatDamage(*defender, *attacker)
 				hits++
 			}
@@ -599,11 +602,9 @@ func combatStrikeWithRuntime(state *State, sources Sources, attackers, defenders
 			continue
 		}
 		target := targets[0]
-		attack := attacker.Attack
-		if ranged {
-			attack = attacker.Ranged
-		}
+		attack := combatAttackValue(*attacker, ranged)
 		attack += combatAttackModifierWithRuntime(*state, runtime, *attacker, *target)
+		attack = combatVeteranAdjustedAttackWithRuntime(runtime, *attacker, attack)
 		defense := target.Defense + combatDefenseModifierWithRuntime(*state, runtime, *target, *attacker)
 		if attack <= 0 || defense < 0 {
 			continue
@@ -614,6 +615,32 @@ func combatStrikeWithRuntime(state *State, sources Sources, attackers, defenders
 			target.Health -= readinessAdjustedCombatDamage(*state, *target, damage)
 		}
 	}
+}
+
+func combatAttackValue(unit Unit, ranged bool) int {
+	if ranged {
+		return unit.Ranged
+	}
+	return unit.Attack
+}
+
+func combatAttackValueWithRuntime(runtime *rules.RuntimeRules, unit Unit, ranged bool) int {
+	return combatVeteranAdjustedAttackWithRuntime(runtime, unit, combatAttackValue(unit, ranged))
+}
+
+func combatVeteranAdjustedAttackWithRuntime(runtime *rules.RuntimeRules, unit Unit, attack int) int {
+	if attack <= 0 || !unit.Veteran {
+		return attack
+	}
+	coef := retailVeteranCoefPercent(runtime)
+	return attack + attack*coef/100
+}
+
+func retailVeteranCoefPercent(runtime *rules.RuntimeRules) int {
+	if runtime != nil && runtime.Constants.VeteranCoefPercent != 0 {
+		return runtime.Constants.VeteranCoefPercent
+	}
+	return 50
 }
 
 func combatDamage(attacker, target Unit) int {

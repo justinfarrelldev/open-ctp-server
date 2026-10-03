@@ -1,0 +1,7 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/veteran_combat_task58_test.go:10:67: unknown field VeteranCoefPercent in struct literal of type rules.RuntimeConstants
+internal/gameplay/engine/veteran_combat_task58_test.go:12:12: undefined: combatAttackValueWithRuntime
+internal/gameplay/engine/veteran_combat_task58_test.go:15:12: undefined: combatAttackValueWithRuntime
+internal/gameplay/engine/veteran_combat_task58_test.go:22:12: undefined: combatAttackValueWithRuntime
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL
