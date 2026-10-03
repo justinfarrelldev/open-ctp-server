@@ -1,0 +1,7 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/advertise_task42_test.go:10:65: undefined: CommandAdvertise
+internal/gameplay/engine/advertise_task42_test.go:14:18: undefined: EventAdvertised
+internal/gameplay/engine/advertise_task42_test.go:15:51: undefined: EventAdvertised
+internal/gameplay/engine/advertise_task42_test.go:30:60: undefined: CommandAdvertise
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL

@@ -90,6 +90,7 @@ var commands = map[string]struct {
 	"establish-embassy":     {engine.CommandEstablishEmbassy, fields("unit_id", "city_id")},
 	"soothsaying":           {engine.CommandSoothsaying, fields("unit_id", "city_id")},
 	"cause-unhappiness":     {engine.CommandCauseUnhappiness, fields("unit_id", "city_id")},
+	"advertise":             {engine.CommandAdvertise, fields("unit_id", "city_id")},
 	"incite-revolution":     {engine.CommandInciteRevolution, fields("unit_id", "city_id")},
 	"indulgence-sales":      {engine.CommandIndulgenceSales, fields("unit_id", "city_id")},
 	"slave-uprising":        {engine.CommandSlaveUprising, fields("unit_id", "city_id")},

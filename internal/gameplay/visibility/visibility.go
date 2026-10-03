@@ -1532,7 +1532,9 @@ func specialActions(projection Projection, tiles map[string]TileProjection, citi
 		if hasEffect(unit.Effects, engine.EffectSpecialSoothsaying) {
 			actions = append(actions, action(engine.CommandSoothsaying, "soothsaying", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
 		}
-		if hasEffect(unit.Effects, engine.EffectSpecialCauseUnhappiness) {
+		if hasEffect(unit.Effects, engine.EffectAdvertise) && hasEffect(unit.Effects, engine.EffectSpecialCauseUnhappiness) {
+			actions = append(actions, action(engine.CommandAdvertise, "advertise", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
+		} else if hasEffect(unit.Effects, engine.EffectSpecialCauseUnhappiness) {
 			actions = append(actions, action(engine.CommandCauseUnhappiness, "cause-unhappiness", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
 		}
 		if hasEffect(unit.Effects, engine.EffectSpecialInciteRevolution) {

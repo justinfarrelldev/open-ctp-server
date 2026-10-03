@@ -55,7 +55,7 @@
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "98cfea594a6d0bd300b8c2cca14efef930082f01479808a51c580f70d518cbab"
+      "sha256": "47615a2fc78064e42bf1017c595c7144509e8be1abf997eb6e325a4156b5809c"
     },
     {
       "path": "internal/gameplay/engine/government.go",
@@ -71,7 +71,7 @@
     },
     {
       "path": "internal/gameplay/engine/special.go",
-      "sha256": "58ed3c1fe899d3504e8c10cb5874ab7c9315cf2e4a5c0314fa64d4040e9a0a09"
+      "sha256": "bbeafed5ba54b61517f50e2bbc7bc0e451b116f0cfd453b9e83364de07f6e9aa"
     },
     {
       "path": "internal/gameplay/engine/turns/turns.go",
@@ -95,7 +95,7 @@
     },
     {
       "path": "internal/gameplay/http/http.go",
-      "sha256": "e203c389cd1e0d50212b75122edf8bdb62a5e408ee7e48994e38157f9bfddf44"
+      "sha256": "c267e957916d4003cc42a4f5f92fa378f9b7731140df71fe035cf60c813440e9"
     },
     {
       "path": "internal/gameplay/rules/retail_catalog.go",
@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "8a032dcb602cd41eff242468112a8ff9653132482a2a3d4e0b0b621566dea48d"
+      "sha256": "fabebd2ed83f11e07165646e64ebc0a2408888b7dc6960156bd54dcaa31ff34b"
     },
     {
       "path": "internal/runtime/runtime.go",

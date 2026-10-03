@@ -1,0 +1,5 @@
+--- FAIL: TestHandlerDelegatesAdvertiseRoute (0.00s)
+    http_test.go:97: advertise route failed: status=404 request=service.CommandRequest{GameID:0, ExpectedRevision:0, IdempotencyKey:"", CommandID:"", Type:"", Payload:json.RawMessage(nil)} body={"error":"gameplay request rejected"}
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/http	0.003s
+FAIL

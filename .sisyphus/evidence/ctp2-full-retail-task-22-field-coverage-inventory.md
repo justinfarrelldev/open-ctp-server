@@ -13,7 +13,7 @@ Regression guard:
 
 | Catalog | Records | Unique fields, including nested fields | Current coverage summary |
 | --- | ---: | ---: | --- |
-| Units | 74 | 194 | Core cost/prereq/obsolete/combat/move/fuel/ranged/bombard plus `SpaceLaunch`, `NuclearAttack`, and `ThrowParty` actions are partially projected/executed. Many special actions, cargo/vision classes, stealth, active defense, upgrades, support, and sound/UI fields remain pending. |
+| Units | 74 | 194 | Core cost/prereq/obsolete/combat/move/fuel/ranged/bombard plus `SpaceLaunch`, `NuclearAttack`, `ThrowParty`, and `Advertise` actions are partially projected/executed. Many special actions, cargo/vision classes, stealth, active defense, upgrades, support, and sound/UI fields remain pending. |
 | Advances | 107 | 19 | Cost/prerequisites, research unlocks, production obsolescence, plant-nuke unlocks, pollution modifiers, capitalization/infrastructure unlocks, terrain-improvement transport/terraform gates, and advance-triggered feats are executed; Age/Branch/Icon/GLHidden/advice are presentation metadata. |
 | Feats | 14 | 13 | Advance-triggered feat effects for production, science, happiness, boat movement, hit points, and city-wall reduction are imported as timed runtime effects; building thresholds, sailed-around-world, conquered-by-force, and founder city-recapture triggers now execute as timed nation effects with retail one-time achievement gating. |
 | Wonders | 30 | 39 | Cost/prereq/obsolete metadata plus selected effects including `IncreaseBoatMovement`, `IncreaseHp`, `IncreaseScientists`, `IncreaseBrokerages`, and `IncreaseRegard` are projected/executed; Gaia and remaining global effects require more execution coverage. |
@@ -87,3 +87,6 @@ Task 040 update:
 
 Task 041 update:
 - Retail wonder `IncreaseRegard` is no longer parse-only for diplomacy projections: contacted foreign players now see positive/friendly regard toward active owners of `IncreaseRegard` wonders.
+
+Task 042 update:
+- Retail unit `Advertise` is no longer parse-only: advertiser units project/execute a dedicated `advertise` action and apply the nested `CauseUnhappiness` amount/timer/chance mechanics through HTTP and canonical engine commands.

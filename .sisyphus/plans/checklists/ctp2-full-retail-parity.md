@@ -335,6 +335,7 @@
 - [x] Task 384: Retail direct `NuclearAttack` units execute city nuke attacks and are consumed after launch.
 - [x] Task 385: Retail `ThrowParty` units execute reception-cost diplomacy regard actions with target cooldown, legal projection, and HTTP route.
 - [x] Task 386: Retail wonder `IncreaseRegard` affects directional diplomacy regard projections for contacted foreigners.
+- [x] Task 387: Retail unit `Advertise` actions execute through the dedicated route using CauseUnhappiness payload effects.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

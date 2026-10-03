@@ -108,7 +108,7 @@ type ExpelPayload struct {
 
 func isSpecialCommand(kind string) bool {
 	switch kind {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandCauseUnhappiness, CommandInciteRevolution, CommandIndulgenceSales, CommandSlaveUprising, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandThrowParty, CommandAssassinateRuler, CommandInjoin, CommandReform, CommandUndergroundRailway, CommandSue, CommandCreatePark, CommandExpel, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandCauseUnhappiness, CommandAdvertise, CommandInciteRevolution, CommandIndulgenceSales, CommandSlaveUprising, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandThrowParty, CommandAssassinateRuler, CommandInjoin, CommandReform, CommandUndergroundRailway, CommandSue, CommandCreatePark, CommandExpel, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
 		return true
 	default:
 		return false
@@ -120,7 +120,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		return "", nil, err
 	}
 	switch command.Type {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandCauseUnhappiness, CommandInciteRevolution, CommandIndulgenceSales, CommandSlaveUprising, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandThrowParty, CommandAssassinateRuler, CommandInjoin, CommandReform, CommandUndergroundRailway, CommandSue:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandCauseUnhappiness, CommandAdvertise, CommandInciteRevolution, CommandIndulgenceSales, CommandSlaveUprising, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandThrowParty, CommandAssassinateRuler, CommandInjoin, CommandReform, CommandUndergroundRailway, CommandSue:
 		var payload SpecialActionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", nil, err
@@ -161,6 +161,8 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			return EventSoothsayingApplied, json.RawMessage(`{"disclosed":true}`), nil
 		case CommandCauseUnhappiness:
 			return causeUnhappiness(state, unit, city, sources)
+		case CommandAdvertise:
+			return advertise(state, unit, city, sources)
 		case CommandInciteRevolution:
 			return inciteRevolution(state, unit, city, sources)
 		case CommandIndulgenceSales:
@@ -1414,6 +1416,17 @@ func causeUnhappiness(state *State, unit *Unit, city *City, sources Sources) (st
 	if !hasEffect(unit.Effects, EffectSpecialCauseUnhappiness) {
 		return "", nil, errors.New("special action is not authorized")
 	}
+	return applyUnhappinessAttack(state, unit, city, sources, EventCauseUnhappinessApplied, EventCauseUnhappinessFailed)
+}
+
+func advertise(state *State, unit *Unit, city *City, sources Sources) (string, json.RawMessage, error) {
+	if !hasEffect(unit.Effects, EffectAdvertise) || !hasEffect(unit.Effects, EffectSpecialCauseUnhappiness) {
+		return "", nil, errors.New("special action is not authorized")
+	}
+	return applyUnhappinessAttack(state, unit, city, sources, EventAdvertised, EventCauseUnhappinessFailed)
+}
+
+func applyUnhappinessAttack(state *State, unit *Unit, city *City, sources Sources, successEvent string, failureEvent string) (string, json.RawMessage, error) {
 	if err := spendSpecialMove(unit); err != nil {
 		return "", nil, err
 	}
@@ -1423,7 +1436,7 @@ func causeUnhappiness(state *State, unit *Unit, city *City, sources Sources) (st
 		next, roll := sources.RNG.Next(RNGDomainSpecialAction, rngValue(*state, RNGDomainSpecialAction))
 		setRNG(state, RNGDomainSpecialAction, next)
 		if int(roll%100) >= chance {
-			return EventCauseUnhappinessFailed, json.RawMessage(`{"disclosed":true}`), nil
+			return failureEvent, json.RawMessage(`{"disclosed":true}`), nil
 		}
 	}
 	amount := effectValue(unit.Effects, EffectSpecialCauseUnhappinessAmount)
@@ -1435,7 +1448,7 @@ func causeUnhappiness(state *State, unit *Unit, city *City, sources Sources) (st
 		turns = 1
 	}
 	city.Effects = append(city.Effects, Effect{ID: "happiness-attack:" + unit.ID, Kind: EffectHappiness, Value: -amount, Turns: turns})
-	return EventCauseUnhappinessApplied, json.RawMessage(`{"disclosed":true}`), nil
+	return successEvent, json.RawMessage(`{"disclosed":true}`), nil
 }
 
 func stoppedBySpiesEverywhere(state *State, unit *Unit, city *City, sources Sources) bool {

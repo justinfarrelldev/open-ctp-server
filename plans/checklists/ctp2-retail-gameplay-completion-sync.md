@@ -53,6 +53,7 @@
 - [x] Task 039: Retail `NuclearAttack` units can directly nuke vulnerable foreign cities and are consumed on use or protection.
 - [x] Task 040: Retail `ThrowParty` units now spend gold/movement, respect target reception cooldown, and apply timed diplomacy regard through projection and HTTP.
 - [x] Task 041: Retail wonder `IncreaseRegard` now improves public foreign regard toward active wonder owners.
+- [x] Task 042: Retail `Advertise` units now execute the dedicated advertise route by reusing CauseUnhappiness amount/timer/chance mechanics.
 
 ## Full-Game Mechanical Execution First
 
