@@ -171,3 +171,6 @@ Task 068 update:
 
 Task 069 update:
 - Retail bombard hostilities now set war state and remove combatant trade routes, aligning bombard with retail `VerifyAttack` hostile/enemy flow.
+
+Task 070 update:
+- Retail `LossMoveToDmgTwo` now imports as `loss_move_to_dmg_two` and applies the minimum-two damaged movement refresh rule from `UnitData::ResetMovement`.

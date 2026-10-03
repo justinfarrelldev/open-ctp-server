@@ -508,6 +508,9 @@ func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {
 	if retailContainsString(unit.Flags, "LossMoveToDmgNone") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("loss_move_to_dmg_none"), Kind: "loss_move_to_dmg_none"})
 	}
+	if retailContainsString(unit.Flags, "LossMoveToDmgTwo") {
+		effects = append(effects, RuntimeStarterEffect{ID: effectID("loss_move_to_dmg_two"), Kind: "loss_move_to_dmg_two"})
+	}
 	if retailContainsString(unit.Flags, "CantBuild") {
 		effects = append(effects, RuntimeStarterEffect{ID: effectID("cant_build"), Kind: "cant_build"})
 	}

@@ -81,6 +81,7 @@
 - [x] Task 067: Retail `IsFlanker` now affects melee row targeting so flankers can attack nearby occupied rows when same-row targets are gone.
 - [x] Task 068: Retail ranged combat now prefers same/nearest tactical-row targets before fallback.
 - [x] Task 069: Retail bombard hostilities now start war and cancel trade routes between combatants.
+- [x] Task 070: Retail `LossMoveToDmgTwo` now imports and refreshes damaged movement with a minimum of two points.
 
 ## Full-Game Mechanical Execution First
 

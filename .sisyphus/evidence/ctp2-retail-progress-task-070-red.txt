@@ -1,0 +1,9 @@
+--- FAIL: TestRetailUnitLossMoveToDmgTwoProjectsMarker (0.00s)
+    loss_move_task70_test.go:12: effects = []rules.RuntimeStarterEffect{}, want loss_move_to_dmg_two marker
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules	0.002s
+FAIL
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/movement_damage_task70_test.go:6:153: undefined: EffectLossMoveToDmgTwo
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL
