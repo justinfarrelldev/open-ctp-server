@@ -252,3 +252,6 @@ Task 096 update:
 
 Task 097 update:
 - Grouped-combat/city-capture edge fields (`CantCaptureCity`, `VictoryEnslavement`, `DeathEffectsHappy`, `SingleUse`, `NuclearAttack`) are source-verified as executed; `Civilian` is preserved for AI/diplomacy/threat classification and has no separate retail grouped-combat/capture mutation.
+
+Task 098 update:
+- Advance map-action flags are closed: `DeepOcean` is presentation/map-visibility refresh metadata; `Transform` gates the retail terraform UI tab while actual server action legality uses terrain transform data and tile-improvement `EnableAdvance`; `Roads`, `Railroads`, `MagLev`, and `Tunnels` have no non-parser source call sites and released data gates their improvements through tile-improvement advances.
