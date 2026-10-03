@@ -1,0 +1,13 @@
+../../ctp2/ctp2_source_code/ctp2_code/ui/interface/battle.cpp:379:	if(theUnit.IsValid() && !theUnit.GetDBRec()->GetExplodes())
+../../ctp2/ctp2_source_code/ctp2_code/ui/interface/battle.cpp:443:	case BATTLE_EVENT_TYPE_EXPLODE :
+../../ctp2/ctp2_source_code/ctp2_code/ui/interface/battle.cpp:477:		case BATTLE_EVENT_TYPE_EXPLODE :
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/CTP2Combat.cpp:1080:					BattleEvent *explodeEvent = new BattleEvent(BATTLE_EVENT_TYPE_EXPLODE);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/CTP2Combat.cpp:1182:					BattleEvent *explodeEvent = new BattleEvent(BATTLE_EVENT_TYPE_EXPLODE);
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:679:    "Explodes",
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:913:    { NULL, UnitRecord::GetExplodes, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:1145:#define k_Token_Unit_Explodes                    ((k_Token_Custom_Base) + 136)
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:1786:            case k_Token_Unit_Explodes:
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:1787:                m_flags3 |= k_Unit_Explodes_Bit;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/unit.cdb:275:	Bit Explodes				
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:121:#define k_Unit_Explodes_Bit                      0x00000010
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1264:    bool             GetExplodes() const { return (m_flags3 & k_Unit_Explodes_Bit) != 0; }

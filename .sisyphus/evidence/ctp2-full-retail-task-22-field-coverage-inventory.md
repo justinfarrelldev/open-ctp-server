@@ -183,3 +183,6 @@ Task 072 update:
 
 Task 073 update:
 - Retail active-defense range now uses interceptor-to-bombarder distance, matching `ArmyData::GetActiveDefenders` distance checks against the attacking unit.
+
+Task 074 update:
+- Retail `Explodes` is classified as presentation-only battle explosion animation metadata: the gameplay layer creates battle events and the UI gates the visual effect on `GetExplodes`, with no gameplay state mutation tied to the field.

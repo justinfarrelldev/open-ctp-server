@@ -85,6 +85,7 @@
 - [x] Task 071: Retail counter-bombard now considers every living defender on the target tile, not only the attacker's eligible bombard targets.
 - [x] Task 072: Retail counter-bombard now honors the defender's own bombard range to the original bombarder.
 - [x] Task 073: Retail active-defense range is now measured from interceptor to bombarder, not interceptor to target tile.
+- [x] Task 074: Retail `Explodes` is source-classified as presentation-only combat explosion animation metadata.
 
 ## Full-Game Mechanical Execution First
 
@@ -144,7 +145,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 ### Unit combat and special actions
 
 - [ ] Implement or source-classify `IsFlanker` tactical targeting, including grouped-combat target row/column behavior.
-- [ ] Implement or source-classify `Explodes` death/combat behavior with tests for carriers/missiles/etc.
+- [x] Source-classify `Explodes` death/combat behavior as presentation-only battle explosion animation metadata.
 - [ ] Verify all combat stats and modifiers: `Attack`, `Defense`, `ZBRangeAttack`, `BombRounds`, `BombardRange`, `Firepower`, `Armor`, `MaxHP`, `MountedBonus`, `BonusAgainstMounted`, `AttackWoodenShipBonus`, `WoodenShipBonus`, `Defend`, `CanAttack`, `CanBombard`, `CanCounterBombard`, `CityWalls`, `ReduceCityWalls`, and `IgnoreCityWalls`.
 - [ ] Complete active defense parity: `ActiveDefenseRange`, `ActiveDefenseOnlyWhenCarryingEnablers`, `EnableCarrierDefenses`, interceptor target selection, enabler cargo checks, and bombard/counter-bombard RNG ordering.
 - [ ] Complete `Civilian`, `CantCaptureCity`, `VictoryEnslavement`, `DeathEffectsHappy`, `SingleUse`, and `NuclearAttack` edge cases under grouped combat/city capture.
