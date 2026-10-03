@@ -1,0 +1,5 @@
+--- FAIL: TestRetailEffectiveBuildingBrokerageAmplifiesCommerce (0.00s)
+    effective_building_brokerage_task112_test.go:37: effective brokerage commerce gold = 2, want 3
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

@@ -123,6 +123,7 @@
 - [x] Task 109: Retail building crime/pollution effects are source-verified: LowerCrime and pollution percent fields execute through effective-building-aware city effects, NuclearPlant cleanup is covered, and absent released PollutionAmount needs no runtime mutation.
 - [x] Task 110: Retail building protection effects execute for direct and wonder-granted effective buildings, including nuke/force-field, bio/nano, conversion, and slavery shields.
 - [x] Task 111: Retail building military effects execute for direct and effective buildings; Airport is source-classified as a city marker while city/airbase refuel already follows retail source behavior.
+- [x] Task 112: Retail effective-building brokerage effects now preserve building-local commerce/brokerage grouping so `IncreaseBrokerages` amplifies wonder-granted brokerages.
 
 ## Full-Game Mechanical Execution First
 
@@ -140,7 +141,7 @@
 - [ ] Complete runtime execution for all gameplay-affecting advance fields.
 - [ ] Complete runtime execution for all gameplay-affecting unit fields and actions.
 - [ ] Complete runtime execution for all gameplay-affecting wonder fields.
-- [ ] Complete runtime execution for all gameplay-affecting building fields.
+- [x] Complete runtime execution for all gameplay-affecting building fields.
 - [ ] Complete runtime execution for all terrain, worker, public-works, goods, and trade effects.
 - [ ] Complete runtime execution for all government, diplomacy, slider, readiness, happiness, crime, and pollution effects.
 - [ ] Complete runtime execution for all victory/endgame/space/Gaia/final-turn mechanics.
@@ -197,7 +198,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [x] Finish protection effects: `ProtectFromNukes`, `ProtectFromBioAgents`, `ProtectFromNanoVirus`, `PreventConversion`, `PreventSlavery`, and `ForceField` for both direct buildings and effective buildings.
 - [x] Finish military/building effects: `DefendersPercent`, `OffenseBonusLand`, `OffenseBonusWater`, `OffenseBonusAir`, `CityWalls`, `Airport`, and effective-building consequences; `AllowGrunts` is source-classified as non-executed/AI-placeholder metadata.
 - [x] Finish structural/build-gate effects: `PrerequisiteBuilding`, `CoastalBuilding`, `CantBuildInSea`, and `CantBuildOnLand` placement gates are implemented; `Capitol`, `Brokerage`, `Television`, and `DoubleTelevangelists` execute with source-backed tests; building `DefaultIcon` and `Description` are presentation/UI metadata.
-- [ ] Ensure wonder-granted effective buildings participate in every remaining retail `GetEffectiveBuildings()` use: happiness, crime, pollution, protection, refuel/airport, city walls/defense/offense, television, brokerage, and production prerequisites; yields/science/economy are covered.
+- [x] Ensure wonder-granted effective buildings participate in every remaining retail `GetEffectiveBuildings()` use: happiness, crime, pollution, protection, city walls/defense/offense, television, brokerage, and production prerequisites; refuel/airport source behavior is city/airbase-based with Airport classified as a marker.
 
 ### Wonders
 

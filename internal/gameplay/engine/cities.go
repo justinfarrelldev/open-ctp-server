@@ -3173,13 +3173,10 @@ func brokerageGoldPercentBonus(state State, city City) int {
 		return 0
 	}
 	bonusPercent := 0
-	for _, building := range city.Buildings {
-		if isObsoleteForPlayer(state, city.OwnerID, city.Obsolete, building.ObsoletedBy) {
-			continue
-		}
+	for _, effects := range brokerageEffectGroups(state, city) {
 		brokerage := false
 		commercePercent := 0
-		for _, effect := range building.Effects {
+		for _, effect := range effects {
 			switch effect.Kind {
 			case EffectBrokerage:
 				brokerage = true
@@ -3192,6 +3189,18 @@ func brokerageGoldPercentBonus(state State, city City) int {
 		}
 	}
 	return bonusPercent
+}
+
+func brokerageEffectGroups(state State, city City) [][]Effect {
+	groups := [][]Effect(nil)
+	for _, building := range city.Buildings {
+		if isObsoleteForPlayer(state, city.OwnerID, city.Obsolete, building.ObsoletedBy) {
+			continue
+		}
+		groups = append(groups, building.Effects)
+	}
+	groups = append(groups, effectiveBuildingEffectGroups(state, city)...)
+	return groups
 }
 
 func tradeRouteGoldYield(state State, city City) int {
@@ -3300,6 +3309,18 @@ func cityLocalEffects(state State, city City) []Effect {
 }
 
 func effectiveBuildingEffects(state State, city City) []Effect {
+	groups := effectiveBuildingEffectGroups(state, city)
+	if len(groups) == 0 {
+		return nil
+	}
+	effects := []Effect(nil)
+	for _, group := range groups {
+		effects = append(effects, group...)
+	}
+	return effects
+}
+
+func effectiveBuildingEffectGroups(state State, city City) [][]Effect {
 	if !hasEffectiveBuildingMarker(state, city.OwnerID) {
 		return nil
 	}
@@ -3314,7 +3335,7 @@ func effectiveBuildingEffects(state State, city City) []Effect {
 		}
 	}
 	seen := map[string]bool{}
-	effects := []Effect(nil)
+	groups := [][]Effect(nil)
 	for _, wonder := range state.Wonders {
 		if !wonderAppliesToPlayer(state, wonder, city.OwnerID) {
 			continue
@@ -3328,15 +3349,19 @@ func effectiveBuildingEffects(state State, city City) []Effect {
 				continue
 			}
 			seen[effect.ID] = true
+			group := []Effect(nil)
 			for _, buildingEffect := range runtimeProductionEffects(definition) {
 				if effectAlreadyEmbeddedInWonder(wonder.Effects, buildingEffect) {
 					continue
 				}
-				effects = append(effects, buildingEffect)
+				group = append(group, buildingEffect)
+			}
+			if len(group) > 0 {
+				groups = append(groups, group)
 			}
 		}
 	}
-	return effects
+	return groups
 }
 
 func hasEffectiveBuildingMarker(state State, playerID string) bool {
