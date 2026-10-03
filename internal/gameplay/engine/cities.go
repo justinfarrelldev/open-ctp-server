@@ -741,7 +741,7 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if payload.Item.Kind == ProductionUnit && productionHasRuntimeUnitEffect(payload.Item, runtime, EffectHasPopAndCanBuild) {
 		return errors.New("production prerequisite is not met")
 	}
-	if payload.Item.Kind == ProductionUnit && productionHasNuclearAttackEffect(payload.Item, runtime) && (playerHasNationEffect(*state, actor, EffectEliminateNukes) || anyActiveWonderEffect(*state, EffectEliminateNukes)) {
+	if payload.Item.Kind == ProductionUnit && productionHasNuclearAttackEffect(payload.Item, runtime) && NuclearAttacksEliminated(*state, actor) {
 		return errors.New("production prerequisite is not met")
 	}
 	if payload.Item.Kind == ProductionUnit && productionHasSlaverEffect(payload.Item, runtime) && playerHasUnitEffect(*state, actor, EffectNoSlaves) {
@@ -2633,6 +2633,30 @@ func anyActiveWonderEffect(state State, kind string) bool {
 		}
 	}
 	return false
+}
+
+func anyWonderEffectRecord(state State, kind string) bool {
+	for _, wonder := range state.Wonders {
+		for _, effect := range wonder.Effects {
+			if effect.Kind == kind {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// NuclearAttacksEliminated reports whether a player's nuclear units are currently disabled.
+// Active EliminateNukes wonders are reversible in retail because production checks the live
+// built-wonder set. Legacy nation markers are honored only when no wonder record exists.
+func NuclearAttacksEliminated(state State, playerID string) bool {
+	if anyActiveWonderEffect(state, EffectEliminateNukes) {
+		return true
+	}
+	if anyWonderEffectRecord(state, EffectEliminateNukes) {
+		return false
+	}
+	return playerHasNationEffect(state, playerID, EffectEliminateNukes)
 }
 
 // HasActiveWonderEffect reports whether a player is affected by an active wonder marker.

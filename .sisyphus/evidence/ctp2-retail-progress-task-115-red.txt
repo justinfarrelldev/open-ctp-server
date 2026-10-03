@@ -1,0 +1,5 @@
+--- FAIL: TestRetailDestroyedEliminateNukesWonderReversesProductionBlock (0.00s)
+    wonder_prohibition_reversal_task115_test.go:18: destroyed eliminate-nukes wonder should not block production: production prerequisite is not met
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.002s
+FAIL

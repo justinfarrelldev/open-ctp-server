@@ -1993,22 +1993,7 @@ func unitProductionBlockedByCityGood(city CityProjection, unit rules.RuntimeUnit
 }
 
 func unitProductionBlockedByEliminateNukes(state engine.State, playerID string, unit rules.RuntimeUnitDefinition) bool {
-	if !runtimeUnitHasEffect(unit, engine.EffectNuclearAttack) {
-		return false
-	}
-	nationID := ""
-	for _, player := range state.Players {
-		if player.ID == playerID {
-			nationID = player.NationID
-			break
-		}
-	}
-	for _, nation := range state.Nations {
-		if nation.ID == nationID && stateEffectsContain(nation.Effects, engine.EffectEliminateNukes) {
-			return true
-		}
-	}
-	return false
+	return runtimeUnitHasEffect(unit, engine.EffectNuclearAttack) && engine.NuclearAttacksEliminated(state, playerID)
 }
 
 func stateEffectsContain(effects []engine.Effect, kind string) bool {

@@ -759,7 +759,7 @@ func plantNuke(state *State, unit *Unit, city *City, actorNation *Nation, target
 		return "", nil, err
 	}
 	cityEffects := cityEffects(*state, *city)
-	if hasEffect(cityEffects, EffectProtectFromNukes) || hasEffect(cityEffects, EffectForceField) || hasEffect(targetNation.Effects, EffectEliminateNukes) {
+	if hasEffect(cityEffects, EffectProtectFromNukes) || hasEffect(cityEffects, EffectForceField) || NuclearAttacksEliminated(*state, city.OwnerID) {
 		return EventNukeFailed, json.RawMessage(`{"disclosed":true}`), nil
 	}
 	chance := unitCitySpecialActionChance(*city, *unit, EffectSpecialPlantNuke)

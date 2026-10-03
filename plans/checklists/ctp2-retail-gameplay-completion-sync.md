@@ -126,6 +126,7 @@
 - [x] Task 112: Retail effective-building brokerage effects now preserve building-local commerce/brokerage grouping so `IncreaseBrokerages` amplifies wonder-granted brokerages.
 - [x] Task 113: Retail numeric wonder effects are source-verified and active-wonder gated for yield, research, happiness, crime, empire size, route/television gold, and flat bonus-gold fields.
 - [x] Task 114: Retail global/diplomacy wonder effects execute or project for close/everywhere embassies, at-war embassy edge cases, regard, spies, barbarian protection, and revolt redirection.
+- [x] Task 115: Retail production/prohibition wonder effects execute with illegal queue cleanup and reversible active-wonder gating for destroyed/obsolete EliminateNukes wonders.
 
 ## Full-Game Mechanical Execution First
 
@@ -206,7 +207,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 
 - [x] Finish numeric wonder effects: `IncKnowledgePercent`, `IncreaseFoodAllCities`, `IncreaseProduction`, `IncHappinessEmpire`, `DecCrimePercent`, `DecEmpireSize`, `BonusGold`, `GoldPerWaterTradeRoute`, `GoldPerInternationalTradeRoute`, and `GoldPerTelevision` including obsolescence/destruction.
 - [x] Finish global/diplomacy wonder effects: `CloseEmbassies`, `EmbassiesEverywhereEvenAtWar`, `IncreaseRegard`, `SpiesEverywhere`, `ProtectFromBarbarians`, `RevoltingCitiesJoinPlayer`, and relation/war/embassy edge cases.
-- [ ] Finish production/prohibition wonder effects: `EnableParkRangers`, `FreeSlaves`, `ProhibitSlavers`, `EliminateNukes`, `ReformCities`, `PollutersToParks`, and illegal queue cleanup/reversal edge cases.
+- [x] Finish production/prohibition wonder effects: `EnableParkRangers`, `FreeSlaves`, `ProhibitSlavers`, `EliminateNukes`, `ReformCities`, `PollutersToParks`, and illegal queue cleanup/reversal edge cases.
 - [ ] Finish happiness/readiness/pollution wonder effects: `TemporaryFullHappiness`, `NoPollutionUnhappiness`, `ReduceReadinessCost`, and source-backed duration/stacking behavior.
 - [ ] Finish visibility/endgame wonder effects: `GlobalRadar`, `StartGaiaController`, `BuildingEverywhere`, `ActualBuildingEverywhere`, obsolescence, destruction, capture, and transfer behavior.
 - [x] Classify wonder `DefaultIcon`, `Description`, and `Movie` as presentation/UI metadata for server gameplay.
