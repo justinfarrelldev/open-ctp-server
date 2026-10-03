@@ -1,0 +1,5 @@
+--- FAIL: TestRetailBombardStartsWarAndCancelsTradeRoutes (0.00s)
+    bombard_war_task69_test.go:23: bombard did not start war/cancel routes: wars=[]engine.TurnPolicyWar(nil) routes=[]engine.TradeRoute{engine.TradeRoute{ID:"combatants", SourceCityID:"city-a", DestinationCityID:"city-b", GoodID:"", Gold:0, CrossesWater:false, PiratingArmyID:""}}
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

@@ -309,6 +309,7 @@ func applyBombard(state *State, command Command, sources Sources, runtime *rules
 	if len(targets) == 0 {
 		return bombardUndefendedCity(state, command.ActorPlayerID, unit, targetTile, payload, sources, runtime)
 	}
+	setWarState(state, unit.OwnerID, targets[0].OwnerID, true)
 	activeDefenseHits := 0
 	interceptors := activeDefenseInterceptors(*state, command.ActorPlayerID, targets[0].OwnerID, *unit, targetTile)
 	for _, interceptor := range interceptors {
@@ -381,6 +382,7 @@ func bombardUndefendedCity(state *State, actorID string, unit *Unit, targetTile 
 	if city == nil || city.OwnerID == actorID || !unitCanBombardCity(*unit, *city, runtime) {
 		return "", nil, errors.New("bombard target is unavailable")
 	}
+	setWarState(state, actorID, city.OwnerID, true)
 	probability := unit.Ranged - cityActualWallDefense(*city)
 	if probability < 0 {
 		probability = 0

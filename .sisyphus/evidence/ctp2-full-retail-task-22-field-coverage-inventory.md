@@ -168,3 +168,6 @@ Task 067 update:
 
 Task 068 update:
 - Retail ranged combat now prefers same-row and nearest-row tactical targets before fallback, matching `FindTargetForRangedAttackFrom`.
+
+Task 069 update:
+- Retail bombard hostilities now set war state and remove combatant trade routes, aligning bombard with retail `VerifyAttack` hostile/enemy flow.
