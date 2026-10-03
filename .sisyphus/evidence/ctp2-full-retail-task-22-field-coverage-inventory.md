@@ -186,3 +186,6 @@ Task 073 update:
 
 Task 074 update:
 - Retail `Explodes` is classified as presentation-only battle explosion animation metadata: the gameplay layer creates battle events and the UI gates the visual effect on `GetExplodes`, with no gameplay state mutation tied to the field.
+
+Task 075 update:
+- Retail `HasPopAndCanBuild` unit records are city pseudo-unit types and are rejected from normal city production queueing, matching retail `C3UnitDB` and queue UI filters.

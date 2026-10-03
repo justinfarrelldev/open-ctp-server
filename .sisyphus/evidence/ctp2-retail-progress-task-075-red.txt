@@ -1,0 +1,5 @@
+--- FAIL: TestRetailHasPopAndCanBuildUnitsAreNotCityProduction (0.00s)
+    production_has_pop_task75_test.go:16: HasPopAndCanBuild city-unit was accepted into normal production queue: [{ID:UNIT_LAND_CITY Kind:unit Cost:1 Upkeep:0 Prerequisite: ObsoletedBy: Scope: Effects:[]}]
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

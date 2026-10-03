@@ -625,6 +625,9 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if payload.Item.Kind == ProductionUnit && !productionCityGoodSatisfied(*state, *city, payload.Item, runtime) {
 		return errors.New("production prerequisite is not met")
 	}
+	if payload.Item.Kind == ProductionUnit && productionHasRuntimeUnitEffect(payload.Item, runtime, EffectHasPopAndCanBuild) {
+		return errors.New("production prerequisite is not met")
+	}
 	if payload.Item.Kind == ProductionUnit && productionHasNuclearAttackEffect(payload.Item, runtime) && (playerHasNationEffect(*state, actor, EffectEliminateNukes) || anyActiveWonderEffect(*state, EffectEliminateNukes)) {
 		return errors.New("production prerequisite is not met")
 	}
@@ -722,6 +725,17 @@ func productionHasCreateParkEffect(item ProductionItem, runtime *rules.RuntimeRu
 
 func productionHasNuclearPlantEffect(item ProductionItem) bool {
 	return item.Kind == ProductionBuilding && hasEffect(item.Effects, EffectNuclearPlant)
+}
+
+func productionHasRuntimeUnitEffect(item ProductionItem, runtime *rules.RuntimeRules, effectKind string) bool {
+	if item.Kind != ProductionUnit || runtime == nil {
+		return hasEffect(item.Effects, effectKind)
+	}
+	unit, ok := runtime.Unit(item.ID)
+	if !ok {
+		return hasEffect(item.Effects, effectKind)
+	}
+	return runtimeUnitHasEffect(unit, effectKind)
 }
 
 func productionHasNuclearAttackEffect(item ProductionItem, runtime *rules.RuntimeRules) bool {

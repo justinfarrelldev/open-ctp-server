@@ -368,6 +368,7 @@
 - [x] Task 417: Retail counter-bombard honors the defender's own bombard range to the original bombarder.
 - [x] Task 418: Retail active-defense range is measured from interceptor to bombarder, not interceptor to target tile.
 - [x] Task 419: Retail `Explodes` is source-classified as presentation-only combat explosion animation metadata.
+- [x] Task 420: Retail `HasPopAndCanBuild` city pseudo-units are rejected from normal city production queues.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -398,7 +399,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Verify `CanBeachAssault`, `Paratrooper`, and `ParatrooperTransport` beyond unload movement: legal target selection, transport requirements, and post-drop movement/combat restrictions.
 - [ ] Complete `VisionRange`, `VisionClass`, `CanSee`, `IsSubmarine`, `Stealth`, `CanSeeStealth`, `InvisibleForGlobeSat`, global radar, radar/listening-post interactions, and stale-fog legal action suppression.
 - [ ] Verify `NoZoc`/`IgnoreZOC`/ZOC movement stops and AI pathing behavior against retail.
-- [ ] Complete unit production restrictions: `HasPopAndCanBuild`, `BuildingRemovesAPop`, `CantBuild`, `OnlyBuildOne`, `GovernmentType`, `NeedsCityGood`, `NoSlaves`, `EnableAdvance`, `ObsoleteAdvance`, `UpgradeTo`, `NoIndex`, and `GLHidden` classification.
+- [ ] Complete unit production restrictions: `BuildingRemovesAPop`, `CantBuild`, `OnlyBuildOne`, `GovernmentType`, `NeedsCityGood`, `NoSlaves`, `EnableAdvance`, `ObsoleteAdvance`, `UpgradeTo`, `NoIndex`, and `GLHidden` classification; `HasPopAndCanBuild` city pseudo-units are rejected from normal queues.
 - [ ] Complete upgrade semantics for `UpgradeTo`: costs, prerequisites, HP/fuel/movement carryover, legal projection, HTTP, AI use, and persistence.
 - [ ] Classify all unit sound/icon/sprite fields (`DefaultIcon`, `DefaultSprite`, `Sound*`) as presentation-only or wire them where they affect public contracts.
 
