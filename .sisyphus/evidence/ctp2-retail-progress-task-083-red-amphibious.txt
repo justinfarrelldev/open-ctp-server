@@ -1,0 +1,5 @@
+--- FAIL: TestRetailCargoAllowsAmphibiousUnitsToMatchLandOrWaterClass (0.00s)
+    cargo_size_task83_test.go:28: amphibious small unit should match retail SmallLand carry class: movement obstructed
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

@@ -88,6 +88,8 @@ type RuntimeUnitDefinition struct {
 	ZOC                          bool                   `json:"zoc"`
 	TransportCapacity            int                    `json:"transport_capacity,omitempty"`
 	CargoDomains                 []string               `json:"cargo_domains,omitempty"`
+	CargoClasses                 []string               `json:"cargo_classes,omitempty"`
+	Size                         string                 `json:"size,omitempty"`
 	ProductionCost               int                    `json:"production_cost,omitempty"`
 	PowerPoints                  int                    `json:"power_points,omitempty"`
 	Upkeep                       int                    `json:"upkeep,omitempty"`
@@ -305,6 +307,8 @@ type RuntimeStarter struct {
 	ZOC               bool                   `json:"zoc"`
 	TransportCapacity int                    `json:"transport_capacity,omitempty"`
 	CargoDomains      []string               `json:"cargo_domains,omitempty"`
+	CargoClasses      []string               `json:"cargo_classes,omitempty"`
+	Size              string                 `json:"size,omitempty"`
 	VisibilityRange   int                    `json:"visibility_range,omitempty"`
 	Effects           []RuntimeStarterEffect `json:"effects"`
 }
@@ -584,7 +588,7 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 		return RuntimeRules{}, errors.New("rules definitions require the synthetic starter unit")
 	}
 	runtime.Starter = RuntimeStarter{
-		TypeID: starterUnit.ID, Domain: starterUnit.Domain, Movement: starterUnit.Movement, Attack: starterUnit.Attack, Defense: starterUnit.Defense, Ranged: starterUnit.Ranged, Strength: starterUnit.Strength, Armor: starterUnit.Armor, Firepower: starterUnit.Firepower, Health: starterUnit.Health, MaxFuel: starterUnit.MaxFuel, ZOC: starterUnit.ZOC, TransportCapacity: starterUnit.TransportCapacity, CargoDomains: append([]string(nil), starterUnit.CargoDomains...), VisibilityRange: starterUnit.VisibilityRange,
+		TypeID: starterUnit.ID, Domain: starterUnit.Domain, Movement: starterUnit.Movement, Attack: starterUnit.Attack, Defense: starterUnit.Defense, Ranged: starterUnit.Ranged, Strength: starterUnit.Strength, Armor: starterUnit.Armor, Firepower: starterUnit.Firepower, Health: starterUnit.Health, MaxFuel: starterUnit.MaxFuel, ZOC: starterUnit.ZOC, TransportCapacity: starterUnit.TransportCapacity, CargoDomains: append([]string(nil), starterUnit.CargoDomains...), CargoClasses: append([]string(nil), starterUnit.CargoClasses...), Size: starterUnit.Size, VisibilityRange: starterUnit.VisibilityRange,
 		Effects: append([]RuntimeStarterEffect(nil), starterUnit.Effects...),
 	}
 	sort.Slice(runtime.Victory, func(i, j int) bool { return runtime.Victory[i].ID < runtime.Victory[j].ID })
@@ -621,7 +625,7 @@ func compileRuntimeProjectionDefinitions(definitions []byte, contentHash string)
 		if !ok {
 			return RuntimeRules{}, errors.New("runtime definitions require a starter unit")
 		}
-		runtime.Starter = RuntimeStarter{TypeID: starter.ID, Domain: starter.Domain, Movement: starter.Movement, Attack: starter.Attack, Defense: starter.Defense, Ranged: starter.Ranged, Strength: starter.Strength, Armor: starter.Armor, Firepower: starter.Firepower, Health: starter.Health, MaxFuel: starter.MaxFuel, ZOC: starter.ZOC, TransportCapacity: starter.TransportCapacity, CargoDomains: append([]string(nil), starter.CargoDomains...), VisibilityRange: starter.VisibilityRange, Effects: append([]RuntimeStarterEffect(nil), starter.Effects...)}
+		runtime.Starter = RuntimeStarter{TypeID: starter.ID, Domain: starter.Domain, Movement: starter.Movement, Attack: starter.Attack, Defense: starter.Defense, Ranged: starter.Ranged, Strength: starter.Strength, Armor: starter.Armor, Firepower: starter.Firepower, Health: starter.Health, MaxFuel: starter.MaxFuel, ZOC: starter.ZOC, TransportCapacity: starter.TransportCapacity, CargoDomains: append([]string(nil), starter.CargoDomains...), CargoClasses: append([]string(nil), starter.CargoClasses...), Size: starter.Size, VisibilityRange: starter.VisibilityRange, Effects: append([]RuntimeStarterEffect(nil), starter.Effects...)}
 	}
 	if err := validateRuntimeProjection(runtime); err != nil {
 		return RuntimeRules{}, err

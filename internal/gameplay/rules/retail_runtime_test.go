@@ -207,6 +207,9 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	if got, want := carrier.CargoDomains, []string{"air"}; !sameStringSlices(got, want) {
 		t.Fatalf("carrier cargo domains = %#v, want %#v", got, want)
 	}
+	if got, want := carrier.CargoClasses, []string{"MedAir", "SmallAir"}; !sameStringSlices(got, want) || carrier.Size != "Large" {
+		t.Fatalf("carrier cargo classes/size = %#v/%q, want %#v/Large", got, carrier.Size, want)
+	}
 	fighter, ok := runtime.Unit("UNIT_FIGHTER")
 	if !ok || fighter.Domain != "air" || fighter.MaxFuel != 2400 || !runtimeUnitHasEffect(fighter, "can_beach_assault") {
 		t.Fatalf("fighter runtime = %+v ok=%v", fighter, ok)

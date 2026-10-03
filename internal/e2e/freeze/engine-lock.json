@@ -35,7 +35,7 @@
     },
     {
       "path": "internal/gameplay/ai/ai.go",
-      "sha256": "df17970c6dea3d20e8263a264b4353b790fd9d5da2d4477ba851ab07971ac1d0"
+      "sha256": "3ba0e1afc9ba982334c3b79b66d67900ff4bb5843a767b829d17fb7c28e3efff"
     },
     {
       "path": "internal/gameplay/combat/http.go",
@@ -43,7 +43,7 @@
     },
     {
       "path": "internal/gameplay/engine/cities.go",
-      "sha256": "218f86cec6f7702701cd83ed77dd1fb2222171850fe26c3e0d0e9c8da2129601"
+      "sha256": "d2917434fefd5bf6e0a36074a2864772c98444fe0272fc590e09bfdac35269dd"
     },
     {
       "path": "internal/gameplay/engine/combat.go",
@@ -55,7 +55,7 @@
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "f0229cbaf102de8a7c02bc558bd4b4d9463f0bfc03b443665006a7d9a95af6f6"
+      "sha256": "5078872c574bf9501c8ec427677950d997abfe8375e1dfb0968f3a70d9c47c9a"
     },
     {
       "path": "internal/gameplay/engine/government.go",
@@ -79,7 +79,7 @@
     },
     {
       "path": "internal/gameplay/engine/units.go",
-      "sha256": "f8159ffedfc3d973b4f128cd39994a36fba80c5283582363f965d71f80826d8d"
+      "sha256": "90a76a3f2272fcde76664a05d8b8e533169bdcf4f8b492dffe84f8e25f570f50"
     },
     {
       "path": "internal/gameplay/engine/war.go",
@@ -111,7 +111,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_runtime.go",
-      "sha256": "457529a631218bd792739fe3c04b3ca86a1177198601fa18ca79fb262eaded7b"
+      "sha256": "d49acba9f1fe5296e27d92c110827aa2600aab28b2e5320b9f9034c0778dfd11"
     },
     {
       "path": "internal/gameplay/rules/rules.go",
@@ -119,7 +119,7 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "75bd7699345c5e82b25c6a09884f4240972c560ce2bab5db31f9092eb36a3b8b"
+      "sha256": "9908dffedf30eaa705bec98dae852086074c58f38771b16c70f12e1ab61ce979"
     },
     {
       "path": "internal/gameplay/service/ai.go",
@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "edb7c748797eb92a1121f91f7ba5ac71b6a9f3fce64135ac7d08bb0c85037f36"
+      "sha256": "c8e1ccf163b7fe13198d55667f3bf37451f1acfcd5374e3c1e5486e5112b9125"
     },
     {
       "path": "internal/runtime/runtime.go",

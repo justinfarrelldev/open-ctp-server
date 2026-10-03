@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
@@ -785,13 +786,56 @@ func transportCandidates(projection visibility.Projection, playerID string) []Ca
 			continue
 		}
 		for _, transport := range projection.Units {
-			if transport.OwnerID != playerID || transport.ID == unit.ID || transport.TileID != unit.TileID || transport.TransportID != "" || transport.CargoCapacity <= cargoCount(projection, transport.ID) || !containsString(transport.CargoDomains, unit.Domain) {
+			if transport.OwnerID != playerID || transport.ID == unit.ID || transport.TileID != unit.TileID || transport.TransportID != "" || transport.CargoCapacity <= cargoCount(projection, transport.ID) || !transportCanCarryUnit(transport, unit) {
 				continue
 			}
 			candidates = append(candidates, candidate(engine.CommandEmbark, unit.ID, transport.ID, 600, map[string]string{"unit_id": unit.ID, "transport_id": transport.ID}))
 		}
 	}
 	return candidates
+}
+
+func transportCanCarryUnit(transport visibility.UnitProjection, unit visibility.UnitProjection) bool {
+	if len(transport.CargoClasses) > 0 {
+		for _, cargoClass := range unitCargoClasses(unit) {
+			if containsString(transport.CargoClasses, cargoClass) {
+				return true
+			}
+		}
+		return false
+	}
+	if containsString(transport.CargoDomains, unit.Domain) {
+		return true
+	}
+	if unit.Domain == engine.DomainAmphibious {
+		return containsString(transport.CargoDomains, engine.DomainLand) || containsString(transport.CargoDomains, engine.DomainSea)
+	}
+	return false
+}
+
+func unitCargoClasses(unit visibility.UnitProjection) []string {
+	size := unit.Size
+	if size == "" {
+		size = "Small"
+	}
+	size = strings.TrimSpace(size)
+	if strings.EqualFold(size, "Medium") {
+		size = "Med"
+	}
+	switch strings.ToLower(unit.Domain) {
+	case engine.DomainLand:
+		return []string{size + "Land"}
+	case engine.DomainAir:
+		return []string{size + "Air"}
+	case engine.DomainSea:
+		return []string{size + "Water"}
+	case engine.DomainAmphibious:
+		return []string{size + "Land", size + "Water"}
+	case engine.DomainSpace:
+		return []string{size + "Space"}
+	default:
+		return []string{size + unit.Domain}
+	}
 }
 
 func terrainImprovementCandidates(projection visibility.Projection, playerID string) []Candidate {

@@ -94,6 +94,7 @@
 - [x] Task 080: Retail readiness support now floors after summing fractional per-unit costs, including disband budget checks.
 - [x] Task 081: Building `AllowGrunts` is source-classified as non-executed/AI-placeholder metadata.
 - [x] Task 082: Unit `NoIndex`, `GLHidden`, `DefaultIcon`, `DefaultSprite`, and `Sound*` fields are source-classified as presentation/setup metadata.
+- [x] Task 083: Retail cargo `CanCarry` now imports exact size/domain classes and filters engine/legal/AI embark by class compatibility.
 
 ## Full-Game Mechanical Execution First
 
@@ -141,7 +142,8 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [x] Source-classify `ProfessionalUnits` government quota/behavior as default-zero AI utility metadata; per-unit professional support/disband behavior is implemented.
 - [x] Source-check and close `GoldHunger` and `FoodHunger`: classified as non-executed/default-disabled upkeep metadata for literal retail parity.
 - [ ] Complete `IsTrader` behavior: trader unit lists, trade transport points, route capacity, route path-cost consumption, trader death/removal, and AI route creation.
-- [ ] Complete cargo semantics for `CargoData.Load`, `CargoData.Unload`, `CargoData.MaxCargo`, `CanCarry`, domain/size constraints, transport destruction, and legal public projection.
+- [x] Execute retail cargo capacity/class gates for `CargoData.MaxCargo`, `CanCarry`, domain/size constraints, engine embark, legal public projection, and AI embark planning.
+- [ ] Complete remaining cargo semantics for `CargoData.Load`/`CargoData.Unload` source classification and transport-destruction cargo fate.
 - [ ] Finish air/space/sea/land/domain movement parity, including `MovementType`, `MaxMovePoints`, `MaxFuel`, `NoFuelThenCrash`, `LossMoveToDmgNone`, non-space fuel costs, crash/damage rules, city/airport/carrier refuel, and hostile terrain immunity.
 - [ ] Verify `CanBeachAssault`, `Paratrooper`, and `ParatrooperTransport` beyond unload movement: legal target selection, transport requirements, and post-drop movement/combat restrictions.
 - [ ] Complete `VisionRange`, `VisionClass`, `CanSee`, `IsSubmarine`, `Stealth`, `CanSeeStealth`, `InvisibleForGlobeSat`, global radar, radar/listening-post interactions, and stale-fog legal action suppression.

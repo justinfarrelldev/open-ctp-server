@@ -13,7 +13,7 @@ Regression guard:
 
 | Catalog | Records | Unique fields, including nested fields | Current coverage summary |
 | --- | ---: | ---: | --- |
-| Units | 79 | 194 | Core cost/prereq/obsolete/combat/move/fuel/ranged/bombard plus retail veteran attack odds, `SpaceLaunch`, `NuclearAttack`, `ThrowParty`, `Advertise`, `CanBeGifted`, `CanPirate`, `DeathEffectsHappy`, `InvisibleForGlobeSat`, and beach-assault unload movement behavior are partially projected/executed. Many special actions, cargo/vision classes, stealth, active defense, upgrades, support, and sound/UI fields remain pending. |
+| Units | 79 | 194 | Core cost/prereq/obsolete/combat/move/fuel/ranged/bombard plus retail veteran attack odds, `SpaceLaunch`, `NuclearAttack`, `ThrowParty`, `Advertise`, `CanBeGifted`, `CanPirate`, `DeathEffectsHappy`, `InvisibleForGlobeSat`, cargo capacity/size-class embark gates, and beach-assault unload movement behavior are partially projected/executed. Many special actions, remaining cargo edge cases, vision classes, stealth, active defense enablers, upgrades, support, and sound/UI fields remain pending. |
 | Advances | 107 | 19 | Cost/prerequisites, research unlocks, production obsolescence, plant-nuke unlocks, pollution modifiers, capitalization/infrastructure unlocks, terrain-improvement transport/terraform gates, and advance-triggered feats are executed; Age/Branch/Icon/GLHidden/advice are presentation metadata. |
 | Feats | 14 | 13 | Advance-triggered feat effects for production, science, happiness, boat movement, hit points, and city-wall reduction are imported as timed runtime effects; building thresholds, sailed-around-world, conquered-by-force, and founder city-recapture triggers now execute as timed nation effects with retail one-time achievement gating. |
 | Wonders | 30 | 39 | Cost/prereq/obsolete metadata plus selected effects including `BuildingEverywhere`/`ActualBuildingEverywhere` effective buildings, `IncreaseBoatMovement`, `IncreaseHp`, `IncreaseScientists`, `IncreaseBrokerages`, `IncreaseRegard`, treasury-level gold (`BonusGold`, route gold, television gold), `EnableParkRangers`, `EliminateNukes`, `FreeSlaves`, and `StartGaiaController` countdown requirements are projected/executed; remaining global effects require more execution coverage. |
@@ -210,3 +210,6 @@ Task 081 update:
 
 Task 082 update:
 - Unit `NoIndex`, `GLHidden`, `DefaultIcon`, `DefaultSprite`, and `Sound*` fields are classified as presentation/setup metadata: setup lists, Great Library visibility, sprite actors, icons, and sound IDs only.
+
+Task 083 update:
+- Retail `CanCarry`, `CargoData.MaxCargo`, and `Size` are no longer broad-domain-only: runtime imports exact `Small|Med|Large` + `Land|Air|Water|Space` carry classes, canonical/visible units preserve size metadata, and engine/legal/AI embark filtering requires exact retail-compatible cargo class matching when class data is present.

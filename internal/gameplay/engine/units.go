@@ -257,6 +257,8 @@ func applyUnitDefinition(unit *Unit, definition rules.RuntimeUnitDefinition) {
 	unit.MaxFuel = definition.MaxFuel
 	unit.CargoCapacity = definition.TransportCapacity
 	unit.CargoDomains = append([]string(nil), definition.CargoDomains...)
+	unit.CargoClasses = append([]string(nil), definition.CargoClasses...)
+	unit.Size = definition.Size
 	unit.Upkeep = definition.Upkeep
 	unit.ShieldHunger = definition.ShieldHunger
 	unit.FoodHunger = definition.FoodHunger
@@ -671,11 +673,54 @@ func embark(state *State, actorID string, payload embarkPayload) error {
 		return invalidUnitAction(err)
 	}
 	transport, err := ownedUnit(state, actorID, payload.TransportID)
-	if err != nil || transport.ID == unit.ID || transport.TransportID != "" || unit.TileID != transport.TileID || transport.CargoCapacity <= cargoCount(*state, transport.ID) || !containsString(transport.CargoDomains, unit.Domain) {
+	if err != nil || transport.ID == unit.ID || transport.TransportID != "" || unit.TileID != transport.TileID || transport.CargoCapacity <= cargoCount(*state, transport.ID) || !transportCanCarryUnit(*transport, *unit) {
 		return ErrObstructed
 	}
 	unit.TransportID, unit.TileID, unit.Fortified = transport.ID, "", false
 	return nil
+}
+
+func transportCanCarryUnit(transport Unit, unit Unit) bool {
+	if len(transport.CargoClasses) > 0 {
+		for _, cargoClass := range unitCargoClasses(unit) {
+			if containsString(transport.CargoClasses, cargoClass) {
+				return true
+			}
+		}
+		return false
+	}
+	if containsString(transport.CargoDomains, unit.Domain) {
+		return true
+	}
+	if unit.Domain == DomainAmphibious {
+		return containsString(transport.CargoDomains, DomainLand) || containsString(transport.CargoDomains, DomainSea)
+	}
+	return false
+}
+
+func unitCargoClasses(unit Unit) []string {
+	size := unit.Size
+	if size == "" {
+		size = "Small"
+	}
+	size = strings.TrimSpace(size)
+	if strings.EqualFold(size, "Medium") {
+		size = "Med"
+	}
+	switch strings.ToLower(unit.Domain) {
+	case DomainLand:
+		return []string{size + "Land"}
+	case DomainAir:
+		return []string{size + "Air"}
+	case DomainSea:
+		return []string{size + "Water"}
+	case DomainAmphibious:
+		return []string{size + "Land", size + "Water"}
+	case DomainSpace:
+		return []string{size + "Space"}
+	default:
+		return []string{size + unit.Domain}
+	}
 }
 
 func disembark(state *State, actorID string, payload disembarkPayload, runtime *rules.RuntimeRules) error {

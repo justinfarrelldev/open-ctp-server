@@ -6,6 +6,7 @@ import (
 	"errors"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine/turns"
@@ -63,6 +64,8 @@ type UnitProjection struct {
 	MaxMovement        int             `json:"max_movement,omitempty"`
 	CargoCapacity      int             `json:"cargo_capacity,omitempty"`
 	CargoDomains       []string        `json:"cargo_domains,omitempty"`
+	CargoClasses       []string        `json:"cargo_classes,omitempty"`
+	Size               string          `json:"size,omitempty"`
 	Upkeep             int             `json:"upkeep,omitempty"`
 	ShieldHunger       int             `json:"shield_hunger,omitempty"`
 	FoodHunger         int             `json:"food_hunger,omitempty"`
@@ -287,6 +290,8 @@ func Project(state engine.State, playerID string) (Projection, error) {
 				projected.Veteran = unit.Veteran
 				projected.CargoCapacity = unit.CargoCapacity
 				projected.CargoDomains = append([]string(nil), unit.CargoDomains...)
+				projected.CargoClasses = append([]string(nil), unit.CargoClasses...)
+				projected.Size = unit.Size
 				projected.Upkeep = unit.Upkeep
 				projected.ShieldHunger = unit.ShieldHunger
 				projected.FoodHunger = unit.FoodHunger
@@ -1400,12 +1405,55 @@ func embarkActions(projection Projection, unit UnitProjection) []ActionProjectio
 	}
 	actions := make([]ActionProjection, 0)
 	for _, transport := range projection.Units {
-		if transport.OwnerID != unit.OwnerID || transport.ID == unit.ID || transport.TileID != unit.TileID || transport.TransportID != "" || transport.CargoCapacity <= cargoCount(projection, transport.ID) || !containsString(transport.CargoDomains, unit.Domain) {
+		if transport.OwnerID != unit.OwnerID || transport.ID == unit.ID || transport.TileID != unit.TileID || transport.TransportID != "" || transport.CargoCapacity <= cargoCount(projection, transport.ID) || !projectedTransportCanCarryUnit(transport, unit) {
 			continue
 		}
 		actions = append(actions, action(engine.CommandEmbark, "embark", unit.ID, transport.ID, map[string]string{"unit_id": unit.ID, "transport_id": transport.ID}, []string{"unit_id", "transport_id"}))
 	}
 	return actions
+}
+
+func projectedTransportCanCarryUnit(transport UnitProjection, unit UnitProjection) bool {
+	if len(transport.CargoClasses) > 0 {
+		for _, cargoClass := range projectedUnitCargoClasses(unit) {
+			if containsString(transport.CargoClasses, cargoClass) {
+				return true
+			}
+		}
+		return false
+	}
+	if containsString(transport.CargoDomains, unit.Domain) {
+		return true
+	}
+	if unit.Domain == engine.DomainAmphibious {
+		return containsString(transport.CargoDomains, engine.DomainLand) || containsString(transport.CargoDomains, engine.DomainSea)
+	}
+	return false
+}
+
+func projectedUnitCargoClasses(unit UnitProjection) []string {
+	size := unit.Size
+	if size == "" {
+		size = "Small"
+	}
+	size = strings.TrimSpace(size)
+	if strings.EqualFold(size, "Medium") {
+		size = "Med"
+	}
+	switch strings.ToLower(unit.Domain) {
+	case engine.DomainLand:
+		return []string{size + "Land"}
+	case engine.DomainAir:
+		return []string{size + "Air"}
+	case engine.DomainSea:
+		return []string{size + "Water"}
+	case engine.DomainAmphibious:
+		return []string{size + "Land", size + "Water"}
+	case engine.DomainSpace:
+		return []string{size + "Space"}
+	default:
+		return []string{size + unit.Domain}
+	}
 }
 
 func disembarkActions(projection Projection, tiles map[string]TileProjection, units map[string]UnitProjection, unit UnitProjection) []ActionProjection {

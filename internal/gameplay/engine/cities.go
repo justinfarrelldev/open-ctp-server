@@ -2852,6 +2852,8 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 		MaxFuel:            definition.MaxFuel,
 		CargoCapacity:      definition.TransportCapacity,
 		CargoDomains:       append([]string(nil), definition.CargoDomains...),
+		CargoClasses:       append([]string(nil), definition.CargoClasses...),
+		Size:               definition.Size,
 		Upkeep:             definition.Upkeep,
 		ShieldHunger:       definition.ShieldHunger,
 		FoodHunger:         definition.FoodHunger,

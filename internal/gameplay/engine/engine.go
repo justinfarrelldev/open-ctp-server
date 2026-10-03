@@ -252,6 +252,8 @@ type Unit struct {
 	MaxFuel                int      `json:"max_fuel,omitempty"`
 	CargoCapacity          int      `json:"cargo_capacity,omitempty"`
 	CargoDomains           []string `json:"cargo_domains,omitempty"`
+	CargoClasses           []string `json:"cargo_classes,omitempty"`
+	Size                   string   `json:"size,omitempty"`
 	Upkeep                 int      `json:"upkeep,omitempty"`
 	ShieldHunger           int      `json:"shield_hunger,omitempty"`
 	FoodHunger             int      `json:"food_hunger,omitempty"`
@@ -1171,6 +1173,7 @@ func cloneStateForNormalization(state State) State {
 	state.Units = append([]Unit(nil), state.Units...)
 	for index := range state.Units {
 		state.Units[index].CargoDomains = append([]string(nil), state.Units[index].CargoDomains...)
+		state.Units[index].CargoClasses = append([]string(nil), state.Units[index].CargoClasses...)
 		state.Units[index].Effects = append([]Effect(nil), state.Units[index].Effects...)
 	}
 	state.Cities = append([]City(nil), state.Cities...)
@@ -1289,6 +1292,7 @@ func normalizeState(state *State) {
 	for i := range state.Units {
 		normalizeEffects(state.Units[i].Effects)
 		sort.Strings(state.Units[i].CargoDomains)
+		sort.Strings(state.Units[i].CargoClasses)
 	}
 	for i := range state.Cities {
 		normalizeEffects(state.Cities[i].Effects)
