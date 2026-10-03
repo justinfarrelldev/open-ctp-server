@@ -1204,7 +1204,7 @@ func bestAIListedBuildingProduction(projection visibility.Projection, city visib
 }
 
 func runtimeProductionPlacementAvailable(projection visibility.Projection, city visibility.CityProjection, production rules.RuntimeProduction) bool {
-	if !production.CantBuildInSea && !production.CoastalOnly {
+	if !production.CantBuildInSea && !production.CantBuildOnLand && !production.CoastalOnly {
 		return true
 	}
 	cityTile, ok := projectedTileByID(projection, city.TileID)
@@ -1213,6 +1213,9 @@ func runtimeProductionPlacementAvailable(projection visibility.Projection, city 
 	}
 	isSeaCity := projectedTerrainIsSea(projection, cityTile.Terrain)
 	if production.CantBuildInSea && isSeaCity {
+		return false
+	}
+	if production.CantBuildOnLand && !isSeaCity {
 		return false
 	}
 	if !production.CoastalOnly || isSeaCity {

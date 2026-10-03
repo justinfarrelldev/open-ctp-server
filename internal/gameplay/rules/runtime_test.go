@@ -71,6 +71,16 @@ func TestCompileRuntimePreservesSyntheticUnitCapabilities(t *testing.T) {
 	}
 }
 
+func TestCompileProductionPreservesCantBuildOnLand(t *testing.T) {
+	production, err := compileProductionDefinition(Record{Kind: "production", ID: "IMPROVE_SEA_ONLY", Tags: map[string]string{"Kind": "building", "Cost": "1", "CantBuildOnLand": "true"}}, "building")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !production.CantBuildOnLand {
+		t.Fatalf("production = %+v, want cant-build-on-land", production)
+	}
+}
+
 func TestCompileUnitDefinitionPreservesUpgradeChains(t *testing.T) {
 	unit, err := compileUnitDefinition(Record{Kind: "unit", ID: "UNIT_OLD", Tags: map[string]string{"Domain": "land", "MaxMovePoints": "1", "Health": "1", "UpgradeTo": "UNIT_NEW,UNIT_LATER"}})
 	if err != nil {

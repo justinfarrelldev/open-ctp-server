@@ -219,3 +219,6 @@ Task 084 update:
 
 Task 085 update:
 - Repeated unit `GovernmentType` gates are now preserved as `RequiredGovernmentIDs`; production queue legality, visibility legal-action projection, and upgrade legality accept any listed government and reject unlisted governments, matching retail's `GetNumGovernmentType()` loop.
+
+Task 086 update:
+- Building `CantBuildOnLand` is now imported/executed with the same city-tile water/land placement gate as retail `CityData::CanBuildImprovement`: engine production, visible legal actions, and projection-only AI all reject land-city production for such buildings.

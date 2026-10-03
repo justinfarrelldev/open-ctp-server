@@ -3376,7 +3376,8 @@ func requireProductionUnlock(state State, city City, item ProductionItem, runtim
 	obsolete := item.ObsoletedBy
 	if runtime != nil {
 		if production, ok := runtime.ProductionDefinition(item.ID); ok {
-			if production.CantBuildInSea && cityIsSea(state, city, runtime) || production.CoastalOnly && !cityIsCoastal(state, city, runtime) {
+			seaCity := cityIsSea(state, city, runtime)
+			if production.CantBuildInSea && seaCity || production.CantBuildOnLand && !seaCity || production.CoastalOnly && !cityIsCoastal(state, city, runtime) {
 				return errors.New("production prerequisite is not met")
 			}
 			if prerequisite == "" && len(production.Prerequisites) > 0 {

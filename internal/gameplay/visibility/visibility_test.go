@@ -293,6 +293,25 @@ func TestProjectionAllowsAnyListedGovernmentUnitProduction(t *testing.T) {
 	}
 }
 
+func TestProjectionSuppressesCantBuildOnLandBuildingProduction(t *testing.T) {
+	state := projectionStateWithRuntime(t, rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: engine.TerrainPlains, Domains: []string{engine.DomainLand}}, {ID: engine.TerrainForest, Domains: []string{engine.DomainLand}}, {ID: engine.TerrainOcean, Domains: []string{engine.DomainSea}}}}, Production: []rules.RuntimeProduction{{ID: "IMPROVE_SEA_ONLY", Kind: engine.ProductionBuilding, Cost: 1, CantBuildOnLand: true}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: engine.DomainLand, Movement: 1, Health: 1}}})
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if productionActionTarget(projection, engine.CommandQueueProduction, "IMPROVE_SEA_ONLY") {
+		t.Fatalf("cant-build-on-land building production leaked in land city: %#v", projection.LegalActions)
+	}
+	state.Tiles[0].Terrain = engine.TerrainOcean
+	projection, err = Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !productionActionTarget(projection, engine.CommandQueueProduction, "IMPROVE_SEA_ONLY") {
+		t.Fatalf("cant-build-on-land building production missing in sea city: %#v", projection.LegalActions)
+	}
+}
+
 func TestProjectionSuppressesNoSlavesAndSlaverExclusiveProduction(t *testing.T) {
 	state := projectionStateWithRuntime(t, rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_SLAVER", Kind: engine.ProductionUnit}, {ID: "UNIT_WORKER", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{
 		{ID: "UNIT_SLAVER", Domain: engine.DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "slave", Kind: engine.EffectSpecialSlaveRaid}}},

@@ -175,6 +175,22 @@ func TestRuntimeBuildingProductionRequiresPrerequisiteBuildings(t *testing.T) {
 	}
 }
 
+func TestRuntimeBuildingCantBuildOnLandUsesCityTerrain(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: TerrainOcean, Domains: []string{DomainSea}}, {ID: TerrainPlains, Domains: []string{DomainLand}}}}, Production: []rules.RuntimeProduction{{ID: "IMPROVE_SEA_ONLY", Kind: ProductionBuilding, Cost: 1, CantBuildOnLand: true}}}
+
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "IMPROVE_SEA_ONLY", Kind: ProductionBuilding, Cost: 1}}, runtime); err == nil {
+		t.Fatal("queueProduction accepted a cant-build-on-land building in a land city")
+	}
+
+	state.Cities[0].TileID = "sea-city"
+	state.Tiles = append(state.Tiles, Tile{ID: "sea-city", X: 5, Y: 5, Terrain: TerrainOcean, Open: true})
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "IMPROVE_SEA_ONLY", Kind: ProductionBuilding, Cost: 1}}, runtime); err != nil {
+		t.Fatalf("queueProduction cant-build-on-land sea city error = %v", err)
+	}
+}
+
 func TestRuntimeBuildingProductionHonorsSeaAndCoastalPlacement(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})

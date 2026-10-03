@@ -2039,7 +2039,7 @@ func runtimeUnitHasEffect(unit rules.RuntimeUnitDefinition, kind string) bool {
 }
 
 func cityProductionPlacementAllowed(projection Projection, city CityProjection, production rules.RuntimeProduction) bool {
-	if !production.CantBuildInSea && !production.CoastalOnly {
+	if !production.CantBuildInSea && !production.CantBuildOnLand && !production.CoastalOnly {
 		return true
 	}
 	tiles := projectedTiles(projection)
@@ -2049,6 +2049,9 @@ func cityProductionPlacementAllowed(projection Projection, city CityProjection, 
 	}
 	isSeaCity := projectedTerrainIsSea(projection, cityTile.Terrain)
 	if production.CantBuildInSea && isSeaCity {
+		return false
+	}
+	if production.CantBuildOnLand && !isSeaCity {
 		return false
 	}
 	if !production.CoastalOnly || isSeaCity {

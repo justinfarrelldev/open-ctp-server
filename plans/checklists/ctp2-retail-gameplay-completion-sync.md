@@ -97,6 +97,7 @@
 - [x] Task 083: Retail cargo `CanCarry` now imports exact size/domain classes and filters engine/legal/AI embark by class compatibility.
 - [x] Task 084: Retail cargo `Load`/`Unload` nested sound records are source-classified as presentation-only metadata, and transport death cargo removal is verified.
 - [x] Task 085: Retail repeated unit `GovernmentType` gates now accept any listed government in production, projection, and upgrades.
+- [x] Task 086: Retail building `CantBuildOnLand` now blocks land-city production in engine, legal projections, and AI placement.
 
 ## Full-Game Mechanical Execution First
 
@@ -170,7 +171,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Finish crime/pollution effects: `LowerCrime`, `PopulationPollutionPercent`, `ProductionPollutionPercent`, `PollutionAmount`/`Pollution`, `NuclearPlant`, and wonder interactions.
 - [ ] Finish protection effects: `ProtectFromNukes`, `ProtectFromBioAgents`, `ProtectFromNanoVirus`, `PreventConversion`, `PreventSlavery`, and `ForceField` for both direct buildings and effective buildings.
 - [ ] Finish military/building effects: `DefendersPercent`, `OffenseBonusLand`, `OffenseBonusWater`, `OffenseBonusAir`, `CityWalls`, `Airport`, and effective-building consequences; `AllowGrunts` is source-classified as non-executed/AI-placeholder metadata.
-- [ ] Finish structural/build-gate effects: `PrerequisiteBuilding`, `CoastalBuilding`, `CantBuildInSea`, `CantBuildOnLand`, `Capitol`, `Brokerage`, `Television`, `DoubleTelevangelists`, `DefaultIcon`, and `Description` classification.
+- [ ] Finish structural/build-gate effects: `PrerequisiteBuilding`, `CoastalBuilding`, `CantBuildInSea`, and `CantBuildOnLand` placement gates are implemented; finish remaining `Capitol`, `Brokerage`, `Television`, `DoubleTelevangelists`, `DefaultIcon`, and `Description` classification/edge coverage.
 - [ ] Ensure wonder-granted effective buildings participate in every retail `GetEffectiveBuildings()` use: yields, science, happiness, crime, pollution, protection, refuel/airport, city walls/defense/offense, television, brokerage, and production prerequisites.
 
 ### Wonders

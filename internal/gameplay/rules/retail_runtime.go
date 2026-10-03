@@ -46,7 +46,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 	for _, building := range db.Buildings {
 		effects := retailBuildingRuntimeEffects(building)
 		buildingEffects[building.ID] = effects
-		runtime.Production = append(runtime.Production, RuntimeProduction{ID: building.ID, Kind: "building", Cost: building.ProductionCost, Upkeep: building.Upkeep, Prerequisites: singleOrEmpty(building.EnableAdvance), RequiredBuildings: append([]string(nil), building.PrerequisiteBuilding...), CantBuildInSea: retailContainsString(building.Flags, "CantBuildInSea"), CoastalOnly: retailContainsString(building.Flags, "CoastalBuilding"), ObsoleteBy: append([]string(nil), building.ObsoleteAdvance...), Effects: effects})
+		runtime.Production = append(runtime.Production, RuntimeProduction{ID: building.ID, Kind: "building", Cost: building.ProductionCost, Upkeep: building.Upkeep, Prerequisites: singleOrEmpty(building.EnableAdvance), RequiredBuildings: append([]string(nil), building.PrerequisiteBuilding...), CantBuildInSea: retailContainsString(building.Flags, "CantBuildInSea"), CantBuildOnLand: retailContainsString(building.Flags, "CantBuildOnLand"), CoastalOnly: retailContainsString(building.Flags, "CoastalBuilding"), ObsoleteBy: append([]string(nil), building.ObsoleteAdvance...), Effects: effects})
 		runtime.Effects = append(runtime.Effects, RuntimeEffect{ID: building.ID, Kind: "building"})
 	}
 	for _, wonder := range db.Wonders {
