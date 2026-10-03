@@ -100,6 +100,7 @@
 - [x] Task 086: Retail building `CantBuildOnLand` now blocks land-city production in engine, legal projections, and AI placement.
 - [x] Task 087: Building `DefaultIcon` and `Description` are source-classified as presentation/UI/SLIC metadata.
 - [x] Task 088: Building structural markers `Capitol`, `Brokerage`, `Television`, and `DoubleTelevangelists` are source-verified against existing execution tests.
+- [x] Task 089: Wonder `DefaultIcon`, `Description`, and `Movie` are source-classified as presentation/UI metadata.
 
 ## Full-Game Mechanical Execution First
 
@@ -183,7 +184,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Finish production/prohibition wonder effects: `EnableParkRangers`, `FreeSlaves`, `ProhibitSlavers`, `EliminateNukes`, `ReformCities`, `PollutersToParks`, and illegal queue cleanup/reversal edge cases.
 - [ ] Finish happiness/readiness/pollution wonder effects: `TemporaryFullHappiness`, `NoPollutionUnhappiness`, `ReduceReadinessCost`, and source-backed duration/stacking behavior.
 - [ ] Finish visibility/endgame wonder effects: `GlobalRadar`, `StartGaiaController`, `BuildingEverywhere`, `ActualBuildingEverywhere`, obsolescence, destruction, capture, and transfer behavior.
-- [ ] Classify wonder `DefaultIcon`, `Description`, and `Movie` as presentation-only unless public contract requires projection.
+- [x] Classify wonder `DefaultIcon`, `Description`, and `Movie` as presentation/UI metadata for server gameplay.
 
 ### Terrain, tile improvements, goods, and map rules
 
