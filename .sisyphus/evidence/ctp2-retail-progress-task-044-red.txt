@@ -1,0 +1,5 @@
+--- FAIL: TestRetailTelevangelistConversionNeedsDoubleTelevangelistsBuilding (0.00s)
+    televangelist_task44_test.go:20: televangelist conversion without double building = [{ID:nation-a Effects:[] Advances:[] Embassies:[] CityReports:[] PublicWorks:0 Gold:4 FranchiseProduction:0 SciencePercent:0xc00011a118 PublicWorksPercent:<nil> Workday:<nil> Wages:<nil> Rations:<nil> Readiness: GovernmentID: ResearchTargetID: ResearchProgress:0 GaiaCompletionTurn:0 MaxCityCount:0 LastPartyTurn:0 PeaceMovement:<nil>} {ID:nation-b Effects:[] Advances:[] Embassies:[] CityReports:[] PublicWorks:0 Gold:6 FranchiseProduction:0 SciencePercent:0xc00011a118 PublicWorksPercent:<nil> Workday:<nil> Wages:<nil> Rations:<nil> Readiness: GovernmentID: ResearchTargetID: ResearchProgress:0 GaiaCompletionTurn:0 MaxCityCount:0 LastPartyTurn:0 PeaceMovement:<nil>}], want cleric-rate siphon
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

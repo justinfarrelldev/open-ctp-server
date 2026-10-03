@@ -606,7 +606,7 @@ func payConversionGold(state *State, city City, runtime *rules.RuntimeRules) int
 	if convertedNationID == "" {
 		return 0
 	}
-	percent := conversionGoldPercent(city, runtime)
+	percent := conversionGoldPercent(*state, city, runtime)
 	if percent <= 0 {
 		return 0
 	}
@@ -624,17 +624,21 @@ func payConversionGold(state *State, city City, runtime *rules.RuntimeRules) int
 	return 0
 }
 
-func conversionGoldPercent(city City, runtime *rules.RuntimeRules) int {
-	if city.ConvertedBy == "televangelist" {
-		if runtime != nil && runtime.Constants.TelevangelistConversionPercent > 0 {
-			return runtime.Constants.TelevangelistConversionPercent
-		}
-		return 40
-	}
+func conversionGoldPercent(state State, city City, runtime *rules.RuntimeRules) int {
+	clericPercent := 20
 	if runtime != nil && runtime.Constants.ClericConversionPercent > 0 {
-		return runtime.Constants.ClericConversionPercent
+		clericPercent = runtime.Constants.ClericConversionPercent
 	}
-	return 20
+	if city.ConvertedBy != "televangelist" {
+		return clericPercent
+	}
+	if !hasEffect(cityEffects(state, city), EffectDoubleTelevangelists) {
+		return clericPercent
+	}
+	if runtime != nil && runtime.Constants.TelevangelistConversionPercent > 0 {
+		return runtime.Constants.TelevangelistConversionPercent
+	}
+	return 40
 }
 
 type buildingUpkeepCandidate struct {

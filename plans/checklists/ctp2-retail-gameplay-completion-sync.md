@@ -55,6 +55,7 @@
 - [x] Task 041: Retail wonder `IncreaseRegard` now improves public foreign regard toward active wonder owners.
 - [x] Task 042: Retail `Advertise` units now execute the dedicated advertise route by reusing CauseUnhappiness amount/timer/chance mechanics.
 - [x] Task 043: Retail `EnableParkRangers` now globally unlocks `CreateParks`/park-ranger unit production as in the built-wonders mask check.
+- [x] Task 044: Retail `DoubleTelevangelists` now gates enhanced televangelist conversion gold; unboosted televangelists fall back to cleric conversion.
 
 ## Full-Game Mechanical Execution First
 
