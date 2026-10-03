@@ -1,0 +1,21 @@
+--- source FoodHunger/GoldHunger references ---
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:811:    sint32            m_FoodHunger;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1399:    sint32           GetFoodHunger() const { return m_FoodHunger; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/unit.cdb:373:    Int FoodHunger
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:128:    m_FoodHunger = 0;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:450:	m_FoodHunger = rval.m_FoodHunger; 
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:719:    "FoodHunger",
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:953:    { UnitRecord::GetFoodHunger, NULL, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:1185:#define k_Token_Unit_FoodHunger                  ((k_Token_Custom_Base) + 176)
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:1285:    if(!s_ParsedTokens.Bit(k_Token_Unit_FoodHunger - k_Token_Custom_Base)) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:1286:        DBERROR(("Warning: required field FoodHunger missing"));
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:1962:            case k_Token_Unit_FoodHunger:
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.cpp:1963:                if(!lex->GetIntAssignment(m_FoodHunger)) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:127:	sint32 GetFoodHunger() const; 
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:323:sint32 Unit::GetFoodHunger() const
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:326:    return GetDBRec()->GetFoodHunger(); 
+--- released data counts ---
+FoodHunger records=74 unique=[0] nonzero=0
+GoldHunger records=64 min=0 max=250 nonzero=61
+Units.txt:19: # Modifications from the original Activision code:
+Units.txt:21: # - Added GoldHunger flag but its only activated by the userprofile.txt or 

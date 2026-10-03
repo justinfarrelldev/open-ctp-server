@@ -371,6 +371,7 @@
 - [x] Task 420: Retail `HasPopAndCanBuild` city pseudo-units are rejected from normal city production queues.
 - [x] Task 421: Retail active-defense interceptors fire once per turn and reset on turn refresh.
 - [x] Task 422: Retail active-defense interceptors resolve in descending attack order.
+- [x] Task 423: Retail `GoldHunger` and `FoodHunger` are source-classified as non-executed/default-disabled upkeep metadata.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -394,7 +395,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 
 - [ ] Execute retail material support completely: `ShieldHunger`, `NeedsNoSupport`, `IsSpecialForces`, readiness support coefficients, disband ordering, and wonder readiness reductions.
 - [ ] Implement `ProfessionalUnits` government quota/behavior or source-backed classification; ensure professional units interact with support/disband exactly like retail.
-- [ ] Source-check and close `GoldHunger` and `FoodHunger`: treasury upkeep, food consumption, or explicit retail-disabled classification.
+- [x] Source-check and close `GoldHunger` and `FoodHunger`: classified as non-executed/default-disabled upkeep metadata for literal retail parity.
 - [ ] Complete `IsTrader` behavior: trader unit lists, trade transport points, route capacity, route path-cost consumption, trader death/removal, and AI route creation.
 - [ ] Complete cargo semantics for `CargoData.Load`, `CargoData.Unload`, `CargoData.MaxCargo`, `CanCarry`, domain/size constraints, transport destruction, and legal public projection.
 - [ ] Finish air/space/sea/land/domain movement parity, including `MovementType`, `MaxMovePoints`, `MaxFuel`, `NoFuelThenCrash`, `LossMoveToDmgNone`, non-space fuel costs, crash/damage rules, city/airport/carrier refuel, and hostile terrain immunity.

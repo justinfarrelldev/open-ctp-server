@@ -195,3 +195,6 @@ Task 076 update:
 
 Task 077 update:
 - Retail active-defense interceptors now resolve in descending attack order with deterministic ID tie-breaks, matching `ArmyData::GetActiveDefenders` insertion ordering.
+
+Task 078 update:
+- `FoodHunger` is parsed/displayed but default data is all zero and no gameplay source consumes it; `GoldHunger` is absent from the original source parser and marked by released data comments as an optional Apolyton modification, so both are classified non-executed/default-disabled for literal retail gameplay.
