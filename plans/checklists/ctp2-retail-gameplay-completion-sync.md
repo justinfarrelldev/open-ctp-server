@@ -63,6 +63,7 @@
 - [x] Task 049: Retail `EliminateNukes` now globally blocks nuclear-attack unit production even in imported states with pre-existing defuser wonders.
 - [x] Task 050: Retail `EliminateNukes` now removes queued nuclear-attack unit items when the defuser effect runs.
 - [x] Task 051: Retail `InvisibleForGlobeSat` units are hidden from global-radar-only visibility while remaining visible to normal sight.
+- [x] Task 052: Retail disembark now zeroes movement for non-air/non-beach-assault cargo while preserving beach-assault unload movement.
 
 ## Full-Game Mechanical Execution First
 

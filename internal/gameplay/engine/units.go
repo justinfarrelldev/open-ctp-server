@@ -633,8 +633,22 @@ func disembark(state *State, actorID string, payload disembarkPayload, runtime *
 	if unit.Movement < cost {
 		return ErrObstructed
 	}
-	unit.TransportID, unit.TileID, unit.Movement = "", to.ID, unit.Movement-cost
+	remainingMovement := unit.Movement - cost
+	if !cargoKeepsMovementAfterDisembark(*unit, *transport) {
+		remainingMovement = 0
+	}
+	unit.TransportID, unit.TileID, unit.Movement = "", to.ID, remainingMovement
 	return nil
+}
+
+func cargoKeepsMovementAfterDisembark(unit Unit, transport Unit) bool {
+	if unit.Domain == DomainAir {
+		return true
+	}
+	if hasEffect(unit.Effects, EffectParatrooper) && hasEffect(transport.Effects, EffectParatrooperTransport) {
+		return true
+	}
+	return hasEffect(unit.Effects, EffectCanBeachAssault) && transport.Domain == DomainSea
 }
 
 func createArmy(state *State, actorID string, payload armyCreatePayload) error {

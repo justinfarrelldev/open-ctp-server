@@ -345,6 +345,7 @@
 - [x] Task 394: Retail wonder `EliminateNukes` globally blocks nuclear-attack unit production from active wonder state.
 - [x] Task 395: Retail wonder `EliminateNukes` removes queued nuclear-attack units during defuser cleanup.
 - [x] Task 396: Retail unit `InvisibleForGlobeSat` prevents global-radar-only unit projection without affecting normal sight.
+- [x] Task 397: Retail unit `CanBeachAssault`/paratrooper unload movement keeps legal beach-assault cargo mobile while normal cargo loses movement after disembarking.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

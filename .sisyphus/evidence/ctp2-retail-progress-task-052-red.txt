@@ -1,0 +1,5 @@
+--- FAIL: TestRetailDisembarkZeroesMovementForNonBeachAssaultCargo (0.01s)
+    beach_assault_task52_test.go:21: non-beach-assault cargo movement after disembark = 2, want 0
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.023s
+FAIL
