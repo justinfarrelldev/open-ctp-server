@@ -174,3 +174,6 @@ Task 069 update:
 
 Task 070 update:
 - Retail `LossMoveToDmgTwo` now imports as `loss_move_to_dmg_two` and applies the minimum-two damaged movement refresh rule from `UnitData::ResetMovement`.
+
+Task 071 update:
+- Retail counter-bombard now iterates every living defender on the target tile and applies each defender's own `CanCounterBombard`/`CanBombard` rules, matching `ArmyData::Bombard`.

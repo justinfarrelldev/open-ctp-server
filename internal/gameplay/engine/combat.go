@@ -354,7 +354,7 @@ func applyBombard(state *State, command Command, sources Sources, runtime *rules
 		}
 		targets = livingCombatUnits(targets)
 	}
-	counterBombardHits := counterBombard(state, sources, unit, livingCombatUnits(targets), runtime)
+	counterBombardHits := counterBombard(state, sources, unit, livingCombatUnits(bombardTargets(*state, command.ActorPlayerID, payload.TargetTileID)), runtime)
 	unit.Movement--
 	destroyed := 0
 	for _, target := range bombardTargets(*state, command.ActorPlayerID, payload.TargetTileID) {

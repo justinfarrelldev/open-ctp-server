@@ -82,6 +82,7 @@
 - [x] Task 068: Retail ranged combat now prefers same/nearest tactical-row targets before fallback.
 - [x] Task 069: Retail bombard hostilities now start war and cancel trade routes between combatants.
 - [x] Task 070: Retail `LossMoveToDmgTwo` now imports and refreshes damaged movement with a minimum of two points.
+- [x] Task 071: Retail counter-bombard now considers every living defender on the target tile, not only the attacker's eligible bombard targets.
 
 ## Full-Game Mechanical Execution First
 
