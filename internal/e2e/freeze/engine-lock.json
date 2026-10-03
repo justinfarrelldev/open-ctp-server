@@ -47,7 +47,7 @@
     },
     {
       "path": "internal/gameplay/engine/combat.go",
-      "sha256": "6587cf04024301f0e980a6697b7a2b7a04f1c33bea631fe25a50638372d19de2"
+      "sha256": "5aea9871800e89104996ee8e2be924a8924f10384209b2418bbfbf6b9747701e"
     },
     {
       "path": "internal/gameplay/engine/diplomacy.go",

@@ -388,6 +388,9 @@ func bombardUndefendedCity(state *State, actorID string, unit *Unit, targetTile 
 	buildingDestroyed := ""
 	if bombardPercentThreshold(retailBombardDestroyBuildingPercent(runtime), probability) > int(combatRoll(state, sources)%100) {
 		buildingDestroyed = destroyRandomBombardableBuilding(state, city, sources)
+		if buildingDestroyed != "" {
+			removeIllegalCityQueueItems(state, city, runtime)
+		}
 	}
 	populationKilled := 0
 	if city.Population > 1 && bombardPercentThreshold(retailBombardKillPopulationPercent(runtime), probability) > int(combatRoll(state, sources)%100) {
@@ -456,6 +459,16 @@ func retailBombardKillPopulationPercent(runtime *rules.RuntimeRules) int {
 		return runtime.Constants.BombardKillPopulationPercent
 	}
 	return 10
+}
+
+func removeIllegalCityQueueItems(state *State, city *City, runtime *rules.RuntimeRules) {
+	kept := city.Queue[:0]
+	for _, item := range city.Queue {
+		if requireProductionUnlock(*state, *city, item, runtime) == nil {
+			kept = append(kept, item)
+		}
+	}
+	city.Queue = kept
 }
 
 func destroyRandomBombardableBuilding(state *State, city *City, sources Sources) string {

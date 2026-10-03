@@ -76,6 +76,7 @@
 - [x] Task 062: Retail city capture now destroys captured Capitol buildings while preserving other improvements.
 - [x] Task 063: Retail city capture now clears owner-specific city effects and timed happiness/special effects.
 - [x] Task 064: Retail bombard can target undefended cities, importing city-bombard constants and applying building/population damage with stale-safe projections.
+- [x] Task 065: Retail city bombard building destruction now removes queued production that became illegal.
 
 ## Full-Game Mechanical Execution First
 

@@ -156,3 +156,6 @@ Task 063 update:
 
 Task 064 update:
 - Retail `BOMBARD_DESTROY_BUILDING_CHANCE` and `BOMBARD_KILL_POP_CHANCE` now import/project into runtime constants and drive undefended-city bombard building/population damage; public legal actions include only non-stale visible city bombard targets.
+
+Task 065 update:
+- Retail city bombard building destruction now revalidates the city's build queue and removes items that became illegal, matching `DestroyRandomBuilding()->RemoveIllegalItems(TRUE)`.

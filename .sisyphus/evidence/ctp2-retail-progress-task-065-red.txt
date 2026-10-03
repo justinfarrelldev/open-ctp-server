@@ -1,0 +1,5 @@
+--- FAIL: TestRetailBombardDestroyedBuildingRemovesNowIllegalQueueItems (0.00s)
+    bombard_city_queue_task65_test.go:32: queue after building destruction = []engine.ProductionItem{engine.ProductionItem{ID:"UNIT_FACTORY_ONLY", Kind:"unit", Cost:1, Upkeep:0, Prerequisite:"", ObsoletedBy:"", Scope:"", Effects:[]engine.Effect(nil)}, engine.ProductionItem{ID:"UNIT_GUARD", Kind:"unit", Cost:1, Upkeep:0, Prerequisite:"", ObsoletedBy:"", Scope:"", Effects:[]engine.Effect(nil)}}, want only still-legal guard
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL
