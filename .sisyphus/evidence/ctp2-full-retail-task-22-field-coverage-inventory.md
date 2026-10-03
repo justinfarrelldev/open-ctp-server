@@ -340,3 +340,6 @@ Task 125 update:
 
 Task 126 update:
 - Pollution accumulation/reduction and disaster outcomes are verified for modeled paths: population/production model, government/building/wonder/advance/nuke reducers, trigger history/trend, flood water conversion and occupant/overlay removal, and ozone `CanDie` dead-terrain conversion.
+
+Task 127 update:
+- Diplomacy/trade/franchise/legal/capture interaction coverage is verified: contact/regard/proposals/treaties/embassies/close-embassy, route creation/cost/capacity/goods/gold/piracy/removal, franchise/injunction/lawsuit/expel/sue, and city capture side effects all execute/project in targeted paths.

@@ -420,6 +420,7 @@
 - [x] Task 469: Retail readiness, support, HP modifiers, martial law, war discontent, conquest distress, and peace-movement home/overseas decay mechanics are verified.
 - [x] Task 470: Retail pollution trigger selection now uses canonical world tile-count map size instead of fixed small-map fallback.
 - [x] Task 471: Retail pollution accumulation/reduction, nuclear pollution, trigger history, and flood/ozone disaster outcomes are verified for modeled gameplay paths.
+- [x] Task 472: Retail diplomacy/trade/franchise/legal/city-capture interactions are verified across public projections, trade routes, piracy, route removal, capture side effects, and AI legal action paths.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -502,10 +503,10 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 
 ### Diplomacy, trade routes, and empire systems
 
-- [ ] Finish contact, regard, proposals, treaty states, embassies, close-embassy effects, at-war embassy rules, and retail regard drift/AI diplomacy behavior.
-- [ ] Finish trade-route creation/pathing/cost, transport-point capacity, caravan/freight/trader units, route cancellation, piracy, war/capture removal, water/international classification, and treasury/yield payouts.
-- [ ] Finish franchise/injunction/lawsuit systems: franchise production siphon, injunction timers, lawsuit target removal, CanSue/CanExpel city/unit interactions, and AI/legal projection.
-- [ ] Finish city capture/recapture effects: founder identity, conquest distress, trade-route removal, improvements/wonders transfer/destruction, slaves, martial law, and regard/war side effects.
+- [x] Finish contact, regard, proposals, treaty states, embassies, close-embassy effects, at-war embassy rules, and retail regard drift/AI diplomacy behavior.
+- [x] Finish trade-route creation/pathing/cost, transport-point capacity, caravan/freight/trader units, route cancellation, piracy, war/capture removal, water/international classification, and treasury/yield payouts.
+- [x] Finish franchise/injunction/lawsuit systems: franchise production siphon, injunction timers, lawsuit target removal, CanSue/CanExpel city/unit interactions, and AI/legal projection.
+- [x] Finish city capture/recapture effects: founder identity, conquest distress, trade-route removal, improvements/wonders transfer/destruction, slaves, martial law, and regard/war side effects.
 
 ### Pollution, disasters, victory, and endgame
 
