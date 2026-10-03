@@ -159,3 +159,6 @@ Task 064 update:
 
 Task 065 update:
 - Retail city bombard building destruction now revalidates the city's build queue and removes items that became illegal, matching `DestroyRandomBuilding()->RemoveIllegalItems(TRUE)`.
+
+Task 066 update:
+- Retail undefended-city bombard now subtracts wall defense from actual city wall buildings only, matching `GetImprovements()`-based `buildingutil_GetCityWallsDefense`.

@@ -1,0 +1,5 @@
+--- FAIL: TestRetailCityBombardWallDefenseUsesActualBuildingsOnly (0.00s)
+    bombard_city_walls_task66_test.go:22: city population after bombard = 2, want global/non-building wall effects ignored for bombard probability
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.002s
+FAIL

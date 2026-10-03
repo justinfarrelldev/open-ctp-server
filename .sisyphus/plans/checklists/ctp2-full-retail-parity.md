@@ -359,6 +359,7 @@
 - [x] Task 408: Retail city capture clears owner-specific city effects and timed happiness/special effects.
 - [x] Task 409: Retail bombard targets undefended cities with city-bombard building/population damage and stale-safe legal projections.
 - [x] Task 410: Retail city bombard building destruction removes queued production that became illegal.
+- [x] Task 411: Retail city bombard wall-defense probability uses actual city wall buildings only.
 
 ## Detailed Remaining Retail Parity Ledger
 

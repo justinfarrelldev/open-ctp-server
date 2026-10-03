@@ -381,7 +381,7 @@ func bombardUndefendedCity(state *State, actorID string, unit *Unit, targetTile 
 	if city == nil || city.OwnerID == actorID || !unitCanBombardCity(*unit, *city, runtime) {
 		return "", nil, errors.New("bombard target is unavailable")
 	}
-	probability := unit.Ranged - cityWallDefenseAt(*state, city.TileID)
+	probability := unit.Ranged - cityActualWallDefense(*city)
 	if probability < 0 {
 		probability = 0
 	}
@@ -414,6 +414,16 @@ func bombardUndefendedCity(state *State, actorID string, unit *Unit, targetTile 
 func unitCanBombardCity(unit Unit, city City, runtime *rules.RuntimeRules) bool {
 	target := Unit{OwnerID: city.OwnerID, TileID: city.TileID, Domain: cityBombardDomain(city, runtime)}
 	return unitCanBombardTarget(unit, target)
+}
+
+func cityActualWallDefense(city City) int {
+	defense := 0
+	for _, building := range city.Buildings {
+		if value := effectValue(building.Effects, EffectCityWalls); value > defense {
+			defense = value
+		}
+	}
+	return defense
 }
 
 func cityBombardDomain(city City, runtime *rules.RuntimeRules) string {

@@ -77,6 +77,7 @@
 - [x] Task 063: Retail city capture now clears owner-specific city effects and timed happiness/special effects.
 - [x] Task 064: Retail bombard can target undefended cities, importing city-bombard constants and applying building/population damage with stale-safe projections.
 - [x] Task 065: Retail city bombard building destruction now removes queued production that became illegal.
+- [x] Task 066: Retail city bombard wall-defense probability now uses actual city wall buildings only.
 
 ## Full-Game Mechanical Execution First
 
