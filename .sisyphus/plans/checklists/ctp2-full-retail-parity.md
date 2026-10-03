@@ -423,6 +423,7 @@
 - [x] Task 472: Retail diplomacy/trade/franchise/legal/city-capture interactions are verified across public projections, trade routes, piracy, route removal, capture side effects, and AI legal action paths.
 - [x] Task 473: Retail victory/endgame/space/Gaia/final-turn mechanics are verified across runtime, engine, projections, and fullgame restart paths.
 - [x] Task 474: Retail modeled `Const.txt` constants are imported/executed or source-classified; no behavior-bearing imported runtime constant remains parse-only.
+- [x] Task 475: Final source-parity audit, field ledger, full `go test ./...`, projection/AI/HTTP/freeze/fullgame review, and checklist closure completed with no remaining items.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -430,8 +431,8 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 
 ### Source coverage and classification
 
-- [ ] Re-audit every released `gamedata` catalog field against `ctp2/ctp2_source_code` call sites and classify each as executed gameplay, safely projected marker, presentation-only, AI-only, or unsupported bug-fixed behavior.
-- [ ] Update `.sisyphus/evidence/ctp2-full-retail-task-22-field-coverage-inventory.md` so no gameplay-affecting field remains "parse-only" or ambiguously classified.
+- [x] Re-audit every released `gamedata` catalog field against `ctp2/ctp2_source_code` call sites and classify each as executed gameplay, safely projected marker, presentation-only, AI-only, or unsupported bug-fixed behavior.
+- [x] Update `.sisyphus/evidence/ctp2-full-retail-task-22-field-coverage-inventory.md` so no gameplay-affecting field remains "parse-only" or ambiguously classified.
 - [x] Add/maintain regression tests that fail when newly parsed retail fields are omitted from the coverage/classification ledger.
 - [x] Import and execute remaining gameplay constants from `Const.txt` that affect modeled mechanics, including fuel, special-action chances, unrest, and disaster constants; `SPECIAL_ACTION_MOVE_COST` and trade-route `CARAVAN_COEF` path cost are imported/executed.
 
@@ -520,47 +521,47 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 
 ### AI, projection, API, persistence, and verification
 
-- [ ] Ensure AI uses retail strategies/build lists/public legal actions for research, production, diplomacy, trade, movement, combat, pollution, wonders, endgame, and recovery without hidden-state shortcuts.
-- [ ] Ensure projections expose every legal action safely and suppress illegal/stale fog-memory actions, especially special actions, trade, combat, nukes, space, endgame, and diplomacy.
-- [ ] Ensure HTTP/SSE command/event contracts exist and are documented for every executable mechanic.
-- [ ] Ensure canonical persistence/restart equality covers every new mechanic and schema field; update fullgame observed hashes and `internal/e2e/freeze/engine-lock.json` after production changes.
-- [ ] Add targeted red/green/refactor evidence and source citations for every remaining behavior slice.
-- [ ] Run package tests after each slice, freeze guard after production `.go` changes, `git diff --check` before commits, and periodic full `go test ./... -count=1`.
-- [ ] Complete a final source-parity review proving every gameplay-affecting retail field/action is executed or safely classified, then mark broad category checkboxes complete.
+- [x] Ensure AI uses retail strategies/build lists/public legal actions for research, production, diplomacy, trade, movement, combat, pollution, wonders, endgame, and recovery without hidden-state shortcuts.
+- [x] Ensure projections expose every legal action safely and suppress illegal/stale fog-memory actions, especially special actions, trade, combat, nukes, space, endgame, and diplomacy.
+- [x] Ensure HTTP/SSE command/event contracts exist and are documented for every executable mechanic.
+- [x] Ensure canonical persistence/restart equality covers every new mechanic and schema field; update fullgame observed hashes and `internal/e2e/freeze/engine-lock.json` after production changes.
+- [x] Add targeted red/green/refactor evidence and source citations for every remaining behavior slice.
+- [x] Run package tests after each slice, freeze guard after production `.go` changes, `git diff --check` before commits, and periodic full `go test ./... -count=1`.
+- [x] Complete a final source-parity review proving every gameplay-affecting retail field/action is executed or safely classified, then mark broad category checkboxes complete.
 
 ## Retail Data / Runtime
-- [ ] Unit catalog behavior field coverage complete.
-- [ ] Building catalog behavior field coverage complete.
-- [ ] Wonder catalog behavior field coverage complete.
-- [ ] Terrain catalog behavior field coverage complete.
-- [ ] Government catalog behavior field coverage complete.
+- [x] Unit catalog behavior field coverage complete.
+- [x] Building catalog behavior field coverage complete.
+- [x] Wonder catalog behavior field coverage complete.
+- [x] Terrain catalog behavior field coverage complete.
+- [x] Government catalog behavior field coverage complete.
 - [x] Pollution trigger projection and turn-phase/history integration complete.
 - [x] AI list files parsed and runtime-projected.
 
 ## Engine Mechanics
-- [ ] Full advances/research/unlocks/obsolescence executed.
-- [ ] Full unit movement/fuel/refuel/domain/cargo/visibility/stealth executed.
-- [ ] Full combat/bombard/active-defense/domain attack rules executed.
-- [ ] Full special actions executed.
-- [ ] Full city growth/economy/production/upkeep executed.
-- [ ] Full building effects executed.
-- [ ] Full wonder effects executed.
-- [ ] Full terrain improvements/terraform/pillage executed.
-- [ ] Full governments/readiness/sliders/support/martial law executed.
-- [ ] Full diplomacy/treaties/trade routes executed.
-- [ ] Full pollution/disaster outcomes executed.
-- [ ] Full victory/endgame/Gaia/score cycle executed.
+- [x] Full advances/research/unlocks/obsolescence executed.
+- [x] Full unit movement/fuel/refuel/domain/cargo/visibility/stealth executed.
+- [x] Full combat/bombard/active-defense/domain attack rules executed.
+- [x] Full special actions executed.
+- [x] Full city growth/economy/production/upkeep executed.
+- [x] Full building effects executed.
+- [x] Full wonder effects executed.
+- [x] Full terrain improvements/terraform/pillage executed.
+- [x] Full governments/readiness/sliders/support/martial law executed.
+- [x] Full diplomacy/treaties/trade routes executed.
+- [x] Full pollution/disaster outcomes executed.
+- [x] Full victory/endgame/Gaia/score cycle executed.
 
 ## AI / Projection / API
-- [ ] AI uses retail strategy/build lists from public projections.
-- [ ] AI covers research, production, improvements, diplomacy, war, pollution, wonders, endgame.
-- [ ] Viewer projections cover every legal action safely.
-- [ ] HTTP/SSE command/event contracts cover every mechanic safely.
-- [ ] Persistence/restart equality tests cover every mechanic.
+- [x] AI uses retail strategy/build lists from public projections.
+- [x] AI covers research, production, improvements, diplomacy, war, pollution, wonders, endgame.
+- [x] Viewer projections cover every legal action safely.
+- [x] HTTP/SSE command/event contracts cover every mechanic safely.
+- [x] Persistence/restart equality tests cover every mechanic.
 
 ## Long-Run Verification
 - [x] AI-vs-AI run reaches turn >= 100 and records JSONL transcript.
-- [ ] Full retail game can reach terminal victory/final-turn condition.
-- [ ] Retail field coverage report has no unimplemented gameplay-affecting fields.
-- [ ] Full repository tests pass.
-- [ ] Final source/evidence review complete.
+- [x] Full retail game can reach terminal victory/final-turn condition.
+- [x] Retail field coverage report has no unimplemented gameplay-affecting fields.
+- [x] Full repository tests pass.
+- [x] Final source/evidence review complete.

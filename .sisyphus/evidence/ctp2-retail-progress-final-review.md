@@ -1,26 +1,29 @@
-# CTP2 retail gameplay completion final review
+# Final CTP2 retail gameplay parity review
 
-Review date: 2026-09-28
+## Scope reviewed
 
-Scope reviewed:
-- Task 026 conquest/capture-route recovery commit `071f900`.
-- Public-projection capture movement helpers in `internal/e2e/fullgame/runner.go` and `exploration.go`.
-- Stale-tile planning domain ordering in `internal/gameplay/visibility/visibility.go`.
-- Acceptance hash/freeze-lock updates for the deterministic row-one conquest scenario.
+- Retail field inventory and coverage ledger: `.sisyphus/evidence/ctp2-full-retail-task-22-field-coverage-inventory.md`
+- Root checklist: `plans/checklists/ctp2-retail-gameplay-completion-sync.md`
+- Sisyphus checklist: `.sisyphus/plans/checklists/ctp2-full-retail-parity.md`
+- Runtime importer/projection: `internal/gameplay/rules`
+- Engine execution/projection/AI/legal actions: `internal/gameplay/engine`, `internal/gameplay/visibility`, `internal/gameplay/ai`, `internal/gameplay/http`
+- Freeze/fullgame guards: `internal/e2e/freeze`, `internal/e2e/fullgame`
 
-Findings:
-- Capture planning continues to consume only public projections and projected `move-unit` legal actions for the step it actually executes. Remembered/stale tiles are used only for route selection; execution is limited to the current projected first step.
-- Co-located reserves remain available after conquest combat because attacker army assembly now uses only the selected attacker. Capture fallback can switch to a visible legal reserve when the preferred unit is spent.
-- Stale-memory oscillation is bounded by visited-tile exclusion, recovery reset, and a bounded move trace in errors.
-- `PlanKnown` stale tile domains are sorted before binary-search membership checks.
-- The previous diagnostic capture-budget inflation is absent; conquest still uses configured action/turn budgets.
-- Freeze and acceptance hashes were regenerated after the production visibility change.
+## Review findings
 
-Validation reviewed:
-- Targeted Task 026 green evidence: `.sisyphus/evidence/ctp2-retail-progress-task-026-green.txt`.
-- Package evidence: `.sisyphus/evidence/ctp2-retail-progress-task-026-package-tests.txt`.
-- Full repository validation: `.sisyphus/evidence/ctp2-retail-progress-final-validation.txt` (`go test ./... -count=1`).
-- Whitespace validation: `git diff --check` passed before commit.
+- Every released `gamedata` catalog family with gameplay-bearing fields has an executed gameplay path, safe public projection, or source-backed classification in the retail field coverage ledger.
+- Presentation/audio/UI/worldgen-only fields are explicitly classified rather than treated as gameplay gaps.
+- Released-data markers without retail execution call sites (`UpgradeTo` command semantics, tile-improvement `CanUpgrade`, stubbed freight path constant behavior, `ProfessionalUnits` AI/outcom use) are preserved as markers/metadata and fail closed rather than inventing hidden mechanics.
+- Public legal actions remain projection-driven; no task added hidden-state AI/legal shortcuts. Stale fog-sensitive actions remain suppressed by visibility/projection tests.
+- Runtime/canonical-state schema changes since Task 118 were covered by freeze-lock updates and fullgame validation.
+- The pre-commit hook was allowed to run normally for every commit; no hook bypass was used.
 
-Conclusion:
-- No follow-up defects found in the reviewed Task 026 implementation.
+## Final validation evidence
+
+- Full test suite: `.sisyphus/evidence/ctp2-retail-progress-final-go-test-all.txt`
+- Final field ledger: `.sisyphus/evidence/ctp2-retail-progress-final-field-ledger-green.txt`
+- Final field grep audit: `.sisyphus/evidence/ctp2-retail-progress-final-field-audit-grep.txt`
+
+## Conclusion
+
+No remaining checklist item represents an unimplemented retail gameplay behavior. Broad category checkboxes can be closed based on the task evidence chain and final validation.
