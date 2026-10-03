@@ -384,6 +384,7 @@
 - [x] Task 433: Building structural markers `Capitol`, `Brokerage`, `Television`, and `DoubleTelevangelists` are source-verified against existing execution tests.
 - [x] Task 434: Wonder `DefaultIcon`, `Description`, and `Movie` are source-classified as presentation/UI metadata.
 - [x] Task 435: Advance `Branch`, `Icon`, `GLHidden`, and `KeyAdvanceAdvice` are source-classified; `Age` is split out as gameplay/setup work.
+- [x] Task 436: Government rank/advice/icon fields and `IsEcotopia` are source-classified as UI/advice/marker metadata.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -462,7 +463,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Finish readiness parity: `ReadyPeaceCoef`, `ReadyAlertCoef`, `ReadyWarCoef`, `ReadyPeaceHP`, `ReadyAlertHP`, `ReadyWarHP`, `TurnsToNewReadiness`, transition timing, support cost, HP modifier interpolation, and UI/projection state.
 - [ ] Finish martial-law/war-discontent/conquest-distress: `MartialLawEffect`, `MartialLawThreshold`, `MaxMartialLawUnits`, `WarDiscontentMaxUnits`, `WarDiscontentPerUnit`, `ConquestDistress`, `ConquestDistressDecay`, fortified/home/overseas exceptions, and wonder/building mitigations.
 - [ ] Finish rush-buy/trade/government caps: `BuildingRushModifier`, `UnitRushModifier`, `WonderRushModifier`, `EndGameRushModifier`, `CapitalizationCoefficient`, `InfrastructureCoefficient`, `MaxScienceRate`, `MaxIncomingTrade`, `MaxOutgoingTrade`, and `ProfessionalUnits`.
-- [ ] Classify government rank/advice/icon fields (`Rank`, `*Rank`, `HigherRankAdvice`, `SameRankAdvice`, `Icon`, `IsEcotopia`) or wire them to AI/projection where source-backed.
+- [x] Classify government rank/advice/icon fields (`Rank`, `*Rank`, `HigherRankAdvice`, `SameRankAdvice`, `Icon`, `IsEcotopia`) as UI/advice/marker metadata for server gameplay.
 
 ### Diplomacy, trade routes, and empire systems
 

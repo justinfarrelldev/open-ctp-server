@@ -234,3 +234,6 @@ Task 089 update:
 
 Task 090 update:
 - Advance `Branch`, `Icon`, and `GLHidden` are classified as presentation/setup metadata, and `KeyAdvanceAdvice` as diplomacy/AI advice text metadata. Advance `Age` is explicitly not classified away because source uses it for start/end-age setup and age-transition gameplay.
+
+Task 091 update:
+- Government rank/advice/icon fields (`Rank`, `*Rank`, `HigherRankAdvice`, `SameRankAdvice`, `Icon`) are classified as UI/advice metadata, and `IsEcotopia` as non-executed marker metadata, with no server gameplay state mutation required for literal retail parity.
