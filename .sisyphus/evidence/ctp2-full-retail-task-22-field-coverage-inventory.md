@@ -268,3 +268,6 @@ Task 101 update:
 
 Task 102 update:
 - Unit `UpgradeTo` is source-classified as a released-data marker not parsed/executed by the retail source; the server's optional upgrade command remains fail-closed and covered for prerequisites, government gates, legal projection, AI use, and deterministic stat/HP/fuel/movement carryover.
+
+Task 103 update:
+- All imported special/spy action vectors are source-verified as executed/projection-covered (`EstablishEmbassy`, `StealTechnology`, `PlantNuke`, `InvestigateCity`, `AssasinateRuler`, `BioTerror`, `NanoTerror`, `Plague`, `ConvertCities`, `CreateFranchise`, `CauseUnhappiness`, `Advertise`, `InciteRevolution`, `IndulgenceSales`, `SlaveRaids`, `SettlerSlaveRaids`, `SlaveUprising`, `UndergroundRailway`, `CanInjoin`, `CanReform`, `CanSue`, `CanExpel`, `CreateParks`, `ThrowParty`); nested sound fields remain presentation/audio metadata.

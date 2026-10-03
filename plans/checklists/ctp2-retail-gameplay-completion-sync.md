@@ -114,6 +114,7 @@
 - [x] Task 100: Field coverage ledger now has a regression guard requiring every parsed retail field to be mentioned.
 - [x] Task 101: Production unlock gates now require all runtime prerequisites and reject any listed obsolete advance during queueing and cleanup.
 - [x] Task 102: `UpgradeTo` is source-classified as released-data marker/non-retail executable; optional server upgrade command/projection/AI tests are verified.
+- [x] Task 103: Special/spy action vector execution, projection, HTTP routes, and public-AI consumption are source-verified.
 
 ## Full-Game Mechanical Execution First
 
@@ -177,8 +178,8 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [x] Verify all combat stats and modifiers: `Attack`, `Defense`, `ZBRangeAttack`, `BombRounds`, `BombardRange`, `Firepower`, `Armor`, `MaxHP`, `MountedBonus`, `BonusAgainstMounted`, `AttackWoodenShipBonus`, `WoodenShipBonus`, `Defend`, `CanAttack`, `CanBombard`, `CanCounterBombard`, `CityWalls`, `ReduceCityWalls`, and `IgnoreCityWalls`.
 - [x] Complete active defense parity: `ActiveDefenseRange`, `ActiveDefenseOnlyWhenCarryingEnablers`, `EnableCarrierDefenses`, interceptor target selection, once-per-turn use/reset, enabler cargo checks, and bombard/counter-bombard RNG ordering.
 - [x] Complete `Civilian`, `CantCaptureCity`, `VictoryEnslavement`, `DeathEffectsHappy`, `SingleUse`, and `NuclearAttack` edge cases under grouped combat/city capture; `Civilian` has no separate retail grouped-combat/capture mutation beyond AI/diplomacy/threat classification.
-- [ ] Complete all spy/special-action vectors field-by-field: `EstablishEmbassy`, `StealTechnology`, `PlantNuke`, `InvestigateCity`, `AssasinateRuler`, `BioTerror`, `NanoTerror`, `Plague`, `ConvertCities`, `CreateFranchise`, `CauseUnhappiness`, `Advertise`, `InciteRevolution`, `IndulgenceSales`, `SlaveRaids`, `SettlerSlaveRaids`, `SlaveUprising`, `UndergroundRailway`, `CanInjoin`, `CanReform`, `CanSue`, `CanExpel`, `CreateParks`, `ThrowParty`, and nested `Chance`/`DeathChance`/`EliteChance`/`EscapeChance`/`Effect`/`Timer`/`Amount`/`Sound` fields.
-- [ ] Ensure every special action has safe public legal-action projection, HTTP route coverage where applicable, canonical event payloads, AI-consumable legality, and no hidden-state shortcut.
+- [x] Complete all spy/special-action vectors field-by-field: `EstablishEmbassy`, `StealTechnology`, `PlantNuke`, `InvestigateCity`, `AssasinateRuler`, `BioTerror`, `NanoTerror`, `Plague`, `ConvertCities`, `CreateFranchise`, `CauseUnhappiness`, `Advertise`, `InciteRevolution`, `IndulgenceSales`, `SlaveRaids`, `SettlerSlaveRaids`, `SlaveUprising`, `UndergroundRailway`, `CanInjoin`, `CanReform`, `CanSue`, `CanExpel`, `CreateParks`, `ThrowParty`, and nested `Chance`/`DeathChance`/`EliteChance`/`EscapeChance`/`Effect`/`Timer`/`Amount` fields are executed; nested `Sound` is classified presentation/audio metadata.
+- [x] Ensure every special action has safe public legal-action projection, HTTP route coverage where applicable, canonical event payloads, AI-consumable legality, and no hidden-state shortcut.
 
 ### Buildings and city effects
 
