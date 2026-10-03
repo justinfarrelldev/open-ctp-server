@@ -92,6 +92,7 @@
 - [x] Task 078: Retail `GoldHunger` and `FoodHunger` are source-classified as non-executed/default-disabled upkeep metadata.
 - [x] Task 079: Government `ProfessionalUnits` is source-classified as zero-valued default AI utility metadata; per-unit `IsProfessional` remains the gameplay support exemption.
 - [x] Task 080: Retail readiness support now floors after summing fractional per-unit costs, including disband budget checks.
+- [x] Task 081: Building `AllowGrunts` is source-classified as non-executed/AI-placeholder metadata.
 
 ## Full-Game Mechanical Execution First
 
@@ -164,7 +165,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Finish population/happiness effects: `HappyInc`, `RaiseMaxPopulation`, `RaiseOvercrowdingLevel`, `FoodVat`, `StarvationProtection`, `Cathedral`, `IsReligious`, `LowerPeaceMovement`, and temporary city effects.
 - [ ] Finish crime/pollution effects: `LowerCrime`, `PopulationPollutionPercent`, `ProductionPollutionPercent`, `PollutionAmount`/`Pollution`, `NuclearPlant`, and wonder interactions.
 - [ ] Finish protection effects: `ProtectFromNukes`, `ProtectFromBioAgents`, `ProtectFromNanoVirus`, `PreventConversion`, `PreventSlavery`, and `ForceField` for both direct buildings and effective buildings.
-- [ ] Finish military/building effects: `DefendersPercent`, `OffenseBonusLand`, `OffenseBonusWater`, `OffenseBonusAir`, `CityWalls`, `Airport`, `AllowGrunts`, and effective-building consequences.
+- [ ] Finish military/building effects: `DefendersPercent`, `OffenseBonusLand`, `OffenseBonusWater`, `OffenseBonusAir`, `CityWalls`, `Airport`, and effective-building consequences; `AllowGrunts` is source-classified as non-executed/AI-placeholder metadata.
 - [ ] Finish structural/build-gate effects: `PrerequisiteBuilding`, `CoastalBuilding`, `CantBuildInSea`, `CantBuildOnLand`, `Capitol`, `Brokerage`, `Television`, `DoubleTelevangelists`, `DefaultIcon`, and `Description` classification.
 - [ ] Ensure wonder-granted effective buildings participate in every retail `GetEffectiveBuildings()` use: yields, science, happiness, crime, pollution, protection, refuel/airport, city walls/defense/offense, television, brokerage, and production prerequisites.
 

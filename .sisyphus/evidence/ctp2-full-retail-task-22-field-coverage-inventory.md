@@ -204,3 +204,6 @@ Task 079 update:
 
 Task 080 update:
 - Retail material support now retains fractional per-unit readiness costs and floors only after summing, including over-budget disband comparisons, matching `MilitaryReadiness::m_cost` and `Player` rounded-cost logic.
+
+Task 081 update:
+- Building `AllowGrunts` is parsed and exposed to AI/outcom, but retail `GetCityGruntOutput` returns zero, so it is classified as non-executed/AI-placeholder metadata.

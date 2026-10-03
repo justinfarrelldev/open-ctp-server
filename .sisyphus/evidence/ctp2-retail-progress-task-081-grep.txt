@@ -1,0 +1,19 @@
+--- AllowGrunts source references ---
+../../ctp2/ctp2_source_code/ctp2_code/gs/outcom/C3Population.cpp:533:double C3Population::GetCityGruntOutput(uint32 city_id, BOOL *is_unknown_id)
+../../ctp2/ctp2_source_code/ctp2_code/robotcom/Agent/CityAgentPop.cpp:963:double CityAgent::CalcGruntUtility( AiMain *ai, const double productionCoef)
+../../ctp2/ctp2_source_code/ctp2_code/robotcom/Agent/CityAgentPop.cpp:968:    projectedGrunt = ai->m_population->GetCityGruntOutput(m_id.GetVal(), 
+../../ctp2/ctp2_source_code/ctp2_code/gs/outcom/C3Population.h:70:    STDMETHODIMP_ (double) GetCityGruntOutput(uint32 city_id, BOOL *is_unknown_id);
+../../ctp2/ctp2_source_code/ctp2_code/gs/outcom/IC3Population.h:55:    STDMETHOD_ (double, GetCityGruntOutput)(THIS_ uint32 city_id, BOOL *is_unknown_id) PURE;
+../../ctp2/ctp2_source_code/ctp2_code/robotcom/Agent/CityAgentPop.h:75:    double CalcGruntUtility( AiMain *ai, const double productionCoef);
+../../ctp2/ctp2_source_code/ctp2_code/gs/outcom/IC3BlgDB.h:46:    BLG_EFFECT_ALLOW_GRUNTS,
+../../ctp2/ctp2_source_code/ctp2_code/gs/outcom/C3BlgDB.cpp:371:    effect[BLG_EFFECT_ALLOW_GRUNTS] = buildingutil_GetAllowGrunts(bit);
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.h:32:#define k_Building_AllowGrunts_Bit               0x00020000
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.h:229:    bool             GetAllowGrunts() const { return (m_flags0 & k_Building_AllowGrunts_Bit) != 0; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/building.cdb:30:	Bit        AllowGrunts
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.cpp:242:    "AllowGrunts",
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.cpp:323:    { NULL, BuildingRecord::GetAllowGrunts, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.cpp:402:#define k_Token_Building_AllowGrunts             ((k_Token_Custom_Base) + 36)
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.cpp:630:            case k_Token_Building_AllowGrunts:
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.cpp:631:                m_flags0 |= k_Building_AllowGrunts_Bit;
+--- released data AllowGrunts ---
+364:   AllowGrunts
