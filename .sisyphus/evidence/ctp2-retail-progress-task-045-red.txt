@@ -1,0 +1,5 @@
+--- FAIL: TestRetailEliminateNukesWonderGloballyBlocksNuclearPlantBuildings (0.00s)
+    nuclear_plant_task45_test.go:12: nuclear plant production succeeded after any EliminateNukes wonder existed
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.005s
+FAIL

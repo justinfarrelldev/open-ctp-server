@@ -338,6 +338,7 @@
 - [x] Task 387: Retail unit `Advertise` actions execute through the dedicated route using CauseUnhappiness payload effects.
 - [x] Task 388: Retail wonder `EnableParkRangers` globally unlocks `CreateParks` unit production.
 - [x] Task 389: Retail building `DoubleTelevangelists` gates enhanced televangelist conversion gold.
+- [x] Task 390: Retail wonder `EliminateNukes` globally blocks `NuclearPlant` building production.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

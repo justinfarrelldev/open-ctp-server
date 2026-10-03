@@ -634,6 +634,9 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if payload.Item.Kind == ProductionUnit && productionHasCreateParkEffect(payload.Item, runtime) && !anyActiveWonderEffect(*state, EffectEnableParkRangers) {
 		return errors.New("production prerequisite is not met")
 	}
+	if payload.Item.Kind == ProductionBuilding && productionHasNuclearPlantEffect(payload.Item) && anyActiveWonderEffect(*state, EffectEliminateNukes) {
+		return errors.New("production prerequisite is not met")
+	}
 	if payload.Item.Kind == ProductionBuilding && cityHasBuilding(*city, payload.Item.ID) {
 		return errors.New("building already exists")
 	}
@@ -712,6 +715,10 @@ func productionHasCreateParkEffect(item ProductionItem, runtime *rules.RuntimeRu
 		}
 	}
 	return false
+}
+
+func productionHasNuclearPlantEffect(item ProductionItem) bool {
+	return item.Kind == ProductionBuilding && hasEffect(item.Effects, EffectNuclearPlant)
 }
 
 func productionHasNuclearAttackEffect(item ProductionItem, runtime *rules.RuntimeRules) bool {

@@ -56,6 +56,7 @@
 - [x] Task 042: Retail `Advertise` units now execute the dedicated advertise route by reusing CauseUnhappiness amount/timer/chance mechanics.
 - [x] Task 043: Retail `EnableParkRangers` now globally unlocks `CreateParks`/park-ranger unit production as in the built-wonders mask check.
 - [x] Task 044: Retail `DoubleTelevangelists` now gates enhanced televangelist conversion gold; unboosted televangelists fall back to cleric conversion.
+- [x] Task 045: Retail `EliminateNukes` now globally blocks `NuclearPlant` building production.
 
 ## Full-Game Mechanical Execution First
 
