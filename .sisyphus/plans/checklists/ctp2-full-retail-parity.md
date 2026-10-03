@@ -421,6 +421,7 @@
 - [x] Task 470: Retail pollution trigger selection now uses canonical world tile-count map size instead of fixed small-map fallback.
 - [x] Task 471: Retail pollution accumulation/reduction, nuclear pollution, trigger history, and flood/ozone disaster outcomes are verified for modeled gameplay paths.
 - [x] Task 472: Retail diplomacy/trade/franchise/legal/city-capture interactions are verified across public projections, trade routes, piracy, route removal, capture side effects, and AI legal action paths.
+- [x] Task 473: Retail victory/endgame/space/Gaia/final-turn mechanics are verified across runtime, engine, projections, and fullgame restart paths.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -513,8 +514,8 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [x] Finish retail pollution trigger selection by map size and game setup rather than fixed small-map fallback.
 - [x] Finish pollution accumulation/reduction from population, production, buildings, wonders, advances, nukes, terrain, and world pollution reduction effects.
 - [x] Finish flood and ozone disaster target selection, terrain/dead-tile conversion, city/unit/improvement destruction, pollution history, event payloads, and AI response.
-- [ ] Finish all victory paths: bloodlust/conquest, diplomatic/world-union, score/final-turn, Gaia/Solaris endgame, space/launch interactions, dead-player lifecycle, rankings, and tie-breaking.
-- [ ] Finish Gaia controller retail details beyond prerequisites: countdown interruption/restart, wonder destruction/capture, endgame object loss, map coverage recalculation, and terminal event sequencing.
+- [x] Finish all victory paths: bloodlust/conquest, diplomatic/world-union, score/final-turn, Gaia/Solaris endgame, space/launch interactions, dead-player lifecycle, rankings, and tie-breaking.
+- [x] Finish Gaia controller retail details beyond prerequisites: countdown interruption/restart, wonder destruction/capture, endgame object loss, map coverage recalculation, and terminal event sequencing.
 
 ### AI, projection, API, persistence, and verification
 

@@ -1,0 +1,3 @@
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.141s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules	0.040s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame	6.949s

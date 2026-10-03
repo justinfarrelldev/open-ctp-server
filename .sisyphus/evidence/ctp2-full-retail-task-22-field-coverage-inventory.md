@@ -343,3 +343,6 @@ Task 126 update:
 
 Task 127 update:
 - Diplomacy/trade/franchise/legal/capture interaction coverage is verified: contact/regard/proposals/treaties/embassies/close-embassy, route creation/cost/capacity/goods/gold/piracy/removal, franchise/injunction/lawsuit/expel/sue, and city capture side effects all execute/project in targeted paths.
+
+Task 128 update:
+- Victory/endgame/space/Gaia/final-turn coverage is verified: victory evaluators, final turn/score, conquest/bloodlust, diplomacy/world-union, space launch, Gaia/Solaris countdown interruption/restart, endgame object loss, dead-player lifecycle, rankings/tie-breaking, and terminal sequencing are covered by engine/fullgame tests.
