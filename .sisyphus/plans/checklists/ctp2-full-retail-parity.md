@@ -355,6 +355,110 @@
 - [x] Task 404: Retail wonder `BuildingEverywhere`/`ActualBuildingEverywhere` supplies owner effective buildings for city prerequisite checks.
 - [x] Task 405: Retail `GoldPerTelevision` wonder income uses effective-building television effects.
 
+## Detailed Remaining Retail Parity Ledger
+
+This ledger is the authoritative remaining-task checklist. It must be kept current: when a slice is implemented, mark or refine the corresponding checkbox and add the concrete completed task under "Completed Increments" / numbered task history with source evidence.
+
+### Source coverage and classification
+
+- [ ] Re-audit every released `gamedata` catalog field against `ctp2/ctp2_source_code` call sites and classify each as executed gameplay, safely projected marker, presentation-only, AI-only, or unsupported bug-fixed behavior.
+- [ ] Update `.sisyphus/evidence/ctp2-full-retail-task-22-field-coverage-inventory.md` so no gameplay-affecting field remains "parse-only" or ambiguously classified.
+- [ ] Add/maintain regression tests that fail when newly parsed retail fields are omitted from the coverage/classification ledger.
+- [ ] Import and execute remaining gameplay constants from `Const.txt` that affect modeled mechanics, including fuel, trade-route path cost, special-action costs/chances, unrest, and disaster constants.
+
+### Advances and research
+
+- [ ] Verify and close all advance unlock gates for unit/building/wonder/terrain-improvement production, including multi-prerequisite edge cases and obsolete-advance removal.
+- [ ] Complete or classify `Age`, `Branch`, `Icon`, `KeyAdvanceAdvice`, and `GLHidden` as presentation/AI metadata where source confirms no gameplay effect.
+- [ ] Finish source-backed execution/verification for `DeepOcean`, `Roads`, `Railroads`, `MagLev`, `Tunnels`, and `Transform` map-action gates.
+- [ ] Verify `PlantNuke`, `Capitalization`, `Infrastructure`, `PollutionProductionModifier`, `PollutionSizeModifier`, and `TriggerFeat` parity across government/advance transitions and persistence.
+
+### Unit catalog fields, movement, support, cargo, and visibility
+
+- [ ] Execute retail material support completely: `ShieldHunger`, `NeedsNoSupport`, `IsSpecialForces`, readiness support coefficients, disband ordering, and wonder readiness reductions.
+- [ ] Implement `ProfessionalUnits` government quota/behavior or source-backed classification; ensure professional units interact with support/disband exactly like retail.
+- [ ] Source-check and close `GoldHunger` and `FoodHunger`: treasury upkeep, food consumption, or explicit retail-disabled classification.
+- [ ] Complete `IsTrader` behavior: trader unit lists, trade transport points, route capacity, route path-cost consumption, trader death/removal, and AI route creation.
+- [ ] Complete cargo semantics for `CargoData.Load`, `CargoData.Unload`, `CargoData.MaxCargo`, `CanCarry`, domain/size constraints, transport destruction, and legal public projection.
+- [ ] Finish air/space/sea/land/domain movement parity, including `MovementType`, `MaxMovePoints`, `MaxFuel`, `NoFuelThenCrash`, `LossMoveToDmgNone`, non-space fuel costs, crash/damage rules, city/airport/carrier refuel, and hostile terrain immunity.
+- [ ] Verify `CanBeachAssault`, `Paratrooper`, and `ParatrooperTransport` beyond unload movement: legal target selection, transport requirements, and post-drop movement/combat restrictions.
+- [ ] Complete `VisionRange`, `VisionClass`, `CanSee`, `IsSubmarine`, `Stealth`, `CanSeeStealth`, `InvisibleForGlobeSat`, global radar, radar/listening-post interactions, and stale-fog legal action suppression.
+- [ ] Verify `NoZoc`/`IgnoreZOC`/ZOC movement stops and AI pathing behavior against retail.
+- [ ] Complete unit production restrictions: `HasPopAndCanBuild`, `BuildingRemovesAPop`, `CantBuild`, `OnlyBuildOne`, `GovernmentType`, `NeedsCityGood`, `NoSlaves`, `EnableAdvance`, `ObsoleteAdvance`, `UpgradeTo`, `NoIndex`, and `GLHidden` classification.
+- [ ] Complete upgrade semantics for `UpgradeTo`: costs, prerequisites, HP/fuel/movement carryover, legal projection, HTTP, AI use, and persistence.
+- [ ] Classify all unit sound/icon/sprite fields (`DefaultIcon`, `DefaultSprite`, `Sound*`) as presentation-only or wire them where they affect public contracts.
+
+### Unit combat and special actions
+
+- [ ] Implement or source-classify `IsFlanker` tactical targeting, including grouped-combat target row/column behavior.
+- [ ] Implement or source-classify `Explodes` death/combat behavior with tests for carriers/missiles/etc.
+- [ ] Verify all combat stats and modifiers: `Attack`, `Defense`, `ZBRangeAttack`, `BombRounds`, `BombardRange`, `Firepower`, `Armor`, `MaxHP`, `MountedBonus`, `BonusAgainstMounted`, `AttackWoodenShipBonus`, `WoodenShipBonus`, `Defend`, `CanAttack`, `CanBombard`, `CanCounterBombard`, `CityWalls`, `ReduceCityWalls`, and `IgnoreCityWalls`.
+- [ ] Complete active defense parity: `ActiveDefenseRange`, `ActiveDefenseOnlyWhenCarryingEnablers`, `EnableCarrierDefenses`, interceptor target selection, enabler cargo checks, and bombard/counter-bombard RNG ordering.
+- [ ] Complete `Civilian`, `CantCaptureCity`, `VictoryEnslavement`, `DeathEffectsHappy`, `SingleUse`, and `NuclearAttack` edge cases under grouped combat/city capture.
+- [ ] Complete all spy/special-action vectors field-by-field: `EstablishEmbassy`, `StealTechnology`, `PlantNuke`, `InvestigateCity`, `AssasinateRuler`, `BioTerror`, `NanoTerror`, `Plague`, `ConvertCities`, `CreateFranchise`, `CauseUnhappiness`, `Advertise`, `InciteRevolution`, `IndulgenceSales`, `SlaveRaids`, `SettlerSlaveRaids`, `SlaveUprising`, `UndergroundRailway`, `CanInjoin`, `CanReform`, `CanSue`, `CanExpel`, `CreateParks`, `ThrowParty`, and nested `Chance`/`DeathChance`/`EliteChance`/`EscapeChance`/`Effect`/`Timer`/`Amount`/`Sound` fields.
+- [ ] Ensure every special action has safe public legal-action projection, HTTP route coverage where applicable, canonical event payloads, AI-consumable legality, and no hidden-state shortcut.
+
+### Buildings and city effects
+
+- [ ] Finish all building yield/economy effects: `FoodPercent`, `ProductionPercent`, `CommercePercent`, `SciencePercent`, `GoldPerCitizen`, `Upkeep`, and interactions with sliders/government coefficients.
+- [ ] Finish population/happiness effects: `HappyInc`, `RaiseMaxPopulation`, `RaiseOvercrowdingLevel`, `FoodVat`, `StarvationProtection`, `Cathedral`, `IsReligious`, `LowerPeaceMovement`, and temporary city effects.
+- [ ] Finish crime/pollution effects: `LowerCrime`, `PopulationPollutionPercent`, `ProductionPollutionPercent`, `PollutionAmount`/`Pollution`, `NuclearPlant`, and wonder interactions.
+- [ ] Finish protection effects: `ProtectFromNukes`, `ProtectFromBioAgents`, `ProtectFromNanoVirus`, `PreventConversion`, `PreventSlavery`, and `ForceField` for both direct buildings and effective buildings.
+- [ ] Finish military/building effects: `DefendersPercent`, `OffenseBonusLand`, `OffenseBonusWater`, `OffenseBonusAir`, `CityWalls`, `Airport`, `AllowGrunts`, and effective-building consequences.
+- [ ] Finish structural/build-gate effects: `PrerequisiteBuilding`, `CoastalBuilding`, `CantBuildInSea`, `CantBuildOnLand`, `Capitol`, `Brokerage`, `Television`, `DoubleTelevangelists`, `DefaultIcon`, and `Description` classification.
+- [ ] Ensure wonder-granted effective buildings participate in every retail `GetEffectiveBuildings()` use: yields, science, happiness, crime, pollution, protection, refuel/airport, city walls/defense/offense, television, brokerage, and production prerequisites.
+
+### Wonders
+
+- [ ] Finish numeric wonder effects: `IncKnowledgePercent`, `IncreaseFoodAllCities`, `IncreaseProduction`, `IncHappinessEmpire`, `DecCrimePercent`, `DecEmpireSize`, `BonusGold`, `GoldPerWaterTradeRoute`, `GoldPerInternationalTradeRoute`, and `GoldPerTelevision` including obsolescence/destruction.
+- [ ] Finish global/diplomacy wonder effects: `CloseEmbassies`, `EmbassiesEverywhereEvenAtWar`, `IncreaseRegard`, `SpiesEverywhere`, `ProtectFromBarbarians`, `RevoltingCitiesJoinPlayer`, and relation/war/embassy edge cases.
+- [ ] Finish production/prohibition wonder effects: `EnableParkRangers`, `FreeSlaves`, `ProhibitSlavers`, `EliminateNukes`, `ReformCities`, `PollutersToParks`, and illegal queue cleanup/reversal edge cases.
+- [ ] Finish happiness/readiness/pollution wonder effects: `TemporaryFullHappiness`, `NoPollutionUnhappiness`, `ReduceReadinessCost`, and source-backed duration/stacking behavior.
+- [ ] Finish visibility/endgame wonder effects: `GlobalRadar`, `StartGaiaController`, `BuildingEverywhere`, `ActualBuildingEverywhere`, obsolescence, destruction, capture, and transfer behavior.
+- [ ] Classify wonder `DefaultIcon`, `Description`, and `Movie` as presentation-only unless public contract requires projection.
+
+### Terrain, tile improvements, goods, and map rules
+
+- [ ] Finish terrain `EnvBase`, `EnvCity`, and `EnvRiver` yields/movement/score/defense, including river overlays and city-center yield selection.
+- [ ] Implement or classify terrain `Resources`, goods spawning, goods trade bonuses, `NeedsCityGood`, and route good import/export edge cases.
+- [ ] Finish terrain `CanDie`, dead terrain yields, ozone/flood/nuke transformations, `AddAdvance`, `RemoveAdvance`, `TransformAdd`, `TransformRemove`, and terraform advance gates.
+- [ ] Finish tile improvement fields: `Class`, `Level`, `ConstructionTiles`, `ProductionCost`, `ProductionTime`, `TerrainEffect.Terrain`, `BonusFood`, `BonusProduction`, `BonusGold`, `MoveCost`, `DefenseBonus`, `HealRate`, `Airport`, `Radar`, `RadarRange`, `VisionRange`, `ListeningPost`, `CanSee`, `CanUpgrade`, `Freight`, `Endgame`, `CantBuildOn`, `Excludes`, `IntBorderRadius`, `SquaredBorderRadius`, `TerraformTerrain`, and pillage/upgrade behavior.
+- [ ] Classify terrain/tile-improvement presentation fields (`Icon`, `TilesetIndex`, `HutTilesetIndex*`, `Tooltip`, `Statusbar`, `Sound`, `GLHidden`, `IsCityRuin`, `Column`) or project them safely where public clients need them.
+
+### Governments, sliders, readiness, and happiness/crime
+
+- [ ] Finish government coefficients: `FoodCoef`, `ProductionCoef`, `GoldCoef`, `KnowledgeCoef`, `PollutionCoef`, `PollutionUnhappyCoef`, `CrimeCoef`, `CrimeOffset`, `TooManyCitiesThreshold`, `TooManyCitiesCoefficient`, `EmpireDistanceScale`, `MinEmpireDistance`, `MaxEmpireDistance`, `AtHomeRadius`, `OverseasCoef`, `HomeDefeatCoef`, `OverseasDefeatCoef`, and decay fields.
+- [ ] Finish social slider parity: `WorkdayExpectation`, `WagesExpectation`, `RationsExpectation`, positive/negative coefficients, unrest/happiness, production/gold/food effects, AI slider elements, and government caps.
+- [ ] Finish readiness parity: `ReadyPeaceCoef`, `ReadyAlertCoef`, `ReadyWarCoef`, `ReadyPeaceHP`, `ReadyAlertHP`, `ReadyWarHP`, `TurnsToNewReadiness`, transition timing, support cost, HP modifier interpolation, and UI/projection state.
+- [ ] Finish martial-law/war-discontent/conquest-distress: `MartialLawEffect`, `MartialLawThreshold`, `MaxMartialLawUnits`, `WarDiscontentMaxUnits`, `WarDiscontentPerUnit`, `ConquestDistress`, `ConquestDistressDecay`, fortified/home/overseas exceptions, and wonder/building mitigations.
+- [ ] Finish rush-buy/trade/government caps: `BuildingRushModifier`, `UnitRushModifier`, `WonderRushModifier`, `EndGameRushModifier`, `CapitalizationCoefficient`, `InfrastructureCoefficient`, `MaxScienceRate`, `MaxIncomingTrade`, `MaxOutgoingTrade`, and `ProfessionalUnits`.
+- [ ] Classify government rank/advice/icon fields (`Rank`, `*Rank`, `HigherRankAdvice`, `SameRankAdvice`, `Icon`, `IsEcotopia`) or wire them to AI/projection where source-backed.
+
+### Diplomacy, trade routes, and empire systems
+
+- [ ] Finish contact, regard, proposals, treaty states, embassies, close-embassy effects, at-war embassy rules, and retail regard drift/AI diplomacy behavior.
+- [ ] Finish trade-route creation/pathing/cost, transport-point capacity, caravan/freight/trader units, route cancellation, piracy, war/capture removal, water/international classification, and treasury/yield payouts.
+- [ ] Finish franchise/injunction/lawsuit systems: franchise production siphon, injunction timers, lawsuit target removal, CanSue/CanExpel city/unit interactions, and AI/legal projection.
+- [ ] Finish city capture/recapture effects: founder identity, conquest distress, trade-route removal, improvements/wonders transfer/destruction, slaves, martial law, and regard/war side effects.
+
+### Pollution, disasters, victory, and endgame
+
+- [ ] Finish retail pollution trigger selection by map size and game setup rather than fixed small-map fallback.
+- [ ] Finish pollution accumulation/reduction from population, production, buildings, wonders, advances, nukes, terrain, and world pollution reduction effects.
+- [ ] Finish flood and ozone disaster target selection, terrain/dead-tile conversion, city/unit/improvement destruction, pollution history, event payloads, and AI response.
+- [ ] Finish all victory paths: bloodlust/conquest, diplomatic/world-union, score/final-turn, Gaia/Solaris endgame, space/launch interactions, dead-player lifecycle, rankings, and tie-breaking.
+- [ ] Finish Gaia controller retail details beyond prerequisites: countdown interruption/restart, wonder destruction/capture, endgame object loss, map coverage recalculation, and terminal event sequencing.
+
+### AI, projection, API, persistence, and verification
+
+- [ ] Ensure AI uses retail strategies/build lists/public legal actions for research, production, diplomacy, trade, movement, combat, pollution, wonders, endgame, and recovery without hidden-state shortcuts.
+- [ ] Ensure projections expose every legal action safely and suppress illegal/stale fog-memory actions, especially special actions, trade, combat, nukes, space, endgame, and diplomacy.
+- [ ] Ensure HTTP/SSE command/event contracts exist and are documented for every executable mechanic.
+- [ ] Ensure canonical persistence/restart equality covers every new mechanic and schema field; update fullgame observed hashes and `internal/e2e/freeze/engine-lock.json` after production changes.
+- [ ] Add targeted red/green/refactor evidence and source citations for every remaining behavior slice.
+- [ ] Run package tests after each slice, freeze guard after production `.go` changes, `git diff --check` before commits, and periodic full `go test ./... -count=1`.
+- [ ] Complete a final source-parity review proving every gameplay-affecting retail field/action is executed or safely classified, then mark broad category checkboxes complete.
+
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
 - [ ] Building catalog behavior field coverage complete.
