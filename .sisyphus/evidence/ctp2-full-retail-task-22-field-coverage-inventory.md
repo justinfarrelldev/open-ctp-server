@@ -274,3 +274,6 @@ Task 103 update:
 
 Task 104 update:
 - `Const.txt` `SPECIAL_ACTION_MOVE_COST` is imported/projected and now drives all special-action movement spending (including piracy), replacing the previous synthetic one-point fallback when retail runtime constants are pinned.
+
+Task 105 update:
+- Movement/visibility fields are closed: `MovementType`, `MaxMovePoints`, `MaxFuel`, `NoFuelThenCrash`, `LossMoveToDmgNone`, `LossMoveToDmgTwo`, `ImmuneToHostileTerrain`, `NoZoc`/`IgnoreZOC`, `CanBeachAssault`, `Paratrooper`, `ParatrooperTransport`, `VisionRange`, `VisionClass`, `CanSee`, `IsSubmarine`, `Stealth`, `CanSeeStealth`, `InvisibleForGlobeSat`, global radar, tile-improvement radar/listening-post/vision, and stale-fog action suppression are executed or source-classified where outside the current server map layer.

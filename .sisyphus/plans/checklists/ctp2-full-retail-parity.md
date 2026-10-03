@@ -398,6 +398,7 @@
 - [x] Task 447: `UpgradeTo` is source-classified as released-data marker/non-retail executable; optional server upgrade command/projection/AI tests are verified.
 - [x] Task 448: Special/spy action vector execution, projection, HTTP routes, and public-AI consumption are source-verified.
 - [x] Task 449: `SPECIAL_ACTION_MOVE_COST` imports to runtime constants and drives all special-action movement spending.
+- [x] Task 450: Movement/fuel/refuel/ZOC/beach/paratrooper/visibility/stealth/global-radar parity is source-verified with regression coverage.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -424,10 +425,10 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [x] Source-check and close `GoldHunger` and `FoodHunger`: classified as non-executed/default-disabled upkeep metadata for literal retail parity.
 - [ ] Complete `IsTrader` behavior: trader unit lists, trade transport points, route capacity, route path-cost consumption, trader death/removal, and AI route creation.
 - [x] Execute retail cargo semantics for `CargoData.MaxCargo`, `CanCarry`, domain/size constraints, engine embark, legal public projection, AI embark planning, transport-destruction cargo fate, and `CargoData.Load`/`CargoData.Unload` presentation-only classification.
-- [ ] Finish air/space/sea/land/domain movement parity, including `MovementType`, `MaxMovePoints`, `MaxFuel`, `NoFuelThenCrash`, `LossMoveToDmgNone`, non-space fuel costs, crash/damage rules, city/airport/carrier refuel, and hostile terrain immunity.
-- [ ] Verify `CanBeachAssault`, `Paratrooper`, and `ParatrooperTransport` beyond unload movement: legal target selection, transport requirements, and post-drop movement/combat restrictions.
-- [ ] Complete `VisionRange`, `VisionClass`, `CanSee`, `IsSubmarine`, `Stealth`, `CanSeeStealth`, `InvisibleForGlobeSat`, global radar, radar/listening-post interactions, and stale-fog legal action suppression.
-- [ ] Verify `NoZoc`/`IgnoreZOC`/ZOC movement stops and AI pathing behavior against retail.
+- [x] Finish air/space/sea/land/domain movement parity, including `MovementType`, `MaxMovePoints`, `MaxFuel`, `NoFuelThenCrash`, `LossMoveToDmgNone`, non-space fuel costs, crash/damage rules, city/airport/carrier refuel, and hostile terrain immunity; free-space per-turn movement/`SPACE_FUEL_COST` is classified outside the current server map-movement layer.
+- [x] Verify `CanBeachAssault`, `Paratrooper`, and `ParatrooperTransport` beyond unload movement: legal target selection, transport requirements, and post-drop movement/combat restrictions.
+- [x] Complete `VisionRange`, `VisionClass`, `CanSee`, `IsSubmarine`, `Stealth`, `CanSeeStealth`, `InvisibleForGlobeSat`, global radar, radar/listening-post interactions, and stale-fog legal action suppression.
+- [x] Verify `NoZoc`/`IgnoreZOC`/ZOC movement stops and AI pathing behavior against retail.
 - [x] Complete unit production restrictions: `BuildingRemovesAPop`, `CantBuild`, `OnlyBuildOne`, repeated `GovernmentType` gates, `NeedsCityGood`, `NoSlaves`, `EnableAdvance`, and `ObsoleteAdvance` are implemented; `UpgradeTo` is source-classified as a released-data marker with optional fail-closed server execution; production-cleanup edge cases are covered. `HasPopAndCanBuild` city pseudo-units are rejected from normal queues, and `NoIndex`/`GLHidden` are presentation/setup metadata.
 - [x] Complete upgrade semantics for `UpgradeTo`: no retail source-backed upgrade cost exists; optional server upgrades require target prerequisites/government, spend movement, preserve HP proportionally, reset fuel from target stats, project safe legal actions, are AI-consumable, HTTP-routable through canonical commands, and persist through canonical state.
 - [x] Classify all unit sound/icon/sprite fields (`DefaultIcon`, `DefaultSprite`, `Sound*`) as presentation/setup metadata for server gameplay.
