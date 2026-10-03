@@ -589,6 +589,11 @@ func advanceTreasury(state *State, runtimes ...*rules.RuntimeRules) {
 			}
 			income -= cityBuildingMaintenanceDeficit(*state, city)
 		}
+		for _, player := range state.Players {
+			if player.NationID == nation.ID {
+				income += wonderGoldForPlayer(*state, player.ID)
+			}
+		}
 		income -= unitUpkeepForNation(*state, nation.ID)
 		nation.Gold += income
 		if nation.Gold < 0 {
@@ -596,6 +601,54 @@ func advanceTreasury(state *State, runtimes ...*rules.RuntimeRules) {
 			nation.Gold = 0
 		}
 	}
+}
+
+func wonderGoldForPlayer(state State, playerID string) int {
+	gold := ownerWonderEffectSum(state, playerID, EffectBonusGold)
+	waterGold := ownerWonderEffectSum(state, playerID, EffectGoldPerWaterTradeRoute)
+	internationalGold := ownerWonderEffectSum(state, playerID, EffectGoldPerInternationalTradeRoute)
+	if waterGold > 0 || internationalGold > 0 {
+		for _, route := range state.TradeRoutes {
+			if route.CrossesWater {
+				gold += waterGold
+			}
+			if internationalGold <= 0 {
+				continue
+			}
+			source, sourceOK := cityByID(state, route.SourceCityID)
+			destination, destinationOK := cityByID(state, route.DestinationCityID)
+			if sourceOK && destinationOK && source.OwnerID != destination.OwnerID {
+				gold += internationalGold
+			}
+		}
+	}
+	tvGold := ownerWonderEffectSum(state, playerID, EffectGoldPerTelevision)
+	if tvGold > 0 {
+		for _, city := range state.Cities {
+			if city.OwnerID == playerID || city.Population <= 0 || !cityHasTelevision(state, city) {
+				continue
+			}
+			gold += tvGold * city.Population
+		}
+	}
+	return gold
+}
+
+func cityHasTelevision(state State, city City) bool {
+	for _, building := range city.Buildings {
+		if isObsoleteForPlayer(state, city.OwnerID, city.Obsolete, building.ObsoletedBy) {
+			continue
+		}
+		if hasEffect(building.Effects, EffectTelevision) {
+			return true
+		}
+	}
+	for _, effect := range city.Effects {
+		if effect.Kind == EffectTelevision {
+			return true
+		}
+	}
+	return false
 }
 
 func payConversionGold(state *State, city City, runtime *rules.RuntimeRules) int {

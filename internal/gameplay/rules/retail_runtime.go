@@ -366,7 +366,7 @@ func containsRetailFlag(values []string, value string) bool {
 func retailWonderRuntimeEffects(wonder RetailWonder, buildingEffects map[string][]RuntimeStarterEffect) []RuntimeStarterEffect {
 	effects := make([]RuntimeStarterEffect, 0, 4)
 	if value := wonder.IntValues["BonusGold"]; value > 0 {
-		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":bonus-gold", Kind: "yield_gold", Value: value})
+		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":bonus-gold", Kind: "bonus_gold", Value: value})
 	}
 	if value := wonder.IntValues["IncKnowledgePercent"]; value > 0 {
 		effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":knowledge-percent", Kind: "research_percent", Value: value})

@@ -348,6 +348,7 @@
 - [x] Task 397: Retail unit `CanBeachAssault`/paratrooper unload movement keeps legal beach-assault cargo mobile while normal cargo loses movement after disembarking.
 - [x] Task 398: Retail unit `CanBeGifted` executes safe gift-unit ownership transfer, legal projection, and HTTP routing.
 - [x] Task 399: Retail unit `DeathEffectsHappy` gates combat morale/peace-movement loss accounting.
+- [x] Task 400: Retail wonder gold fields pay owner treasury at begin turn instead of per-city yields.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

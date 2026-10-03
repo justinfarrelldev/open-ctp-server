@@ -1,0 +1,13 @@
+--- FAIL: TestRetailBonusGoldWonderAddsTreasuryOncePerOwner (0.00s)
+    wonder_gold_task55_test.go:19: bonus-gold treasury = 0, want one owner-level 100 gold payment
+--- FAIL: TestRetailTradeRouteWonderGoldIsOwnerTreasuryForAllRoutes (0.00s)
+    wonder_gold_task55_test.go:39: trade-route wonder treasury = 0, want water + international gold from global route
+--- FAIL: TestRetailWonderGoldPerTelevisionCountsForeignTelevisionPopulation (0.00s)
+    wonder_gold_task55_test.go:58: television wonder treasury = 0, want 7 * foreign television population 6
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.009s
+FAIL
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules.test]
+internal/gameplay/rules/retail_runtime_test.go:577:15: no new variables on left side of :=
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules [build failed]
+FAIL

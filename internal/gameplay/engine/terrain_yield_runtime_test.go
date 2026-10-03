@@ -83,7 +83,7 @@ func TestRetailOvercrowdingEffectsAccumulateFromBuildings(t *testing.T) {
 	}
 }
 
-func TestRetailTradeRouteWonderGoldAppliesToSourceCityRoutes(t *testing.T) {
+func TestRetailTradeRouteWonderGoldDoesNotInflateSourceCityYield(t *testing.T) {
 	state := State{
 		Players:     []Player{{ID: "player-a", NationID: "nation-a"}, {ID: "player-b", NationID: "nation-b"}},
 		Nations:     []Nation{{ID: "nation-a"}, {ID: "nation-b"}},
@@ -97,12 +97,12 @@ func TestRetailTradeRouteWonderGoldAppliesToSourceCityRoutes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if yield.Gold != 43 {
-		t.Fatalf("trade route wonder gold = %d, want base 3 + water 15 + international 25", yield.Gold)
+	if yield.Gold != 3 {
+		t.Fatalf("trade route wonder gold city yield = %d, want base 3 only", yield.Gold)
 	}
 }
 
-func TestRetailWonderGoldPerTelevisionUsesCityTelevision(t *testing.T) {
+func TestRetailWonderGoldPerTelevisionDoesNotInflateCityYield(t *testing.T) {
 	state := State{Players: []Player{{ID: "player-a", NationID: "nation-a"}}, Nations: []Nation{{ID: "nation-a"}}, Tiles: []Tile{{ID: "tile-a", Terrain: "TERRAIN_PLAINS", Open: true}}, Cities: []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a", Buildings: []Building{{ID: "IMPROVE_TELEVISION", Effects: []Effect{{ID: "tv", Kind: EffectTelevision}}}}}}, Wonders: []Wonder{{ID: "WONDER_MEDIA", OwnerID: "player-a", Scope: "owner", Effects: []Effect{{ID: "tv-gold", Kind: EffectGoldPerTelevision, Value: 7}}}}}
 	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Configured: true, Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_PLAINS", Cost: 100, Domains: []string{DomainLand}, Gold: 3}}}}
 
@@ -110,8 +110,8 @@ func TestRetailWonderGoldPerTelevisionUsesCityTelevision(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if yield.Gold != 10 {
-		t.Fatalf("gold = %d, want base 3 + wonder 7 per television", yield.Gold)
+	if yield.Gold != 3 {
+		t.Fatalf("gold = %d, want base 3 only", yield.Gold)
 	}
 }
 

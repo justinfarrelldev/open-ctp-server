@@ -571,8 +571,8 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("Central Matter Decompiler building-everywhere effects = %+v ok=%v", matterDecomp, ok)
 	}
 	pyramids, ok := runtime.ProductionDefinition("WONDER_PYRAMIDS")
-	if !ok || len(pyramids.Effects) != 1 || pyramids.Effects[0].Kind != "yield_gold" || pyramids.Effects[0].Value != 100 {
-		t.Fatalf("Pyramids effects = %+v ok=%v", pyramids, ok)
+	if !ok || len(pyramids.Effects) != 1 || pyramids.Effects[0].Kind != "bonus_gold" || pyramids.Effects[0].Value != 100 {
+		t.Fatalf("Pyramids treasury gold effects = %+v ok=%v", pyramids, ok)
 	}
 }
 
