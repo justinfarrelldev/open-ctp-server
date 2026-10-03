@@ -91,6 +91,7 @@
 - [x] Task 077: Retail active-defense interceptors now resolve in descending attack order.
 - [x] Task 078: Retail `GoldHunger` and `FoodHunger` are source-classified as non-executed/default-disabled upkeep metadata.
 - [x] Task 079: Government `ProfessionalUnits` is source-classified as zero-valued default AI utility metadata; per-unit `IsProfessional` remains the gameplay support exemption.
+- [x] Task 080: Retail readiness support now floors after summing fractional per-unit costs, including disband budget checks.
 
 ## Full-Game Mechanical Execution First
 
@@ -134,7 +135,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 
 ### Unit catalog fields, movement, support, cargo, and visibility
 
-- [ ] Execute retail material support completely: `ShieldHunger`, `NeedsNoSupport`, `IsSpecialForces`, readiness support coefficients, disband ordering, and wonder readiness reductions.
+- [x] Execute retail material support completely: `ShieldHunger`, `NeedsNoSupport`, `IsSpecialForces`, readiness support coefficients, fractional cost rounding, disband ordering, and wonder readiness reductions.
 - [x] Source-classify `ProfessionalUnits` government quota/behavior as default-zero AI utility metadata; per-unit professional support/disband behavior is implemented.
 - [x] Source-check and close `GoldHunger` and `FoodHunger`: classified as non-executed/default-disabled upkeep metadata for literal retail parity.
 - [ ] Complete `IsTrader` behavior: trader unit lists, trade transport points, route capacity, route path-cost consumption, trader death/removal, and AI route creation.

@@ -1,0 +1,5 @@
+--- FAIL: TestRetailReadinessSupportFloorsAfterSummingFractionalCosts (0.00s)
+    readiness_fractional_task80_test.go:21: production after fractional support = 2, want 1
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.002s
+FAIL

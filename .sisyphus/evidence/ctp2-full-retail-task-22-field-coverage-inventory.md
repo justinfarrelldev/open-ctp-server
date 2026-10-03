@@ -201,3 +201,6 @@ Task 078 update:
 
 Task 079 update:
 - Government `ProfessionalUnits` is default-zero AI utility metadata in retail data/source; gameplay support exemption is driven by per-unit `IsProfessional`, which the server already executes in support/disband calculations.
+
+Task 080 update:
+- Retail material support now retains fractional per-unit readiness costs and floors only after summing, including over-budget disband comparisons, matching `MilitaryReadiness::m_cost` and `Player` rounded-cost logic.

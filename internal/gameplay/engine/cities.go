@@ -1142,16 +1142,23 @@ func playerIDsForNation(state State, nationID string) map[string]bool {
 }
 
 func readinessSupportCost(state State, nation Nation, ownerIDs map[string]bool, runtime *rules.RuntimeRules) int {
-	total := 0
+	total := 0.0
 	for _, candidate := range readinessSupportCandidates(state, nation, ownerIDs, runtime) {
 		total += candidate.cost
 	}
-	return total
+	return readinessRoundedCost(total)
+}
+
+func readinessRoundedCost(cost float64) int {
+	if cost <= 0 {
+		return 0
+	}
+	return int(cost + 0.0000001)
 }
 
 type readinessSupportCandidate struct {
 	unitID string
-	cost   int
+	cost   float64
 }
 
 func readinessSupportCandidates(state State, nation Nation, ownerIDs map[string]bool, runtime *rules.RuntimeRules) []readinessSupportCandidate {
@@ -1170,7 +1177,7 @@ func readinessSupportCandidates(state State, nation Nation, ownerIDs map[string]
 	return candidates
 }
 
-func readinessSupportCostForUnit(unit Unit, nation Nation, government rules.RuntimeGovernmentDefinition, hasGovernment bool, reduction int) int {
+func readinessSupportCostForUnit(unit Unit, nation Nation, government rules.RuntimeGovernmentDefinition, hasGovernment bool, reduction int) float64 {
 	unitCost := float64(unit.ShieldHunger)
 	if unit.IsSpecialForces {
 		unitCost *= government.ReadyWarCoef
@@ -1190,7 +1197,7 @@ func readinessSupportCostForUnit(unit Unit, nation Nation, government rules.Runt
 	if unitCost <= 0 {
 		return 0
 	}
-	return int(unitCost + 0.000001)
+	return unitCost
 }
 
 func killReadinessOverBudgetUnits(state *State, nation Nation, ownerIDs map[string]bool, runtime *rules.RuntimeRules, budget int) {
@@ -1198,11 +1205,11 @@ func killReadinessOverBudgetUnits(state *State, nation Nation, ownerIDs map[stri
 	if len(candidates) == 0 {
 		return
 	}
-	total := 0
+	total := 0.0
 	for _, candidate := range candidates {
 		total += candidate.cost
 	}
-	if total <= budget {
+	if readinessRoundedCost(total) <= budget {
 		return
 	}
 	sort.Slice(candidates, func(i, j int) bool {
@@ -1212,7 +1219,7 @@ func killReadinessOverBudgetUnits(state *State, nation Nation, ownerIDs map[stri
 		return candidates[i].cost > candidates[j].cost
 	})
 	for _, candidate := range candidates {
-		if total <= budget {
+		if readinessRoundedCost(total) <= budget {
 			break
 		}
 		removeUnitAndCargo(state, candidate.unitID)
