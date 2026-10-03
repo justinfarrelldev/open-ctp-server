@@ -153,3 +153,6 @@ Task 062 update:
 
 Task 063 update:
 - Retail city capture now clears owner-specific city effects (`Franchise`, `Injunction`, `Watchful`) and timed happiness/special effects, matching `CityData::ResetCityOwner()` cleanup.
+
+Task 064 update:
+- Retail `BOMBARD_DESTROY_BUILDING_CHANCE` and `BOMBARD_KILL_POP_CHANCE` now import/project into runtime constants and drive undefended-city bombard building/population damage; public legal actions include only non-stale visible city bombard targets.

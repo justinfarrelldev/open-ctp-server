@@ -75,6 +75,7 @@
 - [x] Task 061: Retail city capture now transfers built wonders to the conqueror and reapplies owner-facing wonder add effects.
 - [x] Task 062: Retail city capture now destroys captured Capitol buildings while preserving other improvements.
 - [x] Task 063: Retail city capture now clears owner-specific city effects and timed happiness/special effects.
+- [x] Task 064: Retail bombard can target undefended cities, importing city-bombard constants and applying building/population damage with stale-safe projections.
 
 ## Full-Game Mechanical Execution First
 

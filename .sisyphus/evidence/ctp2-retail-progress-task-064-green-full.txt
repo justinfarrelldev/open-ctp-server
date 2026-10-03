@@ -1,0 +1,31 @@
+?   	github.com/justinfarrelldev/open-ctp-server	[no test files]
+?   	github.com/justinfarrelldev/open-ctp-server/docs	[no test files]
+ok  	github.com/justinfarrelldev/open-ctp-server/cmd/import-rules	0.341s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/account	0.865s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/auth	0.370s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/boundary	0.129s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/diagnostic	0.014s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze	0.499s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/fullgame	98.915s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/memorysql	0.234s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/onboarding	5.565s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/puppet	0.009s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/setup	0.019s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/e2e/testkit	0.008s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/game	0.341s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/ai	0.022s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/combat	0.005s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	1.109s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine/turns	0.004s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/events	0.009s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/http	0.008s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules	0.368s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/service	0.078s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/store	0.014s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.059s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/health	0.005s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/lobby	0.022s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/ratelimit	0.004s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/runtime	0.003s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/world	0.095s
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/world/fixtures	0.002s

@@ -1487,6 +1487,17 @@ func bombardActions(projection Projection, tiles map[string]TileProjection, atta
 		seenTiles[defender.TileID] = true
 		actions = append(actions, action(engine.CommandBombard, "bombard", attacker.ID, defender.TileID, map[string]string{"unit_id": attacker.ID, "target_tile_id": defender.TileID}, []string{"unit_id", "target_tile_id"}))
 	}
+	for _, city := range projection.Cities {
+		if city.OwnerID == attacker.OwnerID || city.TileID == "" || city.Stale || seenTiles[city.TileID] {
+			continue
+		}
+		target, ok := tiles[city.TileID]
+		if !ok || target.Stale || projectedTileDistance(origin, target) > attacker.BombardRange || !projectionDomainsCompatible(attacker, UnitProjection{Domain: engine.DomainLand}) {
+			continue
+		}
+		seenTiles[city.TileID] = true
+		actions = append(actions, action(engine.CommandBombard, "bombard", attacker.ID, city.TileID, map[string]string{"unit_id": attacker.ID, "target_tile_id": city.TileID}, []string{"unit_id", "target_tile_id"}))
+	}
 	return actions
 }
 

@@ -357,6 +357,7 @@
 - [x] Task 406: Retail city capture transfers built wonders to the conqueror and reapplies owner-facing wonder add effects.
 - [x] Task 407: Retail city capture destroys captured Capitol buildings while preserving other improvements.
 - [x] Task 408: Retail city capture clears owner-specific city effects and timed happiness/special effects.
+- [x] Task 409: Retail bombard targets undefended cities with city-bombard building/population damage and stale-safe legal projections.
 
 ## Detailed Remaining Retail Parity Ledger
 

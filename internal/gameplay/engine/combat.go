@@ -307,7 +307,7 @@ func applyBombard(state *State, command Command, sources Sources, runtime *rules
 	}
 	targets := bombardEligibleTargets(*unit, bombardTargets(*state, command.ActorPlayerID, payload.TargetTileID))
 	if len(targets) == 0 {
-		return "", nil, errors.New("bombard target is unavailable")
+		return bombardUndefendedCity(state, command.ActorPlayerID, unit, targetTile, payload, sources, runtime)
 	}
 	activeDefenseHits := 0
 	interceptors := activeDefenseInterceptors(*state, command.ActorPlayerID, targets[0].OwnerID, *unit, targetTile)
@@ -374,6 +374,106 @@ func applyBombard(state *State, command Command, sources Sources, runtime *rules
 		CounterBombardHits int    `json:"counter_bombard_hits,omitempty"`
 	}{UnitID: unit.ID, TargetTileID: payload.TargetTileID, Hits: hits, Destroyed: destroyed, ActiveDefenseHits: activeDefenseHits, CounterBombardHits: counterBombardHits})
 	return EventBombarded, payloadJSON, nil
+}
+
+func bombardUndefendedCity(state *State, actorID string, unit *Unit, targetTile Tile, payload bombardPayload, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
+	city := cityAtTile(state, payload.TargetTileID)
+	if city == nil || city.OwnerID == actorID || !unitCanBombardCity(*unit, *city, runtime) {
+		return "", nil, errors.New("bombard target is unavailable")
+	}
+	probability := unit.Ranged - cityWallDefenseAt(*state, city.TileID)
+	if probability < 0 {
+		probability = 0
+	}
+	buildingDestroyed := ""
+	if bombardPercentThreshold(retailBombardDestroyBuildingPercent(runtime), probability) > int(combatRoll(state, sources)%100) {
+		buildingDestroyed = destroyRandomBombardableBuilding(state, city, sources)
+	}
+	populationKilled := 0
+	if city.Population > 1 && bombardPercentThreshold(retailBombardKillPopulationPercent(runtime), probability) > int(combatRoll(state, sources)%100) {
+		city.Population--
+		populationKilled = 1
+	}
+	unit.Movement--
+	if unit.Health <= 0 || hasEffect(unit.Effects, EffectSingleUse) {
+		removeUnitAndCargo(state, unit.ID)
+	}
+	payloadJSON, _ := json.Marshal(struct {
+		UnitID            string `json:"unit_id"`
+		TargetTileID      string `json:"target_tile_id"`
+		CityID            string `json:"city_id,omitempty"`
+		BuildingDestroyed string `json:"building_destroyed,omitempty"`
+		PopulationKilled  int    `json:"population_killed,omitempty"`
+	}{UnitID: payload.UnitID, TargetTileID: payload.TargetTileID, CityID: city.ID, BuildingDestroyed: buildingDestroyed, PopulationKilled: populationKilled})
+	return EventBombarded, payloadJSON, nil
+}
+
+func unitCanBombardCity(unit Unit, city City, runtime *rules.RuntimeRules) bool {
+	target := Unit{OwnerID: city.OwnerID, TileID: city.TileID, Domain: cityBombardDomain(city, runtime)}
+	return unitCanBombardTarget(unit, target)
+}
+
+func cityBombardDomain(city City, runtime *rules.RuntimeRules) string {
+	if runtime != nil && city.TypeID != "" {
+		for _, definition := range runtime.Units {
+			if definition.ID == city.TypeID && definition.Domain != "" {
+				return definition.Domain
+			}
+		}
+	}
+	return DomainLand
+}
+
+func cityAtTile(state *State, tileID string) *City {
+	for index := range state.Cities {
+		if state.Cities[index].TileID == tileID {
+			return &state.Cities[index]
+		}
+	}
+	return nil
+}
+
+func bombardPercentThreshold(percent int, probability int) int {
+	if percent <= 0 || probability <= 0 {
+		return 0
+	}
+	threshold := percent * probability / 100
+	if threshold > 100 {
+		return 100
+	}
+	return threshold
+}
+
+func retailBombardDestroyBuildingPercent(runtime *rules.RuntimeRules) int {
+	if runtime != nil && runtime.Constants.BombardDestroyBuildingPercent != 0 {
+		return runtime.Constants.BombardDestroyBuildingPercent
+	}
+	return 10
+}
+
+func retailBombardKillPopulationPercent(runtime *rules.RuntimeRules) int {
+	if runtime != nil && runtime.Constants.BombardKillPopulationPercent != 0 {
+		return runtime.Constants.BombardKillPopulationPercent
+	}
+	return 10
+}
+
+func destroyRandomBombardableBuilding(state *State, city *City, sources Sources) string {
+	candidates := make([]int, 0, len(city.Buildings))
+	for index, building := range city.Buildings {
+		if hasEffect(building.Effects, EffectCapitol) {
+			continue
+		}
+		candidates = append(candidates, index)
+	}
+	if len(candidates) == 0 {
+		return ""
+	}
+	roll := combatRoll(state, sources)
+	removeIndex := candidates[int(roll%uint64(len(candidates)))]
+	removedID := city.Buildings[removeIndex].ID
+	city.Buildings = append(city.Buildings[:removeIndex], city.Buildings[removeIndex+1:]...)
+	return removedID
 }
 
 func counterBombard(state *State, sources Sources, attacker *Unit, defenders []*Unit, runtime *rules.RuntimeRules) int {
