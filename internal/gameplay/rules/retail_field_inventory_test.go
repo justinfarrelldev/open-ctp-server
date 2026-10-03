@@ -1,7 +1,10 @@
 package rules
 
 import (
+	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -39,6 +42,58 @@ func TestRetailFieldInventorySnapshot(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestRetailFieldCoverageLedgerMentionsEveryParsedField(t *testing.T) {
+	root := localRetailGameDataRoot(t)
+	db, err := LoadRetailRulesFromDirectory(root)
+	if err != nil {
+		t.Fatalf("LoadRetailRulesFromDirectory() error = %v", err)
+	}
+	ledgerPath := localRetailFieldCoverageLedger(t)
+	ledger, err := os.ReadFile(ledgerPath)
+	if err != nil {
+		t.Fatalf("read retail field coverage ledger %s: %v", ledgerPath, err)
+	}
+	ledgerText := string(ledger)
+	inventories := map[string][]string{
+		"unit":                retailUnitFieldInventory(db.Units),
+		"advance":             retailAdvanceFieldInventory(db.Advances),
+		"feat":                retailFeatFieldInventory(db.Feats),
+		"wonder":              retailWonderFieldInventory(db.Wonders),
+		"building":            retailBuildingFieldInventory(db.Buildings),
+		"terrain_improvement": retailTerrainImprovementFieldInventory(db.TerrainImprovements),
+		"terrain":             retailTerrainFieldInventory(db.Terrains),
+		"government":          retailGovernmentFieldInventory(db.Governments),
+		"pollution":           retailPollutionFieldInventory(db.PollutionTriggerLists),
+	}
+	for catalog, fields := range inventories {
+		for _, field := range fields {
+			if !strings.Contains(ledgerText, field) {
+				t.Fatalf("retail field coverage ledger missing %s field %q", catalog, field)
+			}
+		}
+	}
+}
+
+func localRetailFieldCoverageLedger(t *testing.T) string {
+	t.Helper()
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	for dir := cwd; ; dir = filepath.Dir(dir) {
+		candidate := filepath.Join(dir, ".sisyphus", "evidence", "ctp2-full-retail-task-22-field-coverage-inventory.md")
+		if stat, err := os.Stat(candidate); err == nil && !stat.IsDir() {
+			return candidate
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+	}
+	t.Skip("retail field coverage ledger is not present")
+	return ""
 }
 
 func retailUnitFieldInventory(values []RetailUnit) []string {

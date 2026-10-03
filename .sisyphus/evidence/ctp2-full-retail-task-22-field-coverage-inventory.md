@@ -8,6 +8,7 @@ Source data root:
 Regression guard:
 - `internal/gameplay/rules/retail_field_inventory_test.go`
 - `TestRetailFieldInventorySnapshot` verifies the released catalog field counts and sentinel behavior-affecting fields.
+- `TestRetailFieldCoverageLedgerMentionsEveryParsedField` verifies every parsed released catalog field is mentioned in this coverage/classification ledger.
 
 ## Summary counts
 
@@ -258,3 +259,6 @@ Task 098 update:
 
 Task 099 update:
 - Remaining gameplay-bearing advance fields (`PlantNuke`, `Capitalization`, `Infrastructure`, `PollutionSizeModifier`, `PollutionProductionModifier`, `TriggerFeat`) are source-verified as runtime/engine/projection executed.
+
+Task 100 update:
+- The field coverage inventory now has a regression test that fails if any parsed released-game catalog field is omitted from this ledger.

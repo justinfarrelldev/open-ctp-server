@@ -111,6 +111,7 @@
 - [x] Task 097: Retail grouped combat/city-capture edge unit flags are source-verified; `Civilian` is classified as AI/diplomacy metadata for combat execution.
 - [x] Task 098: Advance map-action flags are source-classified/verified against tile-improvement and terraform gates.
 - [x] Task 099: Remaining gameplay-bearing advance flags (`PlantNuke`, capitalization/infrastructure, pollution modifiers, `TriggerFeat`) are source-verified.
+- [x] Task 100: Field coverage ledger now has a regression guard requiring every parsed retail field to be mentioned.
 
 ## Full-Game Mechanical Execution First
 
@@ -142,7 +143,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 
 - [ ] Re-audit every released `gamedata` catalog field against `ctp2/ctp2_source_code` call sites and classify each as executed gameplay, safely projected marker, presentation-only, AI-only, or unsupported bug-fixed behavior.
 - [ ] Update `.sisyphus/evidence/ctp2-full-retail-task-22-field-coverage-inventory.md` so no gameplay-affecting field remains "parse-only" or ambiguously classified.
-- [ ] Add/maintain regression tests that fail when newly parsed retail fields are omitted from the coverage/classification ledger.
+- [x] Add/maintain regression tests that fail when newly parsed retail fields are omitted from the coverage/classification ledger.
 - [ ] Import and execute remaining gameplay constants from `Const.txt` that affect modeled mechanics, including fuel, trade-route path cost, special-action costs/chances, unrest, and disaster constants.
 
 ### Advances and research
