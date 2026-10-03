@@ -1,0 +1,7 @@
+--- FAIL: TestRetailFreeSlavesWonderGloballyBlocksSlaveryUnitProduction (0.00s)
+    free_slaves_task47_test.go:12: slaver production succeeded after any FreeSlaves wonder existed
+--- FAIL: TestRetailFreeSlavesWonderGloballyBlocksSlaveUprisingProduction (0.00s)
+    free_slaves_task47_test.go:23: slave-uprising production succeeded after any FreeSlaves wonder existed
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.004s
+FAIL

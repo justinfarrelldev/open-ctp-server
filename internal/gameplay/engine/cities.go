@@ -613,7 +613,7 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if productionRemovesPopulation(payload.Item, runtime) && city.Population <= 1 {
 		return errors.New("city population is insufficient")
 	}
-	if payload.Item.Kind == ProductionUnit && HasActiveWonderEffect(*state, actor, EffectProhibitSlavers) && productionHasSlaverEffect(payload.Item, runtime) {
+	if payload.Item.Kind == ProductionUnit && (anyActiveWonderEffect(*state, EffectFreeSlaves) || anyActiveWonderEffect(*state, EffectProhibitSlavers)) && productionHasFreeSlavesBlockedEffect(payload.Item, runtime) {
 		return errors.New("production prerequisite is not met")
 	}
 	if payload.Item.Kind == ProductionUnit && productionGovernmentMismatch(*state, actor, payload.Item, runtime) {
@@ -732,6 +732,22 @@ func productionHasNuclearAttackEffect(item ProductionItem, runtime *rules.Runtim
 	return runtimeUnitHasEffect(unit, EffectNuclearAttack)
 }
 
+func productionHasFreeSlavesBlockedEffect(item ProductionItem, runtime *rules.RuntimeRules) bool {
+	if item.Kind != ProductionUnit || runtime == nil {
+		return effectsContainFreeSlavesBlocked(item.Effects)
+	}
+	unit, ok := runtime.Unit(item.ID)
+	if !ok {
+		return effectsContainFreeSlavesBlocked(item.Effects)
+	}
+	for _, effect := range unit.Effects {
+		if effect.Kind == EffectSpecialSlaveRaid || effect.Kind == EffectSpecialSettlerSlaveRaid || effect.Kind == EffectSpecialSlaveUprising {
+			return true
+		}
+	}
+	return false
+}
+
 func productionHasSlaverEffect(item ProductionItem, runtime *rules.RuntimeRules) bool {
 	if item.Kind != ProductionUnit || runtime == nil {
 		return effectsContainSlavery(item.Effects)
@@ -785,6 +801,15 @@ func playerHasSlaverUnit(state State, ownerID string) bool {
 func effectsContainSlavery(effects []Effect) bool {
 	for _, effect := range effects {
 		if effect.Kind == EffectSpecialSlaveRaid || effect.Kind == EffectSpecialSettlerSlaveRaid {
+			return true
+		}
+	}
+	return false
+}
+
+func effectsContainFreeSlavesBlocked(effects []Effect) bool {
+	for _, effect := range effects {
+		if effect.Kind == EffectSpecialSlaveRaid || effect.Kind == EffectSpecialSettlerSlaveRaid || effect.Kind == EffectSpecialSlaveUprising {
 			return true
 		}
 	}
