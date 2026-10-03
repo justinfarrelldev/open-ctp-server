@@ -328,3 +328,6 @@ Task 121 update:
 
 Task 122 update:
 - Government coefficient coverage is verified: economy/research/pollution/crime/social/readiness/martial-law/empire/trade/rush/cap fields import/project and execute in targeted engine paths. `ProfessionalUnits` has only AI/outcom call sites in released source and is classified while unit-level professional support markers execute.
+
+Task 123 update:
+- Social slider parity is verified: expectations/coefficients import from governments, sliders persist through public commands, affect production/gold/food and happiness, project safely to owners, and AI social-policy legal actions use public projections.
