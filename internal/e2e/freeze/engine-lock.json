@@ -47,7 +47,7 @@
     },
     {
       "path": "internal/gameplay/engine/combat.go",
-      "sha256": "ade0d8747fefd63632bd53f825048165beb23366a0e727028d952904865836a1"
+      "sha256": "0c81f93afbda7355b2fa896e8bf72db6fdda09cf5eca8fa46a8d8541ebd14b7b"
     },
     {
       "path": "internal/gameplay/engine/diplomacy.go",
@@ -55,7 +55,7 @@
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "e02aa3cffc75351e866ae6f3c8abd0b478d048d4c414feac36914f11b4129347"
+      "sha256": "f0229cbaf102de8a7c02bc558bd4b4d9463f0bfc03b443665006a7d9a95af6f6"
     },
     {
       "path": "internal/gameplay/engine/government.go",
@@ -63,7 +63,7 @@
     },
     {
       "path": "internal/gameplay/engine/lifecycle.go",
-      "sha256": "3b45a460a3c17258de1d52a5267ade1f7d23d31b397f3f0909e0df2eb0e2befb"
+      "sha256": "19d290b9b5b52655ecb172fc503dba258a49285115edcc7dc4a0d806dcedde86"
     },
     {
       "path": "internal/gameplay/engine/policy_state.go",

@@ -313,6 +313,7 @@ func applyBombard(state *State, command Command, sources Sources, runtime *rules
 	activeDefenseHits := 0
 	interceptors := activeDefenseInterceptors(*state, command.ActorPlayerID, targets[0].OwnerID, *unit, origin)
 	for _, interceptor := range interceptors {
+		interceptor.UsedActiveDefense = true
 		defense := unit.Defense + combatDefenseModifierWithRuntime(*state, runtime, *unit, *interceptor)
 		if defense < 0 {
 			defense = 0
@@ -548,7 +549,7 @@ func activeDefenseInterceptors(state State, actorID, protectedOwnerID string, at
 	interceptors := make([]*Unit, 0)
 	for i := range state.Units {
 		unit := &state.Units[i]
-		if unit.OwnerID == actorID || unit.OwnerID != protectedOwnerID || unit.TransportID != "" || unit.ActiveDefenseRange < 1 || unit.Ranged < 1 || unit.Health <= 0 {
+		if unit.OwnerID == actorID || unit.OwnerID != protectedOwnerID || unit.TransportID != "" || unit.ActiveDefenseRange < 1 || unit.Ranged < 1 || unit.Health <= 0 || unit.UsedActiveDefense {
 			continue
 		}
 		tile, ok := tileByID(state, unit.TileID)

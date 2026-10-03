@@ -189,3 +189,6 @@ Task 074 update:
 
 Task 075 update:
 - Retail `HasPopAndCanBuild` unit records are city pseudo-unit types and are rejected from normal city production queueing, matching retail `C3UnitDB` and queue UI filters.
+
+Task 076 update:
+- Retail active-defense interceptors now use canonical once-per-turn state, skip after first active-defense attempt, and clear that state during turn refresh, matching `k_UDF_USED_ACTIVE_DEFENSE`.

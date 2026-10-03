@@ -87,6 +87,7 @@
 - [x] Task 073: Retail active-defense range is now measured from interceptor to bombarder, not interceptor to target tile.
 - [x] Task 074: Retail `Explodes` is source-classified as presentation-only combat explosion animation metadata.
 - [x] Task 075: Retail `HasPopAndCanBuild` city pseudo-units are rejected from normal city production queues.
+- [x] Task 076: Retail active-defense interceptors now fire once per turn and reset on turn refresh.
 
 ## Full-Game Mechanical Execution First
 
@@ -148,7 +149,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Implement or source-classify `IsFlanker` tactical targeting, including grouped-combat target row/column behavior.
 - [x] Source-classify `Explodes` death/combat behavior as presentation-only battle explosion animation metadata.
 - [ ] Verify all combat stats and modifiers: `Attack`, `Defense`, `ZBRangeAttack`, `BombRounds`, `BombardRange`, `Firepower`, `Armor`, `MaxHP`, `MountedBonus`, `BonusAgainstMounted`, `AttackWoodenShipBonus`, `WoodenShipBonus`, `Defend`, `CanAttack`, `CanBombard`, `CanCounterBombard`, `CityWalls`, `ReduceCityWalls`, and `IgnoreCityWalls`.
-- [ ] Complete active defense parity: `ActiveDefenseRange`, `ActiveDefenseOnlyWhenCarryingEnablers`, `EnableCarrierDefenses`, interceptor target selection, enabler cargo checks, and bombard/counter-bombard RNG ordering.
+- [ ] Complete active defense parity: `ActiveDefenseRange`, `ActiveDefenseOnlyWhenCarryingEnablers`, `EnableCarrierDefenses`, interceptor target selection, once-per-turn use/reset, enabler cargo checks, and bombard/counter-bombard RNG ordering.
 - [ ] Complete `Civilian`, `CantCaptureCity`, `VictoryEnslavement`, `DeathEffectsHappy`, `SingleUse`, and `NuclearAttack` edge cases under grouped combat/city capture.
 - [ ] Complete all spy/special-action vectors field-by-field: `EstablishEmbassy`, `StealTechnology`, `PlantNuke`, `InvestigateCity`, `AssasinateRuler`, `BioTerror`, `NanoTerror`, `Plague`, `ConvertCities`, `CreateFranchise`, `CauseUnhappiness`, `Advertise`, `InciteRevolution`, `IndulgenceSales`, `SlaveRaids`, `SettlerSlaveRaids`, `SlaveUprising`, `UndergroundRailway`, `CanInjoin`, `CanReform`, `CanSue`, `CanExpel`, `CreateParks`, `ThrowParty`, and nested `Chance`/`DeathChance`/`EliteChance`/`EscapeChance`/`Effect`/`Timer`/`Amount`/`Sound` fields.
 - [ ] Ensure every special action has safe public legal-action projection, HTTP route coverage where applicable, canonical event payloads, AI-consumable legality, and no hidden-state shortcut.

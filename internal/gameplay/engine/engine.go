@@ -268,6 +268,7 @@ type Unit struct {
 	BombardRange           int      `json:"bombard_range,omitempty"`
 	BombRounds             int      `json:"bomb_rounds,omitempty"`
 	ActiveDefenseRange     int      `json:"active_defense_range,omitempty"`
+	UsedActiveDefense      bool     `json:"used_active_defense,omitempty"`
 	Strength               int      `json:"strength,omitempty"`
 	Armor                  int      `json:"armor,omitempty"`
 	Firepower              int      `json:"firepower,omitempty"`

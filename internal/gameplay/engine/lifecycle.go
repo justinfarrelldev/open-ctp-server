@@ -123,6 +123,7 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 		if state.Units[index].InSpace {
 			continue
 		}
+		state.Units[index].UsedActiveDefense = false
 		if state.Units[index].TransportID == "" {
 			healUnitFromTerrainImprovements(state, &state.Units[index])
 			state.Units[index].Movement = refreshedUnitMovement(*state, state.Units[index], runtime.Starter.Movement)

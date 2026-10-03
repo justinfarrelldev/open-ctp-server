@@ -1,0 +1,5 @@
+--- FAIL: TestRetailActiveDefenseFiresOncePerTurn (0.00s)
+    active_defense_once_task76_test.go:27: active defense should fire once per turn; first=7 second=7
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.002s
+FAIL
