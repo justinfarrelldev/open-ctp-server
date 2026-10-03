@@ -1,0 +1,38 @@
+--- ProfessionalUnits source references ---
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/government.cdb:40:	Int ProfessionalUnits
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/GovernmentRecord.cpp:54:    m_ProfessionalUnits = 0;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/GovernmentRecord.cpp:165:	m_ProfessionalUnits = rval.m_ProfessionalUnits; 
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/GovernmentRecord.cpp:280:    "ProfessionalUnits",
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/GovernmentRecord.cpp:355:    { GovernmentRecord::GetProfessionalUnits, NULL, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/GovernmentRecord.cpp:428:#define k_Token_Government_ProfessionalUnits     ((k_Token_Custom_Base) + 30)
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/GovernmentRecord.cpp:566:    if(!s_ParsedTokens.Bit(k_Token_Government_ProfessionalUnits - k_Token_Custom_Base)) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/GovernmentRecord.cpp:567:        DBERROR(("Warning: required field ProfessionalUnits missing"));
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/GovernmentRecord.cpp:887:            case k_Token_Government_ProfessionalUnits:
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/GovernmentRecord.cpp:888:                if(!lex->GetIntAssignment(m_ProfessionalUnits)) {
+../../ctp2/ctp2_source_code/ctp2_code/robotcom/Agent/scienceagent.cpp:787:    double np = ai->m_governmentDB->GetProfessionalUnits(gov); 
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/GovernmentRecord.h:70:    sint32            m_ProfessionalUnits;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/GovernmentRecord.h:158:    sint32           GetProfessionalUnits() const { return m_ProfessionalUnits; }
+../../ctp2/ctp2_source_code/ctp2_code/robotcom/Alloc/wotp.cpp:316:    double np = ai->m_governmentDB->GetProfessionalUnits(gov); 
+../../ctp2/ctp2_source_code/ctp2_code/gs/outcom/C3Government.h:83:		STDMETHODIMP_ (sint32) GetProfessionalUnits(sint32 gov_id) ;
+../../ctp2/ctp2_source_code/ctp2_code/gs/outcom/C3Government.cpp:505:sint32 C3Government::GetProfessionalUnits(sint32 gov_id)
+../../ctp2/ctp2_source_code/ctp2_code/gs/outcom/C3Government.cpp:507:	return (g_theGovernmentDB->Get(gov_id)->GetProfessionalUnits()) ;
+../../ctp2/ctp2_source_code/ctp2_code/gs/outcom/IC3Government.h:61:	STDMETHOD_ (sint32, GetProfessionalUnits)(THIS_ sint32 gov_id) PURE ;
+../../ctp2/ctp2_source_code/ctp2_code/gs/utility/gameinit.cpp:477:				id1.SetIsProfessional(TRUE); 
+../../ctp2/ctp2_source_code/ctp2_code/gs/utility/gameinit.cpp:510:				id1.SetIsProfessional(TRUE); 
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/UnitData.h:280:    void SetIsProfessional(BOOL on);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/UnitData.h:281:    BOOL GetIsProfessional() const { return Flag(k_UDF_IS_PROFESSIONAL); }
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/player.h:850:    sint32 GetProfessionalUnits() const;
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1525:void Unit::SetIsProfessional(BOOL on)
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1527:    if (GetIsProfessional() != on) { 
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1529:        AccessData()->SetIsProfessional(on); 
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1533:BOOL Unit::GetIsProfessional() const
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1535:    return GetData()->GetIsProfessional();
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Player.cpp:8156:sint32 Player::GetProfessionalUnits() const
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Player.cpp:8158:    return g_theGovernmentDB->Get(m_government_type)->GetProfessionalUnits();
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:346:    void SetIsProfessional(BOOL on);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:347:    BOOL GetIsProfessional() const;
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Readiness.cpp:129:	if(u.GetIsProfessional())
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Readiness.cpp:252:            if (m_all_armies[i][j].GetIsProfessional()) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/UnitData.cpp:5000:void UnitData::SetIsProfessional(BOOL on)
+--- released govern ProfessionalUnits values ---
+ProfessionalUnits records=12 unique=[0] nonzero=0

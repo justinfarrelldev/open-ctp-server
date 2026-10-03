@@ -198,3 +198,6 @@ Task 077 update:
 
 Task 078 update:
 - `FoodHunger` is parsed/displayed but default data is all zero and no gameplay source consumes it; `GoldHunger` is absent from the original source parser and marked by released data comments as an optional Apolyton modification, so both are classified non-executed/default-disabled for literal retail gameplay.
+
+Task 079 update:
+- Government `ProfessionalUnits` is default-zero AI utility metadata in retail data/source; gameplay support exemption is driven by per-unit `IsProfessional`, which the server already executes in support/disband calculations.
