@@ -311,7 +311,7 @@ func applyBombard(state *State, command Command, sources Sources, runtime *rules
 	}
 	setWarState(state, unit.OwnerID, targets[0].OwnerID, true)
 	activeDefenseHits := 0
-	interceptors := activeDefenseInterceptors(*state, command.ActorPlayerID, targets[0].OwnerID, *unit, targetTile)
+	interceptors := activeDefenseInterceptors(*state, command.ActorPlayerID, targets[0].OwnerID, *unit, origin)
 	for _, interceptor := range interceptors {
 		defense := unit.Defense + combatDefenseModifierWithRuntime(*state, runtime, *unit, *interceptor)
 		if defense < 0 {
@@ -544,7 +544,7 @@ func tileDistance(left, right Tile) int {
 	return dx + dy
 }
 
-func activeDefenseInterceptors(state State, actorID, protectedOwnerID string, attacker Unit, targetTile Tile) []*Unit {
+func activeDefenseInterceptors(state State, actorID, protectedOwnerID string, attacker Unit, attackerTile Tile) []*Unit {
 	interceptors := make([]*Unit, 0)
 	for i := range state.Units {
 		unit := &state.Units[i]
@@ -552,7 +552,7 @@ func activeDefenseInterceptors(state State, actorID, protectedOwnerID string, at
 			continue
 		}
 		tile, ok := tileByID(state, unit.TileID)
-		if !ok || tileDistance(tile, targetTile) > unit.ActiveDefenseRange || !activeDefenseCanDefend(*unit, attacker) || !activeDefenseHasRequiredEnabler(state, *unit) {
+		if !ok || tileDistance(tile, attackerTile) > unit.ActiveDefenseRange || !activeDefenseCanDefend(*unit, attacker) || !activeDefenseHasRequiredEnabler(state, *unit) {
 			continue
 		}
 		interceptors = append(interceptors, unit)

@@ -180,3 +180,6 @@ Task 071 update:
 
 Task 072 update:
 - Retail counter-bombard now checks the defending counter-bombarder's own bombard range to the original bombarder, matching `CanCounterBombard()->CanBombard()`.
+
+Task 073 update:
+- Retail active-defense range now uses interceptor-to-bombarder distance, matching `ArmyData::GetActiveDefenders` distance checks against the attacking unit.

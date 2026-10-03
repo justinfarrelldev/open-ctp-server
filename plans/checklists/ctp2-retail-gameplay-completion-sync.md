@@ -84,6 +84,7 @@
 - [x] Task 070: Retail `LossMoveToDmgTwo` now imports and refreshes damaged movement with a minimum of two points.
 - [x] Task 071: Retail counter-bombard now considers every living defender on the target tile, not only the attacker's eligible bombard targets.
 - [x] Task 072: Retail counter-bombard now honors the defender's own bombard range to the original bombarder.
+- [x] Task 073: Retail active-defense range is now measured from interceptor to bombarder, not interceptor to target tile.
 
 ## Full-Game Mechanical Execution First
 
