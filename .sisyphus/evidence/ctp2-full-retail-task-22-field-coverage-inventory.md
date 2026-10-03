@@ -213,3 +213,6 @@ Task 082 update:
 
 Task 083 update:
 - Retail `CanCarry`, `CargoData.MaxCargo`, and `Size` are no longer broad-domain-only: runtime imports exact `Small|Med|Large` + `Land|Air|Water|Space` carry classes, canonical/visible units preserve size metadata, and engine/legal/AI embark filtering requires exact retail-compatible cargo class matching when class data is present.
+
+Task 084 update:
+- Nested `CargoData.Load`/`CargoData.Unload` are classified as presentation-only/unreferenced sound metadata: they parse as Sound DB records and expose `SoundRecord` accessors, but retail boarding/unload audio uses top-level `SoundLoad`/`SoundUnload`; transport death cargo fate is verified against existing recursive cargo removal.
