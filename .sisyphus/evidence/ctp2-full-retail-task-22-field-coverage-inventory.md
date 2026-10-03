@@ -222,3 +222,6 @@ Task 085 update:
 
 Task 086 update:
 - Building `CantBuildOnLand` is now imported/executed with the same city-tile water/land placement gate as retail `CityData::CanBuildImprovement`: engine production, visible legal actions, and projection-only AI all reject land-city production for such buildings.
+
+Task 087 update:
+- Building `DefaultIcon` and `Description` are classified as presentation/UI/SLIC metadata: retail parses them as icon/string IDs and uses them for queue/scenario-editor/Great-Library style presentation, not gameplay state mutation or legality.

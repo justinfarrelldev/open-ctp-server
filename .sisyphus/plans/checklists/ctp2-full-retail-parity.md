@@ -380,6 +380,7 @@
 - [x] Task 429: Retail cargo `Load`/`Unload` nested sound records are source-classified as presentation-only metadata, and transport death cargo removal is verified.
 - [x] Task 430: Retail repeated unit `GovernmentType` gates accept any listed government in production, projection, and upgrades.
 - [x] Task 431: Retail building `CantBuildOnLand` blocks land-city production in engine, legal projections, and AI placement.
+- [x] Task 432: Building `DefaultIcon` and `Description` are source-classified as presentation/UI/SLIC metadata.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -431,7 +432,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Finish crime/pollution effects: `LowerCrime`, `PopulationPollutionPercent`, `ProductionPollutionPercent`, `PollutionAmount`/`Pollution`, `NuclearPlant`, and wonder interactions.
 - [ ] Finish protection effects: `ProtectFromNukes`, `ProtectFromBioAgents`, `ProtectFromNanoVirus`, `PreventConversion`, `PreventSlavery`, and `ForceField` for both direct buildings and effective buildings.
 - [ ] Finish military/building effects: `DefendersPercent`, `OffenseBonusLand`, `OffenseBonusWater`, `OffenseBonusAir`, `CityWalls`, `Airport`, and effective-building consequences; `AllowGrunts` is source-classified as non-executed/AI-placeholder metadata.
-- [ ] Finish structural/build-gate effects: `PrerequisiteBuilding`, `CoastalBuilding`, `CantBuildInSea`, and `CantBuildOnLand` placement gates are implemented; finish remaining `Capitol`, `Brokerage`, `Television`, `DoubleTelevangelists`, `DefaultIcon`, and `Description` classification/edge coverage.
+- [ ] Finish structural/build-gate effects: `PrerequisiteBuilding`, `CoastalBuilding`, `CantBuildInSea`, and `CantBuildOnLand` placement gates are implemented; building `DefaultIcon` and `Description` are presentation/UI metadata; finish remaining `Capitol`, `Brokerage`, `Television`, and `DoubleTelevangelists` edge coverage.
 - [ ] Ensure wonder-granted effective buildings participate in every retail `GetEffectiveBuildings()` use: yields, science, happiness, crime, pollution, protection, refuel/airport, city walls/defense/offense, television, brokerage, and production prerequisites.
 
 ### Wonders
