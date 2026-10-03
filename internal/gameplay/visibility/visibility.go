@@ -393,7 +393,7 @@ func diplomaticRegard(state engine.State, playerID, target string, relation engi
 	if relation.Treaty == "union" {
 		return "love"
 	}
-	if directionalRegardBonus(playerID, target, relation) > 0 {
+	if directionalRegardBonus(playerID, target, relation) > 0 || engine.HasActiveWonderEffect(state, target, engine.EffectIncreaseRegard) {
 		return "friendly"
 	}
 	return "neutral"

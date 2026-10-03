@@ -16,7 +16,7 @@ Regression guard:
 | Units | 74 | 194 | Core cost/prereq/obsolete/combat/move/fuel/ranged/bombard plus `SpaceLaunch`, `NuclearAttack`, and `ThrowParty` actions are partially projected/executed. Many special actions, cargo/vision classes, stealth, active defense, upgrades, support, and sound/UI fields remain pending. |
 | Advances | 107 | 19 | Cost/prerequisites, research unlocks, production obsolescence, plant-nuke unlocks, pollution modifiers, capitalization/infrastructure unlocks, terrain-improvement transport/terraform gates, and advance-triggered feats are executed; Age/Branch/Icon/GLHidden/advice are presentation metadata. |
 | Feats | 14 | 13 | Advance-triggered feat effects for production, science, happiness, boat movement, hit points, and city-wall reduction are imported as timed runtime effects; building thresholds, sailed-around-world, conquered-by-force, and founder city-recapture triggers now execute as timed nation effects with retail one-time achievement gating. |
-| Wonders | 30 | 39 | Cost/prereq/obsolete metadata is projected; selected effects are still incomplete. Gaia and global effects require more execution coverage. |
+| Wonders | 30 | 39 | Cost/prereq/obsolete metadata plus selected effects including `IncreaseBoatMovement`, `IncreaseHp`, `IncreaseScientists`, `IncreaseBrokerages`, and `IncreaseRegard` are projected/executed; Gaia and remaining global effects require more execution coverage. |
 | Buildings | 52 | 42 | Cost/upkeep/prereq/obsolete and production/gold percent effects are projected/executed. Science, happiness, crime, population, pollution, protection, combat, trade, and growth effects remain pending. |
 | Terrain improvements | 40 | 36 | Class, construction cost/time, movement/yield effects, CantBuildOn, and Excludes are partially supported. Vision/radar/heal/terraform/endgame/listening-post behavior remains pending. |
 | Terrain | 26 | 43 | EnvBase yields are used for city/production yield. EnvCity/EnvRiver, resources, transforms, hut/tile-set, death and advance gates remain pending. |
@@ -84,3 +84,6 @@ Validation commands:
 
 Task 040 update:
 - Retail `ThrowParty` is no longer parse-only: canonical units with the imported `throw_party` marker can execute the reception action, spend gold/movement, apply timed diplomacy regard, project legal actions, and submit through `/throw-party`.
+
+Task 041 update:
+- Retail wonder `IncreaseRegard` is no longer parse-only for diplomacy projections: contacted foreign players now see positive/friendly regard toward active owners of `IncreaseRegard` wonders.

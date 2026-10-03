@@ -52,6 +52,7 @@
 - [x] Task 038: Space-launch commands are exposed through the authenticated HTTP gameplay route with safe payload fields.
 - [x] Task 039: Retail `NuclearAttack` units can directly nuke vulnerable foreign cities and are consumed on use or protection.
 - [x] Task 040: Retail `ThrowParty` units now spend gold/movement, respect target reception cooldown, and apply timed diplomacy regard through projection and HTTP.
+- [x] Task 041: Retail wonder `IncreaseRegard` now improves public foreign regard toward active wonder owners.
 
 ## Full-Game Mechanical Execution First
 

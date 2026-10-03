@@ -1,0 +1,5 @@
+--- FAIL: TestRetailIncreaseRegardWonderImprovesForeignRegardTowardOwner (0.00s)
+    increase_regard_task41_test.go:27: foreigner regard toward wonder owner = []visibility.DiplomacyRelationProjection{visibility.DiplomacyRelationProjection{TargetPlayerID:"b", Treaty:"", Trade:false, Regard:"neutral"}}, want friendly
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility	0.002s
+FAIL

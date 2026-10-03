@@ -334,6 +334,7 @@
 - [x] Task 383: Retail `SpaceLaunch` actions are wired through the authenticated gameplay HTTP gateway.
 - [x] Task 384: Retail direct `NuclearAttack` units execute city nuke attacks and are consumed after launch.
 - [x] Task 385: Retail `ThrowParty` units execute reception-cost diplomacy regard actions with target cooldown, legal projection, and HTTP route.
+- [x] Task 386: Retail wonder `IncreaseRegard` affects directional diplomacy regard projections for contacted foreigners.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.
