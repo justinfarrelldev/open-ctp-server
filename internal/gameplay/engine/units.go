@@ -537,6 +537,7 @@ func captureCityAt(state *State, actorID, tileID string, runtimes ...*rules.Runt
 			defeatedCityCount := ownerCityCount(*state, defeatedOwnerID)
 			recapturedByFounder := state.Cities[i].FounderID != "" && state.Cities[i].FounderID == actorID
 			removeCapturedCapitolBuildings(&state.Cities[i])
+			resetCapturedCityEffects(&state.Cities[i])
 			state.Cities[i].OwnerID = actorID
 			normalizeCityConversionOwner(&state.Cities[i])
 			state.Cities[i].ConquestDistress = conquestDistressForOwner(*state, actorID)
@@ -550,6 +551,22 @@ func captureCityAt(state *State, actorID, tileID string, runtimes ...*rules.Runt
 		}
 	}
 	return ""
+}
+
+func resetCapturedCityEffects(city *City) {
+	kept := city.Effects[:0]
+	for _, effect := range city.Effects {
+		if effect.Turns > 0 {
+			continue
+		}
+		switch effect.Kind {
+		case EffectFranchise, EffectInjunction, EffectWatchful:
+			continue
+		default:
+			kept = append(kept, effect)
+		}
+	}
+	city.Effects = kept
 }
 
 func removeCapturedCapitolBuildings(city *City) {

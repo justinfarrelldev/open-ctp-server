@@ -150,3 +150,6 @@ Task 061 update:
 
 Task 062 update:
 - Retail city capture now destroys captured `Capitol` buildings before owner transfer, matching `CityData::DestroyCapitol()`.
+
+Task 063 update:
+- Retail city capture now clears owner-specific city effects (`Franchise`, `Injunction`, `Watchful`) and timed happiness/special effects, matching `CityData::ResetCityOwner()` cleanup.

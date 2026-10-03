@@ -1,0 +1,5 @@
+--- FAIL: TestRetailCityCaptureClearsOwnerSpecificCityEffects (0.00s)
+    city_capture_reset_effects_task63_test.go:18: capture retained owner-specific/timed effects: [{ID:franchise:player-a Kind:franchise Value:0 Turns:0} {ID:injunction Kind:injunction Value:1 Turns:0} {ID:watchful Kind:watchful Value:4 Turns:0} {ID:happiness-attack Kind:happiness Value:-5 Turns:2} {ID:base-happiness Kind:happiness Value:75 Turns:0}]
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL
