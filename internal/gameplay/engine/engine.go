@@ -72,6 +72,7 @@ const (
 	CommandCreateFranchise    = "create-franchise"
 	CommandInvestigateCity    = "investigate-city"
 	CommandPlantNuke          = "plant-nuke"
+	CommandThrowParty         = "throw-party"
 	CommandCreatePark         = "create-park"
 	CommandAssassinateRuler   = "assassinate-ruler"
 	CommandExpel              = "expel"
@@ -131,6 +132,7 @@ const (
 	EventCityInvestigationFailed  = "city.investigation_failed"
 	EventNukePlanted              = "city.nuked"
 	EventNukeFailed               = "city.nuke_failed"
+	EventPartyThrown              = "diplomacy.party_thrown"
 	EventParkCreated              = "tile.park_created"
 	EventRulerAssassinated        = "nation.ruler_assassinated"
 	EventRulerAssassinationFailed = "nation.ruler_assassination_failed"
@@ -334,6 +336,7 @@ type Nation struct {
 	ResearchProgress    int                 `json:"research_progress,omitempty"`
 	GaiaCompletionTurn  int                 `json:"gaia_completion_turn,omitempty"`
 	MaxCityCount        int                 `json:"max_city_count,omitempty"`
+	LastPartyTurn       int                 `json:"last_party_turn,omitempty"`
 	PeaceMovement       *PeaceMovementState `json:"peace_movement,omitempty"`
 }
 
@@ -355,13 +358,17 @@ type Effect struct {
 }
 
 type DiplomaticRelation struct {
-	ID            string `json:"id"`
-	PlayerAID     string `json:"player_a_id"`
-	PlayerBID     string `json:"player_b_id"`
-	Contact       bool   `json:"contact"`
-	Treaty        string `json:"treaty,omitempty"`
-	Trade         bool   `json:"trade,omitempty"`
-	EstablishedAt int    `json:"established_at,omitempty"`
+	ID              string `json:"id"`
+	PlayerAID       string `json:"player_a_id"`
+	PlayerBID       string `json:"player_b_id"`
+	Contact         bool   `json:"contact"`
+	Treaty          string `json:"treaty,omitempty"`
+	Trade           bool   `json:"trade,omitempty"`
+	EstablishedAt   int    `json:"established_at,omitempty"`
+	RegardBonusAToB int    `json:"regard_bonus_a_to_b,omitempty"`
+	RegardTurnsAToB int    `json:"regard_turns_a_to_b,omitempty"`
+	RegardBonusBToA int    `json:"regard_bonus_b_to_a,omitempty"`
+	RegardTurnsBToA int    `json:"regard_turns_b_to_a,omitempty"`
 }
 
 type DiplomaticProposal struct {
@@ -926,7 +933,7 @@ func ValidateState(state State) error {
 		}
 	}
 	for _, nation := range state.Nations {
-		if nation.GaiaCompletionTurn < 0 || nation.ResearchProgress < 0 || nation.MaxCityCount < 0 {
+		if nation.GaiaCompletionTurn < 0 || nation.ResearchProgress < 0 || nation.MaxCityCount < 0 || nation.LastPartyTurn < 0 {
 			return errors.New("nation counters must be nonnegative")
 		}
 		if nation.PublicWorksPercent != nil && (*nation.PublicWorksPercent < 0 || *nation.PublicWorksPercent > 100) {

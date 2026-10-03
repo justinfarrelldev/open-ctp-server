@@ -51,6 +51,7 @@
 - [x] Task 037: Retail unit `SpaceLaunch` now launches units to owned cities and resolves delayed reentry/failed reentry.
 - [x] Task 038: Space-launch commands are exposed through the authenticated HTTP gameplay route with safe payload fields.
 - [x] Task 039: Retail `NuclearAttack` units can directly nuke vulnerable foreign cities and are consumed on use or protection.
+- [x] Task 040: Retail `ThrowParty` units now spend gold/movement, respect target reception cooldown, and apply timed diplomacy regard through projection and HTTP.
 
 ## Full-Game Mechanical Execution First
 

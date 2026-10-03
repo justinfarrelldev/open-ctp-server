@@ -80,6 +80,15 @@ func TestHandlerDelegatesNuclearAttackRoute(t *testing.T) {
 	}
 }
 
+func TestHandlerDelegatesThrowPartyRoute(t *testing.T) {
+	executor := &recordingExecutor{}
+	recorder := httptest.NewRecorder()
+	authenticatedHandler(executor).ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/game/9/throw-party", strings.NewReader(`{"session_id":1,"expected_revision":2,"idempotency_key":"key","command_id":"party","unit_id":"diplomat","city_id":"foreign"}`)))
+	if recorder.Code != http.StatusOK || executor.request.Type != engine.CommandThrowParty || !strings.Contains(string(executor.request.Payload), "city_id") {
+		t.Fatalf("throw-party route failed: status=%d request=%#v body=%s", recorder.Code, executor.request, recorder.Body.String())
+	}
+}
+
 func TestHandlerRejectsUnknownAuthorityAndHidesGatewayDetails(t *testing.T) {
 	executor := &recordingExecutor{err: &service.Error{Status: http.StatusUnprocessableEntity, Message: "hidden foreign unit target"}}
 	handler := authenticatedHandler(executor)

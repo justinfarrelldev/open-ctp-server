@@ -1,0 +1,14 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/throw_party_task40_test.go:11:65: undefined: CommandThrowParty
+internal/gameplay/engine/throw_party_task40_test.go:15:18: undefined: EventPartyThrown
+internal/gameplay/engine/throw_party_task40_test.go:16:51: undefined: EventPartyThrown
+internal/gameplay/engine/throw_party_task40_test.go:21:22: state.Nations[1].LastPartyTurn undefined (type Nation has no field or method LastPartyTurn)
+internal/gameplay/engine/throw_party_task40_test.go:22:69: state.Nations[1].LastPartyTurn undefined (type Nation has no field or method LastPartyTurn)
+internal/gameplay/engine/throw_party_task40_test.go:25:33: relation.RegardBonus undefined (type *DiplomaticRelation has no field or method RegardBonus)
+internal/gameplay/engine/throw_party_task40_test.go:25:48: undefined: retailPartyRegardBonus
+internal/gameplay/engine/throw_party_task40_test.go:25:83: relation.RegardTurns undefined (type *DiplomaticRelation has no field or method RegardTurns)
+internal/gameplay/engine/throw_party_task40_test.go:25:98: undefined: retailPartyRegardDuration
+internal/gameplay/engine/throw_party_task40_test.go:35:26: undefined: retailPartyCost
+internal/gameplay/engine/throw_party_task40_test.go:35:26: too many errors
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL

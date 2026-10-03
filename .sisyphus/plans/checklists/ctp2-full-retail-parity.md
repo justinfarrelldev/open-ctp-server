@@ -333,6 +333,7 @@
 - [x] Task 382: Retail unit `SpaceLaunch` actions execute with owned-city targeting and delayed reentry.
 - [x] Task 383: Retail `SpaceLaunch` actions are wired through the authenticated gameplay HTTP gateway.
 - [x] Task 384: Retail direct `NuclearAttack` units execute city nuke attacks and are consumed after launch.
+- [x] Task 385: Retail `ThrowParty` units execute reception-cost diplomacy regard actions with target cooldown, legal projection, and HTTP route.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

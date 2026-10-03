@@ -13,7 +13,10 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
-const defaultSightRadius = 2
+const (
+	defaultSightRadius = 2
+	retailPartyCost    = 100
+)
 
 const (
 	PlanningStatusOpen   = "open"
@@ -390,7 +393,20 @@ func diplomaticRegard(state engine.State, playerID, target string, relation engi
 	if relation.Treaty == "union" {
 		return "love"
 	}
+	if directionalRegardBonus(playerID, target, relation) > 0 {
+		return "friendly"
+	}
 	return "neutral"
+}
+
+func directionalRegardBonus(playerID, target string, relation engine.DiplomaticRelation) int {
+	if playerID == relation.PlayerAID && target == relation.PlayerBID {
+		return relation.RegardBonusAToB
+	}
+	if playerID == relation.PlayerBID && target == relation.PlayerAID {
+		return relation.RegardBonusBToA
+	}
+	return 0
 }
 
 func projectCity(city engine.City, playerID string, observed int) CityProjection {
@@ -1540,6 +1556,9 @@ func specialActions(projection Projection, tiles map[string]TileProjection, citi
 		if hasEffect(unit.Effects, engine.EffectSpecialPlantNuke) {
 			actions = append(actions, action(engine.CommandPlantNuke, "plant-nuke", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
 		}
+		if partyActionAllowed(projection, city.OwnerID) && hasEffect(unit.Effects, engine.EffectThrowParty) {
+			actions = append(actions, action(engine.CommandThrowParty, "throw-party", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
+		}
 		if hasEffect(unit.Effects, engine.EffectSpecialAssassinateRuler) {
 			actions = append(actions, action(engine.CommandAssassinateRuler, "assassinate-ruler", unit.ID, city.ID, map[string]string{"unit_id": unit.ID, "city_id": city.ID}, []string{"unit_id", "city_id"}))
 		}
@@ -1575,6 +1594,18 @@ func specialActions(projection Projection, tiles map[string]TileProjection, citi
 		}
 	}
 	return actions
+}
+
+func partyActionAllowed(projection Projection, targetPlayerID string) bool {
+	if projection.Diplomacy == nil || projection.Diplomacy.Gold < retailPartyCost {
+		return false
+	}
+	for _, relation := range projection.Diplomacy.Relations {
+		if relation.TargetPlayerID == targetPlayerID {
+			return relation.Regard != "hotwar"
+		}
+	}
+	return true
 }
 
 func terrainActions(projection Projection, tiles map[string]TileProjection, unit UnitProjection) []ActionProjection {

@@ -51,11 +51,11 @@
     },
     {
       "path": "internal/gameplay/engine/diplomacy.go",
-      "sha256": "5fefc6c3d92a37ae027cb91734b1831f57795430c95d1ccfbdf3c2a35a88457e"
+      "sha256": "495d83eb8c2df5fa26b3531194c0c40cef1c71f82d241961ab51cf9daded62fe"
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "3a0a73b94716fe14b26ce1f9a1c0c7b84381f3068a94a320ada68c0273f236fa"
+      "sha256": "98cfea594a6d0bd300b8c2cca14efef930082f01479808a51c580f70d518cbab"
     },
     {
       "path": "internal/gameplay/engine/government.go",
@@ -63,7 +63,7 @@
     },
     {
       "path": "internal/gameplay/engine/lifecycle.go",
-      "sha256": "b2ec9fe9e24d1c84f9badd8606883bde2138c73497f99ef07750a7f88e5fa6b4"
+      "sha256": "4a73b2c0f6e2e4a0359a3f5d5cced67392c7450d5be6197d47eb51ae514d3071"
     },
     {
       "path": "internal/gameplay/engine/policy_state.go",
@@ -71,7 +71,7 @@
     },
     {
       "path": "internal/gameplay/engine/special.go",
-      "sha256": "0607f298381b290902da82ed19c568a6e58173336178cca0fa7a88106abb98a8"
+      "sha256": "58ed3c1fe899d3504e8c10cb5874ab7c9315cf2e4a5c0314fa64d4040e9a0a09"
     },
     {
       "path": "internal/gameplay/engine/turns/turns.go",
@@ -95,7 +95,7 @@
     },
     {
       "path": "internal/gameplay/http/http.go",
-      "sha256": "7d4cf42544ed9724649a431cfe3eb6d83634e0c55ebbc305a8494bf6d12bfa3a"
+      "sha256": "e203c389cd1e0d50212b75122edf8bdb62a5e408ee7e48994e38157f9bfddf44"
     },
     {
       "path": "internal/gameplay/rules/retail_catalog.go",
@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "21b915107847e2ee5462324142233ea8b8d925e9608434dfa5e06b233cb0fcac"
+      "sha256": "f3c0c534701b3ca2aba8018a05d76b81aaa85ded51557d809829de0d2b6f3602"
     },
     {
       "path": "internal/runtime/runtime.go",

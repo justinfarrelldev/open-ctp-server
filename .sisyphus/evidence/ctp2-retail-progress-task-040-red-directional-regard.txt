@@ -1,0 +1,7 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/throw_party_task40_test.go:25:33: relation.RegardBonusBToA undefined (type *DiplomaticRelation has no field or method RegardBonusBToA)
+internal/gameplay/engine/throw_party_task40_test.go:25:87: relation.RegardTurnsBToA undefined (type *DiplomaticRelation has no field or method RegardTurnsBToA)
+internal/gameplay/engine/throw_party_task40_test.go:28:14: relation.RegardBonusAToB undefined (type *DiplomaticRelation has no field or method RegardBonusAToB)
+internal/gameplay/engine/throw_party_task40_test.go:28:47: relation.RegardTurnsAToB undefined (type *DiplomaticRelation has no field or method RegardTurnsAToB)
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL

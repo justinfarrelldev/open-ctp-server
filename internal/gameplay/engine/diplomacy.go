@@ -127,7 +127,7 @@ func applyAcceptedAgreement(state *State, relation *DiplomaticRelation, kind str
 func validateDiplomacyState(state State) error {
 	players := makeIDSet(playerIDs(state.Players))
 	for _, relation := range state.Diplomacy {
-		if relation.ID == "" || relation.PlayerAID == "" || relation.PlayerBID == "" || relation.PlayerAID >= relation.PlayerBID || !players[relation.PlayerAID] || !players[relation.PlayerBID] || !validTreaty(relation.Treaty) || relation.EstablishedAt < 0 {
+		if relation.ID == "" || relation.PlayerAID == "" || relation.PlayerBID == "" || relation.PlayerAID >= relation.PlayerBID || !players[relation.PlayerAID] || !players[relation.PlayerBID] || !validTreaty(relation.Treaty) || relation.EstablishedAt < 0 || relation.RegardBonusAToB < 0 || relation.RegardTurnsAToB < 0 || relation.RegardBonusBToA < 0 || relation.RegardTurnsBToA < 0 {
 			return errors.New("diplomacy relation is invalid")
 		}
 		if relation.ID != relationID(relation.PlayerAID, relation.PlayerBID) {

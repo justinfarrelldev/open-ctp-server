@@ -113,6 +113,7 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 		advancePollution(state, runtime)
 	}
 	advanceTemporaryNationEffects(state)
+	advanceDiplomaticRegard(state)
 	advanceSpaceReentry(state)
 	if runtime == nil || runtime.Starter.Movement < 1 {
 		return
@@ -189,6 +190,25 @@ func unitsOnTileCount(state State, tileID string) int {
 		}
 	}
 	return count
+}
+
+func advanceDiplomaticRegard(state *State) {
+	for index := range state.Diplomacy {
+		advanceDirectionalRegard(&state.Diplomacy[index].RegardBonusAToB, &state.Diplomacy[index].RegardTurnsAToB)
+		advanceDirectionalRegard(&state.Diplomacy[index].RegardBonusBToA, &state.Diplomacy[index].RegardTurnsBToA)
+	}
+}
+
+func advanceDirectionalRegard(bonus *int, turns *int) {
+	if *turns <= 0 {
+		*bonus = 0
+		*turns = 0
+		return
+	}
+	*turns--
+	if *turns == 0 {
+		*bonus = 0
+	}
 }
 
 func advanceTemporaryNationEffects(state *State) {

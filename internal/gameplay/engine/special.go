@@ -12,6 +12,9 @@ import (
 const (
 	retailUnconvertedIndulgenceGold      = 3
 	retailUnconvertedIndulgenceHappiness = 2
+	retailPartyCost                      = 100
+	retailPartyRegardBonus               = 10
+	retailPartyRegardDuration            = 10
 
 	EffectSpecialEmbassy                       = "special_embassy"
 	EffectSpecialSoothsaying                   = "special_soothsaying"
@@ -105,7 +108,7 @@ type ExpelPayload struct {
 
 func isSpecialCommand(kind string) bool {
 	switch kind {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandCauseUnhappiness, CommandInciteRevolution, CommandIndulgenceSales, CommandSlaveUprising, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandAssassinateRuler, CommandInjoin, CommandReform, CommandUndergroundRailway, CommandSue, CommandCreatePark, CommandExpel, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandCauseUnhappiness, CommandInciteRevolution, CommandIndulgenceSales, CommandSlaveUprising, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandThrowParty, CommandAssassinateRuler, CommandInjoin, CommandReform, CommandUndergroundRailway, CommandSue, CommandCreatePark, CommandExpel, CommandPillage, CommandTerraform, CommandBuildImprovement, CommandCancelTerraform:
 		return true
 	default:
 		return false
@@ -117,7 +120,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		return "", nil, err
 	}
 	switch command.Type {
-	case CommandEstablishEmbassy, CommandSoothsaying, CommandCauseUnhappiness, CommandInciteRevolution, CommandIndulgenceSales, CommandSlaveUprising, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandAssassinateRuler, CommandInjoin, CommandReform, CommandUndergroundRailway, CommandSue:
+	case CommandEstablishEmbassy, CommandSoothsaying, CommandCauseUnhappiness, CommandInciteRevolution, CommandIndulgenceSales, CommandSlaveUprising, CommandStealTechnology, CommandConvertCity, CommandBioTerror, CommandNanoTerror, CommandPlague, CommandSlaveRaid, CommandSettlerSlaveRaid, CommandCreateFranchise, CommandInvestigateCity, CommandPlantNuke, CommandThrowParty, CommandAssassinateRuler, CommandInjoin, CommandReform, CommandUndergroundRailway, CommandSue:
 		var payload SpecialActionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", nil, err
@@ -174,6 +177,8 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			return investigateCity(state, unit, city, actorNation, state.Phase.Turn, sources)
 		case CommandPlantNuke:
 			return plantNuke(state, unit, city, actorNation, targetNation, sources, runtime)
+		case CommandThrowParty:
+			return throwParty(state, unit, city, actorNation, targetNation)
 		case CommandAssassinateRuler:
 			return assassinateRuler(state, unit, city, targetNation, sources)
 		case CommandInjoin:
@@ -792,6 +797,56 @@ func plantNuke(state *State, unit *Unit, city *City, actorNation *Nation, target
 		DestroyedUnits int  `json:"destroyed_units,omitempty"`
 	}{Disclosed: true, DestroyedUnits: destroyedUnits})
 	return EventNukePlanted, payload, nil
+}
+
+func throwParty(state *State, unit *Unit, city *City, actorNation *Nation, targetNation *Nation) (string, json.RawMessage, error) {
+	if !hasEffect(unit.Effects, EffectThrowParty) {
+		return "", nil, errors.New("special action is not authorized")
+	}
+	if actorNation.Gold < retailPartyCost {
+		return "", nil, errors.New("party cost is not available")
+	}
+	if playersAtWar(*state, unit.OwnerID, city.OwnerID) {
+		return "", nil, errors.New("party target is unavailable during war")
+	}
+	if targetNation.LastPartyTurn > 0 && targetNation.LastPartyTurn+retailPartyRegardDuration >= state.Phase.Turn {
+		return "", nil, errors.New("party target is not ready")
+	}
+	if err := spendSpecialMove(unit); err != nil {
+		return "", nil, err
+	}
+	actorNation.Gold -= retailPartyCost
+	targetNation.LastPartyTurn = state.Phase.Turn
+	relation := ensureRelation(state, unit.OwnerID, city.OwnerID)
+	relation.Contact = true
+	if relation.EstablishedAt == 0 {
+		relation.EstablishedAt = state.Phase.Turn
+	}
+	addDirectionalRegard(relation, city.OwnerID, unit.OwnerID, retailPartyRegardBonus, retailPartyRegardDuration)
+	return EventPartyThrown, json.RawMessage(`{"disclosed":true}`), nil
+}
+
+func addDirectionalRegard(relation *DiplomaticRelation, fromPlayerID, toPlayerID string, bonus int, turns int) {
+	if fromPlayerID == relation.PlayerAID && toPlayerID == relation.PlayerBID {
+		relation.RegardBonusAToB += bonus
+		relation.RegardTurnsAToB = turns
+		return
+	}
+	if fromPlayerID == relation.PlayerBID && toPlayerID == relation.PlayerAID {
+		relation.RegardBonusBToA += bonus
+		relation.RegardTurnsBToA = turns
+	}
+}
+
+func playersAtWar(state State, left, right string) bool {
+	a, b := sortedPlayers(left, right)
+	for _, war := range state.Policy.Wars {
+		wa, wb := sortedPlayers(war.A, war.B)
+		if wa == a && wb == b {
+			return true
+		}
+	}
+	return false
 }
 
 func nukePopulationPercent(runtime *rules.RuntimeRules) int {
@@ -1515,7 +1570,7 @@ func filterCompletedOneShotImprovements(overlays []TileOverlay) []TileOverlay {
 
 func validateSpecialState(state State) error {
 	for _, nation := range state.Nations {
-		if nation.ID == "" || nation.PublicWorks < 0 || nation.Gold < 0 || uniqueStrings(nation.Advances) || uniqueStrings(nation.Embassies) || invalidCityReports(nation.CityReports) {
+		if nation.ID == "" || nation.PublicWorks < 0 || nation.Gold < 0 || nation.LastPartyTurn < 0 || uniqueStrings(nation.Advances) || uniqueStrings(nation.Embassies) || invalidCityReports(nation.CityReports) {
 			return errors.New("nation special state is invalid")
 		}
 	}

@@ -93,6 +93,7 @@ var commands = map[string]struct {
 	"incite-revolution":     {engine.CommandInciteRevolution, fields("unit_id", "city_id")},
 	"indulgence-sales":      {engine.CommandIndulgenceSales, fields("unit_id", "city_id")},
 	"slave-uprising":        {engine.CommandSlaveUprising, fields("unit_id", "city_id")},
+	"throw-party":           {engine.CommandThrowParty, fields("unit_id", "city_id")},
 	"steal-technology":      {engine.CommandStealTechnology, fields("unit_id", "city_id", "advance_id")},
 	"terraform":             {engine.CommandTerraform, fields("unit_id", "tile_id", "target_terrain")},
 	"build-improvement":     {engine.CommandBuildImprovement, fields("unit_id", "tile_id", "improvement_id")},
