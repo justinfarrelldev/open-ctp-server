@@ -1,0 +1,5 @@
+--- FAIL: TestRetailRangedAttacksPreferSameRowTarget (0.00s)
+    ranged_row_task68_test.go:14: ranged row targeting damaged wrong units: same=10 other=0
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

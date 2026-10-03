@@ -165,3 +165,6 @@ Task 066 update:
 
 Task 067 update:
 - Retail `IsFlanker` now affects melee row targeting: non-flankers do not retarget from empty same rows, while flankers search nearest occupied compatible rows.
+
+Task 068 update:
+- Retail ranged combat now prefers same-row and nearest-row tactical targets before fallback, matching `FindTargetForRangedAttackFrom`.

@@ -361,6 +361,7 @@
 - [x] Task 410: Retail city bombard building destruction removes queued production that became illegal.
 - [x] Task 411: Retail city bombard wall-defense probability uses actual city wall buildings only.
 - [x] Task 412: Retail `IsFlanker` melee row targeting lets flankers attack nearby occupied rows when same-row targets are gone.
+- [x] Task 413: Retail ranged combat prefers same/nearest tactical-row targets before fallback.
 
 ## Detailed Remaining Retail Parity Ledger
 

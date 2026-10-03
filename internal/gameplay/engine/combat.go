@@ -741,13 +741,23 @@ func combatStrikeWithRuntime(state *State, sources Sources, attackers, defenders
 
 func combatStrikeTarget(attacker Unit, attackerIndex int, defenders []*Unit, ranged bool) *Unit {
 	if ranged {
-		targets := combatEligibleTargets(attacker, livingCombatUnits(defenders))
-		if len(targets) == 0 {
-			return nil
-		}
-		return targets[0]
+		return combatRangedTarget(attacker, attackerIndex, defenders)
 	}
 	return combatMeleeTarget(attacker, attackerIndex, defenders)
+}
+
+func combatRangedTarget(attacker Unit, attackerIndex int, defenders []*Unit) *Unit {
+	for delta := 0; delta < len(defenders); delta++ {
+		if row := attackerIndex + delta; defenderAtRowCanBeTargeted(attacker, defenders, row) {
+			return defenders[row]
+		}
+		if delta != 0 {
+			if row := attackerIndex - delta; defenderAtRowCanBeTargeted(attacker, defenders, row) {
+				return defenders[row]
+			}
+		}
+	}
+	return firstEligibleLivingTarget(attacker, defenders)
 }
 
 func combatMeleeTarget(attacker Unit, attackerIndex int, defenders []*Unit) *Unit {
