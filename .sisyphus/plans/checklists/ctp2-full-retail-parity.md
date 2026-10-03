@@ -412,6 +412,7 @@
 - [x] Task 461: Retail happiness/readiness/pollution wonder effects execute with expiring full-happiness markers, pollution-unhappiness suppression, and stacked/capped readiness-cost reduction.
 - [x] Task 462: Retail visibility/endgame wonder effects execute or project for GlobalRadar, StartGaiaController, BuildingEverywhere, ActualBuildingEverywhere, obsolescence, destruction, capture, and transfer behavior.
 - [x] Task 463: Retail terrain EnvRiver modifiers import and execute for river yield/movement/defense, alongside existing EnvBase/EnvCity city-center selection.
+- [x] Task 464: Retail terrain Resources/goods spawning is classified as worldgen input, while canonical tile/city/trade-route goods and NeedsCityGood import/export mechanics execute in gameplay.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -478,7 +479,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 ### Terrain, tile improvements, goods, and map rules
 
 - [x] Finish terrain `EnvBase`, `EnvCity`, and `EnvRiver` yields/movement/score/defense, including river overlays and city-center yield selection; score remains presentation/scoring metadata outside modeled tile yield.
-- [ ] Implement or classify terrain `Resources`, goods spawning, goods trade bonuses, `NeedsCityGood`, and route good import/export edge cases.
+- [x] Implement or classify terrain `Resources`, goods spawning, goods trade bonuses, `NeedsCityGood`, and route good import/export edge cases.
 - [ ] Finish terrain `CanDie`, dead terrain yields, ozone/flood/nuke transformations, `AddAdvance`, `RemoveAdvance`, `TransformAdd`, `TransformRemove`, and terraform advance gates.
 - [ ] Finish tile improvement fields: `Class`, `Level`, `ConstructionTiles`, `ProductionCost`, `ProductionTime`, `TerrainEffect.Terrain`, `BonusFood`, `BonusProduction`, `BonusGold`, `MoveCost`, `DefenseBonus`, `HealRate`, `Airport`, `Radar`, `RadarRange`, `VisionRange`, `ListeningPost`, `CanSee`, `CanUpgrade`, `Freight`, `Endgame`, `CantBuildOn`, `Excludes`, `IntBorderRadius`, `SquaredBorderRadius`, `TerraformTerrain`, and pillage/upgrade behavior.
 - [x] Classify terrain/tile-improvement presentation fields (`Icon`, `TilesetIndex`, `HutTilesetIndex*`, `Tooltip`, `Statusbar`, `Sound`, `GLHidden`, `IsCityRuin`, `Column`) as presentation/editor/Great-Library/control-panel metadata for server gameplay.
