@@ -337,3 +337,6 @@ Task 124 update:
 
 Task 125 update:
 - Pollution trigger-list selection now uses canonical world tile count with released small/medium/large/gigantic thresholds instead of a fixed small-map fallback.
+
+Task 126 update:
+- Pollution accumulation/reduction and disaster outcomes are verified for modeled paths: population/production model, government/building/wonder/advance/nuke reducers, trigger history/trend, flood water conversion and occupant/overlay removal, and ozone `CanDie` dead-terrain conversion.

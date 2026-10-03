@@ -419,6 +419,7 @@
 - [x] Task 468: Retail social slider expectations, coefficients, economy/happiness effects, AI legal-action projection, and owner-only projection are verified.
 - [x] Task 469: Retail readiness, support, HP modifiers, martial law, war discontent, conquest distress, and peace-movement home/overseas decay mechanics are verified.
 - [x] Task 470: Retail pollution trigger selection now uses canonical world tile-count map size instead of fixed small-map fallback.
+- [x] Task 471: Retail pollution accumulation/reduction, nuclear pollution, trigger history, and flood/ozone disaster outcomes are verified for modeled gameplay paths.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -509,8 +510,8 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 ### Pollution, disasters, victory, and endgame
 
 - [x] Finish retail pollution trigger selection by map size and game setup rather than fixed small-map fallback.
-- [ ] Finish pollution accumulation/reduction from population, production, buildings, wonders, advances, nukes, terrain, and world pollution reduction effects.
-- [ ] Finish flood and ozone disaster target selection, terrain/dead-tile conversion, city/unit/improvement destruction, pollution history, event payloads, and AI response.
+- [x] Finish pollution accumulation/reduction from population, production, buildings, wonders, advances, nukes, terrain, and world pollution reduction effects.
+- [x] Finish flood and ozone disaster target selection, terrain/dead-tile conversion, city/unit/improvement destruction, pollution history, event payloads, and AI response.
 - [ ] Finish all victory paths: bloodlust/conquest, diplomatic/world-union, score/final-turn, Gaia/Solaris endgame, space/launch interactions, dead-player lifecycle, rankings, and tie-breaking.
 - [ ] Finish Gaia controller retail details beyond prerequisites: countdown interruption/restart, wonder destruction/capture, endgame object loss, map coverage recalculation, and terminal event sequencing.
 
