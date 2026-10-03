@@ -1150,7 +1150,7 @@ func RecalculateRound(state State) (State, error) {
 		if nation := nationForID(&next, nationForPlayer(next, city.OwnerID)); nation != nil {
 			advanceConquestDistress(city, *nation)
 		}
-		advanceCityFoodWithRuntime(city, runtime, cityMaxPopulation(next, *city), cityStarvationProtection(next, *city), foodVatPercent(*city), cityFoodConsumptionForNation(next, *city))
+		advanceCityFoodWithRuntime(city, runtime, cityMaxPopulation(next, *city), cityStarvationProtection(next, *city), foodVatPercent(next, *city), cityFoodConsumptionForNation(next, *city))
 		if cityPollutionEnabled(runtime) {
 			applyCityPollution(&next, *city, runtimePollutionModel(runtime), runtime)
 		}
@@ -1564,11 +1564,21 @@ func advanceCityFoodWithGrowthCoefficient(city *City, maxPopulation int, starvat
 	}
 }
 
-func foodVatPercent(city City) int {
+func foodVatPercent(state State, city City) int {
 	percent := 0
 	for _, effect := range city.Effects {
 		if effect.Kind == EffectFoodVatPercent && effect.Value > percent {
 			percent = effect.Value
+		}
+	}
+	for _, building := range city.Buildings {
+		if isObsoleteForPlayer(state, city.OwnerID, city.Obsolete, building.ObsoletedBy) {
+			continue
+		}
+		for _, effect := range building.Effects {
+			if effect.Kind == EffectFoodVatPercent && effect.Value > percent {
+				percent = effect.Value
+			}
 		}
 	}
 	if percent > 100 {

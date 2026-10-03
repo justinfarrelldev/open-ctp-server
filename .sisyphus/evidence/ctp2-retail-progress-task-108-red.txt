@@ -1,0 +1,6 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/terrain_yield_runtime_test.go:158:53: too many arguments in call to foodVatPercent
+	have (State, City)
+	want (City)
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL

@@ -1,0 +1,5 @@
+--- FAIL: TestEngineLock (0.00s)
+    lock_test.go:19: manifest path "internal/gameplay/engine/cities.go": hash mismatch: manifest e87b366389ba1e9d5b4d3d5f5b5cbd4a7f62361f2895f2af8098ff00f297475f, actual ac8634d4caf57a1a54456768cf4fb19d6f43271660913a49416a18fcaf971ee8
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/e2e/freeze	0.003s
+FAIL

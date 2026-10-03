@@ -144,10 +144,21 @@ func TestRetailBuildingUpkeepReducesGoldNotProduction(t *testing.T) {
 func TestRetailFoodVatReducesFoodConsumption(t *testing.T) {
 	city := City{Population: 4, Yields: Yield{Food: 4}, Effects: []Effect{{ID: "vat", Kind: EffectFoodVatPercent, Value: 50}}}
 
-	advanceCityFood(&city, 0, 0, foodVatPercent(city))
+	advanceCityFood(&city, 0, 0, foodVatPercent(State{}, city))
 
 	if city.Population != 4 || city.StoredFood != 0 {
 		t.Fatalf("food vat city = %+v", city)
+	}
+}
+
+func TestRetailFoodVatReducesFoodConsumptionFromBuildings(t *testing.T) {
+	state := State{Players: []Player{{ID: "player-a", NationID: "nation-a"}}, Nations: []Nation{{ID: "nation-a"}}}
+	city := City{ID: "city-a", OwnerID: "player-a", Population: 4, Yields: Yield{Food: 4}, Buildings: []Building{{ID: "IMPROVE_FOOD_VAT", Effects: []Effect{{ID: "vat", Kind: EffectFoodVatPercent, Value: 50}}}}}
+
+	advanceCityFood(&city, 0, 0, foodVatPercent(state, city))
+
+	if city.Population != 4 || city.StoredFood != 0 {
+		t.Fatalf("building food vat city = %+v", city)
 	}
 }
 
