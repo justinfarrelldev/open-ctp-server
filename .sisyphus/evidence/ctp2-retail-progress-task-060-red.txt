@@ -1,0 +1,5 @@
+--- FAIL: TestRetailTelevisionGoldCountsWonderEffectiveBuildings (0.00s)
+    building_everywhere_tv_task60_test.go:16: television wonder gold = 0, want 20 from foreign effective television building
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

@@ -636,20 +636,7 @@ func wonderGoldForPlayer(state State, playerID string) int {
 }
 
 func cityHasTelevision(state State, city City) bool {
-	for _, building := range city.Buildings {
-		if isObsoleteForPlayer(state, city.OwnerID, city.Obsolete, building.ObsoletedBy) {
-			continue
-		}
-		if hasEffect(building.Effects, EffectTelevision) {
-			return true
-		}
-	}
-	for _, effect := range city.Effects {
-		if effect.Kind == EffectTelevision {
-			return true
-		}
-	}
-	return false
+	return hasEffect(cityLocalEffects(state, city), EffectTelevision)
 }
 
 func piracyGoldForPlayer(state State, playerID string, runtime *rules.RuntimeRules) int {

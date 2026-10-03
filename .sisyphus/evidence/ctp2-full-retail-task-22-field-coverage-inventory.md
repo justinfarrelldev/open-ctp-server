@@ -141,3 +141,6 @@ Task 058 update:
 
 Task 059 update:
 - Retail wonder `BuildingEverywhere` and `ActualBuildingEverywhere` now project effective-building markers so active owner wonders satisfy city `PrerequisiteBuilding` checks, matching retail `GetEffectiveBuildings()`.
+
+Task 060 update:
+- Retail `GoldPerTelevision` wonder income now checks television effects through effective city buildings, including wonder-granted building effects.
