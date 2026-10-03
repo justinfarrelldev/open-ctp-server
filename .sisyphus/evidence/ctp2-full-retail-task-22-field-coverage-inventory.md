@@ -207,3 +207,6 @@ Task 080 update:
 
 Task 081 update:
 - Building `AllowGrunts` is parsed and exposed to AI/outcom, but retail `GetCityGruntOutput` returns zero, so it is classified as non-executed/AI-placeholder metadata.
+
+Task 082 update:
+- Unit `NoIndex`, `GLHidden`, `DefaultIcon`, `DefaultSprite`, and `Sound*` fields are classified as presentation/setup metadata: setup lists, Great Library visibility, sprite actors, icons, and sound IDs only.

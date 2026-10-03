@@ -375,6 +375,7 @@
 - [x] Task 424: Government `ProfessionalUnits` is source-classified as zero-valued default AI utility metadata; per-unit `IsProfessional` remains the gameplay support exemption.
 - [x] Task 425: Retail readiness support floors after summing fractional per-unit costs, including disband budget checks.
 - [x] Task 426: Building `AllowGrunts` is source-classified as non-executed/AI-placeholder metadata.
+- [x] Task 427: Unit `NoIndex`, `GLHidden`, `DefaultIcon`, `DefaultSprite`, and `Sound*` fields are source-classified as presentation/setup metadata.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -405,9 +406,9 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Verify `CanBeachAssault`, `Paratrooper`, and `ParatrooperTransport` beyond unload movement: legal target selection, transport requirements, and post-drop movement/combat restrictions.
 - [ ] Complete `VisionRange`, `VisionClass`, `CanSee`, `IsSubmarine`, `Stealth`, `CanSeeStealth`, `InvisibleForGlobeSat`, global radar, radar/listening-post interactions, and stale-fog legal action suppression.
 - [ ] Verify `NoZoc`/`IgnoreZOC`/ZOC movement stops and AI pathing behavior against retail.
-- [ ] Complete unit production restrictions: `BuildingRemovesAPop`, `CantBuild`, `OnlyBuildOne`, `GovernmentType`, `NeedsCityGood`, `NoSlaves`, `EnableAdvance`, `ObsoleteAdvance`, `UpgradeTo`, `NoIndex`, and `GLHidden` classification; `HasPopAndCanBuild` city pseudo-units are rejected from normal queues.
+- [ ] Complete unit production restrictions: `BuildingRemovesAPop`, `CantBuild`, `OnlyBuildOne`, `GovernmentType`, `NeedsCityGood`, `NoSlaves`, `EnableAdvance`, `ObsoleteAdvance`, and `UpgradeTo`; `HasPopAndCanBuild` city pseudo-units are rejected from normal queues, and `NoIndex`/`GLHidden` are presentation/setup metadata.
 - [ ] Complete upgrade semantics for `UpgradeTo`: costs, prerequisites, HP/fuel/movement carryover, legal projection, HTTP, AI use, and persistence.
-- [ ] Classify all unit sound/icon/sprite fields (`DefaultIcon`, `DefaultSprite`, `Sound*`) as presentation-only or wire them where they affect public contracts.
+- [x] Classify all unit sound/icon/sprite fields (`DefaultIcon`, `DefaultSprite`, `Sound*`) as presentation/setup metadata for server gameplay.
 
 ### Unit combat and special actions
 

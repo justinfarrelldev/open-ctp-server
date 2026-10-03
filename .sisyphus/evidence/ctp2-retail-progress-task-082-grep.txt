@@ -1,0 +1,161 @@
+--- Unit NoIndex/GLHidden/default art/sound source references ---
+../../ctp2/ctp2_source_code/ctp2_code/sound/soundevent.cpp:18:									 gamesounds_GetGameSoundID(GAMESOUNDS_SETTLE_CITY),
+../../ctp2/ctp2_source_code/ctp2_code/sound/gamesounds.h:110:sint32 gamesounds_GetGameSoundID(sint32 gamesound);
+../../ctp2/ctp2_source_code/ctp2_code/sound/gamesounds.h:117:				gamesounds_GetGameSoundID(GAMESOUNDS_DEFAULT_FAIL),\
+../../ctp2/ctp2_source_code/ctp2_code/sound/civsound.h:24:	sint32		GetSoundID(void) const { return m_soundID; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:229:	sint32 GetSelect1SoundID(void);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:230:	sint32 GetSelect2SoundID(void);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:231:	sint32 GetMoveSoundID(void);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:232:	sint32 GetAcknowledgeSoundID(void);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:233:	sint32 GetCantMoveSoundID(void);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:234:	sint32 GetAttackSoundID(void);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:236:	sint32 GetWorkSoundID(void);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:237:	sint32 GetVictorySoundID(void);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:238:	sint32 GetDeathSoundID(void);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:239:	sint32 GetLoadSoundID(void);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.h:240:	sint32 GetUnloadSoundID(void);
+../../ctp2/ctp2_source_code/ctp2_code/sound/gamesounds.cpp:98:sint32 gamesounds_GetGameSoundID(sint32 gamesound)
+../../ctp2/ctp2_source_code/ctp2_code/sound/gamesounds.cpp:115:				gamesounds_GetGameSoundID(GAMESOUNDS_MAXWINDOW), 0, 0);
+../../ctp2/ctp2_source_code/ctp2_code/sound/gamesounds.cpp:123:				gamesounds_GetGameSoundID(GAMESOUNDS_MINWINDOW), 0, 0);
+../../ctp2/ctp2_source_code/ctp2_code/sound/soundmanager.cpp:326:		if (walk.GetObj()->GetSoundID() == sound->GetSoundID())
+../../ctp2/ctp2_source_code/ctp2_code/sound/soundmanager.cpp:337:	sint32 id = gamesounds_GetGameSoundID(sound);
+../../ctp2/ctp2_source_code/ctp2_code/sound/soundmanager.cpp:404:		if (existingSound->GetSoundID() == soundID)
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/bldque.cpp:586:											gamesounds_GetGameSoundID(GAMESOUNDS_BUILDING_COMPLETE),
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/bldque.cpp:1029:										gamesounds_GetGameSoundID(GAMESOUNDS_BUILDING_STARTED),
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/bldque.cpp:1129:									gamesounds_GetGameSoundID(GAMESOUNDS_BUILDING_STARTED),
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/TerrainRecord.h:194:    bool             GetGLHidden() const { return (m_flags0 & k_Terrain_GLHidden_Bit) != 0; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/TerrainRecord.h:239:    bool             GetNoIndex() const { return (m_flags0 & k_Terrain_NoIndex_Bit) != 0; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:28:    m_DefaultIcon = 0x7fffffff;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:76:	m_DefaultIcon = rval.m_DefaultIcon; 
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:199:    "DefaultIcon",
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:287:    {WonderRecord::GetDefaultIconIndex, NULL, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:363:    { NULL, WonderRecord::GetGLHidden, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:373:#define k_Token_Wonder_DefaultIcon               ((k_Token_Custom_Base) + 1)
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:508:            case k_Token_Wonder_DefaultIcon:
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:509:                if(!g_theIconDB->GetRecordFromLexer(lex, m_DefaultIcon, err)) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:814:    if(m_DefaultIcon & 0x80000000) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:815:        sint32 id = m_DefaultIcon & 0x7fffffff;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:816:        if(!g_theIconDB->GetNamedItem(id, m_DefaultIcon)) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:819:    } else if(m_DefaultIcon == 0x7fffffff) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:820:        m_DefaultIcon = -1;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:998:const IconRecord *WonderRecord::GetDefaultIcon() const
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.cpp:1000:    return g_theIconDB->Get(m_DefaultIcon);
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/building.cdb:4:	Record Icon DefaultIcon
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/UnitData.cpp:308:    m_sprite_state = new SpriteState(g_theUnitDB->Get(t)->GetDefaultSprite()->GetValue());
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/UnitData.cpp:5739:	soundID = rec->GetSoundIDIndex();
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/UnitData.cpp:5763:							gamesounds_GetGameSoundID(GAMESOUNDS_DEFAULT_FAIL),
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/order.cdb:86:  Record Icon DefaultIcon
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.h:93:    sint32            m_DefaultIcon; // Index into Icon database
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.h:147:    sint32           GetDefaultIconIndex() const { return m_DefaultIcon; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.h:148:    const IconRecord *GetDefaultIcon() const;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/WonderRecord.h:332:    bool             GetGLHidden() const { return (m_flags1 & k_Wonder_GLHidden_Bit) != 0; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/PlayerEvent.cpp:473:												 gamesounds_GetGameSoundID(GAMESOUNDS_GOODY_CITY),
+../../ctp2/ctp2_source_code/ctp2_code/ui/netshell/ns_units.cpp:42:		m_noIndex = new sint32[ numUnits ];
+../../ctp2/ctp2_source_code/ctp2_code/ui/netshell/ns_units.cpp:54:			m_noIndex[ i ] = g_theUnitDB->Get( i )->GetNoIndex();
+../../ctp2/ctp2_source_code/ctp2_code/ui/netshell/ns_units.cpp:71:	if ( m_noIndex )
+../../ctp2/ctp2_source_code/ctp2_code/ui/netshell/ns_units.cpp:73:		delete m_noIndex;
+../../ctp2/ctp2_source_code/ctp2_code/ui/netshell/ns_units.cpp:74:		m_noIndex = NULL;
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/GoodyHuts.cpp:183:											gamesounds_GetGameSoundID(GAMESOUNDS_DRAGDROP_FAIL),
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/GoodyHuts.cpp:225:											gamesounds_GetGameSoundID(GAMESOUNDS_GOODY_CITY),
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/GoodyHuts.cpp:244:											gamesounds_GetGameSoundID(GAMESOUNDS_TOOEXPENSIVE),
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/GoodyHuts.cpp:262:											gamesounds_GetGameSoundID(GAMESOUNDS_ADVANCE),
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/GoodyHuts.cpp:295:											gamesounds_GetGameSoundID(GAMESOUNDS_GOODY_UNIT),
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/GoodyHuts.cpp:312:												 gamesounds_GetGameSoundID(GAMESOUNDS_BOO),
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/GoodyHuts.cpp:328:												 gamesounds_GetGameSoundID(GAMESOUNDS_DRAGDROP_FAIL),
+../../ctp2/ctp2_source_code/ctp2_code/ui/netshell/ns_units.h:36:	sint32 *m_noIndex;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/SpecialAttackInfoRecord.cpp:49:    {SpecialAttackInfoRecord::GetSoundIDIndex, NULL, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/SpecialAttackInfoRecord.cpp:96:                if(!g_theSoundDB->GetRecordFromLexer(lex, m_SoundID, err)) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/SpecialAttackInfoRecord.cpp:124:        if(!g_theSoundDB->GetNamedItem(id, m_SoundID)) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/SpecialAttackInfoRecord.cpp:155:const SoundRecord *SpecialAttackInfoRecord::GetSoundID() const
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/SpecialAttackInfoRecord.cpp:157:    return g_theSoundDB->Get(m_SoundID);
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:31:    m_DefaultIcon = 0x7fffffff;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:138:	m_DefaultIcon = rval.m_DefaultIcon; 
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:208:    "DefaultIcon",
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:270:    { NULL, OrderRecord::GetGLHidden, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:272:    {OrderRecord::GetDefaultIconIndex, NULL, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:334:#define k_Token_Order_DefaultIcon                ((k_Token_Custom_Base) + 52)
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:586:            case k_Token_Order_DefaultIcon:
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:587:                if(!g_theIconDB->GetRecordFromLexer(lex, m_DefaultIcon, err)) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:640:    if(m_DefaultIcon & 0x80000000) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:641:        sint32 id = m_DefaultIcon & 0x7fffffff;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:642:        if(!g_theIconDB->GetNamedItem(id, m_DefaultIcon)) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:645:    } else if(m_DefaultIcon == 0x7fffffff) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:646:        m_DefaultIcon = -1;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:709:const IconRecord *OrderRecord::GetDefaultIcon() const
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/OrderRecord.cpp:711:    return g_theIconDB->Get(m_DefaultIcon);
+../../ctp2/ctp2_source_code/ctp2_code/ui/netshell/allinonewindow.cpp:1481:		if ( !g_nsUnits->m_noIndex[ i ] )
+../../ctp2/ctp2_source_code/ctp2_code/ui/netshell/allinonewindow.cpp:1510:		if ( !g_nsUnits->m_noIndex[ i ] )
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/CityEvent.cpp:111:			sint32 soundID = gamesounds_GetGameSoundID(GAMESOUNDS_CITYCONQUERED);
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/wonder.cdb:6:	Record Icon DefaultIcon
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Player.cpp:3198:											gamesounds_GetGameSoundID(GAMESOUNDS_SETTLE_CITY),
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/ResourceRecord.h:71:    bool             GetGLHidden() const { return (m_flags0 & k_Resource_GLHidden_Bit) != 0; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:992:sint32 Unit::GetSelect1SoundID(void)
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:994:	return GetDBRec()->GetSoundSelect1Index();;
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:997:sint32 Unit::GetSelect2SoundID(void)
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:999:	return GetDBRec()->GetSoundSelect2Index();
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1002:sint32 Unit::GetMoveSoundID(void)
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1007:	return GetDBRec()->GetSoundMoveIndex();
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1010:sint32 Unit::GetAcknowledgeSoundID(void)
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1015:sint32 Unit::GetCantMoveSoundID(void)
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1020:sint32 Unit::GetAttackSoundID(void)
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1022:	return GetDBRec()->GetSoundAttackIndex();
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1032:sint32 Unit::GetWorkSoundID(void)
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1037:sint32 Unit::GetVictorySoundID(void)
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1042:sint32 Unit::GetDeathSoundID(void)
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1047:sint32 Unit::GetLoadSoundID(void)
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1052:sint32 Unit::GetUnloadSoundID(void)
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/Unit.cpp:1062:	*soundID = rec->GetSoundIDIndex();
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.h:86:    sint32            m_DefaultIcon; // Index into Icon database
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.h:139:    sint32           GetDefaultIconIndex() const { return m_DefaultIcon; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.h:140:    const IconRecord *GetDefaultIcon() const;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.h:325:    bool             GetGLHidden() const { return (m_flags1 & k_Building_GLHidden_Bit) != 0; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/TerrainImprovementRecord.cpp:186:    { NULL, TerrainImprovementRecord::GetGLHidden, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/ArmyData.cpp:2023:						numRest, restOfStack, FALSE, top_src.GetMoveSoundID());
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/ArmyData.cpp:5950:							numRest, restOfStack, FALSE, top_src.GetMoveSoundID());  
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/ArmyData.cpp:6193:							if(transports[j].GetLoadSoundID() >= 0) {
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/ArmyData.cpp:6195:												transports[j].GetLoadSoundID(),
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/ArmyData.cpp:6236:							numRest, restOfStack, TRUE, top_src.GetMoveSoundID());
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/ArmyData.cpp:6365:								m_array[0].GetCantMoveSoundID(),
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/ArmyData.cpp:6431:									    m_array[0].GetUnloadSoundID(),
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/ArmyData.cpp:6988:	soundID = rec->GetSoundIDIndex();
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/ArmyData.cpp:7023:							gamesounds_GetGameSoundID(GAMESOUNDS_DEFAULT_FAIL),
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/ArmyData.cpp:7192:				sint32	soundID = gamesounds_GetGameSoundID(GAMESOUNDS_TOOEXPENSIVE);
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/ArmyData.cpp:7337:			sint32	soundID = gamesounds_GetGameSoundID(GAMESOUNDS_DEFAULT_FAIL);
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:826:    sint32            m_SoundSelect1; // Index into Sound database
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:827:    sint32            m_SoundSelect2; // Index into Sound database
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:828:    sint32            m_SoundMove; // Index into Sound database
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:831:    sint32            m_SoundAttack; // Index into Sound database
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:841:    sint32            m_DefaultIcon; // Index into Icon database
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1400:    sint32           GetDefaultSpriteIndex() const { return m_DefaultSprite; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1401:    const SpriteRecord *GetDefaultSprite() const;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1488:    sint32           GetSoundSelect1Index() const { return m_SoundSelect1; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1489:    const SoundRecord *GetSoundSelect1() const;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1490:    sint32           GetSoundSelect2Index() const { return m_SoundSelect2; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1491:    const SoundRecord *GetSoundSelect2() const;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1492:    sint32           GetSoundMoveIndex() const { return m_SoundMove; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1493:    const SoundRecord *GetSoundMove() const;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1498:    sint32           GetSoundAttackIndex() const { return m_SoundAttack; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1499:    const SoundRecord *GetSoundAttack() const;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1556:    sint32           GetDefaultIconIndex() const { return m_DefaultIcon; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1557:    const IconRecord *GetDefaultIcon() const;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1558:    bool             GetNoIndex() const { return (m_flags4 & k_Unit_NoIndex_Bit) != 0; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/UnitRecord.h:1573:    bool             GetGLHidden() const { return (m_flags4 & k_Unit_GLHidden_Bit) != 0; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/SpecialAttackInfoRecord.h:52:    sint32           GetSoundIDIndex() const { return m_SoundID; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/SpecialAttackInfoRecord.h:53:    const SoundRecord *GetSoundID() const;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/unit.cdb:411:	Record Sound SoundSelect1			
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/unit.cdb:412:	Record Sound SoundSelect2			
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/unit.cdb:413:	Record Sound SoundMove				
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/unit.cdb:416:	Record Sound SoundAttack
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/unit.cdb:465:	Record Icon DefaultIcon
+../../ctp2/ctp2_source_code/ctp2_code/gs/gameobj/CityData.cpp:872:		soundID = specRec->GetSoundIDIndex();
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/TerrainImprovementRecord.h:353:    bool             GetGLHidden() const { return (m_flags0 & k_TerrainImprovement_GLHidden_Bit) != 0; }
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/AdvanceRecord.cpp:187:    { NULL, AdvanceRecord::GetNoIndex, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/AdvanceRecord.cpp:193:    { NULL, AdvanceRecord::GetGLHidden, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.cpp:26:    m_DefaultIcon = 0x7fffffff;
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.cpp:78:	m_DefaultIcon = rval.m_DefaultIcon; 
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.cpp:206:    "DefaultIcon",
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.cpp:287:    {BuildingRecord::GetDefaultIconIndex, NULL, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.cpp:363:    { NULL, BuildingRecord::GetGLHidden, NULL, NULL, NULL },
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.cpp:366:#define k_Token_Building_DefaultIcon             ((k_Token_Custom_Base) + 0)
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.cpp:492:            case k_Token_Building_DefaultIcon:
+../../ctp2/ctp2_source_code/ctp2_code/gs/newdb/BuildingRecord.cpp:493:                if(!g_theIconDB->GetRecordFromLexer(lex, m_DefaultIcon, err)) {
