@@ -346,3 +346,6 @@ Task 127 update:
 
 Task 128 update:
 - Victory/endgame/space/Gaia/final-turn coverage is verified: victory evaluators, final turn/score, conquest/bloodlust, diplomacy/world-union, space launch, Gaia/Solaris countdown interruption/restart, endgame object loss, dead-player lifecycle, rankings/tie-breaking, and terminal sequencing are covered by engine/fullgame tests.
+
+Task 129 update:
+- Modeled `Const.txt` constants are closed: runtime imports/executions cover city growth, conversion, indulgence, emancipation, nukes, piracy, veterans, bombard chances, special-action move cost, and caravan coefficient; unmodeled constants are source-classified as UI/audio/worldgen/AI/out-of-state metadata.

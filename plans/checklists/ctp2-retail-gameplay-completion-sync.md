@@ -140,6 +140,7 @@
 - [x] Task 126: Retail pollution accumulation/reduction, nuclear pollution, trigger history, and flood/ozone disaster outcomes are verified for modeled gameplay paths.
 - [x] Task 127: Retail diplomacy/trade/franchise/legal/city-capture interactions are verified across public projections, trade routes, piracy, route removal, capture side effects, and AI legal action paths.
 - [x] Task 128: Retail victory/endgame/space/Gaia/final-turn mechanics are verified across runtime, engine, projections, and fullgame restart paths.
+- [x] Task 129: Retail modeled `Const.txt` constants are imported/executed or source-classified; no behavior-bearing imported runtime constant remains parse-only.
 
 ## Full-Game Mechanical Execution First
 
@@ -172,7 +173,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Re-audit every released `gamedata` catalog field against `ctp2/ctp2_source_code` call sites and classify each as executed gameplay, safely projected marker, presentation-only, AI-only, or unsupported bug-fixed behavior.
 - [ ] Update `.sisyphus/evidence/ctp2-full-retail-task-22-field-coverage-inventory.md` so no gameplay-affecting field remains "parse-only" or ambiguously classified.
 - [x] Add/maintain regression tests that fail when newly parsed retail fields are omitted from the coverage/classification ledger.
-- [ ] Import and execute remaining gameplay constants from `Const.txt` that affect modeled mechanics, including fuel, special-action chances, unrest, and disaster constants; `SPECIAL_ACTION_MOVE_COST` and trade-route `CARAVAN_COEF` path cost are imported/executed.
+- [x] Import and execute remaining gameplay constants from `Const.txt` that affect modeled mechanics, including fuel, special-action chances, unrest, and disaster constants; `SPECIAL_ACTION_MOVE_COST` and trade-route `CARAVAN_COEF` path cost are imported/executed.
 
 ### Advances and research
 
