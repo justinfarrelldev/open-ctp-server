@@ -128,6 +128,7 @@ type TradeRouteProjection struct {
 	DestinationCityID string `json:"destination_city_id"`
 	CrossesWater      bool   `json:"crosses_water,omitempty"`
 	PiratingArmyID    string `json:"pirating_army_id,omitempty"`
+	TransportCost     int    `json:"transport_cost,omitempty"`
 }
 
 type DiplomacyRelationProjection struct {
@@ -145,17 +146,19 @@ type DiplomacyProposalProjection struct {
 }
 
 type DiplomacyProjection struct {
-	GovernmentID       string                        `json:"government_id,omitempty"`
-	PublicWorks        int                           `json:"public_works,omitempty"`
-	Gold               int                           `json:"gold,omitempty"`
-	SciencePercent     *int                          `json:"science_percent,omitempty"`
-	PublicWorksPercent *int                          `json:"public_works_percent,omitempty"`
-	Workday            *int                          `json:"workday,omitempty"`
-	Wages              *int                          `json:"wages,omitempty"`
-	Rations            *int                          `json:"rations,omitempty"`
-	Readiness          string                        `json:"readiness,omitempty"`
-	Relations          []DiplomacyRelationProjection `json:"relations,omitempty"`
-	Proposals          []DiplomacyProposalProjection `json:"proposals,omitempty"`
+	GovernmentID             string                        `json:"government_id,omitempty"`
+	PublicWorks              int                           `json:"public_works,omitempty"`
+	Gold                     int                           `json:"gold,omitempty"`
+	SciencePercent           *int                          `json:"science_percent,omitempty"`
+	PublicWorksPercent       *int                          `json:"public_works_percent,omitempty"`
+	Workday                  *int                          `json:"workday,omitempty"`
+	Wages                    *int                          `json:"wages,omitempty"`
+	Rations                  *int                          `json:"rations,omitempty"`
+	Readiness                string                        `json:"readiness,omitempty"`
+	TradeTransportPoints     int                           `json:"trade_transport_points,omitempty"`
+	UsedTradeTransportPoints int                           `json:"used_trade_transport_points,omitempty"`
+	Relations                []DiplomacyRelationProjection `json:"relations,omitempty"`
+	Proposals                []DiplomacyProposalProjection `json:"proposals,omitempty"`
 }
 
 type RulesProjection struct {
@@ -249,21 +252,17 @@ func Project(state engine.State, playerID string) (Projection, error) {
 		return Projection{}, err
 	}
 	result := Projection{Revision: state.Revision, Turn: state.Phase.Turn, PlanningStatus: planningStatus(state, playerID), Rules: rulesProjection(state)}
-	for _, player := range state.Players {
-		if player.ID != playerID {
+	viewerNationID := nationForPlayer(state, playerID)
+	for _, nation := range state.Nations {
+		if nation.ID != viewerNationID {
 			continue
 		}
-		for _, nation := range state.Nations {
-			if nation.ID != player.NationID {
-				continue
-			}
-			result.Research = researchProjection(state, nation)
-			result.Diplomacy = diplomacyProjection(state, playerID, nation)
-			result.CityReports = cloneCityReports(nation.CityReports)
-			for _, embassyPlayer := range state.Players {
-				if embassyPlayer.ID != playerID && engine.HasEffectiveEmbassyWith(state, playerID, embassyPlayer.ID) {
-					result.EmbassyPlayerIDs = append(result.EmbassyPlayerIDs, embassyPlayer.ID)
-				}
+		result.Research = researchProjection(state, nation)
+		result.Diplomacy = diplomacyProjection(state, playerID, nation)
+		result.CityReports = cloneCityReports(nation.CityReports)
+		for _, embassyPlayer := range state.Players {
+			if embassyPlayer.ID != playerID && engine.HasEffectiveEmbassyWith(state, playerID, embassyPlayer.ID) {
+				result.EmbassyPlayerIDs = append(result.EmbassyPlayerIDs, embassyPlayer.ID)
 			}
 		}
 	}
@@ -334,13 +333,13 @@ func tradeRouteProjection(state engine.State, playerID string, visible map[strin
 		if !sourceOK || !destinationOK || !visible[source.TileID] || !visible[destination.TileID] {
 			continue
 		}
-		projection = append(projection, TradeRouteProjection{ID: route.ID, SourceCityID: route.SourceCityID, DestinationCityID: route.DestinationCityID, CrossesWater: route.CrossesWater, PiratingArmyID: route.PiratingArmyID})
+		projection = append(projection, TradeRouteProjection{ID: route.ID, SourceCityID: route.SourceCityID, DestinationCityID: route.DestinationCityID, CrossesWater: route.CrossesWater, PiratingArmyID: route.PiratingArmyID, TransportCost: route.TransportCost})
 	}
 	return projection
 }
 
 func diplomacyProjection(state engine.State, playerID string, nation engine.Nation) *DiplomacyProjection {
-	projection := &DiplomacyProjection{GovernmentID: nation.GovernmentID, PublicWorks: nation.PublicWorks, Gold: nation.Gold, Readiness: nation.Readiness}
+	projection := &DiplomacyProjection{GovernmentID: nation.GovernmentID, PublicWorks: nation.PublicWorks, Gold: nation.Gold, Readiness: nation.Readiness, TradeTransportPoints: nation.TradeTransportPoints, UsedTradeTransportPoints: projectedUsedTradeTransportPoints(state, nation.ID)}
 	if nation.SciencePercent != nil {
 		science := *nation.SciencePercent
 		projection.SciencePercent = &science
@@ -380,7 +379,11 @@ func diplomacyProjection(state engine.State, playerID string, nation engine.Nati
 		return projection.Relations[i].TargetPlayerID < projection.Relations[j].TargetPlayerID
 	})
 	sort.Slice(projection.Proposals, func(i, j int) bool { return projection.Proposals[i].ID < projection.Proposals[j].ID })
-	if projection.GovernmentID == "" && projection.PublicWorks == 0 && projection.Gold == 0 && projection.SciencePercent == nil && projection.PublicWorksPercent == nil && projection.Workday == nil && projection.Wages == nil && projection.Rations == nil && projection.Readiness == "" && len(projection.Relations) == 0 && len(projection.Proposals) == 0 {
+	freightModelEnabled := false
+	if runtime, ok := runtimeRules(state); ok && runtime.Constants.CaravanCoefPercent > 0 {
+		freightModelEnabled = true
+	}
+	if projection.GovernmentID == "" && projection.PublicWorks == 0 && projection.Gold == 0 && projection.TradeTransportPoints == 0 && projection.UsedTradeTransportPoints == 0 && !freightModelEnabled && projection.SciencePercent == nil && projection.PublicWorksPercent == nil && projection.Workday == nil && projection.Wages == nil && projection.Rations == nil && projection.Readiness == "" && len(projection.Relations) == 0 && len(projection.Proposals) == 0 {
 		return nil
 	}
 	return projection
@@ -925,10 +928,62 @@ func tradeRouteActions(state engine.State, projection Projection, playerID strin
 			if maxIncoming > 0 && projectedTradeRouteIncomingCount(state, destination.ID) >= maxIncoming {
 				continue
 			}
+			if !projectedTradeTransportAllows(state, projection, source, destination) {
+				continue
+			}
 			actions = append(actions, action(engine.CommandCreateTradeRoute, "create-trade-route", source.ID, destination.ID, map[string]string{"source_city_id": source.ID, "destination_city_id": destination.ID}, []string{"source_city_id", "destination_city_id"}))
 		}
 	}
 	return actions
+}
+
+func projectedUsedTradeTransportPoints(state engine.State, nationID string) int {
+	used := 0
+	for _, route := range state.TradeRoutes {
+		source, ok := cityByID(state.Cities, route.SourceCityID)
+		if !ok || nationForPlayer(state, source.OwnerID) != nationID {
+			continue
+		}
+		used += route.TransportCost
+	}
+	return used
+}
+
+func projectedTradeTransportAllows(state engine.State, projection Projection, source, destination CityProjection) bool {
+	if projection.Diplomacy == nil {
+		return true
+	}
+	cost := projectedTradeRouteTransportCost(state, source, destination)
+	if cost <= 0 {
+		return true
+	}
+	return projection.Diplomacy.UsedTradeTransportPoints+cost <= projection.Diplomacy.TradeTransportPoints
+}
+
+func projectedTradeRouteTransportCost(state engine.State, source, destination CityProjection) int {
+	runtime, ok := runtimeRules(state)
+	if !ok || runtime.Constants.CaravanCoefPercent <= 0 {
+		return 0
+	}
+	sourceTile, sourceOK := tileByID(state.Tiles, source.TileID)
+	destinationTile, destinationOK := tileByID(state.Tiles, destination.TileID)
+	if !sourceOK || !destinationOK {
+		return 0
+	}
+	distance := abs(sourceTile.X-destinationTile.X) + abs(sourceTile.Y-destinationTile.Y)
+	if distance < 1 {
+		distance = 1
+	}
+	return (distance*100*runtime.Constants.CaravanCoefPercent + 50) / 100
+}
+
+func nationForPlayer(state engine.State, playerID string) string {
+	for _, player := range state.Players {
+		if player.ID == playerID {
+			return player.NationID
+		}
+	}
+	return ""
 }
 
 func projectedTradeRouteCaps(projection Projection) (maxOutgoing, maxIncoming int) {

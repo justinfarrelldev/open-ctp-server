@@ -326,28 +326,29 @@ type PeaceMovementState struct {
 }
 
 type Nation struct {
-	ID                  string              `json:"id"`
-	Effects             []Effect            `json:"effects,omitempty"`
-	Advances            []string            `json:"advances,omitempty"`
-	Embassies           []string            `json:"embassies,omitempty"`
-	CityReports         []CityReport        `json:"city_reports,omitempty"`
-	PublicWorks         int                 `json:"public_works,omitempty"`
-	Gold                int                 `json:"gold,omitempty"`
-	FranchiseProduction int                 `json:"franchise_production,omitempty"`
-	SciencePercent      *int                `json:"science_percent,omitempty"`
-	PublicWorksPercent  *int                `json:"public_works_percent,omitempty"`
-	Workday             *int                `json:"workday,omitempty"`
-	Wages               *int                `json:"wages,omitempty"`
-	Rations             *int                `json:"rations,omitempty"`
-	Readiness           string              `json:"readiness,omitempty"`
-	GovernmentID        string              `json:"government_id,omitempty"`
-	ResearchTargetID    string              `json:"research_target_id,omitempty"`
-	ResearchProgress    int                 `json:"research_progress,omitempty"`
-	CurrentAgeID        string              `json:"current_age_id,omitempty"`
-	GaiaCompletionTurn  int                 `json:"gaia_completion_turn,omitempty"`
-	MaxCityCount        int                 `json:"max_city_count,omitempty"`
-	LastPartyTurn       int                 `json:"last_party_turn,omitempty"`
-	PeaceMovement       *PeaceMovementState `json:"peace_movement,omitempty"`
+	ID                   string              `json:"id"`
+	Effects              []Effect            `json:"effects,omitempty"`
+	Advances             []string            `json:"advances,omitempty"`
+	Embassies            []string            `json:"embassies,omitempty"`
+	CityReports          []CityReport        `json:"city_reports,omitempty"`
+	PublicWorks          int                 `json:"public_works,omitempty"`
+	Gold                 int                 `json:"gold,omitempty"`
+	FranchiseProduction  int                 `json:"franchise_production,omitempty"`
+	TradeTransportPoints int                 `json:"trade_transport_points,omitempty"`
+	SciencePercent       *int                `json:"science_percent,omitempty"`
+	PublicWorksPercent   *int                `json:"public_works_percent,omitempty"`
+	Workday              *int                `json:"workday,omitempty"`
+	Wages                *int                `json:"wages,omitempty"`
+	Rations              *int                `json:"rations,omitempty"`
+	Readiness            string              `json:"readiness,omitempty"`
+	GovernmentID         string              `json:"government_id,omitempty"`
+	ResearchTargetID     string              `json:"research_target_id,omitempty"`
+	ResearchProgress     int                 `json:"research_progress,omitempty"`
+	CurrentAgeID         string              `json:"current_age_id,omitempty"`
+	GaiaCompletionTurn   int                 `json:"gaia_completion_turn,omitempty"`
+	MaxCityCount         int                 `json:"max_city_count,omitempty"`
+	LastPartyTurn        int                 `json:"last_party_turn,omitempty"`
+	PeaceMovement        *PeaceMovementState `json:"peace_movement,omitempty"`
 }
 
 type CityReport struct {
@@ -397,6 +398,7 @@ type TradeRoute struct {
 	Gold              int    `json:"gold,omitempty"`
 	CrossesWater      bool   `json:"crosses_water,omitempty"`
 	PiratingArmyID    string `json:"pirating_army_id,omitempty"`
+	TransportCost     int    `json:"transport_cost,omitempty"`
 }
 
 type Player struct {
@@ -944,7 +946,7 @@ func ValidateState(state State) error {
 		}
 	}
 	for _, nation := range state.Nations {
-		if nation.GaiaCompletionTurn < 0 || nation.ResearchProgress < 0 || nation.MaxCityCount < 0 || nation.LastPartyTurn < 0 {
+		if nation.GaiaCompletionTurn < 0 || nation.ResearchProgress < 0 || nation.MaxCityCount < 0 || nation.LastPartyTurn < 0 || nation.TradeTransportPoints < 0 {
 			return errors.New("nation counters must be nonnegative")
 		}
 		if nation.PublicWorksPercent != nil && (*nation.PublicWorksPercent < 0 || *nation.PublicWorksPercent > 100) {
@@ -979,7 +981,7 @@ func validateTradeRoutes(state State) error {
 	cities := makeIDSet(cityIDs(state.Cities))
 	armies := makeIDSet(armyIDs(state.Armies))
 	for _, route := range state.TradeRoutes {
-		if route.ID == "" || route.SourceCityID == "" || route.DestinationCityID == "" || route.SourceCityID == route.DestinationCityID {
+		if route.ID == "" || route.SourceCityID == "" || route.DestinationCityID == "" || route.SourceCityID == route.DestinationCityID || route.TransportCost < 0 {
 			return errors.New("trade route is invalid")
 		}
 		if len(state.Cities) > 0 && (!cities[route.SourceCityID] || !cities[route.DestinationCityID]) {

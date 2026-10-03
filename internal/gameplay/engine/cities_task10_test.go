@@ -78,6 +78,50 @@ func TestCreateTradeRouteCarriesSourceGoodAndGold(t *testing.T) {
 	}
 }
 
+func TestRetailTraderProductionAddsTransportPointsWithoutMapUnit(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	state.Cities[0].Yields.Production = 100
+	state.Nations = []Nation{{ID: "nation-a"}}
+	state.Cities[0].Queue = []ProductionItem{{ID: "UNIT_CARAVAN", Kind: ProductionUnit, Cost: 1}}
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_CARAVAN", Domain: DomainLand, Movement: 500, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "trader", Kind: EffectIsTrader}}}}}
+
+	if err := completeProduction(&state, &state.Cities[0], runtime); err != nil {
+		t.Fatalf("completeProduction(trader) error = %v", err)
+	}
+	if len(state.Units) != 1 { // only the original settler fixture remains; trader units live in transport-point capacity, not on map.
+		t.Fatalf("trader production created map unit: %#v", state.Units)
+	}
+	if len(state.Nations) != 1 || state.Nations[0].TradeTransportPoints != 500 {
+		t.Fatalf("nation trade transport points = %#v, want 500", state.Nations)
+	}
+}
+
+func TestRetailTradeRoutesConsumeTraderTransportCapacity(t *testing.T) {
+	state := task10State()
+	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "a"}, {ID: "city-b", OwnerID: "player-a", TileID: "c"}}
+	state.Nations = []Nation{{ID: "nation-a", TradeTransportPoints: 7}}
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Constants: rules.RuntimeConstants{CaravanCoefPercent: 4}, Starter: rules.RuntimeStarter{Domain: DomainLand, Movement: 1, Health: 1}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: DomainLand, Movement: 1, Health: 1}}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: ProductionUnit, Cost: 1}}}
+	definitions, hash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Rules = RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: hash, Definitions: definitions}
+
+	err = runtimeApplyExpectError(t, state, "player-a", CommandCreateTradeRoute, CreateTradeRoutePayload{SourceCityID: "city-a", DestinationCityID: "city-b"})
+	if err == nil || !strings.Contains(err.Error(), "trade transport capacity") {
+		t.Fatalf("create route below capacity error = %v, want trade transport capacity", err)
+	}
+	state.Nations[0].TradeTransportPoints = 8
+	next := runtimeApply(t, state, "player-a", CommandCreateTradeRoute, CreateTradeRoutePayload{SourceCityID: "city-a", DestinationCityID: "city-b"})
+	if len(next.TradeRoutes) != 1 || next.TradeRoutes[0].TransportCost != 8 {
+		t.Fatalf("trade route transport cost = %#v, want 8", next.TradeRoutes)
+	}
+	if used := usedTradeTransportPoints(next, "nation-a"); used != 8 {
+		t.Fatalf("used trade transport points = %d, want 8", used)
+	}
+}
+
 func TestTradeRouteImportsGoodForDestinationProduction(t *testing.T) {
 	state := fixtureState()
 	state.Players = []Player{{ID: "player-a", NationID: "nation-a", Lifecycle: PlayerActive, Controller: ControllerHuman}, {ID: "player-b", NationID: "nation-b", Lifecycle: PlayerActive, Controller: ControllerHuman}}

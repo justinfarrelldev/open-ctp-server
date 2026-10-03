@@ -341,8 +341,58 @@ func createTradeRoute(state *State, actor string, payload CreateTradeRoutePayloa
 		return errors.New("trade route already exists")
 	}
 	goodID := tradeRouteGoodID(*source, *destination)
-	state.TradeRoutes = append(state.TradeRoutes, TradeRoute{ID: routeID, SourceCityID: source.ID, DestinationCityID: destination.ID, GoodID: goodID, Gold: tradeRouteGold(goodID), CrossesWater: tradeRouteCrossesWater(*state, *source, *destination)})
+	transportCost := tradeRouteTransportCost(*state, *source, *destination, runtime)
+	if err := requireTradeTransportCapacity(*state, actor, transportCost); err != nil {
+		return err
+	}
+	state.TradeRoutes = append(state.TradeRoutes, TradeRoute{ID: routeID, SourceCityID: source.ID, DestinationCityID: destination.ID, GoodID: goodID, Gold: tradeRouteGold(goodID), CrossesWater: tradeRouteCrossesWater(*state, *source, *destination), TransportCost: transportCost})
 	return nil
+}
+
+func tradeRouteTransportCost(state State, source, destination City, runtime *rules.RuntimeRules) int {
+	if runtime == nil || runtime.Constants.CaravanCoefPercent <= 0 {
+		return 0
+	}
+	sourceTile, sourceOK := tileByID(state, source.TileID)
+	destinationTile, destinationOK := tileByID(state, destination.TileID)
+	if !sourceOK || !destinationOK {
+		return 0
+	}
+	distance := abs(sourceTile.X-destinationTile.X) + abs(sourceTile.Y-destinationTile.Y)
+	if distance < 1 {
+		distance = 1
+	}
+	return (distance*100*runtime.Constants.CaravanCoefPercent + 50) / 100
+}
+
+func requireTradeTransportCapacity(state State, actor string, transportCost int) error {
+	if transportCost <= 0 {
+		return nil
+	}
+	nationID := nationForPlayer(state, actor)
+	if nationID == "" {
+		return nil
+	}
+	nation := nationForID(&state, nationID)
+	if nation == nil {
+		return nil
+	}
+	if usedTradeTransportPoints(state, nationID)+transportCost > nation.TradeTransportPoints {
+		return errors.New("trade transport capacity is insufficient")
+	}
+	return nil
+}
+
+func usedTradeTransportPoints(state State, nationID string) int {
+	used := 0
+	for _, route := range state.TradeRoutes {
+		source, ok := cityByID(state, route.SourceCityID)
+		if !ok || nationForPlayer(state, source.OwnerID) != nationID {
+			continue
+		}
+		used += route.TransportCost
+	}
+	return used
 }
 
 func tradeRouteCaps(state State, actor string, runtime *rules.RuntimeRules) (maxOutgoing, maxIncoming int) {
@@ -2899,6 +2949,12 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 	if !ok {
 		return nil
 	}
+	if runtimeUnitDefinitionHasEffect(definition, EffectIsTrader) {
+		if nation := nationForID(state, nationForPlayer(*state, city.OwnerID)); nation != nil {
+			nation.TradeTransportPoints += definition.Movement
+		}
+		return nil
+	}
 	health := definition.Health + ownerWonderEffectSum(*state, city.OwnerID, EffectIncreaseHP) + ownerEffectSum(*state, city.OwnerID, EffectIncreaseHP)
 	if health < 1 {
 		health = 1
@@ -2978,6 +3034,15 @@ func runtimeProductionEffects(definition rules.RuntimeProduction) []Effect {
 		effects = append(effects, Effect{ID: effect.ID, Kind: effect.Kind, Value: effect.Value})
 	}
 	return effects
+}
+
+func runtimeUnitDefinitionHasEffect(definition rules.RuntimeUnitDefinition, kind string) bool {
+	for _, effect := range definition.Effects {
+		if effect.Kind == kind {
+			return true
+		}
+	}
+	return false
 }
 
 func runtimeUnitEffects(definition rules.RuntimeUnitDefinition) []Effect {

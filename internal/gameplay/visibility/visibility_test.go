@@ -173,6 +173,35 @@ func TestVisibleCitiesSuppressTradeRouteActionsAtGovernmentCaps(t *testing.T) {
 	}
 }
 
+func TestVisibleCitiesSuppressTradeRouteActionsAtTraderCapacity(t *testing.T) {
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Constants: rules.RuntimeConstants{CaravanCoefPercent: 4}, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: engine.DomainLand, Movement: 1, Health: 1}}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: engine.ProductionUnit, Cost: 1}}}
+	definitions, hash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := fixtureState()
+	state.Rules = engine.RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: hash, Definitions: definitions}
+	state.Players = []engine.Player{{ID: "a", NationID: "a", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}}
+	state.Phase.ActivePlayerOrder = []string{"a"}
+	state.Nations = []engine.Nation{{ID: "a"}}
+	state.Tiles = []engine.Tile{{ID: "0,0", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true}, {ID: "2,0", X: 2, Y: 0, Terrain: engine.TerrainPlains, Open: true}}
+	state.Units = nil
+	state.Cities = []engine.City{{ID: "home", OwnerID: "a", TileID: "0,0"}, {ID: "target", OwnerID: "a", TileID: "2,0"}}
+
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if projection.Diplomacy == nil || projection.Diplomacy.TradeTransportPoints != 0 || projection.Diplomacy.UsedTradeTransportPoints != 0 {
+		t.Fatalf("trade transport projection = %#v", projection.Diplomacy)
+	}
+	for _, action := range projection.LegalActions {
+		if action.Command == engine.CommandCreateTradeRoute && action.EntityID == "home" && action.TargetID == "target" {
+			t.Fatalf("trade route action leaked beyond trader capacity: %#v", action)
+		}
+	}
+}
+
 func TestRushBuyActionUsesGovernmentModifier(t *testing.T) {
 	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Domain: engine.DomainLand, Movement: 1, Health: 1}}, Production: []rules.RuntimeProduction{{ID: "UNIT_SETTLER", Kind: engine.ProductionUnit, Cost: 1}}, Governments: []rules.RuntimeGovernmentDefinition{{ID: "GOVERNMENT_RETAIL", BuildingRushModifier: 4}}}
 	definitions, hash, err := rules.CanonicalRuntimeDefinitions(runtime)

@@ -399,6 +399,7 @@
 - [x] Task 448: Special/spy action vector execution, projection, HTTP routes, and public-AI consumption are source-verified.
 - [x] Task 449: `SPECIAL_ACTION_MOVE_COST` imports to runtime constants and drives all special-action movement spending.
 - [x] Task 450: Movement/fuel/refuel/ZOC/beach/paratrooper/visibility/stealth/global-radar parity is source-verified with regression coverage.
+- [x] Task 451: Retail `IsTrader`/`CARAVAN_COEF` behavior treats trader production as freight capacity, consumes route transport cost, records public used/total freight, and suppresses over-capacity legal/AI route planning.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -409,7 +410,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Re-audit every released `gamedata` catalog field against `ctp2/ctp2_source_code` call sites and classify each as executed gameplay, safely projected marker, presentation-only, AI-only, or unsupported bug-fixed behavior.
 - [ ] Update `.sisyphus/evidence/ctp2-full-retail-task-22-field-coverage-inventory.md` so no gameplay-affecting field remains "parse-only" or ambiguously classified.
 - [x] Add/maintain regression tests that fail when newly parsed retail fields are omitted from the coverage/classification ledger.
-- [ ] Import and execute remaining gameplay constants from `Const.txt` that affect modeled mechanics, including fuel, trade-route path cost, special-action costs/chances, unrest, and disaster constants.
+- [ ] Import and execute remaining gameplay constants from `Const.txt` that affect modeled mechanics, including fuel, special-action chances, unrest, and disaster constants; `SPECIAL_ACTION_MOVE_COST` and trade-route `CARAVAN_COEF` path cost are imported/executed.
 
 ### Advances and research
 
@@ -423,7 +424,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [x] Execute retail material support completely: `ShieldHunger`, `NeedsNoSupport`, `IsSpecialForces`, readiness support coefficients, fractional cost rounding, disband ordering, and wonder readiness reductions.
 - [x] Source-classify `ProfessionalUnits` government quota/behavior as default-zero AI utility metadata; per-unit professional support/disband behavior is implemented.
 - [x] Source-check and close `GoldHunger` and `FoodHunger`: classified as non-executed/default-disabled upkeep metadata for literal retail parity.
-- [ ] Complete `IsTrader` behavior: trader unit lists, trade transport points, route capacity, route path-cost consumption, trader death/removal, and AI route creation.
+- [x] Complete `IsTrader` behavior: trader unit production is modeled as transport-point capacity, route path-cost consumption uses imported `CARAVAN_COEF`, over-capacity routes are rejected/suppressed in public legal actions, and projection-only AI consumes only those public route actions; trader death/removal is represented by capacity abstraction rather than map units.
 - [x] Execute retail cargo semantics for `CargoData.MaxCargo`, `CanCarry`, domain/size constraints, engine embark, legal public projection, AI embark planning, transport-destruction cargo fate, and `CargoData.Load`/`CargoData.Unload` presentation-only classification.
 - [x] Finish air/space/sea/land/domain movement parity, including `MovementType`, `MaxMovePoints`, `MaxFuel`, `NoFuelThenCrash`, `LossMoveToDmgNone`, non-space fuel costs, crash/damage rules, city/airport/carrier refuel, and hostile terrain immunity; free-space per-turn movement/`SPACE_FUEL_COST` is classified outside the current server map-movement layer.
 - [x] Verify `CanBeachAssault`, `Paratrooper`, and `ParatrooperTransport` beyond unload movement: legal target selection, transport requirements, and post-drop movement/combat restrictions.
