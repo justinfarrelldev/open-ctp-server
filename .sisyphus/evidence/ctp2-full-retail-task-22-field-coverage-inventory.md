@@ -177,3 +177,6 @@ Task 070 update:
 
 Task 071 update:
 - Retail counter-bombard now iterates every living defender on the target tile and applies each defender's own `CanCounterBombard`/`CanBombard` rules, matching `ArmyData::Bombard`.
+
+Task 072 update:
+- Retail counter-bombard now checks the defending counter-bombarder's own bombard range to the original bombarder, matching `CanCounterBombard()->CanBombard()`.

@@ -507,7 +507,7 @@ func counterBombard(state *State, sources Sources, attacker *Unit, defenders []*
 		if attacker.Health <= 0 {
 			break
 		}
-		if !hasEffect(defender.Effects, EffectCanCounterBombard) || defender.Ranged <= 0 || defender.BombRounds < 1 || len(bombardEligibleTargets(*defender, []*Unit{attacker})) == 0 {
+		if !hasEffect(defender.Effects, EffectCanCounterBombard) || defender.Ranged <= 0 || defender.BombRounds < 1 || defender.BombardRange < 1 || !unitWithinBombardRange(*defender, *attacker, *state) || len(bombardEligibleTargets(*defender, []*Unit{attacker})) == 0 {
 			continue
 		}
 		for round := 0; round < defender.BombRounds && attacker.Health > 0; round++ {
@@ -524,6 +524,12 @@ func counterBombard(state *State, sources Sources, attacker *Unit, defenders []*
 		}
 	}
 	return hits
+}
+
+func unitWithinBombardRange(attacker Unit, target Unit, state State) bool {
+	origin, ok := tileByID(state, attacker.TileID)
+	targetTile, targetOK := tileByID(state, target.TileID)
+	return ok && targetOK && tileDistance(origin, targetTile) <= attacker.BombardRange
 }
 
 func tileDistance(left, right Tile) int {

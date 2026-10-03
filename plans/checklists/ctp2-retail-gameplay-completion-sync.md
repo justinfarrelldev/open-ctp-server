@@ -83,6 +83,7 @@
 - [x] Task 069: Retail bombard hostilities now start war and cancel trade routes between combatants.
 - [x] Task 070: Retail `LossMoveToDmgTwo` now imports and refreshes damaged movement with a minimum of two points.
 - [x] Task 071: Retail counter-bombard now considers every living defender on the target tile, not only the attacker's eligible bombard targets.
+- [x] Task 072: Retail counter-bombard now honors the defender's own bombard range to the original bombarder.
 
 ## Full-Game Mechanical Execution First
 

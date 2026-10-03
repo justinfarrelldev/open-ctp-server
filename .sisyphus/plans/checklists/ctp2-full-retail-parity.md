@@ -365,6 +365,7 @@
 - [x] Task 414: Retail bombard hostilities start war and cancel trade routes between combatants.
 - [x] Task 415: Retail `LossMoveToDmgTwo` imports and refreshes damaged movement with a minimum of two points.
 - [x] Task 416: Retail counter-bombard considers every living defender on the target tile, not only attacker-eligible bombard targets.
+- [x] Task 417: Retail counter-bombard honors the defender's own bombard range to the original bombarder.
 
 ## Detailed Remaining Retail Parity Ledger
 

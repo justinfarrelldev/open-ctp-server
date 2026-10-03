@@ -1,0 +1,5 @@
+--- FAIL: TestRetailCounterBombardHonorsDefenderBombardRange (0.00s)
+    counter_bombard_range_task72_test.go:22: out-of-range counter-bombard fired: attacker=&{ID:long-gun TypeID: OwnerID:player-a TileID:origin ArmyID: TransportID: Domain:land Movement:0 MaxMovement:0 Fuel:0 MaxFuel:0 CargoCapacity:0 CargoDomains:[] Upkeep:0 ShieldHunger:0 FoodHunger:0 NeedsNoSupport:false IsProfessional:false IsSpecialForces:false ZOC:false Fortified:false Veteran:false Effects:[{ID:bombard-land Kind:can_bombard_land Value:0 Turns:0}] Attack:0 Defense:0 Ranged:100 BombardRange:2 BombRounds:1 ActiveDefenseRange:0 Strength:1 Armor:1 Firepower:0 Health:5 MaxHealth:10 VisibilityRange:0 CircumnavigatedColumns:[] InSpace:false ReentryTileID: ReentryTurns:0 SettleCityTypeID:} ok=true
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.002s
+FAIL
