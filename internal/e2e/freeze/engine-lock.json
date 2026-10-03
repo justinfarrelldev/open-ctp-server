@@ -55,7 +55,7 @@
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "f037cf1ecf971b9c55ca8b2b371a0fc2f7d4b7eac120a5bd40fec273db4bb068"
+      "sha256": "e02aa3cffc75351e866ae6f3c8abd0b478d048d4c414feac36914f11b4129347"
     },
     {
       "path": "internal/gameplay/engine/government.go",
@@ -63,7 +63,7 @@
     },
     {
       "path": "internal/gameplay/engine/lifecycle.go",
-      "sha256": "6a67098980bc22d5abea661b03ba668561119ba38a0a8db7d9ce9af674ff10a9"
+      "sha256": "cd7f2cc2ba7ca32bbeaff87f69c867ee290be87c0bca11399c8f927528e0e2cb"
     },
     {
       "path": "internal/gameplay/engine/policy_state.go",
@@ -79,7 +79,7 @@
     },
     {
       "path": "internal/gameplay/engine/units.go",
-      "sha256": "c3e71bc6d3d46ccf07ae87f9f30d0ef020455144c327547debd028d5cc079fc4"
+      "sha256": "c48bcc31fa45b2cf04270c3ead20ea36c93d7df66312e3bc2382a214b3afd936"
     },
     {
       "path": "internal/gameplay/engine/war.go",
@@ -95,11 +95,11 @@
     },
     {
       "path": "internal/gameplay/http/http.go",
-      "sha256": "05cc9828e62aa66d9f06d329abd92fab84f68b9c98ed6514c032ff948fed7992"
+      "sha256": "b5756f0c7aae892df4f4b99d96832fcaa0832005c63fbdc4b9b252cef1dccf0d"
     },
     {
       "path": "internal/gameplay/rules/retail_catalog.go",
-      "sha256": "09053900918d44ec0b0fa6819878e3054971f9fee1bf20bb3fb291a516faa3df"
+      "sha256": "c51c81f70b8a649ff6a15c9c2b0477aaaa19ad155352f31da6400aa83c9f30b9"
     },
     {
       "path": "internal/gameplay/rules/retail_pollution.go",
@@ -111,7 +111,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_runtime.go",
-      "sha256": "06ba7876362031c479cd40fda129dbb8f75ffe3045ce308f1033dbd39e2fb559"
+      "sha256": "e8887407fe4b9a3f2bb9f98d7df6b961ffb9bd7f04ea643185b45aacd2fc88e5"
     },
     {
       "path": "internal/gameplay/rules/rules.go",
@@ -119,7 +119,7 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "dbf048dd231c72babc4be53f495f8ecc3314401c8185ed1fef8eaa14d81ead24"
+      "sha256": "5ba12000e2d0eb1b7f93bbe12093223f2beb3f39383516333bd138640e1e5909"
     },
     {
       "path": "internal/gameplay/service/ai.go",
@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "efe24cd3f1a2fe06ebc4499c848dfd4061d05e7108af791b5f04685b14ca1fba"
+      "sha256": "ca66f5d8ad6f52e75a18a4aa6c8ab3e469ca6ea0af505eba2f30cf7dc03e19ba"
     },
     {
       "path": "internal/runtime/runtime.go",

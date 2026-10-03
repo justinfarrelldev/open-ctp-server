@@ -80,6 +80,7 @@ var commands = map[string]struct {
 	"embark":                {engine.CommandEmbark, fields("unit_id", "transport_id")},
 	"disembark":             {engine.CommandDisembark, fields("unit_id", "tile_id")},
 	"gift-unit":             {engine.CommandGiftUnit, fields("unit_id", "target_player_id")},
+	"pirate-trade":          {engine.CommandPirateTrade, fields("unit_id", "route_id")},
 	"space-launch":          {engine.CommandSpaceLaunch, fields("unit_id", "target_tile_id")},
 	"fortify":               {engine.CommandFortify, fields("unit_id")},
 	"found-city":            {engine.CommandFoundCity, fields("unit_id", "city_id", "name")},

@@ -349,6 +349,7 @@
 - [x] Task 398: Retail unit `CanBeGifted` executes safe gift-unit ownership transfer, legal projection, and HTTP routing.
 - [x] Task 399: Retail unit `DeathEffectsHappy` gates combat morale/peace-movement loss accounting.
 - [x] Task 400: Retail wonder gold fields pay owner treasury at begin turn instead of per-city yields.
+- [x] Task 401: Retail unit `CanPirate` executes trade-route piracy with persistent pirating-army treasury income.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

@@ -107,6 +107,15 @@ func TestHandlerDelegatesGiftUnitRoute(t *testing.T) {
 	}
 }
 
+func TestHandlerDelegatesPirateTradeRoute(t *testing.T) {
+	executor := &recordingExecutor{}
+	recorder := httptest.NewRecorder()
+	authenticatedHandler(executor).ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/game/9/pirate-trade", strings.NewReader(`{"session_id":1,"expected_revision":2,"idempotency_key":"key","command_id":"pirate","unit_id":"privateer","route_id":"route-b-c"}`)))
+	if recorder.Code != http.StatusOK || executor.request.Type != engine.CommandPirateTrade || !strings.Contains(string(executor.request.Payload), "route_id") {
+		t.Fatalf("pirate-trade route failed: status=%d request=%#v body=%s", recorder.Code, executor.request, recorder.Body.String())
+	}
+}
+
 func TestHandlerRejectsUnknownAuthorityAndHidesGatewayDetails(t *testing.T) {
 	executor := &recordingExecutor{err: &service.Error{Status: http.StatusUnprocessableEntity, Message: "hidden foreign unit target"}}
 	handler := authenticatedHandler(executor)

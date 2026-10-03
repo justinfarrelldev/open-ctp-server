@@ -338,6 +338,7 @@ type RuntimeConstants struct {
 	NukePopulationPercent          int `json:"nuke_population_percent,omitempty"`
 	NukeKillTiles                  int `json:"nuke_kill_tiles,omitempty"`
 	PollutionCausedByNuke          int `json:"pollution_caused_by_nuke,omitempty"`
+	PiracyWastePercent             int `json:"piracy_waste_percent,omitempty"`
 }
 
 type RuntimeGaia struct {

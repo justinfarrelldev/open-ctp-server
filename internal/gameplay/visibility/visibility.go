@@ -124,6 +124,7 @@ type TradeRouteProjection struct {
 	SourceCityID      string `json:"source_city_id"`
 	DestinationCityID string `json:"destination_city_id"`
 	CrossesWater      bool   `json:"crosses_water,omitempty"`
+	PiratingArmyID    string `json:"pirating_army_id,omitempty"`
 }
 
 type DiplomacyRelationProjection struct {
@@ -325,10 +326,10 @@ func tradeRouteProjection(state engine.State, playerID string, visible map[strin
 	for _, route := range state.TradeRoutes {
 		source, sourceOK := cityByID(state.Cities, route.SourceCityID)
 		destination, destinationOK := cityByID(state.Cities, route.DestinationCityID)
-		if !sourceOK || !destinationOK || source.OwnerID != playerID || !visible[source.TileID] || !visible[destination.TileID] {
+		if !sourceOK || !destinationOK || !visible[source.TileID] || !visible[destination.TileID] {
 			continue
 		}
-		projection = append(projection, TradeRouteProjection{ID: route.ID, SourceCityID: route.SourceCityID, DestinationCityID: route.DestinationCityID, CrossesWater: route.CrossesWater})
+		projection = append(projection, TradeRouteProjection{ID: route.ID, SourceCityID: route.SourceCityID, DestinationCityID: route.DestinationCityID, CrossesWater: route.CrossesWater, PiratingArmyID: route.PiratingArmyID})
 	}
 	return projection
 }
@@ -1153,6 +1154,7 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 		actions = append(actions, nuclearAttackActions(cities, unit)...)
 		actions = append(actions, spaceLaunchActions(cities, unit)...)
 		actions = append(actions, giftUnitActions(projection, unit, playerID)...)
+		actions = append(actions, pirateTradeActions(projection, cities, unit)...)
 		actions = append(actions, expelActions(projection, tiles, unit)...)
 		actions = append(actions, sueUnitActions(projection, tiles, unit)...)
 		actions = append(actions, specialActions(projection, tiles, cities, unit, playerID)...)
@@ -1278,6 +1280,28 @@ func giftUnitActions(projection Projection, unit UnitProjection, playerID string
 			continue
 		}
 		actions = append(actions, action(engine.CommandGiftUnit, "gift-unit", unit.ID, relation.TargetPlayerID, map[string]string{"unit_id": unit.ID, "target_player_id": relation.TargetPlayerID}, []string{"unit_id", "target_player_id"}))
+	}
+	return actions
+}
+
+func pirateTradeActions(projection Projection, cities map[string]CityProjection, unit UnitProjection) []ActionProjection {
+	if unit.InSpace || unit.TileID == "" || unit.TransportID != "" || unit.ArmyID == "" || unit.Movement < 1 || !effectHasKind(unit.Effects, engine.EffectCanPirate) {
+		return nil
+	}
+	actions := make([]ActionProjection, 0)
+	for _, route := range projection.TradeRoutes {
+		if route.ID == "" || route.PiratingArmyID == unit.ArmyID {
+			continue
+		}
+		source, sourceOK := cities[route.SourceCityID]
+		destination, destinationOK := cities[route.DestinationCityID]
+		if !sourceOK || !destinationOK || source.Stale || destination.Stale || source.OwnerID == unit.OwnerID {
+			continue
+		}
+		if source.TileID != unit.TileID && destination.TileID != unit.TileID {
+			continue
+		}
+		actions = append(actions, action(engine.CommandPirateTrade, "pirate-trade", unit.ID, route.ID, map[string]string{"unit_id": unit.ID, "route_id": route.ID}, []string{"unit_id", "route_id"}))
 	}
 	return actions
 }

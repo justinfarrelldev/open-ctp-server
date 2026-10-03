@@ -1,0 +1,10 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/piracy_task56_test.go:12:12: undefined: Phase
+internal/gameplay/engine/piracy_task56_test.go:21:67: unknown field PiracyWastePercent in struct literal of type rules.RuntimeConstants
+internal/gameplay/engine/piracy_task56_test.go:23:59: undefined: CommandPirateTrade
+internal/gameplay/engine/piracy_task56_test.go:27:18: undefined: EventTradeRoutePirated
+internal/gameplay/engine/piracy_task56_test.go:27:65: state.TradeRoutes[0].PiratingArmyID undefined (type TradeRoute has no field or method PiratingArmyID)
+internal/gameplay/engine/piracy_task56_test.go:39:16: undefined: Phase
+internal/gameplay/engine/piracy_task56_test.go:49:51: undefined: CommandPirateTrade
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL

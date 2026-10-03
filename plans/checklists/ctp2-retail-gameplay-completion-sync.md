@@ -67,6 +67,7 @@
 - [x] Task 053: Retail `CanBeGifted` units now execute/projection/HTTP gift-unit actions that transfer ownership at the giver capitol.
 - [x] Task 054: Retail `DeathEffectsHappy` now gates combat peace-movement lost-unit counters instead of all combat casualties counting.
 - [x] Task 055: Retail wonder gold (`BonusGold`, route gold, and television gold) now pays owner treasury once at begin turn instead of inflating city yields.
+- [x] Task 056: Retail `CanPirate` units now mark trade routes as pirated and earn route-value piracy gold at begin turn.
 
 ## Full-Game Mechanical Execution First
 

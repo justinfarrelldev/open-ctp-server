@@ -43,6 +43,11 @@ type giftUnitPayload struct {
 	TargetPlayerID string `json:"target_player_id"`
 }
 
+type pirateTradePayload struct {
+	UnitID  string `json:"unit_id"`
+	RouteID string `json:"route_id"`
+}
+
 type spaceLaunchPayload struct {
 	UnitID       string `json:"unit_id"`
 	TargetTileID string `json:"target_tile_id"`
@@ -119,6 +124,12 @@ func applyUnitCommand(state *State, command Command, runtime *rules.RuntimeRules
 			return "", err
 		}
 		return EventUnitGifted, giftUnit(state, command.ActorPlayerID, payload)
+	case CommandPirateTrade:
+		var payload pirateTradePayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", err
+		}
+		return EventTradeRoutePirated, pirateTrade(state, command.ActorPlayerID, payload)
 	case CommandSpaceLaunch:
 		var payload spaceLaunchPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -678,6 +689,49 @@ func giftUnit(state *State, actorID string, payload giftUnitPayload) error {
 	unit.TransportID = ""
 	unit.Fortified = false
 	return nil
+}
+
+func pirateTrade(state *State, actorID string, payload pirateTradePayload) error {
+	unit, err := ownedUnit(state, actorID, payload.UnitID)
+	if err != nil || payload.RouteID == "" || unit.TileID == "" || unit.TransportID != "" || unit.InSpace || unit.ArmyID == "" || !hasEffect(unit.Effects, EffectCanPirate) {
+		return errors.New("piracy action is invalid")
+	}
+	army, ok := armyByID(state, unit.ArmyID)
+	if !ok || army.OwnerID != actorID {
+		return errors.New("piracy action is invalid")
+	}
+	route, ok := tradeRouteByID(state, payload.RouteID)
+	if !ok || !tradeRouteTouchesTile(*state, *route, unit.TileID) || tradeRouteSourceOwner(*state, *route) == actorID {
+		return errors.New("piracy action is invalid")
+	}
+	if err := spendSpecialMove(unit); err != nil {
+		return err
+	}
+	route.PiratingArmyID = unit.ArmyID
+	return nil
+}
+
+func tradeRouteByID(state *State, routeID string) (*TradeRoute, bool) {
+	for index := range state.TradeRoutes {
+		if state.TradeRoutes[index].ID == routeID {
+			return &state.TradeRoutes[index], true
+		}
+	}
+	return nil, false
+}
+
+func tradeRouteTouchesTile(state State, route TradeRoute, tileID string) bool {
+	source, sourceOK := cityByID(state, route.SourceCityID)
+	destination, destinationOK := cityByID(state, route.DestinationCityID)
+	return (sourceOK && source.TileID == tileID) || (destinationOK && destination.TileID == tileID)
+}
+
+func tradeRouteSourceOwner(state State, route TradeRoute) string {
+	city, ok := cityByID(state, route.SourceCityID)
+	if !ok {
+		return ""
+	}
+	return city.OwnerID
 }
 
 func createArmy(state *State, actorID string, payload armyCreatePayload) error {

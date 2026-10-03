@@ -43,6 +43,7 @@ const (
 	CommandEmbark             = "embark-unit"
 	CommandDisembark          = "disembark-unit"
 	CommandGiftUnit           = "gift-unit"
+	CommandPirateTrade        = "pirate-trade"
 	CommandSpaceLaunch        = "space-launch"
 	CommandArmyCreate         = "create-army"
 	CommandArmyJoin           = "join-army"
@@ -137,6 +138,7 @@ const (
 	EventAdvertised               = "city.advertised"
 	EventPartyThrown              = "diplomacy.party_thrown"
 	EventUnitGifted               = "unit.gifted"
+	EventTradeRoutePirated        = "trade_route.pirated"
 	EventParkCreated              = "tile.park_created"
 	EventRulerAssassinated        = "nation.ruler_assassinated"
 	EventRulerAssassinationFailed = "nation.ruler_assassination_failed"
@@ -390,6 +392,7 @@ type TradeRoute struct {
 	GoodID            string `json:"good_id,omitempty"`
 	Gold              int    `json:"gold,omitempty"`
 	CrossesWater      bool   `json:"crosses_water,omitempty"`
+	PiratingArmyID    string `json:"pirating_army_id,omitempty"`
 }
 
 type Player struct {
@@ -970,12 +973,16 @@ func ValidateState(state State) error {
 
 func validateTradeRoutes(state State) error {
 	cities := makeIDSet(cityIDs(state.Cities))
+	armies := makeIDSet(armyIDs(state.Armies))
 	for _, route := range state.TradeRoutes {
 		if route.ID == "" || route.SourceCityID == "" || route.DestinationCityID == "" || route.SourceCityID == route.DestinationCityID {
 			return errors.New("trade route is invalid")
 		}
 		if len(state.Cities) > 0 && (!cities[route.SourceCityID] || !cities[route.DestinationCityID]) {
 			return errors.New("trade route city does not exist")
+		}
+		if route.PiratingArmyID != "" && len(state.Armies) > 0 && !armies[route.PiratingArmyID] {
+			return errors.New("trade route pirating army does not exist")
 		}
 	}
 	return nil

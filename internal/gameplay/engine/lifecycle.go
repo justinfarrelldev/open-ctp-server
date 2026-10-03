@@ -592,6 +592,7 @@ func advanceTreasury(state *State, runtimes ...*rules.RuntimeRules) {
 		for _, player := range state.Players {
 			if player.NationID == nation.ID {
 				income += wonderGoldForPlayer(*state, player.ID)
+				income += piracyGoldForPlayer(*state, player.ID, runtime)
 			}
 		}
 		income -= unitUpkeepForNation(*state, nation.ID)
@@ -645,6 +646,39 @@ func cityHasTelevision(state State, city City) bool {
 	}
 	for _, effect := range city.Effects {
 		if effect.Kind == EffectTelevision {
+			return true
+		}
+	}
+	return false
+}
+
+func piracyGoldForPlayer(state State, playerID string, runtime *rules.RuntimeRules) int {
+	percent := 100
+	if runtime != nil && runtime.Constants.PiracyWastePercent > 0 {
+		percent = runtime.Constants.PiracyWastePercent
+	}
+	total := 0
+	for _, route := range state.TradeRoutes {
+		if route.PiratingArmyID == "" {
+			continue
+		}
+		army, ok := armyByID(&state, route.PiratingArmyID)
+		if !ok || army.OwnerID != playerID || !armyTouchesTradeRoute(state, *army, route) {
+			continue
+		}
+		value := route.Gold
+		if value <= 0 {
+			value = tradeRouteGold(route.GoodID)
+		}
+		total += value * percent / 100
+	}
+	return total
+}
+
+func armyTouchesTradeRoute(state State, army Army, route TradeRoute) bool {
+	for _, unitID := range army.UnitIDs {
+		unit, ok := unitByID(state, unitID)
+		if ok && unit.TileID != "" && tradeRouteTouchesTile(state, route, unit.TileID) {
 			return true
 		}
 	}
