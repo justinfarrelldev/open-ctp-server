@@ -1,0 +1,7 @@
+--- FAIL: TestRetailCityCaptureTransfersBuiltWondersToConqueror (0.00s)
+    wonder_capture_task61_test.go:22: wonder owner after capture = "player-b", want player-a
+--- FAIL: TestRetailCityCaptureReappliesWonderAddEffectsForNewOwner (0.00s)
+    wonder_capture_task61_test.go:37: new owner unit HP after wonder capture = 5/5, want 7/7
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

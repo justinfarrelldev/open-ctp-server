@@ -79,7 +79,7 @@
     },
     {
       "path": "internal/gameplay/engine/units.go",
-      "sha256": "c48bcc31fa45b2cf04270c3ead20ea36c93d7df66312e3bc2382a214b3afd936"
+      "sha256": "928fcb960701533c1a0381dbcdb3314142e2d6378213a9b9071749df1f756134"
     },
     {
       "path": "internal/gameplay/engine/war.go",

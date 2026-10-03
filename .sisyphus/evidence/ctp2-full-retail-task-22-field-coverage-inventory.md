@@ -144,3 +144,6 @@ Task 059 update:
 
 Task 060 update:
 - Retail `GoldPerTelevision` wonder income now checks television effects through effective city buildings, including wonder-granted building effects.
+
+Task 061 update:
+- Retail city capture now transfers built wonders in the captured city to the conqueror and reapplies owner-facing wonder add effects such as hit points and effective-building ownership.

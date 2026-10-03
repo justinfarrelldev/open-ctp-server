@@ -540,6 +540,7 @@ func captureCityAt(state *State, actorID, tileID string, runtimes ...*rules.Runt
 			normalizeCityConversionOwner(&state.Cities[i])
 			state.Cities[i].ConquestDistress = conquestDistressForOwner(*state, actorID)
 			state.TradeRoutes = removeTradeRoutesTouchingCity(state.TradeRoutes, cityID)
+			transferCityWondersToOwner(state, cityID, actorID, runtime)
 			applyConqueredByForceFeat(state, actorID, defeatedOwnerID, defeatedCityCount, runtime)
 			if recapturedByFounder {
 				applyCityRecapturedFeat(state, actorID, runtime)
@@ -548,6 +549,17 @@ func captureCityAt(state *State, actorID, tileID string, runtimes ...*rules.Runt
 		}
 	}
 	return ""
+}
+
+func transferCityWondersToOwner(state *State, cityID, newOwnerID string, runtime *rules.RuntimeRules) {
+	for index := range state.Wonders {
+		wonder := &state.Wonders[index]
+		if wonder.CityID != cityID || wonder.Destroyed || wonder.OwnerID == newOwnerID {
+			continue
+		}
+		wonder.OwnerID = newOwnerID
+		applyWonderCompletionEffects(state, *wonder, runtime)
+	}
 }
 
 func ownerCityCount(state State, ownerID string) int {

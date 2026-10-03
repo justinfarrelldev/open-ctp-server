@@ -354,6 +354,7 @@
 - [x] Task 403: Retail `VETERAN_COEF` increases veteran melee, bombard, active-defense, and counter-bombard hit strength.
 - [x] Task 404: Retail wonder `BuildingEverywhere`/`ActualBuildingEverywhere` supplies owner effective buildings for city prerequisite checks.
 - [x] Task 405: Retail `GoldPerTelevision` wonder income uses effective-building television effects.
+- [x] Task 406: Retail city capture transfers built wonders to the conqueror and reapplies owner-facing wonder add effects.
 
 ## Detailed Remaining Retail Parity Ledger
 

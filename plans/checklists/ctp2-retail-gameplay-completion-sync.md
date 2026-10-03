@@ -72,6 +72,7 @@
 - [x] Task 058: Retail `VETERAN_COEF` now increases veteran melee, bombard, active-defense, and counter-bombard hit strength.
 - [x] Task 059: Retail wonder `BuildingEverywhere`/`ActualBuildingEverywhere` now provide effective buildings for owner city building prerequisites.
 - [x] Task 060: Retail `GoldPerTelevision` wonder income now counts television effects from effective buildings, including building-everywhere wonders.
+- [x] Task 061: Retail city capture now transfers built wonders to the conqueror and reapplies owner-facing wonder add effects.
 
 ## Full-Game Mechanical Execution First
 
