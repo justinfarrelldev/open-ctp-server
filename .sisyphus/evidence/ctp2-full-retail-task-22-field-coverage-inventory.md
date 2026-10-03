@@ -108,3 +108,6 @@ Task 047 update:
 
 Task 048 update:
 - Retail wonder `FreeSlaves` emancipation now removes queued slave raid, settler slave raid, and slave-uprising unit items via the same post-emancipation illegal-item cleanup retail runs.
+
+Task 049 update:
+- Retail wonder `EliminateNukes` now globally blocks nuclear-attack unit production from active wonder state, not only from nation markers written during wonder completion.

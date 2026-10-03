@@ -622,7 +622,7 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if payload.Item.Kind == ProductionUnit && !productionCityGoodSatisfied(*state, *city, payload.Item, runtime) {
 		return errors.New("production prerequisite is not met")
 	}
-	if payload.Item.Kind == ProductionUnit && productionHasNuclearAttackEffect(payload.Item, runtime) && playerHasNationEffect(*state, actor, EffectEliminateNukes) {
+	if payload.Item.Kind == ProductionUnit && productionHasNuclearAttackEffect(payload.Item, runtime) && (playerHasNationEffect(*state, actor, EffectEliminateNukes) || anyActiveWonderEffect(*state, EffectEliminateNukes)) {
 		return errors.New("production prerequisite is not met")
 	}
 	if payload.Item.Kind == ProductionUnit && productionHasSlaverEffect(payload.Item, runtime) && playerHasUnitEffect(*state, actor, EffectNoSlaves) {

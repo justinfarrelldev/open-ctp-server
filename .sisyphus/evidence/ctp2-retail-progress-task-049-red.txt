@@ -1,0 +1,5 @@
+--- FAIL: TestRetailEliminateNukesWonderGloballyBlocksNuclearAttackUnitProduction (0.00s)
+    eliminate_nukes_production_task49_test.go:12: nuclear attack unit production succeeded after any EliminateNukes wonder existed
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.004s
+FAIL

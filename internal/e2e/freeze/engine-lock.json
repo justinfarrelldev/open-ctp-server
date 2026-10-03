@@ -43,7 +43,7 @@
     },
     {
       "path": "internal/gameplay/engine/cities.go",
-      "sha256": "a16c7ce129f64bcc04da616b64ee286fb2a0173dc49cc991c187a08728f735a7"
+      "sha256": "a46db1753ead87825dfdbdb53383a5ba7cd18daf340bff3c31e6e9c3fcfac293"
     },
     {
       "path": "internal/gameplay/engine/combat.go",
