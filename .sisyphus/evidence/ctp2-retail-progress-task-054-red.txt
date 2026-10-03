@@ -1,0 +1,5 @@
+--- FAIL: TestRetailCombatDeathWithoutDeathEffectsHappyDoesNotAffectPeaceMovement (0.00s)
+    death_effects_happy_task54_test.go:23: non DeathEffectsHappy combat casualty affected peace movement: &engine.PeaceMovementState{RawOverseasDefeat:0, RawHomeDefeat:0, UnitsLostOverseas:0, UnitsLostHome:1}
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.005s
+FAIL

@@ -13,7 +13,7 @@ Regression guard:
 
 | Catalog | Records | Unique fields, including nested fields | Current coverage summary |
 | --- | ---: | ---: | --- |
-| Units | 77 | 194 | Core cost/prereq/obsolete/combat/move/fuel/ranged/bombard plus `SpaceLaunch`, `NuclearAttack`, `ThrowParty`, `Advertise`, `CanBeGifted`, `InvisibleForGlobeSat`, and beach-assault unload movement behavior are partially projected/executed. Many special actions, cargo/vision classes, stealth, active defense, upgrades, support, and sound/UI fields remain pending. |
+| Units | 78 | 194 | Core cost/prereq/obsolete/combat/move/fuel/ranged/bombard plus `SpaceLaunch`, `NuclearAttack`, `ThrowParty`, `Advertise`, `CanBeGifted`, `DeathEffectsHappy`, `InvisibleForGlobeSat`, and beach-assault unload movement behavior are partially projected/executed. Many special actions, cargo/vision classes, stealth, active defense, upgrades, support, and sound/UI fields remain pending. |
 | Advances | 107 | 19 | Cost/prerequisites, research unlocks, production obsolescence, plant-nuke unlocks, pollution modifiers, capitalization/infrastructure unlocks, terrain-improvement transport/terraform gates, and advance-triggered feats are executed; Age/Branch/Icon/GLHidden/advice are presentation metadata. |
 | Feats | 14 | 13 | Advance-triggered feat effects for production, science, happiness, boat movement, hit points, and city-wall reduction are imported as timed runtime effects; building thresholds, sailed-around-world, conquered-by-force, and founder city-recapture triggers now execute as timed nation effects with retail one-time achievement gating. |
 | Wonders | 30 | 39 | Cost/prereq/obsolete metadata plus selected effects including `IncreaseBoatMovement`, `IncreaseHp`, `IncreaseScientists`, `IncreaseBrokerages`, `IncreaseRegard`, `EnableParkRangers`, `EliminateNukes`, and `FreeSlaves` are projected/executed; Gaia and remaining global effects require more execution coverage. |
@@ -123,3 +123,6 @@ Task 052 update:
 
 Task 053 update:
 - Retail unit `CanBeGifted` is no longer marker-only: giftable units expose safe public gift actions for known diplomacy targets, execute ownership transfer at the giver capitol, and submit through `/gift-unit`.
+
+Task 054 update:
+- Retail unit `DeathEffectsHappy` now gates combat casualty peace-movement accounting; ordinary combat deaths no longer increment morale/peace-movement lost-unit counters.

@@ -95,14 +95,18 @@ func applyCombat(state *State, command Command, sources Sources, runtime *rules.
 	}
 	for _, unit := range combatArmyUnits(*state, *attackers) {
 		if unit.Health <= 0 {
-			recordUnitLossForPeaceMovement(state, *unit)
+			if hasEffect(unit.Effects, EffectDeathEffectsHappy) {
+				recordUnitLossForPeaceMovement(state, *unit)
+			}
 			removeUnitAndCargo(state, unit.ID)
 			result.AttackerCasualties++
 		}
 	}
 	for _, unit := range combatArmyUnits(*state, *defenders) {
 		if unit.Health <= 0 {
-			recordUnitLossForPeaceMovement(state, *unit)
+			if hasEffect(unit.Effects, EffectDeathEffectsHappy) {
+				recordUnitLossForPeaceMovement(state, *unit)
+			}
 			removeUnitAndCargo(state, unit.ID)
 			result.DefenderCasualties++
 		}

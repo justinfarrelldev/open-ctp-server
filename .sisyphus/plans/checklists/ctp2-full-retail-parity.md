@@ -347,6 +347,7 @@
 - [x] Task 396: Retail unit `InvisibleForGlobeSat` prevents global-radar-only unit projection without affecting normal sight.
 - [x] Task 397: Retail unit `CanBeachAssault`/paratrooper unload movement keeps legal beach-assault cargo mobile while normal cargo loses movement after disembarking.
 - [x] Task 398: Retail unit `CanBeGifted` executes safe gift-unit ownership transfer, legal projection, and HTTP routing.
+- [x] Task 399: Retail unit `DeathEffectsHappy` gates combat morale/peace-movement loss accounting.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

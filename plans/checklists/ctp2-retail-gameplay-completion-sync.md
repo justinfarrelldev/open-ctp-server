@@ -65,6 +65,7 @@
 - [x] Task 051: Retail `InvisibleForGlobeSat` units are hidden from global-radar-only visibility while remaining visible to normal sight.
 - [x] Task 052: Retail disembark now zeroes movement for non-air/non-beach-assault cargo while preserving beach-assault unload movement.
 - [x] Task 053: Retail `CanBeGifted` units now execute/projection/HTTP gift-unit actions that transfer ownership at the giver capitol.
+- [x] Task 054: Retail `DeathEffectsHappy` now gates combat peace-movement lost-unit counters instead of all combat casualties counting.
 
 ## Full-Game Mechanical Execution First
 
