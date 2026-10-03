@@ -230,7 +230,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		}
 		actorNation := nationForID(state, nationForPlayer(*state, command.ActorPlayerID))
 		cost, turns := effectValue(unit.Effects, EffectSpecialTerraform), effectValue(unit.Effects, EffectSpecialTerraformTurns)
-		if actorNation == nil || cost <= 0 || turns <= 0 || actorNation.PublicWorks < cost {
+		if actorNation == nil || !terraformAdvancesMet(*state, runtime, command.ActorPlayerID, tile.Terrain, payload.TargetTerrain) || cost <= 0 || turns <= 0 || actorNation.PublicWorks < cost {
 			return "", nil, errors.New("terrain action is not eligible")
 		}
 		if err := spendSpecialMove(unit, runtime); err != nil {
@@ -355,7 +355,7 @@ func buildTerrainImprovement(state *State, actorID string, payload BuildImprovem
 	}
 	effective := effectiveTerrainImprovement(*state, runtime, definition, tile.ID)
 	actorNation := nationForID(state, nationForPlayer(*state, actorID))
-	if actorNation == nil || definition.RequiredAdvanceID != "" && !containsString(actorNation.Advances, definition.RequiredAdvanceID) || effective.PublicWorksCost < 1 || effective.BuildTurns < 1 || actorNation.PublicWorks < effective.PublicWorksCost {
+	if actorNation == nil || definition.RequiredAdvanceID != "" && !containsString(actorNation.Advances, definition.RequiredAdvanceID) || !terraformAdvancesMet(*state, runtime, actorID, tile.Terrain, definition.TargetTerrain) || effective.PublicWorksCost < 1 || effective.BuildTurns < 1 || actorNation.PublicWorks < effective.PublicWorksCost {
 		return "", nil, errors.New("terrain action is not eligible")
 	}
 	if unit != nil {
@@ -389,6 +389,28 @@ func publicWorksTileEligible(state State, actorID, tileID string) bool {
 		}
 	}
 	return false
+}
+
+func terraformAdvancesMet(state State, runtime *rules.RuntimeRules, actorID, fromTerrainID, toTerrainID string) bool {
+	if runtime == nil || toTerrainID == "" {
+		return true
+	}
+	from, fromOK := runtime.Movement.Terrain(fromTerrainID)
+	to, toOK := runtime.Movement.Terrain(toTerrainID)
+	if !fromOK && !toOK {
+		return true
+	}
+	nation := nationForID(&state, nationForPlayer(state, actorID))
+	if nation == nil {
+		return false
+	}
+	if fromOK && from.TransformRemoveAdvanceID != "" && !containsString(nation.Advances, from.TransformRemoveAdvanceID) {
+		return false
+	}
+	if toOK && to.TransformAddAdvanceID != "" && !containsString(nation.Advances, to.TransformAddAdvanceID) {
+		return false
+	}
+	return true
 }
 
 func effectiveTerrainImprovement(state State, runtime *rules.RuntimeRules, definition rules.RuntimeTerrainImprovementDefinition, tileID string) rules.RuntimeTerrainImprovementDefinition {

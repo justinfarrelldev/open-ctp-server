@@ -251,8 +251,14 @@ type RuntimeTerrain struct {
 	RiverCost                int      `json:"river_cost,omitempty"`
 	RiverDefenseBonusPercent int      `json:"river_defense_bonus_percent,omitempty"`
 	DefenseBonusPercent      int      `json:"defense_bonus_percent,omitempty"`
+	CanDie                   bool     `json:"can_die,omitempty"`
+	DeadFood                 int      `json:"dead_food,omitempty"`
+	DeadProduction           int      `json:"dead_production,omitempty"`
+	DeadGold                 int      `json:"dead_gold,omitempty"`
+	TransformAddAdvanceID    string   `json:"transform_add_advance_id,omitempty"`
 	TransformAddTime         int      `json:"transform_add_time,omitempty"`
 	TransformAddMaterials    int      `json:"transform_add_materials,omitempty"`
+	TransformRemoveAdvanceID string   `json:"transform_remove_advance_id,omitempty"`
 	TransformRemoveTime      int      `json:"transform_remove_time,omitempty"`
 	TransformRemoveMaterials int      `json:"transform_remove_materials,omitempty"`
 }

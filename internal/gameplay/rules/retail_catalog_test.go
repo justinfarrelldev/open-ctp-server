@@ -162,6 +162,9 @@ func TestLoadRetailRulesFromDirectoryPreservesTypedRetailValues(t *testing.T) {
 	if plains.EnvCity.Movement != 50 || plains.EnvCity.Food != 10 || plains.EnvCity.Shield != 15 || plains.EnvCity.Gold != 15 {
 		t.Fatalf("TERRAIN_PLAINS EnvCity = %+v", plains.EnvCity)
 	}
+	if !plains.CanDie || plains.AddAdvance != "ADVANCE_TOOLMAKING" || plains.RemoveAdvance != "ADVANCE_TOOLMAKING" || plains.EnvBase.DeadFood != 0 || plains.EnvBase.DeadShield != 0 || plains.EnvBase.DeadGold != 0 {
+		t.Fatalf("TERRAIN_PLAINS transform/death gates = %+v", plains)
+	}
 	if plains.TransformAdd.Time != 1 || plains.TransformAdd.Materials != 200 || plains.TransformRemove.Time != 1 || plains.TransformRemove.Materials != 50 {
 		t.Fatalf("TERRAIN_PLAINS transform data = add %+v remove %+v", plains.TransformAdd, plains.TransformRemove)
 	}

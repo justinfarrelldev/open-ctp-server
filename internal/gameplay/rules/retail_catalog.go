@@ -161,6 +161,9 @@ type RetailTerrain struct {
 	EnvBase         RetailTerrainModifiers `json:"env_base"`
 	EnvCity         RetailTerrainModifiers `json:"env_city"`
 	EnvRiver        RetailTerrainModifiers `json:"env_river"`
+	CanDie          bool                   `json:"can_die,omitempty"`
+	AddAdvance      string                 `json:"add_advance,omitempty"`
+	RemoveAdvance   string                 `json:"remove_advance,omitempty"`
 	TransformAdd    RetailTransformData    `json:"transform_add"`
 	TransformRemove RetailTransformData    `json:"transform_remove"`
 	RawFields       []RetailRawField       `json:"raw_fields"`
@@ -172,13 +175,16 @@ type RetailTransformData struct {
 }
 
 type RetailTerrainModifiers struct {
-	Score    int     `json:"score"`
-	Food     int     `json:"food"`
-	Shield   int     `json:"shield"`
-	Gold     int     `json:"gold"`
-	Defense  float64 `json:"defense"`
-	Movement int     `json:"movement"`
-	Freight  int     `json:"freight"`
+	Score      int     `json:"score"`
+	Food       int     `json:"food"`
+	Shield     int     `json:"shield"`
+	Gold       int     `json:"gold"`
+	Defense    float64 `json:"defense"`
+	Movement   int     `json:"movement"`
+	Freight    int     `json:"freight"`
+	DeadFood   int     `json:"dead_food,omitempty"`
+	DeadShield int     `json:"dead_shield,omitempty"`
+	DeadGold   int     `json:"dead_gold,omitempty"`
 }
 
 type RetailGovernment struct {
@@ -978,7 +984,7 @@ func compileRetailTerrainImprovement(record RetailRawRecord) (RetailTerrainImpro
 }
 
 func compileRetailTerrain(record RetailRawRecord) (RetailTerrain, error) {
-	terrain := RetailTerrain{ID: record.ID, InternalType: record.FirstValue("InternalType"), MovementTypes: record.Values("MovementType"), RawFields: cloneRetailFields(record.Fields)}
+	terrain := RetailTerrain{ID: record.ID, InternalType: record.FirstValue("InternalType"), MovementTypes: record.Values("MovementType"), CanDie: record.HasFlag("CanDie"), AddAdvance: record.FirstValue("AddAdvance"), RemoveAdvance: record.FirstValue("RemoveAdvance"), RawFields: cloneRetailFields(record.Fields)}
 	if envBase, ok := record.FirstBlock("EnvBase"); ok {
 		modifiers, err := retailTerrainModifiers(record.ID, envBase)
 		if err != nil {
@@ -1218,6 +1224,14 @@ func retailTerrainModifiers(recordID string, field RetailRawField) (RetailTerrai
 		*target, err = retailFieldInt(recordID, field, key)
 		if err != nil {
 			return RetailTerrainModifiers{}, err
+		}
+	}
+	for key, target := range map[string]*int{"DeadFood": &modifiers.DeadFood, "DeadShield": &modifiers.DeadShield, "DeadGold": &modifiers.DeadGold} {
+		if value := field.FirstValue(key); value != "" {
+			*target, err = retailParseInt(recordID, key, value)
+			if err != nil {
+				return RetailTerrainModifiers{}, err
+			}
 		}
 	}
 	modifiers.Defense, err = retailParseFloat(recordID, "Defense", field.FirstValue("Defense"))

@@ -390,7 +390,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 	}
 
 	plains, ok := runtime.Movement.Terrain("TERRAIN_PLAINS")
-	if !ok || plains.Cost != 100 || plains.Food != 10 || plains.Production != 10 || plains.Gold != 5 || plains.CityFood != 10 || plains.CityProduction != 15 || plains.CityGold != 15 || plains.TransformAddTime != 1 || plains.TransformAddMaterials != 200 || plains.TransformRemoveTime != 1 || plains.TransformRemoveMaterials != 50 || !sameStringSlices(plains.Domains, []string{"air", "land"}) {
+	if !ok || plains.Cost != 100 || plains.Food != 10 || plains.Production != 10 || plains.Gold != 5 || plains.CityFood != 10 || plains.CityProduction != 15 || plains.CityGold != 15 || !plains.CanDie || plains.TransformAddAdvanceID != "ADVANCE_TOOLMAKING" || plains.TransformAddTime != 1 || plains.TransformAddMaterials != 200 || plains.TransformRemoveAdvanceID != "ADVANCE_TOOLMAKING" || plains.TransformRemoveTime != 1 || plains.TransformRemoveMaterials != 50 || !sameStringSlices(plains.Domains, []string{"air", "land"}) {
 		t.Fatalf("plains runtime terrain = %+v ok=%v", plains, ok)
 	}
 	forest, ok := runtime.Movement.Terrain("TERRAIN_FOREST")

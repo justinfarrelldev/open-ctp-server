@@ -326,7 +326,7 @@ func floodPollutionTile(state *State, runtime *rules.RuntimeRules) {
 }
 
 func ozonePollutionTile(state *State, runtime *rules.RuntimeRules) {
-	index, ok := highestPollutedLandTile(*state, runtime)
+	index, ok := highestPollutedCanDieTile(*state, runtime)
 	if !ok {
 		return
 	}
@@ -337,10 +337,18 @@ func ozonePollutionTile(state *State, runtime *rules.RuntimeRules) {
 }
 
 func highestPollutedLandTile(state State, runtime *rules.RuntimeRules) (int, bool) {
+	return highestPollutedTileMatching(state, runtime, func(tile Tile) bool { return !waterTerrain(runtime, tile.Terrain) })
+}
+
+func highestPollutedCanDieTile(state State, runtime *rules.RuntimeRules) (int, bool) {
+	return highestPollutedTileMatching(state, runtime, func(tile Tile) bool { return canDieTerrain(runtime, tile.Terrain) })
+}
+
+func highestPollutedTileMatching(state State, runtime *rules.RuntimeRules, eligible func(Tile) bool) (int, bool) {
 	bestIndex := -1
 	bestPollution := 0
 	for index, tile := range state.Tiles {
-		if tile.ID == "" || waterTerrain(runtime, tile.Terrain) {
+		if tile.ID == "" || !eligible(tile) {
 			continue
 		}
 		if bestIndex == -1 || tile.Pollution > bestPollution || tile.Pollution == bestPollution && tile.ID < state.Tiles[bestIndex].ID {
@@ -349,6 +357,15 @@ func highestPollutedLandTile(state State, runtime *rules.RuntimeRules) (int, boo
 		}
 	}
 	return bestIndex, bestIndex >= 0
+}
+
+func canDieTerrain(runtime *rules.RuntimeRules, terrainID string) bool {
+	if runtime != nil {
+		if terrain, ok := runtime.Movement.Terrain(terrainID); ok {
+			return terrain.CanDie
+		}
+	}
+	return !waterTerrain(runtime, terrainID)
 }
 
 func waterTerrain(runtime *rules.RuntimeRules, terrainID string) bool {
