@@ -243,3 +243,6 @@ Task 092 update:
 
 Task 094 update:
 - Advance `Age` now imports through `age.txt`/`Advance.txt`, projects to runtime rules, grants earlier-age advances for configured starting age, suppresses research beyond configured ending age in engine/projection, advances `Nation.CurrentAgeID` on the retail `NeedAdvances` threshold, and seeds eligible earlier-age non-capitol city buildings at founding.
+
+Task 095 update:
+- Unit `IsFlanker` is executed in grouped combat targeting: non-flankers do not retarget inactive rows, while flankers scan adjacent rows in the same column for the nearest active defender.
