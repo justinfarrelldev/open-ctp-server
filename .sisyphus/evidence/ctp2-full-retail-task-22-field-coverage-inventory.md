@@ -225,3 +225,6 @@ Task 086 update:
 
 Task 087 update:
 - Building `DefaultIcon` and `Description` are classified as presentation/UI/SLIC metadata: retail parses them as icon/string IDs and uses them for queue/scenario-editor/Great-Library style presentation, not gameplay state mutation or legality.
+
+Task 088 update:
+- Building structural markers `Capitol`, `Brokerage`, `Television`, and `DoubleTelevangelists` are source-verified as covered by existing runtime projection/execution tests: capture/bombard/capital effects, brokerage-commerce wonder amplification, television wonder income/effective buildings, and televangelist conversion gating.
