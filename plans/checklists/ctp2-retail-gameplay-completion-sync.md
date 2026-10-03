@@ -62,6 +62,7 @@
 - [x] Task 048: Retail `FreeSlaves` emancipation now removes queued slave raid, settler slave raid, and slave-uprising unit items.
 - [x] Task 049: Retail `EliminateNukes` now globally blocks nuclear-attack unit production even in imported states with pre-existing defuser wonders.
 - [x] Task 050: Retail `EliminateNukes` now removes queued nuclear-attack unit items when the defuser effect runs.
+- [x] Task 051: Retail `InvisibleForGlobeSat` units are hidden from global-radar-only visibility while remaining visible to normal sight.
 
 ## Full-Game Mechanical Execution First
 

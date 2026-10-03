@@ -1462,6 +1462,9 @@ func unitVisibleToPlayer(state engine.State, playerID string, visible map[string
 	if !visible[unit.TileID] {
 		return false
 	}
+	if effectHasKind(unit.Effects, engine.EffectInvisibleForGlobeSat) && playerHasGlobalRadar(state, playerID) && !visibleTilesWithoutGlobalRadar(state)[playerID][unit.TileID] {
+		return false
+	}
 	submarine := effectHasKind(unit.Effects, engine.EffectSubmarine)
 	stealth := effectHasKind(unit.Effects, engine.EffectStealth)
 	if !submarine && !stealth {
@@ -2269,6 +2272,14 @@ func (p Projector) viewerPlayerID(viewer events.Viewer) string {
 }
 
 func visibleTiles(state engine.State) map[string]map[string]bool {
+	return visibleTilesFor(state, true)
+}
+
+func visibleTilesWithoutGlobalRadar(state engine.State) map[string]map[string]bool {
+	return visibleTilesFor(state, false)
+}
+
+func visibleTilesFor(state engine.State, includeGlobalRadar bool) map[string]map[string]bool {
 	result := make(map[string]map[string]bool)
 	for _, player := range state.Players {
 		result[player.ID] = make(map[string]bool)
@@ -2299,7 +2310,7 @@ func visibleTiles(state engine.State) map[string]map[string]bool {
 		}
 	}
 	for _, player := range state.Players {
-		if playerHasGlobalRadar(state, player.ID) {
+		if includeGlobalRadar && playerHasGlobalRadar(state, player.ID) {
 			for _, tile := range state.Tiles {
 				result[player.ID][tile.ID] = true
 			}

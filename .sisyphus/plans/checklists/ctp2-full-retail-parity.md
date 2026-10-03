@@ -344,6 +344,7 @@
 - [x] Task 393: Retail wonder `FreeSlaves` removes queued slavery units from city build queues during emancipation.
 - [x] Task 394: Retail wonder `EliminateNukes` globally blocks nuclear-attack unit production from active wonder state.
 - [x] Task 395: Retail wonder `EliminateNukes` removes queued nuclear-attack units during defuser cleanup.
+- [x] Task 396: Retail unit `InvisibleForGlobeSat` prevents global-radar-only unit projection without affecting normal sight.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

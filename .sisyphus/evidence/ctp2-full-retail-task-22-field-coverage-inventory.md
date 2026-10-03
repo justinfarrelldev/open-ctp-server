@@ -13,7 +13,7 @@ Regression guard:
 
 | Catalog | Records | Unique fields, including nested fields | Current coverage summary |
 | --- | ---: | ---: | --- |
-| Units | 74 | 194 | Core cost/prereq/obsolete/combat/move/fuel/ranged/bombard plus `SpaceLaunch`, `NuclearAttack`, `ThrowParty`, and `Advertise` actions are partially projected/executed. Many special actions, cargo/vision classes, stealth, active defense, upgrades, support, and sound/UI fields remain pending. |
+| Units | 75 | 194 | Core cost/prereq/obsolete/combat/move/fuel/ranged/bombard plus `SpaceLaunch`, `NuclearAttack`, `ThrowParty`, `Advertise`, and `InvisibleForGlobeSat` projection behavior are partially projected/executed. Many special actions, cargo/vision classes, stealth, active defense, upgrades, support, and sound/UI fields remain pending. |
 | Advances | 107 | 19 | Cost/prerequisites, research unlocks, production obsolescence, plant-nuke unlocks, pollution modifiers, capitalization/infrastructure unlocks, terrain-improvement transport/terraform gates, and advance-triggered feats are executed; Age/Branch/Icon/GLHidden/advice are presentation metadata. |
 | Feats | 14 | 13 | Advance-triggered feat effects for production, science, happiness, boat movement, hit points, and city-wall reduction are imported as timed runtime effects; building thresholds, sailed-around-world, conquered-by-force, and founder city-recapture triggers now execute as timed nation effects with retail one-time achievement gating. |
 | Wonders | 30 | 39 | Cost/prereq/obsolete metadata plus selected effects including `IncreaseBoatMovement`, `IncreaseHp`, `IncreaseScientists`, `IncreaseBrokerages`, `IncreaseRegard`, `EnableParkRangers`, `EliminateNukes`, and `FreeSlaves` are projected/executed; Gaia and remaining global effects require more execution coverage. |
@@ -114,3 +114,6 @@ Task 049 update:
 
 Task 050 update:
 - Retail wonder `EliminateNukes` now removes queued nuclear-attack unit items during defuser cleanup, matching retail `RemoveIllegalItems()` after nukes are globally eliminated.
+
+Task 051 update:
+- Retail unit `InvisibleForGlobeSat` now affects projection: such units are hidden from global-radar-only visibility but still appear under normal line-of-sight visibility.
