@@ -1,0 +1,15 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/http [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/http.test]
+internal/gameplay/http/http_test.go:105:71: undefined: engine.CommandGiftUnit
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility.test]
+internal/gameplay/visibility/gift_unit_task53_test.go:18:31: undefined: engine.CommandGiftUnit
+internal/gameplay/visibility/gift_unit_task53_test.go:32:31: undefined: engine.CommandGiftUnit
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/gift_unit_task53_test.go:11:59: undefined: CommandGiftUnit
+internal/gameplay/engine/gift_unit_task53_test.go:11:127: undefined: giftUnitPayload
+internal/gameplay/engine/gift_unit_task53_test.go:16:18: undefined: EventUnitGifted
+internal/gameplay/engine/gift_unit_task53_test.go:27:54: undefined: CommandGiftUnit
+internal/gameplay/engine/gift_unit_task53_test.go:27:122: undefined: giftUnitPayload
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility [build failed]
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/http [build failed]
+FAIL

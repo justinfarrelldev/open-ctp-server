@@ -1152,6 +1152,7 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 		actions = append(actions, bombardActions(projection, tiles, unit)...)
 		actions = append(actions, nuclearAttackActions(cities, unit)...)
 		actions = append(actions, spaceLaunchActions(cities, unit)...)
+		actions = append(actions, giftUnitActions(projection, unit, playerID)...)
 		actions = append(actions, expelActions(projection, tiles, unit)...)
 		actions = append(actions, sueUnitActions(projection, tiles, unit)...)
 		actions = append(actions, specialActions(projection, tiles, cities, unit, playerID)...)
@@ -1263,6 +1264,20 @@ func spaceLaunchActions(cities map[string]CityProjection, unit UnitProjection) [
 			continue
 		}
 		actions = append(actions, action(engine.CommandSpaceLaunch, "space-launch", unit.ID, city.TileID, map[string]string{"unit_id": unit.ID, "target_tile_id": city.TileID}, []string{"unit_id", "target_tile_id"}))
+	}
+	return actions
+}
+
+func giftUnitActions(projection Projection, unit UnitProjection, playerID string) []ActionProjection {
+	if unit.InSpace || unit.TileID == "" || unit.TransportID != "" || !effectHasKind(unit.Effects, engine.EffectCanBeGifted) || projection.Diplomacy == nil {
+		return nil
+	}
+	actions := make([]ActionProjection, 0)
+	for _, relation := range projection.Diplomacy.Relations {
+		if relation.TargetPlayerID == "" || relation.TargetPlayerID == playerID {
+			continue
+		}
+		actions = append(actions, action(engine.CommandGiftUnit, "gift-unit", unit.ID, relation.TargetPlayerID, map[string]string{"unit_id": unit.ID, "target_player_id": relation.TargetPlayerID}, []string{"unit_id", "target_player_id"}))
 	}
 	return actions
 }

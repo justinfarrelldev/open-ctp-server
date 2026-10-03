@@ -38,6 +38,11 @@ type disembarkPayload struct {
 	TileID string `json:"tile_id"`
 }
 
+type giftUnitPayload struct {
+	UnitID         string `json:"unit_id"`
+	TargetPlayerID string `json:"target_player_id"`
+}
+
 type spaceLaunchPayload struct {
 	UnitID       string `json:"unit_id"`
 	TargetTileID string `json:"target_tile_id"`
@@ -108,6 +113,12 @@ func applyUnitCommand(state *State, command Command, runtime *rules.RuntimeRules
 			return "", err
 		}
 		return "unit.disembarked", disembark(state, command.ActorPlayerID, payload, runtime)
+	case CommandGiftUnit:
+		var payload giftUnitPayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", err
+		}
+		return EventUnitGifted, giftUnit(state, command.ActorPlayerID, payload)
 	case CommandSpaceLaunch:
 		var payload spaceLaunchPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -649,6 +660,24 @@ func cargoKeepsMovementAfterDisembark(unit Unit, transport Unit) bool {
 		return true
 	}
 	return hasEffect(unit.Effects, EffectCanBeachAssault) && transport.Domain == DomainSea
+}
+
+func giftUnit(state *State, actorID string, payload giftUnitPayload) error {
+	unit, err := ownedUnit(state, actorID, payload.UnitID)
+	target, ok := playerByID(state, payload.TargetPlayerID)
+	capital, hasCapital := capitalCity(*state, actorID)
+	if err != nil || !ok || target.Lifecycle != PlayerActive || payload.TargetPlayerID == actorID || unit.TileID == "" || unit.TransportID != "" || unit.InSpace || !hasEffect(unit.Effects, EffectCanBeGifted) || !hasCapital {
+		return invalidUnitAction(err)
+	}
+	if cargoCount(*state, unit.ID) > 0 {
+		return ErrObstructed
+	}
+	leaveUnitArmy(state, unit.ID)
+	unit.OwnerID = payload.TargetPlayerID
+	unit.TileID = capital.TileID
+	unit.TransportID = ""
+	unit.Fortified = false
+	return nil
 }
 
 func createArmy(state *State, actorID string, payload armyCreatePayload) error {
