@@ -1,0 +1,5 @@
+--- FAIL: TestRetailStartingAgeSeedsEarlierAgeCityBuildings (0.00s)
+    city_starting_age_task94_test.go:50: city buildings = [], want old non-capitol building only
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.006s
+FAIL

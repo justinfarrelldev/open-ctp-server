@@ -539,16 +539,7 @@ func runtimeRules(state engine.State) (rules.RuntimeRules, bool) {
 }
 
 func projectionAdvanceAvailable(nation engine.Nation, runtime rules.RuntimeRules, advanceID string) bool {
-	advance, ok := runtime.Advance(advanceID)
-	if !ok || containsString(nation.Advances, advanceID) {
-		return false
-	}
-	for _, prerequisite := range advance.Prerequisites {
-		if !containsString(nation.Advances, prerequisite) {
-			return false
-		}
-	}
-	return true
+	return engine.CanResearchAdvance(nation, runtime, advanceID)
 }
 
 func legalActions(state engine.State, projection Projection, playerID string) []ActionProjection {

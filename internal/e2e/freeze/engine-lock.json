@@ -43,7 +43,7 @@
     },
     {
       "path": "internal/gameplay/engine/cities.go",
-      "sha256": "d859912ac47533b7281c23cd75594ee9845ca06292b511195554c7b36b3dc725"
+      "sha256": "ff6f89290a46e7a68879e27d0e059cfbd28a3f10e4795769a04dfe4caa59c924"
     },
     {
       "path": "internal/gameplay/engine/combat.go",
@@ -55,7 +55,7 @@
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "5078872c574bf9501c8ec427677950d997abfe8375e1dfb0968f3a70d9c47c9a"
+      "sha256": "027aeaf57d09cda7ed209690c4a750d313ad13fb9028dc9ba275962d87f700db"
     },
     {
       "path": "internal/gameplay/engine/government.go",
@@ -63,7 +63,7 @@
     },
     {
       "path": "internal/gameplay/engine/lifecycle.go",
-      "sha256": "19d290b9b5b52655ecb172fc503dba258a49285115edcc7dc4a0d806dcedde86"
+      "sha256": "1ed8fb231cfd5b51bebb2c523624db5fd5aebb30c1c1fbda419ead7d27704375"
     },
     {
       "path": "internal/gameplay/engine/policy_state.go",
@@ -99,7 +99,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_catalog.go",
-      "sha256": "ada1cc52f8782c26ee3a1f2955c9b1f62a5dd4189092985985acfdd44fee74c9"
+      "sha256": "5374d863f4b949a35e99efd9108c1b7e7f13e38769b6f089da616d978245a65e"
     },
     {
       "path": "internal/gameplay/rules/retail_pollution.go",
@@ -111,7 +111,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_runtime.go",
-      "sha256": "d44fe50c3db5077966c896eec7d7172c779ad2382fc0299006078c4bb0ea37c1"
+      "sha256": "0e2f3b9a5e99e5d2a0dddbfdf87253f50167518f280eccc924bc505a116e3217"
     },
     {
       "path": "internal/gameplay/rules/rules.go",
@@ -119,7 +119,7 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "0b8ac7948ab7dc1f051054d6e81eea8be13f133ae34df24c9a3b0c9646e21100"
+      "sha256": "5cca736b617cedeb7f94ae2bd9e03419cb987edeb1d1929f8cd981664aeb4a17"
     },
     {
       "path": "internal/gameplay/service/ai.go",
@@ -143,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "389185d8f155e04a3ad420c66d99230c0756ced9f75e76811cd2ac052fa241dd"
+      "sha256": "299e6ecdbc42c7e9a622552ff05624160d4fc203f1759937ca1d7b9aeed6fd37"
     },
     {
       "path": "internal/runtime/runtime.go",

@@ -273,7 +273,7 @@ func applyCityCommand(state *State, command Command, runtime *rules.RuntimeRules
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", err
 		}
-		return "city.founded", foundCity(state, command.ActorPlayerID, payload)
+		return "city.founded", foundCity(state, command.ActorPlayerID, payload, runtime)
 	case CommandQueueProduction:
 		var payload QueueProductionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -512,7 +512,11 @@ func setSpecialists(state *State, actor string, payload SetSpecialistsPayload) e
 	return nil
 }
 
-func foundCity(state *State, actor string, payload FoundCityPayload) error {
+func foundCity(state *State, actor string, payload FoundCityPayload, runtimeOptions ...*rules.RuntimeRules) error {
+	var runtime *rules.RuntimeRules
+	if len(runtimeOptions) > 0 {
+		runtime = runtimeOptions[0]
+	}
 	if payload.UnitID == "" || payload.CityID == "" || payload.Name == "" {
 		return errors.New("found city unit, city id, and name are required")
 	}
@@ -541,7 +545,9 @@ func foundCity(state *State, actor string, payload FoundCityPayload) error {
 	cityTypeID := unit.SettleCityTypeID
 	population, buildings := foundedCitySeed(unit.Effects)
 	removeUnitAndCargo(state, unit.ID)
-	state.Cities = append(state.Cities, City{ID: payload.CityID, TypeID: cityTypeID, Name: payload.Name, OwnerID: actor, FounderID: actor, TileID: tileID, Population: population, Buildings: buildings, Goods: cityGoodsInRadius(*state, tileID)})
+	city := City{ID: payload.CityID, TypeID: cityTypeID, Name: payload.Name, OwnerID: actor, FounderID: actor, TileID: tileID, Population: population, Buildings: buildings, Goods: cityGoodsInRadius(*state, tileID)}
+	seedStartingAgeCityBuildings(*state, &city, runtime)
+	state.Cities = append(state.Cities, city)
 	return nil
 }
 
@@ -596,6 +602,63 @@ func foundedCitySeed(effects []Effect) (int, []Building) {
 		}
 	}
 	return population, buildings
+}
+
+func seedStartingAgeCityBuildings(state State, city *City, runtime *rules.RuntimeRules) {
+	if city == nil || runtime == nil || len(runtime.Ages) == 0 {
+		return
+	}
+	startAgeID := runtime.StartAgeID
+	if nationID := nationForPlayer(state, city.OwnerID); nationID != "" {
+		if nation := nationForID(&state, nationID); nation != nil && nation.CurrentAgeID != "" {
+			startAgeID = nation.CurrentAgeID
+		}
+	}
+	if startAgeID == "" {
+		return
+	}
+	startAge, ok := runtime.Age(startAgeID)
+	if !ok || startAge.Index <= 0 {
+		return
+	}
+	seen := make(map[string]bool, len(city.Buildings))
+	for _, building := range city.Buildings {
+		seen[building.ID] = true
+	}
+	for _, production := range runtime.Production {
+		if production.Kind != ProductionBuilding || production.ID == "" || seen[production.ID] || runtimeProductionHasEffect(production, EffectCapitol) || !productionEnabledBeforeAge(production, *runtime, startAge) {
+			continue
+		}
+		item := applyRuntimeProductionDefaults(ProductionItem{ID: production.ID, Kind: ProductionBuilding}, runtime)
+		if err := requireProductionUnlock(state, *city, item, runtime); err != nil {
+			continue
+		}
+		city.Buildings = append(city.Buildings, Building{ID: item.ID, Upkeep: item.Upkeep, ObsoletedBy: item.ObsoletedBy, Effects: item.Effects})
+		seen[item.ID] = true
+	}
+}
+
+func runtimeProductionHasEffect(production rules.RuntimeProduction, kind string) bool {
+	for _, effect := range production.Effects {
+		if effect.Kind == kind {
+			return true
+		}
+	}
+	return false
+}
+
+func productionEnabledBeforeAge(production rules.RuntimeProduction, runtime rules.RuntimeRules, startAge rules.RuntimeAgeDefinition) bool {
+	for _, prerequisite := range production.Prerequisites {
+		advance, ok := runtime.Advance(prerequisite)
+		if !ok || advance.AgeID == "" {
+			continue
+		}
+		age, ok := runtime.Age(advance.AgeID)
+		if ok && age.Index < startAge.Index {
+			return true
+		}
+	}
+	return false
 }
 
 func queueProduction(state *State, actor string, payload QueueProductionPayload, runtime *rules.RuntimeRules) error {

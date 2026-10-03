@@ -25,6 +25,9 @@ type RuntimeRules struct {
 	Effects              []RuntimeEffect                       `json:"effects"`
 	Starter              RuntimeStarter                        `json:"starter"`
 	Movement             RuntimeMovement                       `json:"movement"`
+	Ages                 []RuntimeAgeDefinition                `json:"ages,omitempty"`
+	StartAgeID           string                                `json:"start_age_id,omitempty"`
+	EndAgeID             string                                `json:"end_age_id,omitempty"`
 	Advances             []RuntimeAdvanceDefinition            `json:"advances,omitempty"`
 	TerrainImprovements  []RuntimeTerrainImprovementDefinition `json:"terrain_improvements,omitempty"`
 	PollutionSources     []RuntimePollutionSourceDefinition    `json:"pollution_sources,omitempty"`
@@ -37,9 +40,17 @@ type RuntimeRules struct {
 
 // RuntimeAdvanceDefinition is the bounded synthetic technology model. It keeps
 // CTP2's prerequisite/cost shape without copying the retail tree.
+type RuntimeAgeDefinition struct {
+	ID           string `json:"id"`
+	Index        int    `json:"index"`
+	Number       int    `json:"number,omitempty"`
+	NeedAdvances int    `json:"need_advances,omitempty"`
+}
+
 type RuntimeAdvanceDefinition struct {
 	ID                          string   `json:"id"`
 	Cost                        int      `json:"cost"`
+	AgeID                       string   `json:"age_id,omitempty"`
 	Prerequisites               []string `json:"prerequisites,omitempty"`
 	TriggerFeatID               string   `json:"trigger_feat_id,omitempty"`
 	AllowsPlantNuke             bool     `json:"allows_plant_nuke,omitempty"`
@@ -263,10 +274,50 @@ func (runtime RuntimeRules) Feat(id string) (RuntimeFeatDefinition, bool) {
 
 func (runtime RuntimeRules) Advance(id string) (RuntimeAdvanceDefinition, bool) {
 	index := sort.Search(len(runtime.Advances), func(index int) bool { return runtime.Advances[index].ID >= id })
-	if index == len(runtime.Advances) || runtime.Advances[index].ID != id {
-		return RuntimeAdvanceDefinition{}, false
+	if index < len(runtime.Advances) && runtime.Advances[index].ID == id {
+		return runtime.Advances[index], true
 	}
-	return runtime.Advances[index], true
+	for _, advance := range runtime.Advances {
+		if advance.ID == id {
+			return advance, true
+		}
+	}
+	return RuntimeAdvanceDefinition{}, false
+}
+
+func (runtime RuntimeRules) Age(id string) (RuntimeAgeDefinition, bool) {
+	for _, age := range runtime.Ages {
+		if age.ID == id {
+			return age, true
+		}
+	}
+	return RuntimeAgeDefinition{}, false
+}
+
+func (runtime RuntimeRules) FirstAge() (RuntimeAgeDefinition, bool) {
+	if len(runtime.Ages) == 0 {
+		return RuntimeAgeDefinition{}, false
+	}
+	first := runtime.Ages[0]
+	for _, age := range runtime.Ages[1:] {
+		if age.Index < first.Index || age.Index == first.Index && age.ID < first.ID {
+			first = age
+		}
+	}
+	return first, true
+}
+
+func (runtime RuntimeRules) LastAge() (RuntimeAgeDefinition, bool) {
+	if len(runtime.Ages) == 0 {
+		return RuntimeAgeDefinition{}, false
+	}
+	last := runtime.Ages[0]
+	for _, age := range runtime.Ages[1:] {
+		if age.Index > last.Index || age.Index == last.Index && age.ID > last.ID {
+			last = age
+		}
+	}
+	return last, true
 }
 
 func (runtime RuntimeRules) Government(id string) (RuntimeGovernmentDefinition, bool) {
@@ -561,9 +612,18 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 	if runtime.Movement.Configured && (!runtime.Movement.PolicyConfigured || len(runtime.Movement.Terrains) == 0) {
 		return RuntimeRules{}, errors.New("rules definitions require complete synthetic movement definitions")
 	}
+	sort.Slice(runtime.Ages, func(i, j int) bool {
+		if runtime.Ages[i].Index != runtime.Ages[j].Index {
+			return runtime.Ages[i].Index < runtime.Ages[j].Index
+		}
+		return runtime.Ages[i].ID < runtime.Ages[j].ID
+	})
 	sort.Slice(runtime.Advances, func(i, j int) bool { return runtime.Advances[i].ID < runtime.Advances[j].ID })
 	sort.Slice(runtime.Feats, func(i, j int) bool { return runtime.Feats[i].ID < runtime.Feats[j].ID })
-	if err := validateRuntimeAdvances(runtime.Advances); err != nil {
+	if err := validateRuntimeAges(runtime.Ages, runtime.StartAgeID, runtime.EndAgeID); err != nil {
+		return RuntimeRules{}, err
+	}
+	if err := validateRuntimeAdvances(runtime.Advances, runtime.Ages); err != nil {
 		return RuntimeRules{}, err
 	}
 	for _, government := range runtime.Governments {
@@ -659,7 +719,10 @@ func validateRuntimeProjection(runtime RuntimeRules) error {
 		}
 		seenUnits[unit.ID] = struct{}{}
 	}
-	if err := validateRuntimeAdvanceProjection(runtime.Advances); err != nil {
+	if err := validateRuntimeAges(runtime.Ages, runtime.StartAgeID, runtime.EndAgeID); err != nil {
+		return err
+	}
+	if err := validateRuntimeAdvanceProjection(runtime.Advances, runtime.Ages); err != nil {
 		return err
 	}
 	for _, government := range runtime.Governments {
@@ -700,7 +763,40 @@ func validateRuntimeProjectionVictory(victories []RuntimeVictory) error {
 	return nil
 }
 
-func validateRuntimeAdvanceProjection(advances []RuntimeAdvanceDefinition) error {
+func validateRuntimeAges(ages []RuntimeAgeDefinition, startAgeID, endAgeID string) error {
+	seen := make(map[string]struct{}, len(ages))
+	seenIndex := make(map[int]string, len(ages))
+	for _, age := range ages {
+		if age.ID == "" || age.Index < 0 || age.NeedAdvances < 0 {
+			return errors.New("runtime age record is malformed")
+		}
+		if _, exists := seen[age.ID]; exists {
+			return fmt.Errorf("runtime age %q is duplicated", age.ID)
+		}
+		seen[age.ID] = struct{}{}
+		if previous, exists := seenIndex[age.Index]; exists {
+			return fmt.Errorf("runtime age index %d is duplicated by %q and %q", age.Index, previous, age.ID)
+		}
+		seenIndex[age.Index] = age.ID
+	}
+	if startAgeID != "" {
+		if _, ok := seen[startAgeID]; !ok {
+			return fmt.Errorf("runtime start age %q is missing", startAgeID)
+		}
+	}
+	if endAgeID != "" {
+		if _, ok := seen[endAgeID]; !ok {
+			return fmt.Errorf("runtime end age %q is missing", endAgeID)
+		}
+	}
+	return nil
+}
+
+func validateRuntimeAdvanceProjection(advances []RuntimeAdvanceDefinition, ages []RuntimeAgeDefinition) error {
+	seenAge := make(map[string]struct{}, len(ages))
+	for _, age := range ages {
+		seenAge[age.ID] = struct{}{}
+	}
 	seen := make(map[string]struct{}, len(advances))
 	for _, advance := range advances {
 		if advance.ID == "" {
@@ -712,6 +808,11 @@ func validateRuntimeAdvanceProjection(advances []RuntimeAdvanceDefinition) error
 		seen[advance.ID] = struct{}{}
 	}
 	for _, advance := range advances {
+		if advance.AgeID != "" && len(seenAge) > 0 {
+			if _, ok := seenAge[advance.AgeID]; !ok {
+				return fmt.Errorf("runtime advance %q references missing age %q", advance.ID, advance.AgeID)
+			}
+		}
 		for _, prerequisite := range advance.Prerequisites {
 			if prerequisite == advance.ID {
 				continue
@@ -935,6 +1036,7 @@ func compileAdvanceDefinition(record Record) (RuntimeAdvanceDefinition, error) {
 		return RuntimeAdvanceDefinition{}, err
 	}
 	triggerFeatID := record.Tags["TriggerFeatID"]
+	ageID := record.Tags["AgeID"]
 	allowsPlantNuke, err := optionalBool(record, "AllowsPlantNuke", false)
 	if err != nil {
 		return RuntimeAdvanceDefinition{}, err
@@ -979,7 +1081,7 @@ func compileAdvanceDefinition(record Record) (RuntimeAdvanceDefinition, error) {
 	if err != nil {
 		return RuntimeAdvanceDefinition{}, err
 	}
-	return RuntimeAdvanceDefinition{ID: record.ID, Cost: cost, Prerequisites: prerequisites, TriggerFeatID: triggerFeatID, AllowsPlantNuke: allowsPlantNuke, EnablesCapitalization: capitalization, EnablesInfrastructure: infrastructure, EnablesTransform: transform, EnablesRoads: roads, EnablesRailroads: railroads, EnablesMagLev: maglev, EnablesTunnels: tunnels, EnablesDeepOcean: deepOcean, PollutionSizeModifier: pollutionSizeModifier, PollutionProductionModifier: pollutionProductionModifier}, nil
+	return RuntimeAdvanceDefinition{ID: record.ID, Cost: cost, AgeID: ageID, Prerequisites: prerequisites, TriggerFeatID: triggerFeatID, AllowsPlantNuke: allowsPlantNuke, EnablesCapitalization: capitalization, EnablesInfrastructure: infrastructure, EnablesTransform: transform, EnablesRoads: roads, EnablesRailroads: railroads, EnablesMagLev: maglev, EnablesTunnels: tunnels, EnablesDeepOcean: deepOcean, PollutionSizeModifier: pollutionSizeModifier, PollutionProductionModifier: pollutionProductionModifier}, nil
 }
 
 func compileTerrainImprovementDefinition(record Record) (RuntimeTerrainImprovementDefinition, error) {
@@ -1304,7 +1406,11 @@ func compileGovernmentEmpireFields(record Record) (RuntimeGovernmentDefinition, 
 	return definition, nil
 }
 
-func validateRuntimeAdvances(advances []RuntimeAdvanceDefinition) error {
+func validateRuntimeAdvances(advances []RuntimeAdvanceDefinition, ages []RuntimeAgeDefinition) error {
+	byAge := make(map[string]struct{}, len(ages))
+	for _, age := range ages {
+		byAge[age.ID] = struct{}{}
+	}
 	byID := make(map[string]RuntimeAdvanceDefinition, len(advances))
 	for _, advance := range advances {
 		if advance.ID == "" || advance.Cost < 1 {
@@ -1312,6 +1418,11 @@ func validateRuntimeAdvances(advances []RuntimeAdvanceDefinition) error {
 		}
 		if _, duplicate := byID[advance.ID]; duplicate {
 			return fmt.Errorf("rules definition advance %q is duplicated", advance.ID)
+		}
+		if advance.AgeID != "" && len(byAge) > 0 {
+			if _, ok := byAge[advance.AgeID]; !ok {
+				return fmt.Errorf("rules definition advance %q references missing age %q", advance.ID, advance.AgeID)
+			}
 		}
 		byID[advance.ID] = advance
 	}

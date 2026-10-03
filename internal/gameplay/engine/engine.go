@@ -343,6 +343,7 @@ type Nation struct {
 	GovernmentID        string              `json:"government_id,omitempty"`
 	ResearchTargetID    string              `json:"research_target_id,omitempty"`
 	ResearchProgress    int                 `json:"research_progress,omitempty"`
+	CurrentAgeID        string              `json:"current_age_id,omitempty"`
 	GaiaCompletionTurn  int                 `json:"gaia_completion_turn,omitempty"`
 	MaxCityCount        int                 `json:"max_city_count,omitempty"`
 	LastPartyTurn       int                 `json:"last_party_turn,omitempty"`

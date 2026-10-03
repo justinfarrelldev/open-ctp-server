@@ -21,6 +21,13 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		Movement:             RuntimeMovement{Configured: true, PolicyConfigured: true, OpenAccess: false, ZOCStopsPath: true},
 		PollutionModel:       projectRetailPollutionModel(db.PollutionModel),
 	}
+	for _, age := range db.Ages {
+		runtime.Ages = append(runtime.Ages, RuntimeAgeDefinition{ID: age.ID, Index: age.Index, Number: age.Number, NeedAdvances: age.NeedAdvances})
+	}
+	if len(runtime.Ages) > 0 {
+		runtime.StartAgeID = runtime.Ages[0].ID
+		runtime.EndAgeID = runtime.Ages[len(runtime.Ages)-1].ID
+	}
 	for _, advance := range db.Advances {
 		projected := projectRetailAdvance(advance)
 		runtime.Advances = append(runtime.Advances, projected)
@@ -199,6 +206,7 @@ func projectRetailAdvance(advance RetailAdvance) RuntimeAdvanceDefinition {
 	return RuntimeAdvanceDefinition{
 		ID:                          advance.ID,
 		Cost:                        advance.Cost,
+		AgeID:                       advance.AgeID,
 		Prerequisites:               append([]string(nil), advance.Prerequisites...),
 		TriggerFeatID:               advance.TriggerFeatID,
 		AllowsPlantNuke:             retailContainsString(advance.Flags, "PlantNuke"),
@@ -1033,6 +1041,12 @@ func positiveOrOne(value int) int {
 }
 
 func sortRuntimeProjection(runtime *RuntimeRules) {
+	sort.Slice(runtime.Ages, func(i, j int) bool {
+		if runtime.Ages[i].Index != runtime.Ages[j].Index {
+			return runtime.Ages[i].Index < runtime.Ages[j].Index
+		}
+		return runtime.Ages[i].ID < runtime.Ages[j].ID
+	})
 	sort.Slice(runtime.Advances, func(i, j int) bool { return runtime.Advances[i].ID < runtime.Advances[j].ID })
 	sort.Slice(runtime.Feats, func(i, j int) bool { return runtime.Feats[i].ID < runtime.Feats[j].ID })
 	sort.Slice(runtime.Units, func(i, j int) bool { return runtime.Units[i].ID < runtime.Units[j].ID })

@@ -516,6 +516,7 @@ func advanceResearch(state *State, runtime *rules.RuntimeRules) {
 			nation.ResearchProgress -= advance.Cost
 			nation.Advances = append(nation.Advances, advance.ID)
 			sort.Strings(nation.Advances)
+			maybeEnterAdvanceAge(nation, advance, *runtime)
 			applyAdvanceTriggerFeat(state, nation, advance, runtime)
 			nation.ResearchTargetID = nextResearchAdvance(*nation, *runtime)
 			if nation.ResearchTargetID == "" {
@@ -871,6 +872,38 @@ func cityResearchEffects(state State, city City) []Effect {
 	return effects
 }
 
+func GrantStartingAgeAdvances(state *State, runtime *rules.RuntimeRules, startAgeID string) {
+	if state == nil || runtime == nil || len(runtime.Ages) == 0 {
+		return
+	}
+	if startAgeID == "" {
+		startAgeID = runtime.StartAgeID
+	}
+	if startAgeID == "" {
+		if first, ok := runtime.FirstAge(); ok {
+			startAgeID = first.ID
+		}
+	}
+	startAge, ok := runtime.Age(startAgeID)
+	if !ok {
+		return
+	}
+	for index := range state.Nations {
+		nation := &state.Nations[index]
+		nation.CurrentAgeID = startAge.ID
+		for _, advance := range runtime.Advances {
+			age, ok := runtime.Age(advance.AgeID)
+			if ok && age.Index < startAge.Index && !containsString(nation.Advances, advance.ID) {
+				nation.Advances = append(nation.Advances, advance.ID)
+			}
+		}
+		sort.Strings(nation.Advances)
+		if nation.ResearchTargetID == "" {
+			nation.ResearchTargetID = nextResearchAdvance(*nation, *runtime)
+		}
+	}
+}
+
 func nextResearchAdvance(nation Nation, runtime rules.RuntimeRules) string {
 	for _, advance := range runtime.Advances {
 		if canResearchAdvance(nation, runtime, advance.ID) {
@@ -880,9 +913,13 @@ func nextResearchAdvance(nation Nation, runtime rules.RuntimeRules) string {
 	return ""
 }
 
+func CanResearchAdvance(nation Nation, runtime rules.RuntimeRules, advanceID string) bool {
+	return canResearchAdvance(nation, runtime, advanceID)
+}
+
 func canResearchAdvance(nation Nation, runtime rules.RuntimeRules, advanceID string) bool {
 	advance, ok := runtime.Advance(advanceID)
-	if !ok || containsString(nation.Advances, advanceID) {
+	if !ok || containsString(nation.Advances, advanceID) || advanceBeyondEndAge(advance, runtime) {
 		return false
 	}
 	for _, prerequisite := range advance.Prerequisites {
@@ -891,6 +928,58 @@ func canResearchAdvance(nation Nation, runtime rules.RuntimeRules, advanceID str
 		}
 	}
 	return true
+}
+
+func advanceBeyondEndAge(advance rules.RuntimeAdvanceDefinition, runtime rules.RuntimeRules) bool {
+	if advance.AgeID == "" || runtime.EndAgeID == "" || len(runtime.Ages) == 0 {
+		return false
+	}
+	advanceAge, ok := runtime.Age(advance.AgeID)
+	if !ok {
+		return false
+	}
+	endAge, ok := runtime.Age(runtime.EndAgeID)
+	return ok && advanceAge.Index > endAge.Index
+}
+
+func maybeEnterAdvanceAge(nation *Nation, advance rules.RuntimeAdvanceDefinition, runtime rules.RuntimeRules) {
+	if nation == nil || advance.AgeID == "" || len(runtime.Ages) == 0 {
+		return
+	}
+	advanceAge, ok := runtime.Age(advance.AgeID)
+	if !ok {
+		return
+	}
+	currentAge := currentNationAge(*nation, runtime)
+	if currentAge.ID != "" && advanceAge.Index <= currentAge.Index {
+		return
+	}
+	count := 0
+	for _, knownAdvanceID := range nation.Advances {
+		knownAdvance, ok := runtime.Advance(knownAdvanceID)
+		if !ok || knownAdvance.AgeID != advanceAge.ID {
+			continue
+		}
+		count++
+	}
+	if count >= advanceAge.NeedAdvances {
+		nation.CurrentAgeID = advanceAge.ID
+	}
+}
+
+func currentNationAge(nation Nation, runtime rules.RuntimeRules) rules.RuntimeAgeDefinition {
+	if nation.CurrentAgeID != "" {
+		if age, ok := runtime.Age(nation.CurrentAgeID); ok {
+			return age
+		}
+	}
+	if runtime.StartAgeID != "" {
+		if age, ok := runtime.Age(runtime.StartAgeID); ok {
+			return age
+		}
+	}
+	age, _ := runtime.FirstAge()
+	return age
 }
 
 func endOwnerGame(state *State, owner string) {

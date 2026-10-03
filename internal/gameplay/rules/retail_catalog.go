@@ -15,6 +15,7 @@ import (
 type RetailRules struct {
 	Units                 []RetailUnit                 `json:"units"`
 	Advances              []RetailAdvance              `json:"advances"`
+	Ages                  []RetailAge                  `json:"ages,omitempty"`
 	Feats                 []RetailFeat                 `json:"feats,omitempty"`
 	Wonders               []RetailWonder               `json:"wonders"`
 	Buildings             []RetailBuilding             `json:"buildings"`
@@ -64,9 +65,20 @@ type RetailUnit struct {
 	RawFields          []RetailRawField `json:"raw_fields"`
 }
 
+type RetailAge struct {
+	ID            string           `json:"id"`
+	Index         int              `json:"index"`
+	Number        int              `json:"number,omitempty"`
+	StartingRound int              `json:"starting_round,omitempty"`
+	NeedAdvances  int              `json:"need_advances,omitempty"`
+	SlicObject    string           `json:"slic_object,omitempty"`
+	RawFields     []RetailRawField `json:"raw_fields"`
+}
+
 type RetailAdvance struct {
 	ID            string             `json:"id"`
 	Cost          int                `json:"cost"`
+	AgeID         string             `json:"age_id,omitempty"`
 	Prerequisites []string           `json:"prerequisites,omitempty"`
 	TriggerFeatID string             `json:"trigger_feat_id,omitempty"`
 	FloatValues   map[string]float64 `json:"float_values,omitempty"`
@@ -261,6 +273,7 @@ func RetailGameCatalogs() []RetailCatalog {
 	return []RetailCatalog{
 		{Filename: "Units.txt", Kind: "unit", Prefixes: []string{"UNIT_"}},
 		{Filename: "Advance.txt", Kind: "advance", Prefixes: []string{"ADVANCE_"}},
+		{Filename: "age.txt", Kind: "age", Prefixes: []string{"AGE_"}},
 		{Filename: "feat.txt", Kind: "feat", Prefixes: []string{"FEAT_"}},
 		{Filename: "Wonder.txt", Kind: "wonder", Prefixes: []string{"WONDER_"}},
 		{Filename: "buildings.txt", Kind: "building", Prefixes: []string{"IMPROVE_"}},
@@ -317,6 +330,12 @@ func LoadRetailRulesFromDirectory(directory string) (RetailRules, error) {
 					return RetailRules{}, err
 				}
 				result.Advances = append(result.Advances, compiled)
+			case "age":
+				compiled, err := compileRetailAge(record, len(result.Ages))
+				if err != nil {
+					return RetailRules{}, err
+				}
+				result.Ages = append(result.Ages, compiled)
 			case "feat":
 				compiled, err := compileRetailFeat(record)
 				if err != nil {
@@ -824,7 +843,23 @@ func compileRetailAdvance(record RetailRawRecord) (RetailAdvance, error) {
 	if err != nil {
 		return RetailAdvance{}, err
 	}
-	return RetailAdvance{ID: record.ID, Cost: cost, Prerequisites: record.Values("Prerequisites"), TriggerFeatID: record.FirstValue("TriggerFeat"), FloatValues: retailFloatValues(record.Fields), Flags: retailFlags(record.Fields), RawFields: cloneRetailFields(record.Fields)}, nil
+	return RetailAdvance{ID: record.ID, Cost: cost, AgeID: record.FirstValue("Age"), Prerequisites: record.Values("Prerequisites"), TriggerFeatID: record.FirstValue("TriggerFeat"), FloatValues: retailFloatValues(record.Fields), Flags: retailFlags(record.Fields), RawFields: cloneRetailFields(record.Fields)}, nil
+}
+
+func compileRetailAge(record RetailRawRecord, index int) (RetailAge, error) {
+	number, err := retailRecordInt(record, "Age")
+	if err != nil {
+		return RetailAge{}, err
+	}
+	startingRound, err := retailRecordOptionalInt(record, "StartingRound")
+	if err != nil {
+		return RetailAge{}, err
+	}
+	needAdvances, err := retailRecordOptionalInt(record, "NeedAdvances")
+	if err != nil {
+		return RetailAge{}, err
+	}
+	return RetailAge{ID: record.ID, Index: index, Number: number, StartingRound: startingRound, NeedAdvances: needAdvances, SlicObject: record.FirstValue("SlicObject"), RawFields: cloneRetailFields(record.Fields)}, nil
 }
 
 func compileRetailFeat(record RetailRawRecord) (RetailFeat, error) {
@@ -1022,6 +1057,15 @@ func (r RetailRules) Advance(id string) (RetailAdvance, bool) {
 	return RetailAdvance{}, false
 }
 
+func (r RetailRules) Age(id string) (RetailAge, bool) {
+	for _, value := range r.Ages {
+		if value.ID == id {
+			return value, true
+		}
+	}
+	return RetailAge{}, false
+}
+
 func (r RetailRules) Wonder(id string) (RetailWonder, bool) {
 	for _, value := range r.Wonders {
 		if value.ID == id {
@@ -1092,6 +1136,14 @@ func retailFieldsByKey(fields []RetailRawField, key string) []RetailRawField {
 
 func retailRecordInt(record RetailRawRecord, key string) (int, error) {
 	return retailParseInt(record.ID, key, record.FirstValue(key))
+}
+
+func retailRecordOptionalInt(record RetailRawRecord, key string) (int, error) {
+	value := record.FirstValue(key)
+	if value == "" {
+		return 0, nil
+	}
+	return retailParseInt(record.ID, key, value)
 }
 
 func retailRecordInts(record RetailRawRecord, key string) ([]int, error) {

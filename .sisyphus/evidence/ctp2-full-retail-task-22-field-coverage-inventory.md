@@ -240,3 +240,6 @@ Task 091 update:
 
 Task 092 update:
 - Terrain/tile-improvement presentation fields (`Icon`, `TilesetIndex`, `HutTilesetIndex*`, `Tooltip`, `Statusbar`, `Sound`, `GLHidden`, `IsCityRuin`, `Column`) are classified as presentation/editor/Great-Library/control-panel metadata; no server gameplay execution is required.
+
+Task 094 update:
+- Advance `Age` now imports through `age.txt`/`Advance.txt`, projects to runtime rules, grants earlier-age advances for configured starting age, suppresses research beyond configured ending age in engine/projection, advances `Nation.CurrentAgeID` on the retail `NeedAdvances` threshold, and seeds eligible earlier-age non-capitol city buildings at founding.
