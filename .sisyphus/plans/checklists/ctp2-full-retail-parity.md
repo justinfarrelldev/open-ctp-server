@@ -392,6 +392,7 @@
 - [x] Task 441: Retail combat stats and core modifiers are source-verified against engine/rules regression coverage.
 - [x] Task 442: Retail grouped combat/city-capture edge unit flags are source-verified; `Civilian` is classified as AI/diplomacy metadata for combat execution.
 - [x] Task 443: Advance map-action flags are source-classified/verified against tile-improvement and terraform gates.
+- [x] Task 444: Remaining gameplay-bearing advance flags (`PlantNuke`, capitalization/infrastructure, pollution modifiers, `TriggerFeat`) are source-verified.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -409,7 +410,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Verify and close all advance unlock gates for unit/building/wonder/terrain-improvement production, including multi-prerequisite edge cases and obsolete-advance removal.
 - [x] Complete advance `Age` gameplay/setup parity for start/end age, age transitions, and age-gated initial grants; `Branch`, `Icon`, `GLHidden`, and `KeyAdvanceAdvice` are source-classified as presentation/advice metadata.
 - [x] Finish source-backed execution/verification for `DeepOcean`, `Roads`, `Railroads`, `MagLev`, `Tunnels`, and `Transform` map-action gates.
-- [ ] Verify `PlantNuke`, `Capitalization`, `Infrastructure`, `PollutionProductionModifier`, `PollutionSizeModifier`, and `TriggerFeat` parity across government/advance transitions and persistence.
+- [x] Verify `PlantNuke`, `Capitalization`, `Infrastructure`, `PollutionProductionModifier`, `PollutionSizeModifier`, and `TriggerFeat` parity across government/advance transitions and persistence.
 
 ### Unit catalog fields, movement, support, cargo, and visibility
 

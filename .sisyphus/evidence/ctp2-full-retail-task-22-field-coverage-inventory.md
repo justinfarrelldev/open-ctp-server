@@ -255,3 +255,6 @@ Task 097 update:
 
 Task 098 update:
 - Advance map-action flags are closed: `DeepOcean` is presentation/map-visibility refresh metadata; `Transform` gates the retail terraform UI tab while actual server action legality uses terrain transform data and tile-improvement `EnableAdvance`; `Roads`, `Railroads`, `MagLev`, and `Tunnels` have no non-parser source call sites and released data gates their improvements through tile-improvement advances.
+
+Task 099 update:
+- Remaining gameplay-bearing advance fields (`PlantNuke`, `Capitalization`, `Infrastructure`, `PollutionSizeModifier`, `PollutionProductionModifier`, `TriggerFeat`) are source-verified as runtime/engine/projection executed.
