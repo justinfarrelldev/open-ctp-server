@@ -631,7 +631,7 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if payload.Item.Kind == ProductionUnit && productionHasNoSlavesEffect(payload.Item, runtime) && playerHasSlaverUnit(*state, actor) {
 		return errors.New("production prerequisite is not met")
 	}
-	if payload.Item.Kind == ProductionUnit && productionHasCreateParkEffect(payload.Item, runtime) && !HasActiveWonderEffect(*state, actor, EffectEnableParkRangers) {
+	if payload.Item.Kind == ProductionUnit && productionHasCreateParkEffect(payload.Item, runtime) && !anyActiveWonderEffect(*state, EffectEnableParkRangers) {
 		return errors.New("production prerequisite is not met")
 	}
 	if payload.Item.Kind == ProductionBuilding && cityHasBuilding(*city, payload.Item.ID) {
@@ -2440,6 +2440,20 @@ func ownerWonderEffectSum(state State, ownerID, kind string) int {
 		}
 	}
 	return total
+}
+
+func anyActiveWonderEffect(state State, kind string) bool {
+	for _, wonder := range state.Wonders {
+		if wonder.Destroyed || isObsoleteForPlayer(state, wonder.OwnerID, nil, wonder.ObsoletedBy) {
+			continue
+		}
+		for _, effect := range wonder.Effects {
+			if effect.Kind == kind {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // HasActiveWonderEffect reports whether a player is affected by an active wonder marker.

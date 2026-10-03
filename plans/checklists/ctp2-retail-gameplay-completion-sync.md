@@ -54,6 +54,7 @@
 - [x] Task 040: Retail `ThrowParty` units now spend gold/movement, respect target reception cooldown, and apply timed diplomacy regard through projection and HTTP.
 - [x] Task 041: Retail wonder `IncreaseRegard` now improves public foreign regard toward active wonder owners.
 - [x] Task 042: Retail `Advertise` units now execute the dedicated advertise route by reusing CauseUnhappiness amount/timer/chance mechanics.
+- [x] Task 043: Retail `EnableParkRangers` now globally unlocks `CreateParks`/park-ranger unit production as in the built-wonders mask check.
 
 ## Full-Game Mechanical Execution First
 

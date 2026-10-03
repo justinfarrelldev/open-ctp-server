@@ -336,6 +336,7 @@
 - [x] Task 385: Retail `ThrowParty` units execute reception-cost diplomacy regard actions with target cooldown, legal projection, and HTTP route.
 - [x] Task 386: Retail wonder `IncreaseRegard` affects directional diplomacy regard projections for contacted foreigners.
 - [x] Task 387: Retail unit `Advertise` actions execute through the dedicated route using CauseUnhappiness payload effects.
+- [x] Task 388: Retail wonder `EnableParkRangers` globally unlocks `CreateParks` unit production.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

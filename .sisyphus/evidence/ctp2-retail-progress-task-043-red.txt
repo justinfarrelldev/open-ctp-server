@@ -1,0 +1,5 @@
+--- FAIL: TestRetailEnableParkRangersWonderGloballyUnlocksParkRangerProduction (0.00s)
+    park_rangers_task43_test.go:12: queue park ranger with globally built Eden Project: production prerequisite is not met
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.005s
+FAIL
