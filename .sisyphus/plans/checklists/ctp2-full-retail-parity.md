@@ -406,6 +406,7 @@
 - [x] Task 455: Retail building protection effects execute for direct and wonder-granted effective buildings, including nuke/force-field, bio/nano, conversion, and slavery shields.
 - [x] Task 456: Retail building military effects execute for direct and effective buildings; Airport is source-classified as a city marker while city/airbase refuel already follows retail source behavior.
 - [x] Task 457: Retail effective-building brokerage effects now preserve building-local commerce/brokerage grouping so `IncreaseBrokerages` amplifies wonder-granted brokerages.
+- [x] Task 458: Retail numeric wonder effects are source-verified and active-wonder gated for yield, research, happiness, crime, empire size, route/television gold, and flat bonus-gold fields.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -462,7 +463,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 
 ### Wonders
 
-- [ ] Finish numeric wonder effects: `IncKnowledgePercent`, `IncreaseFoodAllCities`, `IncreaseProduction`, `IncHappinessEmpire`, `DecCrimePercent`, `DecEmpireSize`, `BonusGold`, `GoldPerWaterTradeRoute`, `GoldPerInternationalTradeRoute`, and `GoldPerTelevision` including obsolescence/destruction.
+- [x] Finish numeric wonder effects: `IncKnowledgePercent`, `IncreaseFoodAllCities`, `IncreaseProduction`, `IncHappinessEmpire`, `DecCrimePercent`, `DecEmpireSize`, `BonusGold`, `GoldPerWaterTradeRoute`, `GoldPerInternationalTradeRoute`, and `GoldPerTelevision` including obsolescence/destruction.
 - [ ] Finish global/diplomacy wonder effects: `CloseEmbassies`, `EmbassiesEverywhereEvenAtWar`, `IncreaseRegard`, `SpiesEverywhere`, `ProtectFromBarbarians`, `RevoltingCitiesJoinPlayer`, and relation/war/embassy edge cases.
 - [ ] Finish production/prohibition wonder effects: `EnableParkRangers`, `FreeSlaves`, `ProhibitSlavers`, `EliminateNukes`, `ReformCities`, `PollutersToParks`, and illegal queue cleanup/reversal edge cases.
 - [ ] Finish happiness/readiness/pollution wonder effects: `TemporaryFullHappiness`, `NoPollutionUnhappiness`, `ReduceReadinessCost`, and source-backed duration/stacking behavior.
