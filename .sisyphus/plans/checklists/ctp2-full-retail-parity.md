@@ -341,6 +341,7 @@
 - [x] Task 390: Retail wonder `EliminateNukes` globally blocks `NuclearPlant` building production.
 - [x] Task 391: Retail wonder `EliminateNukes` removes existing and queued `NuclearPlant` buildings across all cities.
 - [x] Task 392: Retail wonder `FreeSlaves` globally blocks slavery unit production, including slave-uprising units.
+- [x] Task 393: Retail wonder `FreeSlaves` removes queued slavery units from city build queues during emancipation.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

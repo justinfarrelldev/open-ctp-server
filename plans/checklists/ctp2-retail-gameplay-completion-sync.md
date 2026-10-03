@@ -59,6 +59,7 @@
 - [x] Task 045: Retail `EliminateNukes` now globally blocks `NuclearPlant` building production.
 - [x] Task 046: Retail `EliminateNukes` now destroys existing `NuclearPlant` buildings and removes queued nuclear-plant items in all cities.
 - [x] Task 047: Retail `FreeSlaves` now globally blocks slave raid, settler slave raid, and slave-uprising unit production.
+- [x] Task 048: Retail `FreeSlaves` emancipation now removes queued slave raid, settler slave raid, and slave-uprising unit items.
 
 ## Full-Game Mechanical Execution First
 

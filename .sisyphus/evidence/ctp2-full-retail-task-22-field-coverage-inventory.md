@@ -105,3 +105,6 @@ Task 046 update:
 
 Task 047 update:
 - Retail wonder `FreeSlaves` now uses the global built-wonder semantics to block slavery unit production, including slave-uprising units, for all players once any active emancipation-style wonder exists.
+
+Task 048 update:
+- Retail wonder `FreeSlaves` emancipation now removes queued slave raid, settler slave raid, and slave-uprising unit items via the same post-emancipation illegal-item cleanup retail runs.

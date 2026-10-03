@@ -1,0 +1,5 @@
+--- FAIL: TestRetailFreeSlavesRemovesQueuedSlaveryUnitsEverywhere (0.00s)
+    free_slaves_queue_task48_test.go:14: city-a queue after emancipation = []engine.ProductionItem{engine.ProductionItem{ID:"UNIT_SLAVER", Kind:"unit", Cost:1, Upkeep:0, Prerequisite:"", ObsoletedBy:"", Scope:"", Effects:[]engine.Effect{engine.Effect{ID:"raid", Kind:"special_slave_raid", Value:0, Turns:0}}}, engine.ProductionItem{ID:"UNIT_GUARD", Kind:"unit", Cost:1, Upkeep:0, Prerequisite:"", ObsoletedBy:"", Scope:"", Effects:[]engine.Effect(nil)}}
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

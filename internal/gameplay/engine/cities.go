@@ -2735,6 +2735,7 @@ func emancipationUnhappiness(runtime *rules.RuntimeRules) (int, int) {
 func emancipateSlaves(state *State, wonderOwnerID string, runtime *rules.RuntimeRules) {
 	turns, amount := emancipationUnhappiness(runtime)
 	for index := range state.Cities {
+		state.Cities[index].Queue = removeFreeSlavesBlockedQueueItems(state.Cities[index].Queue)
 		freed := state.Cities[index].Specialists["POP_SLAVE"]
 		if freed <= 0 {
 			continue
@@ -2745,6 +2746,17 @@ func emancipateSlaves(state *State, wonderOwnerID string, runtime *rules.Runtime
 		}
 	}
 	removeSlaverUnits(state)
+}
+
+func removeFreeSlavesBlockedQueueItems(queue []ProductionItem) []ProductionItem {
+	filtered := queue[:0]
+	for _, item := range queue {
+		if productionHasFreeSlavesBlockedEffect(item, nil) {
+			continue
+		}
+		filtered = append(filtered, item)
+	}
+	return filtered
 }
 
 func removeSlaverUnits(state *State) {
