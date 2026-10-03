@@ -415,6 +415,7 @@
 - [x] Task 464: Retail terrain Resources/goods spawning is classified as worldgen input, while canonical tile/city/trade-route goods and NeedsCityGood import/export mechanics execute in gameplay.
 - [x] Task 465: Retail terrain transform advance gates, CanDie, and dead-yield metadata import to runtime; terraform requires source remove/target add advances and ozone only kills CanDie terrain.
 - [x] Task 466: Retail tile-improvement metadata imports/projects, border-radius forts claim territory, and detector overlays can reveal underwater units; freight/upgrade markers are source-classified.
+- [x] Task 467: Retail government economy/crime/pollution/empire/rush/trade/readiness coefficient import/execution is verified; `ProfessionalUnits` is classified as AI/outcom metadata with unit-level professional support markers executing.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -488,11 +489,11 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 
 ### Governments, sliders, readiness, and happiness/crime
 
-- [ ] Finish government coefficients: `FoodCoef`, `ProductionCoef`, `GoldCoef`, `KnowledgeCoef`, `PollutionCoef`, `PollutionUnhappyCoef`, `CrimeCoef`, `CrimeOffset`, `TooManyCitiesThreshold`, `TooManyCitiesCoefficient`, `EmpireDistanceScale`, `MinEmpireDistance`, `MaxEmpireDistance`, `AtHomeRadius`, `OverseasCoef`, `HomeDefeatCoef`, `OverseasDefeatCoef`, and decay fields.
+- [x] Finish government coefficients: `FoodCoef`, `ProductionCoef`, `GoldCoef`, `KnowledgeCoef`, `PollutionCoef`, `PollutionUnhappyCoef`, `CrimeCoef`, `CrimeOffset`, `TooManyCitiesThreshold`, `TooManyCitiesCoefficient`, `EmpireDistanceScale`, `MinEmpireDistance`, `MaxEmpireDistance`, `AtHomeRadius`, `OverseasCoef`, `HomeDefeatCoef`, `OverseasDefeatCoef`, and decay fields.
 - [ ] Finish social slider parity: `WorkdayExpectation`, `WagesExpectation`, `RationsExpectation`, positive/negative coefficients, unrest/happiness, production/gold/food effects, AI slider elements, and government caps.
 - [ ] Finish readiness parity: `ReadyPeaceCoef`, `ReadyAlertCoef`, `ReadyWarCoef`, `ReadyPeaceHP`, `ReadyAlertHP`, `ReadyWarHP`, `TurnsToNewReadiness`, transition timing, support cost, HP modifier interpolation, and UI/projection state.
 - [ ] Finish martial-law/war-discontent/conquest-distress: `MartialLawEffect`, `MartialLawThreshold`, `MaxMartialLawUnits`, `WarDiscontentMaxUnits`, `WarDiscontentPerUnit`, `ConquestDistress`, `ConquestDistressDecay`, fortified/home/overseas exceptions, and wonder/building mitigations.
-- [ ] Finish rush-buy/trade/government caps: `BuildingRushModifier`, `UnitRushModifier`, `WonderRushModifier`, `EndGameRushModifier`, `CapitalizationCoefficient`, `InfrastructureCoefficient`, `MaxScienceRate`, `MaxIncomingTrade`, `MaxOutgoingTrade`, and `ProfessionalUnits`.
+- [x] Finish rush-buy/trade/government caps: `BuildingRushModifier`, `UnitRushModifier`, `WonderRushModifier`, `EndGameRushModifier`, `CapitalizationCoefficient`, `InfrastructureCoefficient`, `MaxScienceRate`, `MaxIncomingTrade`, `MaxOutgoingTrade`, and `ProfessionalUnits` classification.
 - [x] Classify government rank/advice/icon fields (`Rank`, `*Rank`, `HigherRankAdvice`, `SameRankAdvice`, `Icon`, `IsEcotopia`) as UI/advice/marker metadata for server gameplay.
 
 ### Diplomacy, trade routes, and empire systems
