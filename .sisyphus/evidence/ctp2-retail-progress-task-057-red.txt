@@ -1,0 +1,12 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/gaia_task57_test.go:10:142: unknown field MinBuildingCount in struct literal of type rules.RuntimeGaia
+internal/gameplay/engine/gaia_task57_test.go:10:163: unknown field SatelliteBuildingID in struct literal of type rules.RuntimeGaia
+internal/gameplay/engine/gaia_task57_test.go:10:211: unknown field MinSatelliteCount in struct literal of type rules.RuntimeGaia
+internal/gameplay/engine/gaia_task57_test.go:10:233: unknown field MaxSatelliteCount in struct literal of type rules.RuntimeGaia
+internal/gameplay/engine/gaia_task57_test.go:10: unknown field TowerImprovementID in struct literal of type rules.RuntimeGaia
+internal/gameplay/engine/gaia_task57_test.go:10: unknown field MinTowerCount in struct literal of type rules.RuntimeGaia
+internal/gameplay/engine/gaia_task57_test.go:10: unknown field MinTowerCoveragePercent in struct literal of type rules.RuntimeGaia
+internal/gameplay/engine/gaia_task57_test.go:10: unknown field TowerMinRadius in struct literal of type rules.RuntimeGaia
+internal/gameplay/engine/gaia_task57_test.go:10: unknown field TowerMaxRadius in struct literal of type rules.RuntimeGaia
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL

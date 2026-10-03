@@ -342,9 +342,18 @@ type RuntimeConstants struct {
 }
 
 type RuntimeGaia struct {
-	ActivationTurns int    `json:"activation_turns"`
-	BuildingID      string `json:"building_id,omitempty"`
-	WonderID        string `json:"wonder_id,omitempty"`
+	ActivationTurns         int    `json:"activation_turns"`
+	BuildingID              string `json:"building_id,omitempty"`
+	MinBuildingCount        int    `json:"min_building_count,omitempty"`
+	SatelliteBuildingID     string `json:"satellite_building_id,omitempty"`
+	MinSatelliteCount       int    `json:"min_satellite_count,omitempty"`
+	MaxSatelliteCount       int    `json:"max_satellite_count,omitempty"`
+	TowerImprovementID      string `json:"tower_improvement_id,omitempty"`
+	MinTowerCount           int    `json:"min_tower_count,omitempty"`
+	MinTowerCoveragePercent int    `json:"min_tower_coverage_percent,omitempty"`
+	TowerMinRadius          int    `json:"tower_min_radius,omitempty"`
+	TowerMaxRadius          int    `json:"tower_max_radius,omitempty"`
+	WonderID                string `json:"wonder_id,omitempty"`
 }
 
 type RuntimeProduction struct {

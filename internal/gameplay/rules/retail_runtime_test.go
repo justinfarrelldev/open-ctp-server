@@ -52,7 +52,7 @@ func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 	if got, want := runtime.VictoryEvaluatorIDs(), []string{"bloodlust_conquest", "diplomatic_world_union", "score_2300", "science_gaia_controller"}; !sameStringSlices(got, want) {
 		t.Fatalf("runtime victory evaluators = %#v, want %#v", got, want)
 	}
-	if runtime.Gaia.ActivationTurns != 10 || runtime.Gaia.BuildingID != "IMPROVE_GAIA_COMPUTER" || runtime.Gaia.WonderID != "WONDER_THE_SOLARIS_PROJECT" {
+	if runtime.Gaia.ActivationTurns != 10 || runtime.Gaia.BuildingID != "IMPROVE_GAIA_COMPUTER" || runtime.Gaia.MinBuildingCount != 10 || runtime.Gaia.SatelliteBuildingID != "IMPROVE_POWER_SATELLITE" || runtime.Gaia.MinSatelliteCount != 10 || runtime.Gaia.MaxSatelliteCount != 40 || runtime.Gaia.TowerImprovementID != "TILEIMP_PROCESSING_TOWER" || runtime.Gaia.MinTowerCount != 5 || runtime.Gaia.MinTowerCoveragePercent != 60 || runtime.Gaia.TowerMinRadius != 5 || runtime.Gaia.TowerMaxRadius != 16 || runtime.Gaia.WonderID != "WONDER_THE_SOLARIS_PROJECT" {
 		t.Fatalf("runtime Gaia = %+v", runtime.Gaia)
 	}
 	if runtime.AI == nil || len(runtime.AI.UnitBuildLists) != 27 || len(runtime.AI.BuildingBuildLists) != 13 || len(runtime.AI.WonderBuildLists) != 7 || len(runtime.AI.AdvanceLists) != 7 || len(runtime.AI.ImprovementLists) != 4 {

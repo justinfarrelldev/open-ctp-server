@@ -1032,12 +1032,12 @@ func gaiaWinner(state State, runtime *rules.RuntimeRules) string {
 		}
 		return ""
 	}
-	buildingID, wonderID, ok := gaiaPrerequisiteIDs(runtime)
+	gaia, ok := gaiaPrerequisites(runtime)
 	if !ok {
 		return ""
 	}
 	for _, nation := range state.Nations {
-		if nation.GaiaCompletionTurn > 0 && state.Phase.Turn >= nation.GaiaCompletionTurn && nationHasGaiaPrerequisites(state, nation.ID, buildingID, wonderID) {
+		if nation.GaiaCompletionTurn > 0 && state.Phase.Turn >= nation.GaiaCompletionTurn && nationHasGaiaRuntimePrerequisites(state, nation.ID, gaia) {
 			return playerForNation(state, nation.ID)
 		}
 	}
@@ -1048,10 +1048,10 @@ func updateGaiaCountdown(state *State, runtime *rules.RuntimeRules, resolvedTurn
 	if runtime == nil {
 		return
 	}
-	buildingID, wonderID, ok := gaiaPrerequisiteIDs(runtime)
+	gaia, ok := gaiaPrerequisites(runtime)
 	for index := range state.Nations {
 		nation := &state.Nations[index]
-		if !ok || !nationHasGaiaPrerequisites(*state, nation.ID, buildingID, wonderID) {
+		if !ok || !nationHasGaiaRuntimePrerequisites(*state, nation.ID, gaia) {
 			nation.GaiaCompletionTurn = 0
 			continue
 		}
@@ -1062,11 +1062,16 @@ func updateGaiaCountdown(state *State, runtime *rules.RuntimeRules, resolvedTurn
 }
 
 func gaiaPrerequisiteIDs(runtime *rules.RuntimeRules) (string, string, bool) {
+	gaia, ok := gaiaPrerequisites(runtime)
+	return gaia.BuildingID, gaia.WonderID, ok
+}
+
+func gaiaPrerequisites(runtime *rules.RuntimeRules) (rules.RuntimeGaia, bool) {
 	if runtime == nil {
-		return "", "", false
+		return rules.RuntimeGaia{}, false
 	}
 	if runtime.Gaia.BuildingID != "" && runtime.Gaia.WonderID != "" {
-		return runtime.Gaia.BuildingID, runtime.Gaia.WonderID, true
+		return normalizeGaiaPrerequisites(runtime.Gaia), true
 	}
 	buildingID, wonderID := "", ""
 	for _, production := range runtime.Production {
@@ -1077,34 +1082,128 @@ func gaiaPrerequisiteIDs(runtime *rules.RuntimeRules) (string, string, bool) {
 			wonderID = production.ID
 		}
 	}
-	return buildingID, wonderID, buildingID != "" && wonderID != ""
+	if buildingID == "" || wonderID == "" {
+		return rules.RuntimeGaia{}, false
+	}
+	return normalizeGaiaPrerequisites(rules.RuntimeGaia{ActivationTurns: runtime.Gaia.ActivationTurns, BuildingID: buildingID, WonderID: wonderID}), true
+}
+
+func normalizeGaiaPrerequisites(gaia rules.RuntimeGaia) rules.RuntimeGaia {
+	if gaia.MinBuildingCount < 1 {
+		gaia.MinBuildingCount = 1
+	}
+	if gaia.SatelliteBuildingID != "" && gaia.MinSatelliteCount < 1 {
+		gaia.MinSatelliteCount = 1
+	}
+	if gaia.TowerImprovementID != "" && gaia.MinTowerCount < 1 {
+		gaia.MinTowerCount = 1
+	}
+	return gaia
 }
 
 func nationHasGaiaPrerequisites(state State, nationID, buildingID, wonderID string) bool {
+	return nationHasGaiaRuntimePrerequisites(state, nationID, normalizeGaiaPrerequisites(rules.RuntimeGaia{BuildingID: buildingID, WonderID: wonderID}))
+}
+
+func nationHasGaiaRuntimePrerequisites(state State, nationID string, gaia rules.RuntimeGaia) bool {
 	owners := make(map[string]bool)
 	for _, player := range state.Players {
 		if player.NationID == nationID {
 			owners[player.ID] = true
 		}
 	}
-	if len(owners) == 0 {
+	if len(owners) == 0 || !nationHasGaiaWonder(state, owners, gaia.WonderID) {
 		return false
 	}
-	return nationHasGaiaBuilding(state, owners, buildingID) && nationHasGaiaWonder(state, owners, wonderID)
+	computerCount := nationGaiaBuildingCount(state, owners, gaia.BuildingID)
+	if computerCount < gaia.MinBuildingCount {
+		return false
+	}
+	satelliteCount := 0
+	if gaia.SatelliteBuildingID != "" {
+		satelliteCount = nationGaiaBuildingCount(state, owners, gaia.SatelliteBuildingID)
+		if satelliteCount < gaia.MinSatelliteCount {
+			return false
+		}
+	}
+	if gaia.TowerImprovementID != "" {
+		towerCount := nationGaiaTowerCount(state, owners, gaia.TowerImprovementID)
+		if towerCount < gaia.MinTowerCount || !nationHasGaiaTowerCoverage(state, owners, gaia, satelliteCount) {
+			return false
+		}
+	}
+	return true
 }
 
-func nationHasGaiaBuilding(state State, owners map[string]bool, buildingID string) bool {
+func nationGaiaBuildingCount(state State, owners map[string]bool, buildingID string) int {
+	if buildingID == "" {
+		return 0
+	}
+	count := 0
 	for _, city := range state.Cities {
 		if !owners[city.OwnerID] {
 			continue
 		}
 		for _, building := range city.Buildings {
 			if building.ID == buildingID && !isObsolete(city.Obsolete, building.ObsoletedBy) {
-				return true
+				count++
 			}
 		}
 	}
-	return false
+	return count
+}
+
+func nationGaiaTowerCount(state State, owners map[string]bool, towerID string) int {
+	count := 0
+	for _, overlay := range state.Overlays {
+		if overlay.Kind == "improvement" && overlay.Remaining <= 0 && overlay.ImprovementID == towerID && owners[overlay.OwnerID] {
+			count++
+		}
+	}
+	return count
+}
+
+func nationHasGaiaTowerCoverage(state State, owners map[string]bool, gaia rules.RuntimeGaia, satelliteCount int) bool {
+	if gaia.MinTowerCoveragePercent <= 0 {
+		return true
+	}
+	if len(state.Tiles) == 0 {
+		return false
+	}
+	radius := gaiaTowerRadius(gaia, satelliteCount)
+	covered := make(map[string]bool, len(state.Tiles))
+	for _, overlay := range state.Overlays {
+		if overlay.Kind != "improvement" || overlay.Remaining > 0 || overlay.ImprovementID != gaia.TowerImprovementID || !owners[overlay.OwnerID] {
+			continue
+		}
+		center, ok := tileByID(state, overlay.TileID)
+		if !ok {
+			continue
+		}
+		for _, tile := range state.Tiles {
+			if tileDistance(center, tile) <= radius {
+				covered[tile.ID] = true
+			}
+		}
+	}
+	return len(covered)*100 >= gaia.MinTowerCoveragePercent*len(state.Tiles)
+}
+
+func gaiaTowerRadius(gaia rules.RuntimeGaia, satelliteCount int) int {
+	radius := gaia.TowerMinRadius
+	if radius < 0 {
+		radius = 0
+	}
+	if gaia.TowerMaxRadius <= radius || gaia.MaxSatelliteCount <= gaia.MinSatelliteCount || satelliteCount <= gaia.MinSatelliteCount {
+		return radius
+	}
+	deltaSatellites := satelliteCount - gaia.MinSatelliteCount
+	maxDeltaSatellites := gaia.MaxSatelliteCount - gaia.MinSatelliteCount
+	if deltaSatellites > maxDeltaSatellites {
+		deltaSatellites = maxDeltaSatellites
+	}
+	radiusDelta := gaia.TowerMaxRadius - radius
+	return radius + (deltaSatellites*radiusDelta+maxDeltaSatellites-1)/maxDeltaSatellites
 }
 
 func nationHasGaiaWonder(state State, owners map[string]bool, wonderID string) bool {

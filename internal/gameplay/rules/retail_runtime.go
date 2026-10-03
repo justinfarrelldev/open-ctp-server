@@ -53,7 +53,7 @@ func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 		runtime.Production = append(runtime.Production, RuntimeProduction{ID: wonder.ID, Kind: "wonder", Cost: wonder.ProductionCost, Prerequisites: singleOrEmpty(wonder.EnableAdvance), ObsoleteBy: append([]string(nil), wonder.ObsoleteAdvance...), Effects: retailWonderRuntimeEffects(wonder, buildingEffects)})
 		runtime.Effects = append(runtime.Effects, RuntimeEffect{ID: wonder.ID, Kind: "wonder"})
 		if containsRetailFlag(wonder.Flags, "StartGaiaController") {
-			runtime.Gaia = RuntimeGaia{ActivationTurns: 10, BuildingID: "IMPROVE_GAIA_COMPUTER", WonderID: wonder.ID}
+			runtime.Gaia = RuntimeGaia{ActivationTurns: 10, BuildingID: "IMPROVE_GAIA_COMPUTER", MinBuildingCount: 10, SatelliteBuildingID: "IMPROVE_POWER_SATELLITE", MinSatelliteCount: 10, MaxSatelliteCount: 40, TowerImprovementID: "TILEIMP_PROCESSING_TOWER", MinTowerCount: 5, MinTowerCoveragePercent: 60, TowerMinRadius: 5, TowerMaxRadius: 16, WonderID: wonder.ID}
 		}
 	}
 	for _, terrain := range db.Terrains {
