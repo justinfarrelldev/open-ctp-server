@@ -1,0 +1,1 @@
+ok  	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules	0.024s

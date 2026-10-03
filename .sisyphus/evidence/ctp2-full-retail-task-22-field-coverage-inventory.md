@@ -331,3 +331,6 @@ Task 122 update:
 
 Task 123 update:
 - Social slider parity is verified: expectations/coefficients import from governments, sliders persist through public commands, affect production/gold/food and happiness, project safely to owners, and AI social-policy legal actions use public projections.
+
+Task 124 update:
+- Readiness/martial-law/war-discontent/conquest-distress coverage is verified: readiness support and HP modifiers execute; readiness state projects legally; martial law, war discontent, conquest distress/decay, and peace-movement home/overseas decay are covered in happiness/combat/support paths.
