@@ -101,6 +101,7 @@
 - [x] Task 087: Building `DefaultIcon` and `Description` are source-classified as presentation/UI/SLIC metadata.
 - [x] Task 088: Building structural markers `Capitol`, `Brokerage`, `Television`, and `DoubleTelevangelists` are source-verified against existing execution tests.
 - [x] Task 089: Wonder `DefaultIcon`, `Description`, and `Movie` are source-classified as presentation/UI metadata.
+- [x] Task 090: Advance `Branch`, `Icon`, `GLHidden`, and `KeyAdvanceAdvice` are source-classified; `Age` is split out as gameplay/setup work.
 
 ## Full-Game Mechanical Execution First
 
@@ -138,7 +139,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 ### Advances and research
 
 - [ ] Verify and close all advance unlock gates for unit/building/wonder/terrain-improvement production, including multi-prerequisite edge cases and obsolete-advance removal.
-- [ ] Complete or classify `Age`, `Branch`, `Icon`, `KeyAdvanceAdvice`, and `GLHidden` as presentation/AI metadata where source confirms no gameplay effect.
+- [ ] Complete advance `Age` gameplay/setup parity for start/end age, age transitions, and age-gated initial grants; `Branch`, `Icon`, `GLHidden`, and `KeyAdvanceAdvice` are source-classified as presentation/advice metadata.
 - [ ] Finish source-backed execution/verification for `DeepOcean`, `Roads`, `Railroads`, `MagLev`, `Tunnels`, and `Transform` map-action gates.
 - [ ] Verify `PlantNuke`, `Capitalization`, `Infrastructure`, `PollutionProductionModifier`, `PollutionSizeModifier`, and `TriggerFeat` parity across government/advance transitions and persistence.
 

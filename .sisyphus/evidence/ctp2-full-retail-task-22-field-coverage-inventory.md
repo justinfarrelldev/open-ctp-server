@@ -231,3 +231,6 @@ Task 088 update:
 
 Task 089 update:
 - Wonder `DefaultIcon`, `Description`, and `Movie` are classified as presentation/UI metadata: retail parses them as icon/string/movie DB references and consumes them in wonder movie, Great Library, and queue display code only.
+
+Task 090 update:
+- Advance `Branch`, `Icon`, and `GLHidden` are classified as presentation/setup metadata, and `KeyAdvanceAdvice` as diplomacy/AI advice text metadata. Advance `Age` is explicitly not classified away because source uses it for start/end-age setup and age-transition gameplay.
