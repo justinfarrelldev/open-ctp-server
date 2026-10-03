@@ -202,27 +202,31 @@ type RulesPin struct {
 }
 
 type TileOverlay struct {
-	ID                  string `json:"id"`
-	TileID              string `json:"tile_id"`
-	Kind                string `json:"kind"`
-	OwnerID             string `json:"owner_id,omitempty"`
-	Remaining           int    `json:"remaining,omitempty"`
-	TargetTerrain       string `json:"target_terrain,omitempty"`
-	ImprovementID       string `json:"improvement_id,omitempty"`
-	MovementCostDelta   int    `json:"movement_cost_delta,omitempty"`
-	YieldFood           int    `json:"yield_food,omitempty"`
-	YieldProduction     int    `json:"yield_production,omitempty"`
-	YieldGold           int    `json:"yield_gold,omitempty"`
-	PollutionDelta      int    `json:"pollution_delta,omitempty"`
-	DefenseBonusPercent int    `json:"defense_bonus_percent,omitempty"`
-	HealRatePercent     int    `json:"heal_rate_percent,omitempty"`
-	VisionRange         int    `json:"vision_range,omitempty"`
-	RadarRange          int    `json:"radar_range,omitempty"`
-	Airport             bool   `json:"airport,omitempty"`
-	Radar               bool   `json:"radar,omitempty"`
-	ListeningPost       bool   `json:"listening_post,omitempty"`
-	CanUpgrade          bool   `json:"can_upgrade,omitempty"`
-	Endgame             bool   `json:"endgame,omitempty"`
+	ID                  string   `json:"id"`
+	TileID              string   `json:"tile_id"`
+	Kind                string   `json:"kind"`
+	OwnerID             string   `json:"owner_id,omitempty"`
+	Remaining           int      `json:"remaining,omitempty"`
+	TargetTerrain       string   `json:"target_terrain,omitempty"`
+	ImprovementID       string   `json:"improvement_id,omitempty"`
+	MovementCostDelta   int      `json:"movement_cost_delta,omitempty"`
+	YieldFood           int      `json:"yield_food,omitempty"`
+	YieldProduction     int      `json:"yield_production,omitempty"`
+	YieldGold           int      `json:"yield_gold,omitempty"`
+	PollutionDelta      int      `json:"pollution_delta,omitempty"`
+	DefenseBonusPercent int      `json:"defense_bonus_percent,omitempty"`
+	HealRatePercent     int      `json:"heal_rate_percent,omitempty"`
+	VisionRange         int      `json:"vision_range,omitempty"`
+	RadarRange          int      `json:"radar_range,omitempty"`
+	Airport             bool     `json:"airport,omitempty"`
+	Radar               bool     `json:"radar,omitempty"`
+	ListeningPost       bool     `json:"listening_post,omitempty"`
+	CanUpgrade          bool     `json:"can_upgrade,omitempty"`
+	Endgame             bool     `json:"endgame,omitempty"`
+	CanSee              []string `json:"can_see,omitempty"`
+	Freight             int      `json:"freight,omitempty"`
+	IntBorderRadius     int      `json:"int_border_radius,omitempty"`
+	SquaredBorderRadius int      `json:"squared_border_radius,omitempty"`
 }
 
 // Tile is canonical server terrain/access input for unit transitions. Coordinates

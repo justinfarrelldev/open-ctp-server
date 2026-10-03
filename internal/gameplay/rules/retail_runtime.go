@@ -912,7 +912,7 @@ func (u RetailUnit) FieldsByKey(key string) []RetailRawField {
 }
 
 func projectRetailTerrainImprovement(improvement RetailTerrainImprovement) RuntimeTerrainImprovementDefinition {
-	definition := RuntimeTerrainImprovementDefinition{ID: improvement.ID, Class: improvement.Class, BuildTurns: 1, PublicWorksCost: 1, TargetTerrain: improvement.TerraformTerrain, CantBuildOn: append([]string(nil), improvement.CantBuildOn...), Excludes: append([]string(nil), improvement.Excludes...)}
+	definition := RuntimeTerrainImprovementDefinition{ID: improvement.ID, Class: improvement.Class, Level: improvement.Level, ConstructionTiles: append([]int(nil), improvement.ConstructionTiles...), BuildTurns: 1, PublicWorksCost: 1, TargetTerrain: improvement.TerraformTerrain, CanSee: append([]string(nil), improvement.CanSee...), IntBorderRadius: improvement.IntBorderRadius, SquaredBorderRadius: improvement.SquaredBorderRadius, CantBuildOn: append([]string(nil), improvement.CantBuildOn...), Excludes: append([]string(nil), improvement.Excludes...)}
 	if len(improvement.Effects) == 0 {
 		return definition
 	}
@@ -929,6 +929,7 @@ func projectRetailTerrainImprovement(improvement RetailTerrainImprovement) Runti
 	definition.HealRatePercent = percentPoints(effect.HealRate)
 	definition.VisionRange = effect.VisionRange
 	definition.RadarRange = effect.RadarRange
+	definition.Freight = effect.Freight
 	definition.Airport = retailContainsString(effect.Flags, "Airport")
 	definition.Radar = retailContainsString(effect.Flags, "Radar")
 	definition.ListeningPost = retailContainsString(effect.Flags, "ListeningPost")

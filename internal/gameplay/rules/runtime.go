@@ -123,6 +123,8 @@ type RuntimeUnitDefinition struct {
 type RuntimeTerrainImprovementDefinition struct {
 	ID                  string   `json:"id"`
 	Class               string   `json:"class,omitempty"`
+	Level               int      `json:"level,omitempty"`
+	ConstructionTiles   []int    `json:"construction_tiles,omitempty"`
 	BuildTurns          int      `json:"build_turns"`
 	PublicWorksCost     int      `json:"public_works_cost"`
 	MovementCostDelta   int      `json:"movement_cost_delta,omitempty"`
@@ -142,6 +144,10 @@ type RuntimeTerrainImprovementDefinition struct {
 	ListeningPost       bool     `json:"listening_post,omitempty"`
 	CanUpgrade          bool     `json:"can_upgrade,omitempty"`
 	Endgame             bool     `json:"endgame,omitempty"`
+	CanSee              []string `json:"can_see,omitempty"`
+	Freight             int      `json:"freight,omitempty"`
+	IntBorderRadius     int      `json:"int_border_radius,omitempty"`
+	SquaredBorderRadius int      `json:"squared_border_radius,omitempty"`
 	CantBuildOn         []string `json:"cant_build_on,omitempty"`
 	Excludes            []string `json:"excludes,omitempty"`
 }

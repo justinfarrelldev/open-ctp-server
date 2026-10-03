@@ -407,7 +407,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("terraform grassland runtime = %+v ok=%v", terraformGrassland, ok)
 	}
 	fortifications, ok := runtime.TerrainImprovement("TILEIMP_FORTIFICATIONS")
-	if !ok || fortifications.DefenseBonusPercent != 50 || fortifications.HealRatePercent != 100 || fortifications.VisionRange != 2 || !fortifications.CanUpgrade {
+	if !ok || fortifications.Level != 1 || !sameIntSlices(fortifications.ConstructionTiles, []int{80, 81, 81}) || fortifications.IntBorderRadius != 2 || fortifications.SquaredBorderRadius != 5 || fortifications.DefenseBonusPercent != 50 || fortifications.HealRatePercent != 100 || fortifications.VisionRange != 2 || !fortifications.CanUpgrade {
 		t.Fatalf("fortifications runtime = %+v ok=%v", fortifications, ok)
 	}
 	airBases, ok := runtime.TerrainImprovement("TILEIMP_AIR_BASES")
@@ -415,8 +415,12 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("air bases runtime = %+v ok=%v", airBases, ok)
 	}
 	listeningPosts, ok := runtime.TerrainImprovement("TILEIMP_LISTENING_POSTS")
-	if !ok || !listeningPosts.Radar || !listeningPosts.ListeningPost || listeningPosts.VisionRange != 3 || listeningPosts.RadarRange != 3 {
+	if !ok || !listeningPosts.Radar || !listeningPosts.ListeningPost || listeningPosts.VisionRange != 3 || listeningPosts.RadarRange != 3 || !sameStringSlices(listeningPosts.CanSee, []string{"Standard"}) {
 		t.Fatalf("listening posts runtime = %+v ok=%v", listeningPosts, ok)
+	}
+	railroadImprovement, ok := runtime.TerrainImprovement("TILEIMP_RAILROAD")
+	if !ok || railroadImprovement.Freight != 50 {
+		t.Fatalf("railroad runtime = %+v ok=%v", railroadImprovement, ok)
 	}
 	processingTower, ok := runtime.TerrainImprovement("TILEIMP_PROCESSING_TOWER")
 	if !ok || !processingTower.Endgame {

@@ -1641,7 +1641,37 @@ func unitDetectedByPlayer(state engine.State, playerID, tileID string, detectorE
 			return true
 		}
 	}
+	for _, overlay := range state.Overlays {
+		if overlay.OwnerID != playerID || overlay.TileID == "" || overlay.Remaining > 0 || overlay.Kind != "improvement" || !overlayCanSee(overlay, detectorEffect) {
+			continue
+		}
+		origin, ok := tileByID(state.Tiles, overlay.TileID)
+		if !ok {
+			continue
+		}
+		radius := overlay.VisionRange
+		if overlay.RadarRange > radius {
+			radius = overlay.RadarRange
+		}
+		if radius < defaultSightRadius {
+			radius = defaultSightRadius
+		}
+		if abs(origin.X-target.X)+abs(origin.Y-target.Y) <= radius {
+			return true
+		}
+	}
 	return false
+}
+
+func overlayCanSee(overlay engine.TileOverlay, detectorEffect string) bool {
+	switch detectorEffect {
+	case engine.EffectCanAttackUnderwater:
+		return containsString(overlay.CanSee, "Underwater")
+	case engine.EffectCanSeeStealth:
+		return containsString(overlay.CanSee, "Stealth")
+	default:
+		return containsString(overlay.CanSee, "Standard")
+	}
 }
 
 func effectHasKind(effects []engine.Effect, kind string) bool {

@@ -237,3 +237,15 @@ func sameStringSlices(got, want []string) bool {
 	}
 	return true
 }
+
+func sameIntSlices(got, want []int) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for i := range got {
+		if got[i] != want[i] {
+			return false
+		}
+	}
+	return true
+}

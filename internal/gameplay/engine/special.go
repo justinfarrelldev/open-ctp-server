@@ -364,7 +364,7 @@ func buildTerrainImprovement(state *State, actorID string, payload BuildImprovem
 		}
 	}
 	actorNation.PublicWorks -= effective.PublicWorksCost
-	state.Overlays = append(state.Overlays, TileOverlay{ID: "improvement:" + tile.ID + ":" + definition.ID, TileID: tile.ID, Kind: "improvement", OwnerID: actorID, Remaining: effective.BuildTurns, TargetTerrain: effective.TargetTerrain, ImprovementID: definition.ID, MovementCostDelta: effective.MovementCostDelta, YieldFood: effective.YieldFood, YieldProduction: effective.YieldProduction, YieldGold: effective.YieldGold, PollutionDelta: effective.PollutionDelta, DefenseBonusPercent: effective.DefenseBonusPercent, HealRatePercent: effective.HealRatePercent, VisionRange: effective.VisionRange, RadarRange: effective.RadarRange, Airport: effective.Airport, Radar: effective.Radar, ListeningPost: effective.ListeningPost, CanUpgrade: effective.CanUpgrade, Endgame: effective.Endgame})
+	state.Overlays = append(state.Overlays, TileOverlay{ID: "improvement:" + tile.ID + ":" + definition.ID, TileID: tile.ID, Kind: "improvement", OwnerID: actorID, Remaining: effective.BuildTurns, TargetTerrain: effective.TargetTerrain, ImprovementID: definition.ID, MovementCostDelta: effective.MovementCostDelta, YieldFood: effective.YieldFood, YieldProduction: effective.YieldProduction, YieldGold: effective.YieldGold, PollutionDelta: effective.PollutionDelta, DefenseBonusPercent: effective.DefenseBonusPercent, HealRatePercent: effective.HealRatePercent, VisionRange: effective.VisionRange, RadarRange: effective.RadarRange, Airport: effective.Airport, Radar: effective.Radar, ListeningPost: effective.ListeningPost, CanUpgrade: effective.CanUpgrade, Endgame: effective.Endgame, CanSee: append([]string(nil), effective.CanSee...), Freight: effective.Freight, IntBorderRadius: effective.IntBorderRadius, SquaredBorderRadius: effective.SquaredBorderRadius})
 	return EventImprovementQueued, json.RawMessage(`{"disclosed":false}`), nil
 }
 
@@ -1571,6 +1571,9 @@ func advanceTerraform(state *State) {
 }
 
 func applyImprovementCompletion(state *State, overlay *TileOverlay) {
+	if overlay.IntBorderRadius > 0 && overlay.SquaredBorderRadius > 0 {
+		applyImprovementBorderRadius(state, *overlay)
+	}
 	if overlay.PollutionDelta == 0 && overlay.TargetTerrain == "" {
 		return
 	}
@@ -1586,6 +1589,24 @@ func applyImprovementCompletion(state *State, overlay *TileOverlay) {
 			state.Tiles[i].Pollution = 0
 		}
 		return
+	}
+}
+
+func applyImprovementBorderRadius(state *State, overlay TileOverlay) {
+	center, ok := tileByID(*state, overlay.TileID)
+	if !ok || overlay.OwnerID == "" {
+		return
+	}
+	for i := range state.Tiles {
+		tile := &state.Tiles[i]
+		dx, dy := tile.X-center.X, tile.Y-center.Y
+		if abs(dx) > overlay.IntBorderRadius || abs(dy) > overlay.IntBorderRadius || dx*dx+dy*dy > overlay.SquaredBorderRadius {
+			continue
+		}
+		if tile.OwnerID != "" && tile.OwnerID != overlay.OwnerID {
+			continue
+		}
+		tile.OwnerID = overlay.OwnerID
 	}
 }
 

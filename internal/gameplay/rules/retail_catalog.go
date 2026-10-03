@@ -125,16 +125,19 @@ type RetailBuilding struct {
 }
 
 type RetailTerrainImprovement struct {
-	ID                string                           `json:"id"`
-	Class             string                           `json:"class,omitempty"`
-	Level             int                              `json:"level"`
-	ConstructionTiles []int                            `json:"construction_tiles,omitempty"`
-	TerraformTerrain  string                           `json:"terraform_terrain,omitempty"`
-	CantBuildOn       []string                         `json:"cant_build_on,omitempty"`
-	Excludes          []string                         `json:"excludes,omitempty"`
-	Effects           []RetailTerrainImprovementEffect `json:"effects,omitempty"`
-	Flags             []string                         `json:"flags,omitempty"`
-	RawFields         []RetailRawField                 `json:"raw_fields"`
+	ID                  string                           `json:"id"`
+	Class               string                           `json:"class,omitempty"`
+	Level               int                              `json:"level"`
+	ConstructionTiles   []int                            `json:"construction_tiles,omitempty"`
+	CanSee              []string                         `json:"can_see,omitempty"`
+	IntBorderRadius     int                              `json:"int_border_radius,omitempty"`
+	SquaredBorderRadius int                              `json:"squared_border_radius,omitempty"`
+	TerraformTerrain    string                           `json:"terraform_terrain,omitempty"`
+	CantBuildOn         []string                         `json:"cant_build_on,omitempty"`
+	Excludes            []string                         `json:"excludes,omitempty"`
+	Effects             []RetailTerrainImprovementEffect `json:"effects,omitempty"`
+	Flags               []string                         `json:"flags,omitempty"`
+	RawFields           []RetailRawField                 `json:"raw_fields"`
 }
 
 type RetailTerrainImprovementEffect struct {
@@ -147,6 +150,7 @@ type RetailTerrainImprovementEffect struct {
 	HealRate        float64  `json:"heal_rate,omitempty"`
 	VisionRange     int      `json:"vision_range,omitempty"`
 	RadarRange      int      `json:"radar_range,omitempty"`
+	Freight         int      `json:"freight,omitempty"`
 	EnableAdvance   string   `json:"enable_advance,omitempty"`
 	ProductionCost  int      `json:"production_cost,omitempty"`
 	ProductionTime  int      `json:"production_time,omitempty"`
@@ -961,7 +965,15 @@ func compileRetailTerrainImprovement(record RetailRawRecord) (RetailTerrainImpro
 	if err != nil {
 		return RetailTerrainImprovement{}, err
 	}
-	improvement := RetailTerrainImprovement{ID: record.ID, Class: record.FirstValue("Class"), Level: level, ConstructionTiles: constructionTiles, TerraformTerrain: record.FirstValue("TerraformTerrain"), CantBuildOn: record.Values("CantBuildOn"), Excludes: record.Values("Excludes"), Flags: retailFlags(record.Fields), RawFields: cloneRetailFields(record.Fields)}
+	intBorderRadius, err := retailRecordOptionalInt(record, "IntBorderRadius")
+	if err != nil {
+		return RetailTerrainImprovement{}, err
+	}
+	squaredBorderRadius, err := retailRecordOptionalInt(record, "SquaredBorderRadius")
+	if err != nil {
+		return RetailTerrainImprovement{}, err
+	}
+	improvement := RetailTerrainImprovement{ID: record.ID, Class: record.FirstValue("Class"), Level: level, ConstructionTiles: constructionTiles, CanSee: record.Values("CanSee"), IntBorderRadius: intBorderRadius, SquaredBorderRadius: squaredBorderRadius, TerraformTerrain: record.FirstValue("TerraformTerrain"), CantBuildOn: record.Values("CantBuildOn"), Excludes: record.Values("Excludes"), Flags: retailFlags(record.Fields), RawFields: cloneRetailFields(record.Fields)}
 	for _, field := range record.FieldsByKey("TerrainEffect") {
 		effect := RetailTerrainImprovementEffect{Terrains: field.ChildValues("Terrain"), EnableAdvance: field.FirstValue("EnableAdvance"), Flags: retailFlags(field.Fields)}
 		effect.DefenseBonus, err = retailParseFloat(record.ID, "DefenseBonus", field.FirstValue("DefenseBonus"))
@@ -972,7 +984,7 @@ func compileRetailTerrainImprovement(record RetailRawRecord) (RetailTerrainImpro
 		if err != nil {
 			return RetailTerrainImprovement{}, err
 		}
-		for key, target := range map[string]*int{"BonusFood": &effect.BonusFood, "BonusProduction": &effect.BonusProduction, "BonusGold": &effect.BonusGold, "MoveCost": &effect.MoveCost, "ProductionCost": &effect.ProductionCost, "ProductionTime": &effect.ProductionTime, "TilesetIndex": &effect.TilesetIndex, "VisionRange": &effect.VisionRange, "RadarRange": &effect.RadarRange} {
+		for key, target := range map[string]*int{"BonusFood": &effect.BonusFood, "BonusProduction": &effect.BonusProduction, "BonusGold": &effect.BonusGold, "MoveCost": &effect.MoveCost, "ProductionCost": &effect.ProductionCost, "ProductionTime": &effect.ProductionTime, "TilesetIndex": &effect.TilesetIndex, "VisionRange": &effect.VisionRange, "RadarRange": &effect.RadarRange, "Freight": &effect.Freight} {
 			*target, err = retailFieldInt(record.ID, field, key)
 			if err != nil {
 				return RetailTerrainImprovement{}, err
