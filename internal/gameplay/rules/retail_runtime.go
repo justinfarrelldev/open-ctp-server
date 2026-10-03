@@ -428,6 +428,7 @@ func retailWonderRuntimeEffects(wonder RetailWonder, buildingEffects map[string]
 		}
 	}
 	for _, buildingID := range append(retailFieldValues(wonder.RawFields, "BuildingEverywhere"), retailFieldValues(wonder.RawFields, "ActualBuildingEverywhere")...) {
+		effects = append(effects, RuntimeStarterEffect{ID: buildingID, Kind: "building_everywhere"})
 		for _, effect := range buildingEffects[buildingID] {
 			effects = append(effects, RuntimeStarterEffect{ID: wonder.ID + ":" + effect.ID, Kind: effect.Kind, Value: effect.Value})
 		}

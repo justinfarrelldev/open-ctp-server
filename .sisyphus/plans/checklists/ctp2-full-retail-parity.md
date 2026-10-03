@@ -352,6 +352,7 @@
 - [x] Task 401: Retail unit `CanPirate` executes trade-route piracy with persistent pirating-army treasury income.
 - [x] Task 402: Retail Gaia controller countdown requires endgame object counts and processing tower coverage.
 - [x] Task 403: Retail `VETERAN_COEF` increases veteran melee, bombard, active-defense, and counter-bombard hit strength.
+- [x] Task 404: Retail wonder `BuildingEverywhere`/`ActualBuildingEverywhere` supplies owner effective buildings for city prerequisite checks.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

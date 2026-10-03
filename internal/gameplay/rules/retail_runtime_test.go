@@ -563,7 +563,7 @@ func TestProjectRetailRuntimeMapsSelectedRetailValues(t *testing.T) {
 		t.Fatalf("Aristotle's Lyceum effects = %+v ok=%v", academyWonder, ok)
 	}
 	internet, ok := runtime.ProductionDefinition("WONDER_INTERNET")
-	if !ok || !runtimeProductionHasEffectValue(internet, "research_percent", 20) {
+	if !ok || !runtimeProductionHasEffect(internet, "building_everywhere") || !runtimeProductionHasEffectValue(internet, "research_percent", 20) {
 		t.Fatalf("Internet actual-building effects = %+v ok=%v", internet, ok)
 	}
 	matterDecomp, ok := runtime.ProductionDefinition("WONDER_CENTRAL_MATTER_DECOMPILER")

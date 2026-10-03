@@ -70,6 +70,7 @@
 - [x] Task 056: Retail `CanPirate` units now mark trade routes as pirated and earn route-value piracy gold at begin turn.
 - [x] Task 057: Retail Gaia countdown now requires configured computers, satellites, processing towers, and tower coverage.
 - [x] Task 058: Retail `VETERAN_COEF` now increases veteran melee, bombard, active-defense, and counter-bombard hit strength.
+- [x] Task 059: Retail wonder `BuildingEverywhere`/`ActualBuildingEverywhere` now provide effective buildings for owner city building prerequisites.
 
 ## Full-Game Mechanical Execution First
 

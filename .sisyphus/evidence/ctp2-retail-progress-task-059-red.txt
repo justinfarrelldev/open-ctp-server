@@ -1,0 +1,5 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/building_everywhere_task59_test.go:12:123: undefined: EffectBuildingEverywhere
+internal/gameplay/engine/building_everywhere_task59_test.go:23:123: undefined: EffectBuildingEverywhere
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL
