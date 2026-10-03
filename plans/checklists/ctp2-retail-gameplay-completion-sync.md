@@ -88,6 +88,7 @@
 - [x] Task 074: Retail `Explodes` is source-classified as presentation-only combat explosion animation metadata.
 - [x] Task 075: Retail `HasPopAndCanBuild` city pseudo-units are rejected from normal city production queues.
 - [x] Task 076: Retail active-defense interceptors now fire once per turn and reset on turn refresh.
+- [x] Task 077: Retail active-defense interceptors now resolve in descending attack order.
 
 ## Full-Game Mechanical Execution First
 

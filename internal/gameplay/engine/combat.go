@@ -558,7 +558,12 @@ func activeDefenseInterceptors(state State, actorID, protectedOwnerID string, at
 		}
 		interceptors = append(interceptors, unit)
 	}
-	sort.Slice(interceptors, func(i, j int) bool { return interceptors[i].ID < interceptors[j].ID })
+	sort.Slice(interceptors, func(i, j int) bool {
+		if interceptors[i].Attack != interceptors[j].Attack {
+			return interceptors[i].Attack > interceptors[j].Attack
+		}
+		return interceptors[i].ID < interceptors[j].ID
+	})
 	return interceptors
 }
 

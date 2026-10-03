@@ -192,3 +192,6 @@ Task 075 update:
 
 Task 076 update:
 - Retail active-defense interceptors now use canonical once-per-turn state, skip after first active-defense attempt, and clear that state during turn refresh, matching `k_UDF_USED_ACTIVE_DEFENSE`.
+
+Task 077 update:
+- Retail active-defense interceptors now resolve in descending attack order with deterministic ID tie-breaks, matching `ArmyData::GetActiveDefenders` insertion ordering.

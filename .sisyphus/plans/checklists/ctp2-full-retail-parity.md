@@ -370,6 +370,7 @@
 - [x] Task 419: Retail `Explodes` is source-classified as presentation-only combat explosion animation metadata.
 - [x] Task 420: Retail `HasPopAndCanBuild` city pseudo-units are rejected from normal city production queues.
 - [x] Task 421: Retail active-defense interceptors fire once per turn and reset on turn refresh.
+- [x] Task 422: Retail active-defense interceptors resolve in descending attack order.
 
 ## Detailed Remaining Retail Parity Ledger
 
