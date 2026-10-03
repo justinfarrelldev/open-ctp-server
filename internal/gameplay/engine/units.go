@@ -129,7 +129,7 @@ func applyUnitCommand(state *State, command Command, runtime *rules.RuntimeRules
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", err
 		}
-		return EventTradeRoutePirated, pirateTrade(state, command.ActorPlayerID, payload)
+		return EventTradeRoutePirated, pirateTrade(state, command.ActorPlayerID, payload, runtime)
 	case CommandSpaceLaunch:
 		var payload spaceLaunchPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -792,7 +792,7 @@ func giftUnit(state *State, actorID string, payload giftUnitPayload) error {
 	return nil
 }
 
-func pirateTrade(state *State, actorID string, payload pirateTradePayload) error {
+func pirateTrade(state *State, actorID string, payload pirateTradePayload, runtime *rules.RuntimeRules) error {
 	unit, err := ownedUnit(state, actorID, payload.UnitID)
 	if err != nil || payload.RouteID == "" || unit.TileID == "" || unit.TransportID != "" || unit.InSpace || unit.ArmyID == "" || !hasEffect(unit.Effects, EffectCanPirate) {
 		return errors.New("piracy action is invalid")
@@ -805,7 +805,7 @@ func pirateTrade(state *State, actorID string, payload pirateTradePayload) error
 	if !ok || !tradeRouteTouchesTile(*state, *route, unit.TileID) || tradeRouteSourceOwner(*state, *route) == actorID {
 		return errors.New("piracy action is invalid")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return err
 	}
 	route.PiratingArmyID = unit.ArmyID

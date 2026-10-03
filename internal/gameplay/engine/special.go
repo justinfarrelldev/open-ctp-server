@@ -126,7 +126,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			return "", nil, err
 		}
 		if command.Type == CommandSue && payload.TargetUnitID != "" {
-			return sueUnits(state, command.ActorPlayerID, payload)
+			return sueUnits(state, command.ActorPlayerID, payload, runtime)
 		}
 		unit, city, actorNation, targetNation, err := specialTarget(state, command.ActorPlayerID, payload, command.Type == CommandSue)
 		if err != nil {
@@ -140,7 +140,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			if !hasEffect(unit.Effects, EffectSpecialEmbassy) || HasActiveWonderEffect(*state, city.OwnerID, EffectCloseEmbassies) || HasEffectiveEmbassyWith(*state, command.ActorPlayerID, city.OwnerID) {
 				return "", nil, errors.New("special action is not authorized")
 			}
-			if err := spendSpecialMove(unit); err != nil {
+			if err := spendSpecialMove(unit, runtime); err != nil {
 				return "", nil, err
 			}
 			actorNation.Embassies = append(actorNation.Embassies, targetNation.ID)
@@ -154,66 +154,66 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 			if !hasEffect(unit.Effects, EffectSpecialSoothsaying) {
 				return "", nil, errors.New("special action is not authorized")
 			}
-			if err := spendSpecialMove(unit); err != nil {
+			if err := spendSpecialMove(unit, runtime); err != nil {
 				return "", nil, err
 			}
 			city.Effects = append(city.Effects, Effect{ID: "soothsaying:" + unit.ID, Kind: EffectSoothsaying})
 			return EventSoothsayingApplied, json.RawMessage(`{"disclosed":true}`), nil
 		case CommandCauseUnhappiness:
-			return causeUnhappiness(state, unit, city, sources)
+			return causeUnhappiness(state, unit, city, sources, runtime)
 		case CommandAdvertise:
-			return advertise(state, unit, city, sources)
+			return advertise(state, unit, city, sources, runtime)
 		case CommandInciteRevolution:
-			return inciteRevolution(state, unit, city, sources)
+			return inciteRevolution(state, unit, city, sources, runtime)
 		case CommandIndulgenceSales:
 			return indulgenceSales(state, unit, city, actorNation, targetNation, runtime)
 		case CommandSlaveUprising:
-			return slaveUprising(state, unit, city)
+			return slaveUprising(state, unit, city, runtime)
 		case CommandStealTechnology:
-			return stealTechnology(state, unit, city, actorNation, targetNation, payload.AdvanceID, sources)
+			return stealTechnology(state, unit, city, actorNation, targetNation, payload.AdvanceID, sources, runtime)
 		case CommandConvertCity:
-			return convertCity(state, unit, city, sources)
+			return convertCity(state, unit, city, sources, runtime)
 		case CommandCreateFranchise:
-			return createFranchise(state, unit, city, sources)
+			return createFranchise(state, unit, city, sources, runtime)
 		case CommandInvestigateCity:
-			return investigateCity(state, unit, city, actorNation, state.Phase.Turn, sources)
+			return investigateCity(state, unit, city, actorNation, state.Phase.Turn, sources, runtime)
 		case CommandPlantNuke:
 			return plantNuke(state, unit, city, actorNation, targetNation, sources, runtime)
 		case CommandThrowParty:
-			return throwParty(state, unit, city, actorNation, targetNation)
+			return throwParty(state, unit, city, actorNation, targetNation, runtime)
 		case CommandAssassinateRuler:
-			return assassinateRuler(state, unit, city, targetNation, sources)
+			return assassinateRuler(state, unit, city, targetNation, sources, runtime)
 		case CommandInjoin:
-			return injoinCity(unit, city)
+			return injoinCity(unit, city, runtime)
 		case CommandReform:
-			return reformCity(unit, city)
+			return reformCity(unit, city, runtime)
 		case CommandUndergroundRailway:
-			return undergroundRailway(state, unit, city, actorNation, sources)
+			return undergroundRailway(state, unit, city, actorNation, sources, runtime)
 		case CommandSue:
-			return sueCity(unit, city, command.ActorPlayerID)
+			return sueCity(unit, city, command.ActorPlayerID, runtime)
 		case CommandBioTerror, CommandNanoTerror, CommandPlague:
-			return cityTerror(state, unit, city, command.Type, sources)
+			return cityTerror(state, unit, city, command.Type, sources, runtime)
 		default:
-			return slaveRaid(state, unit, city, command.Type, sources)
+			return slaveRaid(state, unit, city, command.Type, sources, runtime)
 		}
 	case CommandPillage:
 		var payload PillagePayload
 		if err := decodePayload(command.Payload, &payload); err != nil || payload.UnitID == "" {
 			return "", nil, errors.New("pillage payload is invalid")
 		}
-		return pillage(state, command.ActorPlayerID, payload)
+		return pillage(state, command.ActorPlayerID, payload, runtime)
 	case CommandCreatePark:
 		var payload CreateParkPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", nil, err
 		}
-		return createPark(state, command.ActorPlayerID, payload)
+		return createPark(state, command.ActorPlayerID, payload, runtime)
 	case CommandExpel:
 		var payload ExpelPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
 			return "", nil, err
 		}
-		return expelUnit(state, command.ActorPlayerID, payload)
+		return expelUnit(state, command.ActorPlayerID, payload, runtime)
 	case CommandTerraform:
 		var payload TerraformPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -233,7 +233,7 @@ func applySpecialCommand(state *State, command Command, sources Sources, runtime
 		if actorNation == nil || cost <= 0 || turns <= 0 || actorNation.PublicWorks < cost {
 			return "", nil, errors.New("terrain action is not eligible")
 		}
-		if err := spendSpecialMove(unit); err != nil {
+		if err := spendSpecialMove(unit, runtime); err != nil {
 			return "", nil, err
 		}
 		actorNation.PublicWorks -= cost
@@ -359,7 +359,7 @@ func buildTerrainImprovement(state *State, actorID string, payload BuildImprovem
 		return "", nil, errors.New("terrain action is not eligible")
 	}
 	if unit != nil {
-		if err := spendSpecialMove(unit); err != nil {
+		if err := spendSpecialMove(unit, runtime); err != nil {
 			return "", nil, err
 		}
 	}
@@ -460,7 +460,7 @@ func specialTarget(state *State, actorID string, payload SpecialActionPayload, a
 	return unit, city, actorNation, targetNation, nil
 }
 
-func sueCity(unit *Unit, city *City, actorID string) (string, json.RawMessage, error) {
+func sueCity(unit *Unit, city *City, actorID string, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialSue) {
 		return "", nil, errors.New("special action is not authorized")
 	}
@@ -468,7 +468,7 @@ func sueCity(unit *Unit, city *City, actorID string) (string, json.RawMessage, e
 		if !hasExternalFranchise(*city, actorID) {
 			return "", nil, errors.New("special action is not authorized")
 		}
-		if err := spendSpecialMove(unit); err != nil {
+		if err := spendSpecialMove(unit, runtime); err != nil {
 			return "", nil, err
 		}
 		city.Effects = removeExternalFranchises(city.Effects, actorID)
@@ -477,7 +477,7 @@ func sueCity(unit *Unit, city *City, actorID string) (string, json.RawMessage, e
 	if hasEffect(city.Effects, EffectLawsuit) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	city.StoredProduction = 0
@@ -485,7 +485,7 @@ func sueCity(unit *Unit, city *City, actorID string) (string, json.RawMessage, e
 	return EventCitySued, json.RawMessage(`{"disclosed":true}`), nil
 }
 
-func sueUnits(state *State, actorID string, payload SpecialActionPayload) (string, json.RawMessage, error) {
+func sueUnits(state *State, actorID string, payload SpecialActionPayload, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	unit, err := ownedUnit(state, actorID, payload.UnitID)
 	if err != nil || unit.TileID == "" || !hasEffect(unit.Effects, EffectSpecialSue) {
 		return "", nil, errors.New("sue target is unavailable")
@@ -508,7 +508,7 @@ func sueUnits(state *State, actorID string, payload SpecialActionPayload) (strin
 	if len(victimIDs) == 0 {
 		return "", nil, errors.New("sue target is unavailable")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	for _, victimID := range victimIDs {
@@ -537,11 +537,11 @@ func removeExternalFranchises(effects []Effect, ownerID string) []Effect {
 	return kept
 }
 
-func undergroundRailway(state *State, unit *Unit, city *City, actorNation *Nation, sources Sources) (string, json.RawMessage, error) {
+func undergroundRailway(state *State, unit *Unit, city *City, actorNation *Nation, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialUndergroundRailway) || city.Specialists["POP_SLAVE"] <= 0 {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	chance := unitCitySpecialActionChance(*city, *unit, EffectSpecialUndergroundRailway)
@@ -576,11 +576,11 @@ func upsertNationEffect(nation *Nation, kind string, delta int) {
 	nation.Effects = append(nation.Effects, Effect{ID: kind, Kind: kind, Value: delta})
 }
 
-func reformCity(unit *Unit, city *City) (string, json.RawMessage, error) {
+func reformCity(unit *Unit, city *City, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialReform) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	city.Effects = filterEffectsByKind(city.Effects, EffectInjunction)
@@ -599,18 +599,18 @@ func filterEffectsByKind(effects []Effect, kind string) []Effect {
 	return kept
 }
 
-func injoinCity(unit *Unit, city *City) (string, json.RawMessage, error) {
+func injoinCity(unit *Unit, city *City, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialInjoin) || hasEffect(city.Effects, EffectInjunction) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	city.Effects = append(city.Effects, Effect{ID: "injunction", Kind: EffectInjunction, Value: 1})
 	return EventCityInjoined, json.RawMessage(`{"disclosed":true}`), nil
 }
 
-func expelUnit(state *State, actorID string, payload ExpelPayload) (string, json.RawMessage, error) {
+func expelUnit(state *State, actorID string, payload ExpelPayload, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	unit, err := ownedUnit(state, actorID, payload.UnitID)
 	if err != nil || unit.TileID == "" || !hasEffect(unit.Effects, EffectSpecialExpel) {
 		return "", nil, errors.New("expel target is unavailable")
@@ -628,7 +628,7 @@ func expelUnit(state *State, actorID string, payload ExpelPayload) (string, json
 	if destination == "" {
 		return "", nil, errors.New("expel target is unavailable")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	target.TileID = destination
@@ -684,11 +684,11 @@ func cityOnTileState(state State, tileID string) bool {
 	return false
 }
 
-func assassinateRuler(state *State, unit *Unit, city *City, targetNation *Nation, sources Sources) (string, json.RawMessage, error) {
+func assassinateRuler(state *State, unit *Unit, city *City, targetNation *Nation, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialAssassinateRuler) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	chance := unitCitySpecialActionChance(*city, *unit, EffectSpecialAssassinateRuler)
@@ -710,7 +710,7 @@ func assassinateRuler(state *State, unit *Unit, city *City, targetNation *Nation
 	return EventRulerAssassinated, json.RawMessage(`{"disclosed":true}`), nil
 }
 
-func createPark(state *State, actorID string, payload CreateParkPayload) (string, json.RawMessage, error) {
+func createPark(state *State, actorID string, payload CreateParkPayload, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	unit, err := ownedUnit(state, actorID, payload.UnitID)
 	if err != nil || unit.TileID == "" || unit.TransportID != "" || !hasEffect(unit.Effects, EffectSpecialCreatePark) {
 		return "", nil, errors.New("park target is unavailable")
@@ -720,7 +720,7 @@ func createPark(state *State, actorID string, payload CreateParkPayload) (string
 	if tile == nil || !ok || (!adjacent(*tile, unitTile) && tile.ID != unitTile.ID) || parkForTile(*state, tile.ID) != nil {
 		return "", nil, errors.New("park target is unavailable")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	tile.Pollution = 0
@@ -755,7 +755,7 @@ func plantNuke(state *State, unit *Unit, city *City, actorNation *Nation, target
 	if !hasEffect(unit.Effects, EffectSpecialPlantNuke) || !nationCanPlantNuke(*actorNation, runtime) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	cityEffects := cityEffects(*state, *city)
@@ -801,7 +801,7 @@ func plantNuke(state *State, unit *Unit, city *City, actorNation *Nation, target
 	return EventNukePlanted, payload, nil
 }
 
-func throwParty(state *State, unit *Unit, city *City, actorNation *Nation, targetNation *Nation) (string, json.RawMessage, error) {
+func throwParty(state *State, unit *Unit, city *City, actorNation *Nation, targetNation *Nation, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectThrowParty) {
 		return "", nil, errors.New("special action is not authorized")
 	}
@@ -814,7 +814,7 @@ func throwParty(state *State, unit *Unit, city *City, actorNation *Nation, targe
 	if targetNation.LastPartyTurn > 0 && targetNation.LastPartyTurn+retailPartyRegardDuration >= state.Phase.Turn {
 		return "", nil, errors.New("party target is not ready")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	actorNation.Gold -= retailPartyCost
@@ -1039,11 +1039,11 @@ func tilePointer(state *State, tileID string) *Tile {
 	return nil
 }
 
-func investigateCity(state *State, unit *Unit, city *City, actorNation *Nation, turn int, sources Sources) (string, json.RawMessage, error) {
+func investigateCity(state *State, unit *Unit, city *City, actorNation *Nation, turn int, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialInvestigateCity) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	chance := unitCitySpecialActionChance(*city, *unit, EffectSpecialInvestigateCity)
@@ -1074,11 +1074,11 @@ func investigateCity(state *State, unit *Unit, city *City, actorNation *Nation, 
 	return EventCityInvestigated, json.RawMessage(`{"disclosed":true}`), nil
 }
 
-func createFranchise(state *State, unit *Unit, city *City, sources Sources) (string, json.RawMessage, error) {
+func createFranchise(state *State, unit *Unit, city *City, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialCreateFranchise) || hasCityFranchise(*city, unit.OwnerID) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	chance := unitCitySpecialActionChance(*city, *unit, EffectSpecialCreateFranchise)
@@ -1133,7 +1133,7 @@ func setCityWatchful(city *City) {
 	upsertCityEffect(city, Effect{ID: "watchful", Kind: EffectWatchful, Value: 7})
 }
 
-func slaveRaid(state *State, unit *Unit, city *City, commandType string, sources Sources) (string, json.RawMessage, error) {
+func slaveRaid(state *State, unit *Unit, city *City, commandType string, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	requiredEffect := EffectSpecialSlaveRaid
 	if commandType == CommandSettlerSlaveRaid {
 		requiredEffect = EffectSpecialSettlerSlaveRaid
@@ -1143,7 +1143,7 @@ func slaveRaid(state *State, unit *Unit, city *City, commandType string, sources
 	if !hasEffect(unit.Effects, requiredEffect) || HasActiveWonderEffect(*state, unit.OwnerID, EffectProhibitSlavers) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	if protectedByCityEffect(state, city, EffectPreventSlavery, sources) {
@@ -1166,7 +1166,7 @@ func slaveRaid(state *State, unit *Unit, city *City, commandType string, sources
 	return EventSlaveRaidApplied, json.RawMessage(`{"disclosed":true}`), nil
 }
 
-func cityTerror(state *State, unit *Unit, city *City, commandType string, sources Sources) (string, json.RawMessage, error) {
+func cityTerror(state *State, unit *Unit, city *City, commandType string, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	requiredEffect, protectionEffect, successEvent := "", "", ""
 	switch commandType {
 	case CommandBioTerror:
@@ -1181,7 +1181,7 @@ func cityTerror(state *State, unit *Unit, city *City, commandType string, source
 	if !hasEffect(unit.Effects, requiredEffect) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	if protectionEffect != "" && protectedByCityEffect(state, city, protectionEffect, sources) {
@@ -1219,11 +1219,11 @@ func protectedByCityEffect(state *State, city *City, effectKind string, sources 
 	return int(roll%100) < protection
 }
 
-func convertCity(state *State, unit *Unit, city *City, sources Sources) (string, json.RawMessage, error) {
+func convertCity(state *State, unit *Unit, city *City, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialConvertCity) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	if HasActiveWonderEffect(*state, city.OwnerID, EffectPreventConversionEmpire) {
@@ -1357,14 +1357,14 @@ func ensureRebelPlayer(state *State, oldOwner string) string {
 	return playerID
 }
 
-func slaveUprising(state *State, unit *Unit, city *City) (string, json.RawMessage, error) {
+func slaveUprising(state *State, unit *Unit, city *City, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialSlaveUprising) {
 		return "", nil, errors.New("special action is not authorized")
 	}
 	if city.Specialists["POP_SLAVE"] <= 0 {
 		return "", nil, errors.New("special action target is unavailable")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	delete(city.Specialists, "POP_SLAVE")
@@ -1381,7 +1381,7 @@ func indulgenceSales(state *State, unit *Unit, city *City, actorNation *Nation, 
 	if actorNation == nil || targetNation == nil || targetNation.Gold < gold {
 		return "", nil, errors.New("special action target is unavailable")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	targetNation.Gold -= gold
@@ -1390,11 +1390,11 @@ func indulgenceSales(state *State, unit *Unit, city *City, actorNation *Nation, 
 	return EventIndulgenceSold, json.RawMessage(`{"disclosed":true}`), nil
 }
 
-func inciteRevolution(state *State, unit *Unit, city *City, sources Sources) (string, json.RawMessage, error) {
+func inciteRevolution(state *State, unit *Unit, city *City, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialInciteRevolution) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	chance := unitCitySpecialActionChance(*city, *unit, EffectSpecialInciteRevolution)
@@ -1412,22 +1412,22 @@ func inciteRevolution(state *State, unit *Unit, city *City, sources Sources) (st
 	return EventRevolutionIncited, json.RawMessage(`{"disclosed":true}`), nil
 }
 
-func causeUnhappiness(state *State, unit *Unit, city *City, sources Sources) (string, json.RawMessage, error) {
+func causeUnhappiness(state *State, unit *Unit, city *City, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectSpecialCauseUnhappiness) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	return applyUnhappinessAttack(state, unit, city, sources, EventCauseUnhappinessApplied, EventCauseUnhappinessFailed)
+	return applyUnhappinessAttack(state, unit, city, sources, EventCauseUnhappinessApplied, EventCauseUnhappinessFailed, runtime)
 }
 
-func advertise(state *State, unit *Unit, city *City, sources Sources) (string, json.RawMessage, error) {
+func advertise(state *State, unit *Unit, city *City, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	if !hasEffect(unit.Effects, EffectAdvertise) || !hasEffect(unit.Effects, EffectSpecialCauseUnhappiness) {
 		return "", nil, errors.New("special action is not authorized")
 	}
-	return applyUnhappinessAttack(state, unit, city, sources, EventAdvertised, EventCauseUnhappinessFailed)
+	return applyUnhappinessAttack(state, unit, city, sources, EventAdvertised, EventCauseUnhappinessFailed, runtime)
 }
 
-func applyUnhappinessAttack(state *State, unit *Unit, city *City, sources Sources, successEvent string, failureEvent string) (string, json.RawMessage, error) {
-	if err := spendSpecialMove(unit); err != nil {
+func applyUnhappinessAttack(state *State, unit *Unit, city *City, sources Sources, successEvent string, failureEvent string, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	chance := unitCitySpecialActionChance(*city, *unit, EffectSpecialCauseUnhappiness)
@@ -1491,7 +1491,7 @@ func stealTechnologyEligibleAdvances(actor, target *Nation, targetAdvanceID stri
 	return eligible
 }
 
-func stealTechnology(state *State, unit *Unit, city *City, actor, target *Nation, targetAdvanceID string, sources Sources) (string, json.RawMessage, error) {
+func stealTechnology(state *State, unit *Unit, city *City, actor, target *Nation, targetAdvanceID string, sources Sources, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	chance := stealTechnologyChance(unit, targetAdvanceID)
 	if chance < 0 || chance > 100 {
 		return "", nil, errors.New("special action is not authorized")
@@ -1500,7 +1500,7 @@ func stealTechnology(state *State, unit *Unit, city *City, actor, target *Nation
 	if len(eligible) == 0 {
 		return "", nil, errors.New("special action target is unavailable")
 	}
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	if stoppedBySpiesEverywhere(state, unit, city, sources) {
@@ -1608,7 +1608,7 @@ func validateSpecialState(state State) error {
 	return nil
 }
 
-func pillage(state *State, actorID string, payload PillagePayload) (string, json.RawMessage, error) {
+func pillage(state *State, actorID string, payload PillagePayload, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	unit, err := ownedUnit(state, actorID, payload.UnitID)
 	if err != nil || unit.TileID == "" || unit.TransportID != "" || !hasEffect(unit.Effects, EffectCanPillage) {
 		return "", nil, errors.New("pillage target is unavailable")
@@ -1630,7 +1630,7 @@ func pillage(state *State, actorID string, payload PillagePayload) (string, json
 		return "", nil, errors.New("pillage target is unavailable")
 	}
 	state.Overlays = kept
-	if err := spendSpecialMove(unit); err != nil {
+	if err := spendSpecialMove(unit, runtime); err != nil {
 		return "", nil, err
 	}
 	payloadJSON, _ := json.Marshal(struct {
@@ -1692,11 +1692,15 @@ func maybeResolveSpecialDeath(state *State, unitID, actionKind string, sources S
 	}
 }
 
-func spendSpecialMove(unit *Unit) error {
-	if unit.Movement < 1 {
+func spendSpecialMove(unit *Unit, runtime ...*rules.RuntimeRules) error {
+	cost := 1
+	if len(runtime) > 0 && runtime[0] != nil && runtime[0].Constants.SpecialActionMoveCost > 0 {
+		cost = runtime[0].Constants.SpecialActionMoveCost
+	}
+	if unit.Movement < cost {
 		return errors.New("special action is not authorized")
 	}
-	unit.Movement--
+	unit.Movement -= cost
 	return nil
 }
 func rngValue(state State, domain string) uint64 {

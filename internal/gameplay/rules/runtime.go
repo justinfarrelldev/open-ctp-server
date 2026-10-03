@@ -398,6 +398,7 @@ type RuntimeConstants struct {
 	VeteranCoefPercent             int `json:"veteran_coef_percent,omitempty"`
 	BombardDestroyBuildingPercent  int `json:"bombard_destroy_building_percent,omitempty"`
 	BombardKillPopulationPercent   int `json:"bombard_kill_population_percent,omitempty"`
+	SpecialActionMoveCost          int `json:"special_action_move_cost,omitempty"`
 }
 
 type RuntimeGaia struct {

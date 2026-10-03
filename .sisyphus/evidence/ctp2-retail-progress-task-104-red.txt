@@ -1,0 +1,4 @@
+# github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine.test]
+internal/gameplay/engine/special_task11_test.go:33:120: unknown field SpecialActionMoveCost in struct literal of type rules.RuntimeConstants
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine [build failed]
+FAIL

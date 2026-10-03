@@ -271,3 +271,6 @@ Task 102 update:
 
 Task 103 update:
 - All imported special/spy action vectors are source-verified as executed/projection-covered (`EstablishEmbassy`, `StealTechnology`, `PlantNuke`, `InvestigateCity`, `AssasinateRuler`, `BioTerror`, `NanoTerror`, `Plague`, `ConvertCities`, `CreateFranchise`, `CauseUnhappiness`, `Advertise`, `InciteRevolution`, `IndulgenceSales`, `SlaveRaids`, `SettlerSlaveRaids`, `SlaveUprising`, `UndergroundRailway`, `CanInjoin`, `CanReform`, `CanSue`, `CanExpel`, `CreateParks`, `ThrowParty`); nested sound fields remain presentation/audio metadata.
+
+Task 104 update:
+- `Const.txt` `SPECIAL_ACTION_MOVE_COST` is imported/projected and now drives all special-action movement spending (including piracy), replacing the previous synthetic one-point fallback when retail runtime constants are pinned.

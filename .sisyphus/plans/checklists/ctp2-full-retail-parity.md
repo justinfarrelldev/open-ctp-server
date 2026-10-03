@@ -397,6 +397,7 @@
 - [x] Task 446: Production unlock gates now require all runtime prerequisites and reject any listed obsolete advance during queueing and cleanup.
 - [x] Task 447: `UpgradeTo` is source-classified as released-data marker/non-retail executable; optional server upgrade command/projection/AI tests are verified.
 - [x] Task 448: Special/spy action vector execution, projection, HTTP routes, and public-AI consumption are source-verified.
+- [x] Task 449: `SPECIAL_ACTION_MOVE_COST` imports to runtime constants and drives all special-action movement spending.
 
 ## Detailed Remaining Retail Parity Ledger
 

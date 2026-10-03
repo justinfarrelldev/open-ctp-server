@@ -27,6 +27,33 @@ func task11Apply(t *testing.T, state State, kind string, payload any) (State, []
 	return next, events, err
 }
 
+func TestRetailSpecialActionMoveCostUsesRuntimeConstant(t *testing.T) {
+	state := task11State()
+	state.Units[0].Movement = 100
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Constants: rules.RuntimeConstants{SpecialActionMoveCost: 100}, Starter: rules.RuntimeStarter{Domain: DomainLand, Movement: 100, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_AGENT", Kind: ProductionUnit, Cost: 1}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_AGENT", Domain: DomainLand, Movement: 100, Health: 1}}}
+	definitions, hash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Rules = RulesPin{Version: rules.CTP2CompatibilityVersion, ContentHash: hash, Definitions: definitions}
+
+	next, _, err := task11Apply(t, state, CommandEstablishEmbassy, SpecialActionPayload{UnitID: "agent", CityID: "target-city"})
+	if err != nil {
+		t.Fatalf("establish embassy with exact special move cost: %v", err)
+	}
+	unit, ok := unitByID(next, "agent")
+	if !ok || unit.Movement != 0 {
+		t.Fatalf("unit movement after special action = %+v, want 0", unit)
+	}
+
+	state = task11State()
+	state.Units[0].Movement = 99
+	state.Rules = next.Rules
+	if _, _, err := task11Apply(t, state, CommandEstablishEmbassy, SpecialActionPayload{UnitID: "agent", CityID: "target-city"}); err == nil {
+		t.Fatal("special action succeeded below runtime move cost")
+	}
+}
+
 func TestRetailDefendAgainstSpiesStopsAndKillsCitySpy(t *testing.T) {
 	state := task11State()
 	state.Units[0].Effects = append(state.Units[0].Effects, Effect{ID: "investigate", Kind: EffectSpecialInvestigateCity, Value: 100})
