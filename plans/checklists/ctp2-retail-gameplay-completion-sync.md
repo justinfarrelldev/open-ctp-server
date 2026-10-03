@@ -104,6 +104,7 @@
 - [x] Task 090: Advance `Branch`, `Icon`, `GLHidden`, and `KeyAdvanceAdvice` are source-classified; `Age` is split out as gameplay/setup work.
 - [x] Task 091: Government rank/advice/icon fields and `IsEcotopia` are source-classified as UI/advice/marker metadata.
 - [x] Task 092: Terrain and tile-improvement presentation/editor fields are source-classified as non-gameplay metadata.
+- [x] Task 093: Active-defense carrier/enabler gates are source-verified against existing bombard resolution tests.
 
 ## Full-Game Mechanical Execution First
 
@@ -165,7 +166,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Implement or source-classify `IsFlanker` tactical targeting, including grouped-combat target row/column behavior.
 - [x] Source-classify `Explodes` death/combat behavior as presentation-only battle explosion animation metadata.
 - [ ] Verify all combat stats and modifiers: `Attack`, `Defense`, `ZBRangeAttack`, `BombRounds`, `BombardRange`, `Firepower`, `Armor`, `MaxHP`, `MountedBonus`, `BonusAgainstMounted`, `AttackWoodenShipBonus`, `WoodenShipBonus`, `Defend`, `CanAttack`, `CanBombard`, `CanCounterBombard`, `CityWalls`, `ReduceCityWalls`, and `IgnoreCityWalls`.
-- [ ] Complete active defense parity: `ActiveDefenseRange`, `ActiveDefenseOnlyWhenCarryingEnablers`, `EnableCarrierDefenses`, interceptor target selection, once-per-turn use/reset, enabler cargo checks, and bombard/counter-bombard RNG ordering.
+- [x] Complete active defense parity: `ActiveDefenseRange`, `ActiveDefenseOnlyWhenCarryingEnablers`, `EnableCarrierDefenses`, interceptor target selection, once-per-turn use/reset, enabler cargo checks, and bombard/counter-bombard RNG ordering.
 - [ ] Complete `Civilian`, `CantCaptureCity`, `VictoryEnslavement`, `DeathEffectsHappy`, `SingleUse`, and `NuclearAttack` edge cases under grouped combat/city capture.
 - [ ] Complete all spy/special-action vectors field-by-field: `EstablishEmbassy`, `StealTechnology`, `PlantNuke`, `InvestigateCity`, `AssasinateRuler`, `BioTerror`, `NanoTerror`, `Plague`, `ConvertCities`, `CreateFranchise`, `CauseUnhappiness`, `Advertise`, `InciteRevolution`, `IndulgenceSales`, `SlaveRaids`, `SettlerSlaveRaids`, `SlaveUprising`, `UndergroundRailway`, `CanInjoin`, `CanReform`, `CanSue`, `CanExpel`, `CreateParks`, `ThrowParty`, and nested `Chance`/`DeathChance`/`EliteChance`/`EscapeChance`/`Effect`/`Timer`/`Amount`/`Sound` fields.
 - [ ] Ensure every special action has safe public legal-action projection, HTTP route coverage where applicable, canonical event payloads, AI-consumable legality, and no hidden-state shortcut.
