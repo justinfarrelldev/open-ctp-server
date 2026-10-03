@@ -22,7 +22,7 @@ Regression guard:
 | Terrain improvements | 40 | 36 | Class/level/construction tiles, cost/time, terrain gates, movement/yield/defense/heal/vision/radar/listening-post/airport/endgame effects, CanSee detector bits, border radii, CantBuildOn/Excludes, terraform, pillage, and source-classified Freight/CanUpgrade markers are executed/projected or classified for released gameplay-bearing fields. |
 | Terrain | 26 | 43 | EnvBase/EnvCity/EnvRiver yields, movement, river overlays, and defense modifiers are imported/executed for modeled tile/city/combat paths; score is presentation/scoring metadata. Resources/goods spawning is classified as worldgen input consumed via canonical tile goods; NeedsCityGood and route good import/export execute. CanDie, dead-yield metadata, transform timing/materials, and add/remove advance gates execute/project. Hut/tile-set presentation fields remain pending. |
 | Governments | 12 | 69 | EnableAdvance, economy/research, pollution, crime, social sliders, readiness/support/HP, martial law, empire/city-count, trade caps, rush modifiers, capitalization/infrastructure, war-discontent/conquest-distress/peace-movement, and science caps are imported/executed/projected; rank/advice are presentation/AI metadata and `ProfessionalUnits` is source-classified as AI/outcom metadata. |
-| Pollution trigger lists | 4 | 1 | Trigger levels/disaster types are projected and phase/history integration is wired. Full disaster map/city/unit outcomes remain pending. |
+| Pollution trigger lists | 4 | 1 | Trigger levels/disaster types are projected; trigger-list selection uses canonical world tile count matching released map-size thresholds; phase/history integration and flood/ozone outcomes execute for modeled paths. |
 
 ## Full field inventory
 
@@ -334,3 +334,6 @@ Task 123 update:
 
 Task 124 update:
 - Readiness/martial-law/war-discontent/conquest-distress coverage is verified: readiness support and HP modifiers execute; readiness state projects legally; martial law, war discontent, conquest distress/decay, and peace-movement home/overseas decay are covered in happiness/combat/support paths.
+
+Task 125 update:
+- Pollution trigger-list selection now uses canonical world tile count with released small/medium/large/gigantic thresholds instead of a fixed small-map fallback.

@@ -1,0 +1,5 @@
+--- FAIL: TestRetailPollutionTriggerUsesWorldTileCountMapSize (0.00s)
+    pollution_runtime_test.go:207: last disaster = "", want medium-map trigger from tile count
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.004s
+FAIL

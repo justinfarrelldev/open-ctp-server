@@ -136,6 +136,7 @@
 - [x] Task 122: Retail government economy/crime/pollution/empire/rush/trade/readiness coefficient import/execution is verified; `ProfessionalUnits` is classified as AI/outcom metadata with unit-level professional support markers executing.
 - [x] Task 123: Retail social slider expectations, coefficients, economy/happiness effects, AI legal-action projection, and owner-only projection are verified.
 - [x] Task 124: Retail readiness, support, HP modifiers, martial law, war discontent, conquest distress, and peace-movement home/overseas decay mechanics are verified.
+- [x] Task 125: Retail pollution trigger selection now uses canonical world tile-count map size instead of fixed small-map fallback.
 
 ## Full-Game Mechanical Execution First
 
@@ -247,7 +248,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 
 ### Pollution, disasters, victory, and endgame
 
-- [ ] Finish retail pollution trigger selection by map size and game setup rather than fixed small-map fallback.
+- [x] Finish retail pollution trigger selection by map size and game setup rather than fixed small-map fallback.
 - [ ] Finish pollution accumulation/reduction from population, production, buildings, wonders, advances, nukes, terrain, and world pollution reduction effects.
 - [ ] Finish flood and ozone disaster target selection, terrain/dead-tile conversion, city/unit/improvement destruction, pollution history, event payloads, and AI response.
 - [ ] Finish all victory paths: bloodlust/conquest, diplomatic/world-union, score/final-turn, Gaia/Solaris endgame, space/launch interactions, dead-player lifecycle, rankings, and tie-breaking.

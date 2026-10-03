@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
@@ -188,17 +189,21 @@ func tileByIDForTest(tiles []Tile, id string) Tile {
 	return Tile{}
 }
 
-func TestRetailPollutionDefaultsToSmallMapTriggerUntilWorldMapSizeIsModeled(t *testing.T) {
+func TestRetailPollutionTriggerUsesWorldTileCountMapSize(t *testing.T) {
 	state := runtimeStartedState(t)
+	state.Tiles = make([]Tile, 4608)
+	for index := range state.Tiles {
+		state.Tiles[index] = Tile{ID: fmt.Sprintf("tile-%04d", index), X: index % 96, Y: index / 96, Terrain: TerrainPlains, Open: true}
+	}
 	state.Tiles[0].Pollution = 2
-	state.Pollution = &PollutionState{History: []int64{3999999}}
-	runtime := &rules.RuntimeRules{PollutionTriggers: []rules.RuntimePollutionTriggerDefinition{
-		{ID: "POLLUTION_TRIGGER_LIST_HUGE_MAP", TriggerLevels: []int64{35000000}, DisasterTypes: []string{"POLLUTION_OZONE_DISASTER"}},
-		{ID: "POLLUTION_TRIGGER_LIST_SMALL_MAP", TriggerLevels: []int64{4000000}, DisasterTypes: []string{"POLLUTION_FLOOD_DISASTER"}},
+	state.Pollution = &PollutionState{History: []int64{9}}
+	runtime := &rules.RuntimeRules{Movement: rules.RuntimeMovement{Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_DEAD", Domains: []string{DomainLand}}, {ID: TerrainPlains, Domains: []string{DomainLand}, CanDie: true}}}, PollutionTriggers: []rules.RuntimePollutionTriggerDefinition{
+		{ID: "POLLUTION_TRIGGER_LIST_SMALL_MAP", TriggerLevels: []int64{100}, DisasterTypes: []string{"POLLUTION_FLOOD_DISASTER"}},
+		{ID: "POLLUTION_TRIGGER_LIST_MEDIUM_MAP", TriggerLevels: []int64{10}, DisasterTypes: []string{"POLLUTION_OZONE_DISASTER"}},
 	}}
 
 	advanceRound(&state, runtime)
-	if state.Pollution.LastDisaster != "POLLUTION_FLOOD_DISASTER" {
-		t.Fatalf("last disaster = %q, want small-map flood trigger", state.Pollution.LastDisaster)
+	if state.Pollution.LastDisaster != "POLLUTION_OZONE_DISASTER" {
+		t.Fatalf("last disaster = %q, want medium-map trigger from tile count", state.Pollution.LastDisaster)
 	}
 }

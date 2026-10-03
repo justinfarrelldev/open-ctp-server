@@ -283,7 +283,7 @@ func advancePollution(state *State, runtime *rules.RuntimeRules) {
 	if state.Pollution == nil {
 		state.Pollution = &PollutionState{}
 	}
-	trigger := runtimePollutionTrigger(runtime.PollutionTriggers)
+	trigger := runtimePollutionTrigger(*state, runtime.PollutionTriggers)
 	retailState := rules.RetailPollutionState{Phase: state.Pollution.Phase, GWPhase: state.Pollution.GWPhase, History: append([]int64(nil), state.Pollution.History...), Trend: state.Pollution.Trend}
 	retailTrigger := rules.RetailPollutionTriggerList{ID: trigger.ID, TriggerLevels: append([]int64(nil), trigger.TriggerLevels...), DisasterTypes: append([]string(nil), trigger.DisasterTypes...)}
 	next, event := rules.RetailPollutionBeginTurn(retailState, retailTrigger, pollutionByNation, false)
@@ -451,13 +451,31 @@ func removeOverlaysOnTile(state *State, tileID string) {
 	state.Overlays = overlays
 }
 
-func runtimePollutionTrigger(triggers []rules.RuntimePollutionTriggerDefinition) rules.RuntimePollutionTriggerDefinition {
-	for _, trigger := range triggers {
-		if trigger.ID == "POLLUTION_TRIGGER_LIST_SMALL_MAP" {
-			return trigger
+func runtimePollutionTrigger(state State, triggers []rules.RuntimePollutionTriggerDefinition) rules.RuntimePollutionTriggerDefinition {
+	if len(triggers) == 0 {
+		return rules.RuntimePollutionTriggerDefinition{}
+	}
+	for _, id := range pollutionTriggerIDsForTileCount(len(state.Tiles)) {
+		for _, trigger := range triggers {
+			if trigger.ID == id {
+				return trigger
+			}
 		}
 	}
 	return triggers[0]
+}
+
+func pollutionTriggerIDsForTileCount(tileCount int) []string {
+	switch {
+	case tileCount <= 1152:
+		return []string{"POLLUTION_TRIGGER_LIST_SMALL_MAP"}
+	case tileCount <= 4608:
+		return []string{"POLLUTION_TRIGGER_LIST_MEDIUM_MAP", "POLLUTION_TRIGGER_LIST_SMALL_MAP"}
+	case tileCount <= 8192:
+		return []string{"POLLUTION_TRIGGER_LIST_LARGE_MAP", "POLLUTION_TRIGGER_LIST_MEDIUM_MAP", "POLLUTION_TRIGGER_LIST_SMALL_MAP"}
+	default:
+		return []string{"POLLUTION_TRIGGER_LIST_GIGANTIC_MAP", "POLLUTION_TRIGGER_LIST_HUGE_MAP", "POLLUTION_TRIGGER_LIST_LARGE_MAP", "POLLUTION_TRIGGER_LIST_MEDIUM_MAP", "POLLUTION_TRIGGER_LIST_SMALL_MAP"}
+	}
 }
 
 func playerPollutionTotals(state State) []int64 {
