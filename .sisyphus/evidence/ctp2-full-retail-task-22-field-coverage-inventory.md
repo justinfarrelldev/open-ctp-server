@@ -249,3 +249,6 @@ Task 095 update:
 
 Task 096 update:
 - Core combat stats/modifiers (`Attack`, `Defense`, `ZBRangeAttack`, `BombRounds`, `BombardRange`, `Firepower`, `Armor`, `MaxHP`, `MountedBonus`, `BonusAgainstMounted`, `AttackWoodenShipBonus`, `WoodenShipBonus`, `Defend`, `CanAttack`, `CanBombard`, `CanCounterBombard`, `CityWalls`, `ReduceCityWalls`, `IgnoreCityWalls`) are source-verified as executed by rules projection and engine combat/bombard tests.
+
+Task 097 update:
+- Grouped-combat/city-capture edge fields (`CantCaptureCity`, `VictoryEnslavement`, `DeathEffectsHappy`, `SingleUse`, `NuclearAttack`) are source-verified as executed; `Civilian` is preserved for AI/diplomacy/threat classification and has no separate retail grouped-combat/capture mutation.
