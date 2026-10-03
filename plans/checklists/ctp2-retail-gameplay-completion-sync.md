@@ -103,6 +103,7 @@
 - [x] Task 089: Wonder `DefaultIcon`, `Description`, and `Movie` are source-classified as presentation/UI metadata.
 - [x] Task 090: Advance `Branch`, `Icon`, `GLHidden`, and `KeyAdvanceAdvice` are source-classified; `Age` is split out as gameplay/setup work.
 - [x] Task 091: Government rank/advice/icon fields and `IsEcotopia` are source-classified as UI/advice/marker metadata.
+- [x] Task 092: Terrain and tile-improvement presentation/editor fields are source-classified as non-gameplay metadata.
 
 ## Full-Game Mechanical Execution First
 
@@ -194,7 +195,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Implement or classify terrain `Resources`, goods spawning, goods trade bonuses, `NeedsCityGood`, and route good import/export edge cases.
 - [ ] Finish terrain `CanDie`, dead terrain yields, ozone/flood/nuke transformations, `AddAdvance`, `RemoveAdvance`, `TransformAdd`, `TransformRemove`, and terraform advance gates.
 - [ ] Finish tile improvement fields: `Class`, `Level`, `ConstructionTiles`, `ProductionCost`, `ProductionTime`, `TerrainEffect.Terrain`, `BonusFood`, `BonusProduction`, `BonusGold`, `MoveCost`, `DefenseBonus`, `HealRate`, `Airport`, `Radar`, `RadarRange`, `VisionRange`, `ListeningPost`, `CanSee`, `CanUpgrade`, `Freight`, `Endgame`, `CantBuildOn`, `Excludes`, `IntBorderRadius`, `SquaredBorderRadius`, `TerraformTerrain`, and pillage/upgrade behavior.
-- [ ] Classify terrain/tile-improvement presentation fields (`Icon`, `TilesetIndex`, `HutTilesetIndex*`, `Tooltip`, `Statusbar`, `Sound`, `GLHidden`, `IsCityRuin`, `Column`) or project them safely where public clients need them.
+- [x] Classify terrain/tile-improvement presentation fields (`Icon`, `TilesetIndex`, `HutTilesetIndex*`, `Tooltip`, `Statusbar`, `Sound`, `GLHidden`, `IsCityRuin`, `Column`) as presentation/editor/Great-Library/control-panel metadata for server gameplay.
 
 ### Governments, sliders, readiness, and happiness/crime
 

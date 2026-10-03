@@ -237,3 +237,6 @@ Task 090 update:
 
 Task 091 update:
 - Government rank/advice/icon fields (`Rank`, `*Rank`, `HigherRankAdvice`, `SameRankAdvice`, `Icon`) are classified as UI/advice metadata, and `IsEcotopia` as non-executed marker metadata, with no server gameplay state mutation required for literal retail parity.
+
+Task 092 update:
+- Terrain/tile-improvement presentation fields (`Icon`, `TilesetIndex`, `HutTilesetIndex*`, `Tooltip`, `Statusbar`, `Sound`, `GLHidden`, `IsCityRuin`, `Column`) are classified as presentation/editor/Great-Library/control-panel metadata; no server gameplay execution is required.
