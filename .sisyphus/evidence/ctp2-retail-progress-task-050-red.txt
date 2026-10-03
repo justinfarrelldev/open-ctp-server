@@ -1,0 +1,5 @@
+--- FAIL: TestRetailEliminateNukesRemovesQueuedNuclearAttackUnits (0.00s)
+    eliminate_nukes_queue_task50_test.go:14: queue after nuke elimination = []engine.ProductionItem{engine.ProductionItem{ID:"UNIT_NUKE", Kind:"unit", Cost:1, Upkeep:0, Prerequisite:"", ObsoletedBy:"", Scope:"", Effects:[]engine.Effect{engine.Effect{ID:"nuke", Kind:"nuclear_attack", Value:0, Turns:0}}}, engine.ProductionItem{ID:"UNIT_GUARD", Kind:"unit", Cost:1, Upkeep:0, Prerequisite:"", ObsoletedBy:"", Scope:"", Effects:[]engine.Effect(nil)}}
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.004s
+FAIL

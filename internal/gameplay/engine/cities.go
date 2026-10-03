@@ -2563,7 +2563,7 @@ func eliminateNukes(state *State) {
 	}
 	for index := range state.Cities {
 		state.Cities[index].Buildings = removeNuclearPlantBuildings(state.Cities[index].Buildings)
-		state.Cities[index].Queue = removeNuclearPlantQueueItems(state.Cities[index].Queue)
+		state.Cities[index].Queue = removeNukeEliminatedQueueItems(state.Cities[index].Queue)
 	}
 	removed := make([]string, 0)
 	for _, unit := range state.Units {
@@ -2587,10 +2587,10 @@ func removeNuclearPlantBuildings(buildings []Building) []Building {
 	return filtered
 }
 
-func removeNuclearPlantQueueItems(queue []ProductionItem) []ProductionItem {
+func removeNukeEliminatedQueueItems(queue []ProductionItem) []ProductionItem {
 	filtered := queue[:0]
 	for _, item := range queue {
-		if productionHasNuclearPlantEffect(item) {
+		if productionHasNuclearPlantEffect(item) || productionHasNuclearAttackEffect(item, nil) {
 			continue
 		}
 		filtered = append(filtered, item)

@@ -111,3 +111,6 @@ Task 048 update:
 
 Task 049 update:
 - Retail wonder `EliminateNukes` now globally blocks nuclear-attack unit production from active wonder state, not only from nation markers written during wonder completion.
+
+Task 050 update:
+- Retail wonder `EliminateNukes` now removes queued nuclear-attack unit items during defuser cleanup, matching retail `RemoveIllegalItems()` after nukes are globally eliminated.
