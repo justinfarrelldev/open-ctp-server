@@ -78,6 +78,7 @@
 - [x] Task 064: Retail bombard can target undefended cities, importing city-bombard constants and applying building/population damage with stale-safe projections.
 - [x] Task 065: Retail city bombard building destruction now removes queued production that became illegal.
 - [x] Task 066: Retail city bombard wall-defense probability now uses actual city wall buildings only.
+- [x] Task 067: Retail `IsFlanker` now affects melee row targeting so flankers can attack nearby occupied rows when same-row targets are gone.
 
 ## Full-Game Mechanical Execution First
 

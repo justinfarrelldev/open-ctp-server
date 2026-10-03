@@ -716,15 +716,14 @@ func combatStrike(state *State, sources Sources, attackers, defenders []*Unit, r
 }
 
 func combatStrikeWithRuntime(state *State, sources Sources, attackers, defenders []*Unit, ranged bool, result *CombatResult, runtime *rules.RuntimeRules) {
-	for _, attacker := range livingCombatUnits(attackers) {
-		if (ranged && attacker.Ranged <= 0) || (!ranged && attacker.Attack <= 0) {
+	for attackerIndex, attacker := range attackers {
+		if attacker.Health <= 0 || (ranged && attacker.Ranged <= 0) || (!ranged && attacker.Attack <= 0) {
 			continue
 		}
-		targets := combatEligibleTargets(*attacker, livingCombatUnits(defenders))
-		if len(targets) == 0 {
+		target := combatStrikeTarget(*attacker, attackerIndex, defenders, ranged)
+		if target == nil {
 			continue
 		}
-		target := targets[0]
 		attack := combatAttackValue(*attacker, ranged)
 		attack += combatAttackModifierWithRuntime(*state, runtime, *attacker, *target)
 		attack = combatVeteranAdjustedAttackWithRuntime(runtime, *attacker, attack)
@@ -738,6 +737,62 @@ func combatStrikeWithRuntime(state *State, sources Sources, attackers, defenders
 			target.Health -= readinessAdjustedCombatDamage(*state, *target, damage)
 		}
 	}
+}
+
+func combatStrikeTarget(attacker Unit, attackerIndex int, defenders []*Unit, ranged bool) *Unit {
+	if ranged {
+		targets := combatEligibleTargets(attacker, livingCombatUnits(defenders))
+		if len(targets) == 0 {
+			return nil
+		}
+		return targets[0]
+	}
+	return combatMeleeTarget(attacker, attackerIndex, defenders)
+}
+
+func combatMeleeTarget(attacker Unit, attackerIndex int, defenders []*Unit) *Unit {
+	if defenderAtRowCanBeTargeted(attacker, defenders, attackerIndex) {
+		return defenders[attackerIndex]
+	}
+	sameRowOccupied := defenderRowOccupied(defenders, attackerIndex)
+	if !hasEffect(attacker.Effects, EffectIsFlanker) {
+		if sameRowOccupied {
+			return firstEligibleLivingTarget(attacker, defenders)
+		}
+		return nil
+	}
+	for delta := 1; delta < len(defenders); delta++ {
+		if row := attackerIndex + delta; defenderAtRowCanBeTargeted(attacker, defenders, row) {
+			return defenders[row]
+		}
+		if row := attackerIndex - delta; defenderAtRowCanBeTargeted(attacker, defenders, row) {
+			return defenders[row]
+		}
+	}
+	if sameRowOccupied {
+		return firstEligibleLivingTarget(attacker, defenders)
+	}
+	return nil
+}
+
+func defenderRowOccupied(defenders []*Unit, row int) bool {
+	return row >= 0 && row < len(defenders) && defenders[row] != nil && defenders[row].Health > 0
+}
+
+func firstEligibleLivingTarget(attacker Unit, defenders []*Unit) *Unit {
+	for _, defender := range defenders {
+		if defender != nil && defender.Health > 0 && unitCanTarget(attacker, *defender) {
+			return defender
+		}
+	}
+	return nil
+}
+
+func defenderAtRowCanBeTargeted(attacker Unit, defenders []*Unit, row int) bool {
+	if row < 0 || row >= len(defenders) || defenders[row] == nil || defenders[row].Health <= 0 {
+		return false
+	}
+	return unitCanTarget(attacker, *defenders[row])
 }
 
 func combatAttackValue(unit Unit, ranged bool) int {

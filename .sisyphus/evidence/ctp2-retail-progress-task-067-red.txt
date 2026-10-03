@@ -1,0 +1,5 @@
+--- FAIL: TestRetailNonFlankerMeleeDoesNotRetargetEmptyRows (0.00s)
+    flanker_task67_test.go:13: non-flanker retargeted an empty row: health=0
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

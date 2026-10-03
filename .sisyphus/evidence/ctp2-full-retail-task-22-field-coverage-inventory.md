@@ -162,3 +162,6 @@ Task 065 update:
 
 Task 066 update:
 - Retail undefended-city bombard now subtracts wall defense from actual city wall buildings only, matching `GetImprovements()`-based `buildingutil_GetCityWallsDefense`.
+
+Task 067 update:
+- Retail `IsFlanker` now affects melee row targeting: non-flankers do not retarget from empty same rows, while flankers search nearest occupied compatible rows.
