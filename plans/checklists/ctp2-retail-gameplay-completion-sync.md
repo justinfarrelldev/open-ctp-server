@@ -107,6 +107,7 @@
 - [x] Task 093: Active-defense carrier/enabler gates are source-verified against existing bombard resolution tests.
 - [x] Task 094: Advance age metadata, starting-age advance grants, end-age research suppression, and research-completion age transitions are implemented.
 - [x] Task 095: Retail `IsFlanker` grouped-combat retargeting is source-verified against existing engine tests.
+- [x] Task 096: Retail combat stats and core modifiers are source-verified against engine/rules regression coverage.
 
 ## Full-Game Mechanical Execution First
 
@@ -167,7 +168,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 
 - [x] Implement `IsFlanker` tactical targeting, including grouped-combat target row/column behavior.
 - [x] Source-classify `Explodes` death/combat behavior as presentation-only battle explosion animation metadata.
-- [ ] Verify all combat stats and modifiers: `Attack`, `Defense`, `ZBRangeAttack`, `BombRounds`, `BombardRange`, `Firepower`, `Armor`, `MaxHP`, `MountedBonus`, `BonusAgainstMounted`, `AttackWoodenShipBonus`, `WoodenShipBonus`, `Defend`, `CanAttack`, `CanBombard`, `CanCounterBombard`, `CityWalls`, `ReduceCityWalls`, and `IgnoreCityWalls`.
+- [x] Verify all combat stats and modifiers: `Attack`, `Defense`, `ZBRangeAttack`, `BombRounds`, `BombardRange`, `Firepower`, `Armor`, `MaxHP`, `MountedBonus`, `BonusAgainstMounted`, `AttackWoodenShipBonus`, `WoodenShipBonus`, `Defend`, `CanAttack`, `CanBombard`, `CanCounterBombard`, `CityWalls`, `ReduceCityWalls`, and `IgnoreCityWalls`.
 - [x] Complete active defense parity: `ActiveDefenseRange`, `ActiveDefenseOnlyWhenCarryingEnablers`, `EnableCarrierDefenses`, interceptor target selection, once-per-turn use/reset, enabler cargo checks, and bombard/counter-bombard RNG ordering.
 - [ ] Complete `Civilian`, `CantCaptureCity`, `VictoryEnslavement`, `DeathEffectsHappy`, `SingleUse`, and `NuclearAttack` edge cases under grouped combat/city capture.
 - [ ] Complete all spy/special-action vectors field-by-field: `EstablishEmbassy`, `StealTechnology`, `PlantNuke`, `InvestigateCity`, `AssasinateRuler`, `BioTerror`, `NanoTerror`, `Plague`, `ConvertCities`, `CreateFranchise`, `CauseUnhappiness`, `Advertise`, `InciteRevolution`, `IndulgenceSales`, `SlaveRaids`, `SettlerSlaveRaids`, `SlaveUprising`, `UndergroundRailway`, `CanInjoin`, `CanReform`, `CanSue`, `CanExpel`, `CreateParks`, `ThrowParty`, and nested `Chance`/`DeathChance`/`EliteChance`/`EscapeChance`/`Effect`/`Timer`/`Amount`/`Sound` fields.

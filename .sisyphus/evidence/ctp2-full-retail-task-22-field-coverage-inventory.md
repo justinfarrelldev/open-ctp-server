@@ -246,3 +246,6 @@ Task 094 update:
 
 Task 095 update:
 - Unit `IsFlanker` is executed in grouped combat targeting: non-flankers do not retarget inactive rows, while flankers scan adjacent rows in the same column for the nearest active defender.
+
+Task 096 update:
+- Core combat stats/modifiers (`Attack`, `Defense`, `ZBRangeAttack`, `BombRounds`, `BombardRange`, `Firepower`, `Armor`, `MaxHP`, `MountedBonus`, `BonusAgainstMounted`, `AttackWoodenShipBonus`, `WoodenShipBonus`, `Defend`, `CanAttack`, `CanBombard`, `CanCounterBombard`, `CityWalls`, `ReduceCityWalls`, `IgnoreCityWalls`) are source-verified as executed by rules projection and engine combat/bombard tests.
