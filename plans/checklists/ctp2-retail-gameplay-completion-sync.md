@@ -128,6 +128,7 @@
 - [x] Task 114: Retail global/diplomacy wonder effects execute or project for close/everywhere embassies, at-war embassy edge cases, regard, spies, barbarian protection, and revolt redirection.
 - [x] Task 115: Retail production/prohibition wonder effects execute with illegal queue cleanup and reversible active-wonder gating for destroyed/obsolete EliminateNukes wonders.
 - [x] Task 116: Retail happiness/readiness/pollution wonder effects execute with expiring full-happiness markers, pollution-unhappiness suppression, and stacked/capped readiness-cost reduction.
+- [x] Task 117: Retail visibility/endgame wonder effects execute or project for GlobalRadar, StartGaiaController, BuildingEverywhere, ActualBuildingEverywhere, obsolescence, destruction, capture, and transfer behavior.
 
 ## Full-Game Mechanical Execution First
 
@@ -144,7 +145,7 @@
 
 - [ ] Complete runtime execution for all gameplay-affecting advance fields.
 - [ ] Complete runtime execution for all gameplay-affecting unit fields and actions.
-- [ ] Complete runtime execution for all gameplay-affecting wonder fields.
+- [x] Complete runtime execution for all gameplay-affecting wonder fields.
 - [x] Complete runtime execution for all gameplay-affecting building fields.
 - [ ] Complete runtime execution for all terrain, worker, public-works, goods, and trade effects.
 - [ ] Complete runtime execution for all government, diplomacy, slider, readiness, happiness, crime, and pollution effects.
@@ -210,7 +211,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [x] Finish global/diplomacy wonder effects: `CloseEmbassies`, `EmbassiesEverywhereEvenAtWar`, `IncreaseRegard`, `SpiesEverywhere`, `ProtectFromBarbarians`, `RevoltingCitiesJoinPlayer`, and relation/war/embassy edge cases.
 - [x] Finish production/prohibition wonder effects: `EnableParkRangers`, `FreeSlaves`, `ProhibitSlavers`, `EliminateNukes`, `ReformCities`, `PollutersToParks`, and illegal queue cleanup/reversal edge cases.
 - [x] Finish happiness/readiness/pollution wonder effects: `TemporaryFullHappiness`, `NoPollutionUnhappiness`, `ReduceReadinessCost`, and source-backed duration/stacking behavior.
-- [ ] Finish visibility/endgame wonder effects: `GlobalRadar`, `StartGaiaController`, `BuildingEverywhere`, `ActualBuildingEverywhere`, obsolescence, destruction, capture, and transfer behavior.
+- [x] Finish visibility/endgame wonder effects: `GlobalRadar`, `StartGaiaController`, `BuildingEverywhere`, `ActualBuildingEverywhere`, obsolescence, destruction, capture, and transfer behavior.
 - [x] Classify wonder `DefaultIcon`, `Description`, and `Movie` as presentation/UI metadata for server gameplay.
 
 ### Terrain, tile improvements, goods, and map rules
