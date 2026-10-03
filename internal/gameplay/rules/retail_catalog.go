@@ -160,6 +160,7 @@ type RetailTerrain struct {
 	MovementTypes   []string               `json:"movement_types,omitempty"`
 	EnvBase         RetailTerrainModifiers `json:"env_base"`
 	EnvCity         RetailTerrainModifiers `json:"env_city"`
+	EnvRiver        RetailTerrainModifiers `json:"env_river"`
 	TransformAdd    RetailTransformData    `json:"transform_add"`
 	TransformRemove RetailTransformData    `json:"transform_remove"`
 	RawFields       []RetailRawField       `json:"raw_fields"`
@@ -991,6 +992,13 @@ func compileRetailTerrain(record RetailRawRecord) (RetailTerrain, error) {
 			return RetailTerrain{}, err
 		}
 		terrain.EnvCity = modifiers
+	}
+	if envRiver, ok := record.FirstBlock("EnvRiver"); ok {
+		modifiers, err := retailTerrainModifiers(record.ID, envRiver)
+		if err != nil {
+			return RetailTerrain{}, err
+		}
+		terrain.EnvRiver = modifiers
 	}
 	if transformAdd, ok := record.FirstBlock("TransformAdd"); ok {
 		data, err := retailTransformData(record.ID, transformAdd)

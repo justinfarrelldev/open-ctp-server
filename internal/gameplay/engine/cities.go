@@ -3428,7 +3428,13 @@ func cityTileYieldWithRuntime(state State, tileID string, runtime *rules.Runtime
 	}
 	terrainID := EffectiveTerrain(state, tile.ID)
 	if terrain, ok := runtime.Movement.Terrain(terrainID); ok && (terrain.CityFood != 0 || terrain.CityProduction != 0 || terrain.CityGold != 0) {
-		return tileYieldWithOverlays(state, tile.ID, Yield{Food: terrain.CityFood, Production: terrain.CityProduction, Gold: terrain.CityGold}), nil
+		yield := Yield{Food: terrain.CityFood, Production: terrain.CityProduction, Gold: terrain.CityGold}
+		if tile.River {
+			yield.Food += terrain.RiverFood
+			yield.Production += terrain.RiverProduction
+			yield.Gold += terrain.RiverGold
+		}
+		return tileYieldWithOverlays(state, tile.ID, yield), nil
 	}
 	return terrainYieldWithRuntime(state, tileID, runtime)
 }
@@ -3441,7 +3447,13 @@ func terrainYieldWithRuntime(state State, tileID string, runtime *rules.RuntimeR
 	terrainID := EffectiveTerrain(state, tile.ID)
 	if runtime != nil {
 		if terrain, ok := runtime.Movement.Terrain(terrainID); ok && (terrain.Food != 0 || terrain.Production != 0 || terrain.Gold != 0) {
-			return tileYieldWithOverlays(state, tile.ID, Yield{Food: terrain.Food, Production: terrain.Production, Gold: terrain.Gold}), nil
+			yield := Yield{Food: terrain.Food, Production: terrain.Production, Gold: terrain.Gold}
+			if tile.River {
+				yield.Food += terrain.RiverFood
+				yield.Production += terrain.RiverProduction
+				yield.Gold += terrain.RiverGold
+			}
+			return tileYieldWithOverlays(state, tile.ID, yield), nil
 		}
 	}
 	var yield Yield

@@ -244,6 +244,12 @@ type RuntimeTerrain struct {
 	CityFood                 int      `json:"city_food,omitempty"`
 	CityProduction           int      `json:"city_production,omitempty"`
 	CityGold                 int      `json:"city_gold,omitempty"`
+	CityCost                 int      `json:"city_cost,omitempty"`
+	RiverFood                int      `json:"river_food,omitempty"`
+	RiverProduction          int      `json:"river_production,omitempty"`
+	RiverGold                int      `json:"river_gold,omitempty"`
+	RiverCost                int      `json:"river_cost,omitempty"`
+	RiverDefenseBonusPercent int      `json:"river_defense_bonus_percent,omitempty"`
 	DefenseBonusPercent      int      `json:"defense_bonus_percent,omitempty"`
 	TransformAddTime         int      `json:"transform_add_time,omitempty"`
 	TransformAddMaterials    int      `json:"transform_add_materials,omitempty"`

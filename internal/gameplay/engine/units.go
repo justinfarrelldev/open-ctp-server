@@ -1088,6 +1088,14 @@ func terrainCost(state State, runtime *rules.RuntimeRules, tileID string) (int, 
 		return 0, false
 	}
 	cost := terrain.Cost
+	if tile, ok := tileByID(state, tileID); ok {
+		if tile.River && terrain.RiverCost > 0 && (cost == 0 || terrain.RiverCost < cost) {
+			cost = terrain.RiverCost
+		}
+		if _, cityOnTile := cityByTile(state, tileID); cityOnTile && terrain.CityCost > 0 && (cost == 0 || terrain.CityCost < cost) {
+			cost = terrain.CityCost
+		}
+	}
 	for _, overlay := range state.Overlays {
 		if overlay.TileID == tileID && overlay.Kind == "improvement" && overlay.Remaining == 0 {
 			cost += overlay.MovementCostDelta

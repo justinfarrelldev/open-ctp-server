@@ -1006,7 +1006,7 @@ func combatModifierWithRuntime(state State, runtime *rules.RuntimeRules, unit Un
 	}
 	if !attack {
 		if tile, ok := tileByID(state, unit.TileID); ok {
-			modifier += terrainDefenseModifier(runtime, tile.Terrain, unit.Defense)
+			modifier += terrainDefenseModifier(runtime, tile, unit.Defense)
 		}
 		for _, city := range state.Cities {
 			if city.TileID == unit.TileID {
@@ -1026,13 +1026,18 @@ func combatModifierWithRuntime(state State, runtime *rules.RuntimeRules, unit Un
 	return modifier
 }
 
-func terrainDefenseModifier(runtime *rules.RuntimeRules, terrainID string, defense int) int {
+func terrainDefenseModifier(runtime *rules.RuntimeRules, tile Tile, defense int) int {
 	if defense <= 0 {
 		return 0
 	}
+	terrainID := tile.Terrain
 	if runtime != nil {
 		if terrain, ok := runtime.Movement.Terrain(terrainID); ok {
-			return defense * terrain.DefenseBonusPercent / 100
+			percent := terrain.DefenseBonusPercent
+			if tile.River {
+				percent += terrain.RiverDefenseBonusPercent
+			}
+			return defense * percent / 100
 		}
 	}
 	if terrainID == TerrainForest {

@@ -232,6 +232,7 @@ type Tile struct {
 	X         int    `json:"x"`
 	Y         int    `json:"y"`
 	Terrain   string `json:"terrain"`
+	River     bool   `json:"river,omitempty"`
 	GoodID    string `json:"good_id,omitempty"`
 	OwnerID   string `json:"owner_id,omitempty"`
 	Open      bool   `json:"open"`

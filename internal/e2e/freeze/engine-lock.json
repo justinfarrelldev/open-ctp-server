@@ -43,11 +43,11 @@
     },
     {
       "path": "internal/gameplay/engine/cities.go",
-      "sha256": "c06119b122ae02790df58ffb687405795132c45aa6d888c1e8f08eddc1367f96"
+      "sha256": "2d20343e1cf17844edf6865ac51859a9d76ec2def1c19e4af56d9874075fa104"
     },
     {
       "path": "internal/gameplay/engine/combat.go",
-      "sha256": "26f7df33dc6bcd0e1129ca8c6c46083f9a7e21aaa1deb6371188108e8e36cad0"
+      "sha256": "10d7d37b6c790d274d6f71bb5cc9c3f73f67776e4a7661c1be3b4650fca1782e"
     },
     {
       "path": "internal/gameplay/engine/diplomacy.go",
@@ -55,7 +55,7 @@
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "4efe913684f84b82504d93b89171f818e70f6449a44314f9b6339385212dd35a"
+      "sha256": "4544a8dcd05d2b9e863d36f59e26da86b6954b109ed09eee26d79c376309bb3b"
     },
     {
       "path": "internal/gameplay/engine/government.go",
@@ -79,7 +79,7 @@
     },
     {
       "path": "internal/gameplay/engine/units.go",
-      "sha256": "41b79829a7aa7f1eac56da2dfaed67d104487a3bda7e73be1c4e471c8acd9f0b"
+      "sha256": "05712c7f6b938f1bec9da06880415e2cd5e98564f08491b77466c95a4d75ed16"
     },
     {
       "path": "internal/gameplay/engine/war.go",
@@ -99,7 +99,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_catalog.go",
-      "sha256": "fe3dd55efb83bb9616825f2096f455955df66a1a5aef68842c3f474b40c9925d"
+      "sha256": "6771ca92a91e11aef73ba9793dcec3f22fb97b3792ab138be81dbb4889eaf088"
     },
     {
       "path": "internal/gameplay/rules/retail_pollution.go",
@@ -111,7 +111,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_runtime.go",
-      "sha256": "b261a3c30e057af036aff8a14ad5650939fd48edb983f8c9ea2f87b05290f6ab"
+      "sha256": "1310ebad323c881889f9c340463f635116ced0b39deb523e771e5551bed2f61a"
     },
     {
       "path": "internal/gameplay/rules/rules.go",
@@ -119,7 +119,7 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "bfc1432c1dcfc6a202f8564041d191f991b0a40d37d5b6c1b7a08b3652f28426"
+      "sha256": "746ba66afcd90fbe2e5622c1939056df258c44952c85ad666dbb3a98ae402ab0"
     },
     {
       "path": "internal/gameplay/service/ai.go",

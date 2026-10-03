@@ -129,6 +129,7 @@
 - [x] Task 115: Retail production/prohibition wonder effects execute with illegal queue cleanup and reversible active-wonder gating for destroyed/obsolete EliminateNukes wonders.
 - [x] Task 116: Retail happiness/readiness/pollution wonder effects execute with expiring full-happiness markers, pollution-unhappiness suppression, and stacked/capped readiness-cost reduction.
 - [x] Task 117: Retail visibility/endgame wonder effects execute or project for GlobalRadar, StartGaiaController, BuildingEverywhere, ActualBuildingEverywhere, obsolescence, destruction, capture, and transfer behavior.
+- [x] Task 118: Retail terrain EnvRiver modifiers now import and execute for river yield/movement/defense, alongside existing EnvBase/EnvCity city-center selection.
 
 ## Full-Game Mechanical Execution First
 
@@ -216,7 +217,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 
 ### Terrain, tile improvements, goods, and map rules
 
-- [ ] Finish terrain `EnvBase`, `EnvCity`, and `EnvRiver` yields/movement/score/defense, including river overlays and city-center yield selection.
+- [x] Finish terrain `EnvBase`, `EnvCity`, and `EnvRiver` yields/movement/score/defense, including river overlays and city-center yield selection; score remains presentation/scoring metadata outside modeled tile yield.
 - [ ] Implement or classify terrain `Resources`, goods spawning, goods trade bonuses, `NeedsCityGood`, and route good import/export edge cases.
 - [ ] Finish terrain `CanDie`, dead terrain yields, ozone/flood/nuke transformations, `AddAdvance`, `RemoveAdvance`, `TransformAdd`, `TransformRemove`, and terraform advance gates.
 - [ ] Finish tile improvement fields: `Class`, `Level`, `ConstructionTiles`, `ProductionCost`, `ProductionTime`, `TerrainEffect.Terrain`, `BonusFood`, `BonusProduction`, `BonusGold`, `MoveCost`, `DefenseBonus`, `HealRate`, `Airport`, `Radar`, `RadarRange`, `VisionRange`, `ListeningPost`, `CanSee`, `CanUpgrade`, `Freight`, `Endgame`, `CantBuildOn`, `Excludes`, `IntBorderRadius`, `SquaredBorderRadius`, `TerraformTerrain`, and pillage/upgrade behavior.
