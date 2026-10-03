@@ -273,6 +273,26 @@ func TestProjectionSuppressesWrongGovernmentUnitProduction(t *testing.T) {
 	}
 }
 
+func TestProjectionAllowsAnyListedGovernmentUnitProduction(t *testing.T) {
+	state := projectionStateWithRuntime(t, rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_MULTIGOV", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_MULTIGOV", Domain: engine.DomainLand, Movement: 1, Health: 1, RequiredGovernmentIDs: []string{"GOVERNMENT_THEOCRACY", "GOVERNMENT_ECOTOPIA"}}}})
+	state.Nations = []engine.Nation{{ID: "a", GovernmentID: "GOVERNMENT_ECOTOPIA"}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !productionActionTarget(projection, engine.CommandQueueProduction, "UNIT_MULTIGOV") {
+		t.Fatalf("multi-government unit production missing for second listed government: %#v", projection.LegalActions)
+	}
+	state.Nations = []engine.Nation{{ID: "a", GovernmentID: "GOVERNMENT_MONARCHY"}}
+	projection, err = Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if productionActionTarget(projection, engine.CommandQueueProduction, "UNIT_MULTIGOV") {
+		t.Fatalf("multi-government unit production leaked under unlisted government: %#v", projection.LegalActions)
+	}
+}
+
 func TestProjectionSuppressesNoSlavesAndSlaverExclusiveProduction(t *testing.T) {
 	state := projectionStateWithRuntime(t, rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Production: []rules.RuntimeProduction{{ID: "UNIT_SLAVER", Kind: engine.ProductionUnit}, {ID: "UNIT_WORKER", Kind: engine.ProductionUnit}}, Units: []rules.RuntimeUnitDefinition{
 		{ID: "UNIT_SLAVER", Domain: engine.DomainLand, Movement: 1, Health: 1, Effects: []rules.RuntimeStarterEffect{{ID: "slave", Kind: engine.EffectSpecialSlaveRaid}}},

@@ -216,3 +216,6 @@ Task 083 update:
 
 Task 084 update:
 - Nested `CargoData.Load`/`CargoData.Unload` are classified as presentation-only/unreferenced sound metadata: they parse as Sound DB records and expose `SoundRecord` accessors, but retail boarding/unload audio uses top-level `SoundLoad`/`SoundUnload`; transport death cargo fate is verified against existing recursive cargo removal.
+
+Task 085 update:
+- Repeated unit `GovernmentType` gates are now preserved as `RequiredGovernmentIDs`; production queue legality, visibility legal-action projection, and upgrade legality accept any listed government and reject unlisted governments, matching retail's `GetNumGovernmentType()` loop.

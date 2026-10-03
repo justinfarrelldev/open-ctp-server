@@ -107,6 +107,21 @@ func TestRuntimeUnitProductionRequiresCurrentGovernment(t *testing.T) {
 	}
 }
 
+func TestRuntimeUnitProductionAcceptsAnyListedGovernment(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	runtime := &rules.RuntimeRules{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_MULTIGOV", Domain: DomainLand, Movement: 1, Health: 1, RequiredGovernmentIDs: []string{"GOVERNMENT_THEOCRACY", "GOVERNMENT_ECOTOPIA"}}}}
+	state.Nations = []Nation{{ID: "nation-a", GovernmentID: "GOVERNMENT_ECOTOPIA"}}
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_MULTIGOV", Kind: ProductionUnit, Cost: 1}}, runtime); err != nil {
+		t.Fatalf("multi-government unit production under second listed government failed: %v", err)
+	}
+	state.Cities[0].Queue = nil
+	state.Nations = []Nation{{ID: "nation-a", GovernmentID: "GOVERNMENT_MONARCHY"}}
+	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "UNIT_MULTIGOV", Kind: ProductionUnit, Cost: 1}}, runtime); err == nil {
+		t.Fatal("multi-government unit production succeeded under unlisted government")
+	}
+}
+
 func TestRuntimeNoSlavesAndSlaverProductionExcludeEachOther(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})

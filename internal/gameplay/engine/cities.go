@@ -663,12 +663,12 @@ func productionGovernmentMismatch(state State, actor string, item ProductionItem
 		return false
 	}
 	unit, ok := runtime.Unit(item.ID)
-	if !ok || unit.RequiredGovernmentID == "" {
+	if !ok || len(unitRequiredGovernmentIDs(unit)) == 0 {
 		return false
 	}
 	nationID := nationForPlayer(state, actor)
 	nation := nationForID(&state, nationID)
-	return nation == nil || nation.GovernmentID != unit.RequiredGovernmentID
+	return nation == nil || !containsString(unitRequiredGovernmentIDs(unit), nation.GovernmentID)
 }
 
 func productionCityGoodSatisfied(state State, city City, item ProductionItem, runtime *rules.RuntimeRules) bool {

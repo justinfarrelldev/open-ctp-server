@@ -482,11 +482,15 @@ func projectRetailUnit(unit RetailUnit) RuntimeUnitDefinition {
 	effects := retailUnitEffects(unit)
 	cargoDomains := retailCargoDomains(unit.CanCarry)
 	cargoClasses := retailCargoClasses(unit.CanCarry)
-	requiredGovernmentID := firstRetailUnitString(unit, "GovernmentType")
+	requiredGovernmentIDs := retailFieldValues(unit.RawFields, "GovernmentType")
+	requiredGovernmentID := ""
+	if len(requiredGovernmentIDs) > 0 {
+		requiredGovernmentID = requiredGovernmentIDs[0]
+	}
 	needsCityGoodID := firstRetailUnitString(unit, "NeedsCityGood")
 	settleCityTypeID := firstRetailUnitString(unit, "SettleCityType")
 	cityGrowthCoefficientPercent := percentPoints(firstRetailUnitFloat(unit, "CityGrowthCoefficient"))
-	return RuntimeUnitDefinition{ID: unit.ID, Role: unit.Category, Domain: retailUnitDomain(unit.MovementTypes), Movement: positiveOrOne(unit.MaxMovePoints), Attack: unit.Attack, Defense: unit.Defense, Ranged: unit.ZBRangeAttack, BombardRange: unit.BombardRange, BombRounds: unit.BombRounds, ActiveDefenseRange: unit.ActiveDefenseRange, Strength: unit.Attack, Armor: unit.Armor, Firepower: positiveOrOne(unit.Firepower), Health: positiveOrOne(unit.MaxHP), MaxFuel: unit.MaxFuel, ZOC: !retailContainsString(unit.Flags, "NoZoc"), TransportCapacity: unit.CargoMax, CargoDomains: cargoDomains, CargoClasses: cargoClasses, Size: unit.Size, ProductionCost: unit.ShieldCost, PowerPoints: unit.PowerPoints, Upkeep: unit.GoldHunger, ShieldHunger: unit.ShieldHunger, FoodHunger: unit.FoodHunger, NeedsNoSupport: retailContainsString(unit.Flags, "NeedsNoSupport"), IsSpecialForces: retailContainsString(unit.Flags, "IsSpecialForces"), Prerequisites: singleOrEmpty(unit.EnableAdvance), RequiredGovernmentID: requiredGovernmentID, NeedsCityGoodID: needsCityGoodID, SettleCityTypeID: settleCityTypeID, CityGrowthCoefficientPercent: cityGrowthCoefficientPercent, ObsoleteBy: append([]string(nil), unit.ObsoleteAdvance...), UpgradeTo: append([]string(nil), unit.UpgradeTo...), VisibilityRange: unit.VisionRange, Effects: effects}
+	return RuntimeUnitDefinition{ID: unit.ID, Role: unit.Category, Domain: retailUnitDomain(unit.MovementTypes), Movement: positiveOrOne(unit.MaxMovePoints), Attack: unit.Attack, Defense: unit.Defense, Ranged: unit.ZBRangeAttack, BombardRange: unit.BombardRange, BombRounds: unit.BombRounds, ActiveDefenseRange: unit.ActiveDefenseRange, Strength: unit.Attack, Armor: unit.Armor, Firepower: positiveOrOne(unit.Firepower), Health: positiveOrOne(unit.MaxHP), MaxFuel: unit.MaxFuel, ZOC: !retailContainsString(unit.Flags, "NoZoc"), TransportCapacity: unit.CargoMax, CargoDomains: cargoDomains, CargoClasses: cargoClasses, Size: unit.Size, ProductionCost: unit.ShieldCost, PowerPoints: unit.PowerPoints, Upkeep: unit.GoldHunger, ShieldHunger: unit.ShieldHunger, FoodHunger: unit.FoodHunger, NeedsNoSupport: retailContainsString(unit.Flags, "NeedsNoSupport"), IsSpecialForces: retailContainsString(unit.Flags, "IsSpecialForces"), Prerequisites: singleOrEmpty(unit.EnableAdvance), RequiredGovernmentID: requiredGovernmentID, RequiredGovernmentIDs: append([]string(nil), requiredGovernmentIDs...), NeedsCityGoodID: needsCityGoodID, SettleCityTypeID: settleCityTypeID, CityGrowthCoefficientPercent: cityGrowthCoefficientPercent, ObsoleteBy: append([]string(nil), unit.ObsoleteAdvance...), UpgradeTo: append([]string(nil), unit.UpgradeTo...), VisibilityRange: unit.VisionRange, Effects: effects}
 }
 
 func retailUnitEffects(unit RetailUnit) []RuntimeStarterEffect {

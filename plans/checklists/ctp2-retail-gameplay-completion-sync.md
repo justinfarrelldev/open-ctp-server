@@ -96,6 +96,7 @@
 - [x] Task 082: Unit `NoIndex`, `GLHidden`, `DefaultIcon`, `DefaultSprite`, and `Sound*` fields are source-classified as presentation/setup metadata.
 - [x] Task 083: Retail cargo `CanCarry` now imports exact size/domain classes and filters engine/legal/AI embark by class compatibility.
 - [x] Task 084: Retail cargo `Load`/`Unload` nested sound records are source-classified as presentation-only metadata, and transport death cargo removal is verified.
+- [x] Task 085: Retail repeated unit `GovernmentType` gates now accept any listed government in production, projection, and upgrades.
 
 ## Full-Game Mechanical Execution First
 
@@ -148,7 +149,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Verify `CanBeachAssault`, `Paratrooper`, and `ParatrooperTransport` beyond unload movement: legal target selection, transport requirements, and post-drop movement/combat restrictions.
 - [ ] Complete `VisionRange`, `VisionClass`, `CanSee`, `IsSubmarine`, `Stealth`, `CanSeeStealth`, `InvisibleForGlobeSat`, global radar, radar/listening-post interactions, and stale-fog legal action suppression.
 - [ ] Verify `NoZoc`/`IgnoreZOC`/ZOC movement stops and AI pathing behavior against retail.
-- [ ] Complete unit production restrictions: `BuildingRemovesAPop`, `CantBuild`, `OnlyBuildOne`, `GovernmentType`, `NeedsCityGood`, `NoSlaves`, `EnableAdvance`, `ObsoleteAdvance`, and `UpgradeTo`; `HasPopAndCanBuild` city pseudo-units are rejected from normal queues, and `NoIndex`/`GLHidden` are presentation/setup metadata.
+- [ ] Complete unit production restrictions: `BuildingRemovesAPop`, `CantBuild`, `OnlyBuildOne`, repeated `GovernmentType` gates, `NeedsCityGood`, `NoSlaves`, `EnableAdvance`, and `ObsoleteAdvance` are implemented; finish remaining `UpgradeTo` edge semantics and any uncovered production-cleanup edge cases. `HasPopAndCanBuild` city pseudo-units are rejected from normal queues, and `NoIndex`/`GLHidden` are presentation/setup metadata.
 - [ ] Complete upgrade semantics for `UpgradeTo`: costs, prerequisites, HP/fuel/movement carryover, legal projection, HTTP, AI use, and persistence.
 - [x] Classify all unit sound/icon/sprite fields (`DefaultIcon`, `DefaultSprite`, `Sound*`) as presentation/setup metadata for server gameplay.
 

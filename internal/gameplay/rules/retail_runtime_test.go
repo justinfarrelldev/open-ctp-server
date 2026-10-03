@@ -12,6 +12,16 @@ func TestRetailWonderNoPollutionUnhappinessProjectsMarker(t *testing.T) {
 	t.Fatalf("effects = %#v, want no_pollution_unhappiness marker", effects)
 }
 
+func TestProjectRetailUnitPreservesMultipleGovernmentTypes(t *testing.T) {
+	unit := projectRetailUnit(RetailUnit{ID: "UNIT_MULTIGOV", MaxMovePoints: 1, MaxHP: 1, RawFields: []RetailRawField{
+		{Key: "GovernmentType", Values: []string{"GOVERNMENT_THEOCRACY"}},
+		{Key: "GovernmentType", Values: []string{"GOVERNMENT_ECOTOPIA"}},
+	}})
+	if got, want := unit.RequiredGovernmentIDs, []string{"GOVERNMENT_THEOCRACY", "GOVERNMENT_ECOTOPIA"}; !sameStringSlices(got, want) || unit.RequiredGovernmentID != "GOVERNMENT_THEOCRACY" {
+		t.Fatalf("government requirements = %#v first=%q, want %#v first GOVERNMENT_THEOCRACY", got, unit.RequiredGovernmentID, want)
+	}
+}
+
 func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 	root := localRetailGameDataRoot(t)
 	db, err := LoadRetailRulesFromDirectory(root)

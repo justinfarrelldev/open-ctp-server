@@ -99,6 +99,7 @@ type RuntimeUnitDefinition struct {
 	IsSpecialForces              bool                   `json:"is_special_forces,omitempty"`
 	Prerequisites                []string               `json:"prerequisites,omitempty"`
 	RequiredGovernmentID         string                 `json:"required_government_id,omitempty"`
+	RequiredGovernmentIDs        []string               `json:"required_government_ids,omitempty"`
 	NeedsCityGoodID              string                 `json:"needs_city_good_id,omitempty"`
 	SettleCityTypeID             string                 `json:"settle_city_type_id,omitempty"`
 	CityGrowthCoefficientPercent int                    `json:"city_growth_coefficient_percent,omitempty"`
@@ -1442,6 +1443,13 @@ func compileUnitDefinition(record Record) (RuntimeUnitDefinition, error) {
 		return RuntimeUnitDefinition{}, err
 	}
 	requiredGovernmentID := record.Tags["RequiredGovernmentID"]
+	requiredGovernmentIDs, err := optionalIDs(record, "RequiredGovernmentIDs")
+	if err != nil {
+		return RuntimeUnitDefinition{}, err
+	}
+	if requiredGovernmentID != "" && !retailContainsString(requiredGovernmentIDs, requiredGovernmentID) {
+		requiredGovernmentIDs = append([]string{requiredGovernmentID}, requiredGovernmentIDs...)
+	}
 	needsCityGoodID := record.Tags["NeedsCityGoodID"]
 	settleCityTypeID := record.Tags["SettleCityTypeID"]
 	cityGrowthCoefficientPercent, err := optionalNonNegativeInteger(record, "CityGrowthCoefficientPercent", 0)
@@ -1472,7 +1480,7 @@ func compileUnitDefinition(record Record) (RuntimeUnitDefinition, error) {
 	if err != nil {
 		return RuntimeUnitDefinition{}, err
 	}
-	return RuntimeUnitDefinition{ID: record.ID, Role: record.Tags["Role"], Domain: domain, Movement: movement, Attack: attack, Defense: defense, Ranged: ranged, BombardRange: bombardRange, BombRounds: bombRounds, Strength: strength, Armor: armor, Firepower: firepower, Health: health, MaxFuel: maxFuel, ZOC: zoc, TransportCapacity: transportCapacity, CargoDomains: cargoDomains, ProductionCost: productionCost, Upkeep: upkeep, ShieldHunger: shieldHunger, FoodHunger: foodHunger, NeedsNoSupport: needsNoSupport, IsSpecialForces: isSpecialForces, Prerequisites: prerequisites, RequiredGovernmentID: requiredGovernmentID, NeedsCityGoodID: needsCityGoodID, SettleCityTypeID: settleCityTypeID, CityGrowthCoefficientPercent: cityGrowthCoefficientPercent, ObsoleteBy: obsoleteBy, UpgradeTo: upgradeTo, VisibilityRange: visibilityRange, Effects: effects}, nil
+	return RuntimeUnitDefinition{ID: record.ID, Role: record.Tags["Role"], Domain: domain, Movement: movement, Attack: attack, Defense: defense, Ranged: ranged, BombardRange: bombardRange, BombRounds: bombRounds, Strength: strength, Armor: armor, Firepower: firepower, Health: health, MaxFuel: maxFuel, ZOC: zoc, TransportCapacity: transportCapacity, CargoDomains: cargoDomains, ProductionCost: productionCost, Upkeep: upkeep, ShieldHunger: shieldHunger, FoodHunger: foodHunger, NeedsNoSupport: needsNoSupport, IsSpecialForces: isSpecialForces, Prerequisites: prerequisites, RequiredGovernmentID: requiredGovernmentID, RequiredGovernmentIDs: requiredGovernmentIDs, NeedsCityGoodID: needsCityGoodID, SettleCityTypeID: settleCityTypeID, CityGrowthCoefficientPercent: cityGrowthCoefficientPercent, ObsoleteBy: obsoleteBy, UpgradeTo: upgradeTo, VisibilityRange: visibilityRange, Effects: effects}, nil
 }
 
 func unitEffects(record Record) ([]RuntimeStarterEffect, error) {

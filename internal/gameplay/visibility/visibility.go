@@ -1975,10 +1975,21 @@ func stateEffectsContain(effects []engine.Effect, kind string) bool {
 }
 
 func unitProductionBlockedByGovernment(projection Projection, unit rules.RuntimeUnitDefinition) bool {
-	if unit.RequiredGovernmentID == "" {
+	requiredGovernmentIDs := unitRequiredGovernmentIDs(unit)
+	if len(requiredGovernmentIDs) == 0 {
 		return false
 	}
-	return projection.Diplomacy == nil || projection.Diplomacy.GovernmentID != unit.RequiredGovernmentID
+	return projection.Diplomacy == nil || !containsString(requiredGovernmentIDs, projection.Diplomacy.GovernmentID)
+}
+
+func unitRequiredGovernmentIDs(unit rules.RuntimeUnitDefinition) []string {
+	if len(unit.RequiredGovernmentIDs) > 0 {
+		return unit.RequiredGovernmentIDs
+	}
+	if unit.RequiredGovernmentID != "" {
+		return []string{unit.RequiredGovernmentID}
+	}
+	return nil
 }
 
 func unitProductionBlockedByExclusiveSlavery(projection Projection, playerID string, unit rules.RuntimeUnitDefinition) bool {

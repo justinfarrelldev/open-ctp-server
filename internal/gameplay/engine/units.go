@@ -205,7 +205,7 @@ func upgradeUnit(state *State, actorID string, payload upgradeUnitPayload, runti
 		return errors.New("unit upgrade is invalid")
 	}
 	target, ok := runtime.Unit(payload.UpgradeTo)
-	if !ok || !playerHasAllPrerequisites(*state, actorID, target.Prerequisites) || !playerMatchesRequiredGovernment(*state, actorID, target.RequiredGovernmentID) {
+	if !ok || !playerHasAllPrerequisites(*state, actorID, target.Prerequisites) || !playerMatchesUnitGovernment(*state, actorID, target) {
 		return errors.New("unit upgrade is invalid")
 	}
 	applyUnitDefinition(unit, target)
@@ -220,12 +220,27 @@ func producedUnitTypeID(unitID string) string {
 	return ""
 }
 
-func playerMatchesRequiredGovernment(state State, playerID, requiredGovernmentID string) bool {
-	if requiredGovernmentID == "" {
+func playerMatchesUnitGovernment(state State, playerID string, unit rules.RuntimeUnitDefinition) bool {
+	requiredGovernmentIDs := unitRequiredGovernmentIDs(unit)
+	if len(requiredGovernmentIDs) == 0 {
 		return true
 	}
 	nation := nationForID(&state, nationForPlayer(state, playerID))
-	return nation != nil && nation.GovernmentID == requiredGovernmentID
+	return nation != nil && containsString(requiredGovernmentIDs, nation.GovernmentID)
+}
+
+func playerMatchesRequiredGovernment(state State, playerID, requiredGovernmentID string) bool {
+	return playerMatchesUnitGovernment(state, playerID, rules.RuntimeUnitDefinition{RequiredGovernmentID: requiredGovernmentID})
+}
+
+func unitRequiredGovernmentIDs(unit rules.RuntimeUnitDefinition) []string {
+	if len(unit.RequiredGovernmentIDs) > 0 {
+		return unit.RequiredGovernmentIDs
+	}
+	if unit.RequiredGovernmentID != "" {
+		return []string{unit.RequiredGovernmentID}
+	}
+	return nil
 }
 
 func playerHasAllPrerequisites(state State, playerID string, prerequisites []string) bool {
