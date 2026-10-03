@@ -120,6 +120,7 @@
 - [x] Task 106: Retail `IsTrader`/`CARAVAN_COEF` behavior now treats trader production as freight capacity, consumes route transport cost, records public used/total freight, and suppresses over-capacity legal/AI route planning.
 - [x] Task 107: Retail wonder-granted effective buildings now contribute building economy effects (food/production/commerce/science/gold-per-citizen) through the same city-local effect path without double-counting imported wonder effects.
 - [x] Task 108: Retail building FoodVat effects now read actual non-obsolete building effects, and population/happiness fields are source-verified with Cathedral/IsReligious classified as no-extra-mutation markers for released data.
+- [x] Task 109: Retail building crime/pollution effects are source-verified: LowerCrime and pollution percent fields execute through effective-building-aware city effects, NuclearPlant cleanup is covered, and absent released PollutionAmount needs no runtime mutation.
 
 ## Full-Game Mechanical Execution First
 
@@ -190,7 +191,7 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 
 - [x] Finish all building yield/economy effects: `FoodPercent`, `ProductionPercent`, `CommercePercent`, `SciencePercent`, `GoldPerCitizen`, `Upkeep`, and interactions with sliders/government coefficients, including wonder-granted effective buildings.
 - [x] Finish population/happiness effects: `HappyInc`, `RaiseMaxPopulation`, `RaiseOvercrowdingLevel`, `FoodVat`, `StarvationProtection`, `LowerPeaceMovement`, and temporary city effects execute; `Cathedral`/`IsReligious` are source-classified as no-extra-mutation released-data markers.
-- [ ] Finish crime/pollution effects: `LowerCrime`, `PopulationPollutionPercent`, `ProductionPollutionPercent`, `PollutionAmount`/`Pollution`, `NuclearPlant`, and wonder interactions.
+- [x] Finish crime/pollution effects: `LowerCrime`, `PopulationPollutionPercent`, `ProductionPollutionPercent`, `NuclearPlant`, and wonder/effective-building interactions execute; flat `PollutionAmount` is source-classified as absent from released data.
 - [ ] Finish protection effects: `ProtectFromNukes`, `ProtectFromBioAgents`, `ProtectFromNanoVirus`, `PreventConversion`, `PreventSlavery`, and `ForceField` for both direct buildings and effective buildings.
 - [ ] Finish military/building effects: `DefendersPercent`, `OffenseBonusLand`, `OffenseBonusWater`, `OffenseBonusAir`, `CityWalls`, `Airport`, and effective-building consequences; `AllowGrunts` is source-classified as non-executed/AI-placeholder metadata.
 - [x] Finish structural/build-gate effects: `PrerequisiteBuilding`, `CoastalBuilding`, `CantBuildInSea`, and `CantBuildOnLand` placement gates are implemented; `Capitol`, `Brokerage`, `Television`, and `DoubleTelevangelists` execute with source-backed tests; building `DefaultIcon` and `Description` are presentation/UI metadata.
