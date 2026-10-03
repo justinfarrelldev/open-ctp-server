@@ -339,6 +339,7 @@
 - [x] Task 388: Retail wonder `EnableParkRangers` globally unlocks `CreateParks` unit production.
 - [x] Task 389: Retail building `DoubleTelevangelists` gates enhanced televangelist conversion gold.
 - [x] Task 390: Retail wonder `EliminateNukes` globally blocks `NuclearPlant` building production.
+- [x] Task 391: Retail wonder `EliminateNukes` removes existing and queued `NuclearPlant` buildings across all cities.
 
 ## Retail Data / Runtime
 - [ ] Unit catalog behavior field coverage complete.

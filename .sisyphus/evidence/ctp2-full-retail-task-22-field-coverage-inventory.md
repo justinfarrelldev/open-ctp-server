@@ -99,3 +99,6 @@ Task 044 update:
 
 Task 045 update:
 - Retail building `NuclearPlant` production now respects the global `EliminateNukes` wonder gate and is rejected after any active nuke-elimination wonder exists.
+
+Task 046 update:
+- Retail wonder `EliminateNukes` now also destroys existing `NuclearPlant` buildings and removes queued nuclear-plant items from every city, in addition to removing nuclear units.

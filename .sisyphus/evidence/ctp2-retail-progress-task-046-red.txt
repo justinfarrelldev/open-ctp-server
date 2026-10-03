@@ -1,0 +1,5 @@
+--- FAIL: TestRetailEliminateNukesRemovesNuclearPlantsAndQueuedPlants (0.00s)
+    eliminate_nukes_task46_test.go:16: nuclear plant building survived in city city-a: []engine.Building{engine.Building{ID:"IMPROVE_NUCLEAR_PLANT", Upkeep:0, ObsoletedBy:"", Effects:[]engine.Effect{engine.Effect{ID:"plant", Kind:"nuclear_plant", Value:0, Turns:0}}}}
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

@@ -2536,6 +2536,10 @@ func eliminateNukes(state *State) {
 	for index := range state.Nations {
 		upsertNationEffect(&state.Nations[index], EffectEliminateNukes, 1)
 	}
+	for index := range state.Cities {
+		state.Cities[index].Buildings = removeNuclearPlantBuildings(state.Cities[index].Buildings)
+		state.Cities[index].Queue = removeNuclearPlantQueueItems(state.Cities[index].Queue)
+	}
 	removed := make([]string, 0)
 	for _, unit := range state.Units {
 		if hasEffect(unit.Effects, EffectSpecialPlantNuke) || hasEffect(unit.Effects, EffectNuclearAttack) {
@@ -2545,6 +2549,28 @@ func eliminateNukes(state *State) {
 	for _, id := range removed {
 		removeUnitAndCargo(state, id)
 	}
+}
+
+func removeNuclearPlantBuildings(buildings []Building) []Building {
+	filtered := buildings[:0]
+	for _, building := range buildings {
+		if hasEffect(building.Effects, EffectNuclearPlant) {
+			continue
+		}
+		filtered = append(filtered, building)
+	}
+	return filtered
+}
+
+func removeNuclearPlantQueueItems(queue []ProductionItem) []ProductionItem {
+	filtered := queue[:0]
+	for _, item := range queue {
+		if productionHasNuclearPlantEffect(item) {
+			continue
+		}
+		filtered = append(filtered, item)
+	}
+	return filtered
 }
 
 func reformOwnerCities(state *State, ownerID string) {

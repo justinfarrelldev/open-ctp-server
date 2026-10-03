@@ -57,6 +57,7 @@
 - [x] Task 043: Retail `EnableParkRangers` now globally unlocks `CreateParks`/park-ranger unit production as in the built-wonders mask check.
 - [x] Task 044: Retail `DoubleTelevangelists` now gates enhanced televangelist conversion gold; unboosted televangelists fall back to cleric conversion.
 - [x] Task 045: Retail `EliminateNukes` now globally blocks `NuclearPlant` building production.
+- [x] Task 046: Retail `EliminateNukes` now destroys existing `NuclearPlant` buildings and removes queued nuclear-plant items in all cities.
 
 ## Full-Game Mechanical Execution First
 
