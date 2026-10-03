@@ -262,3 +262,6 @@ Task 099 update:
 
 Task 100 update:
 - The field coverage inventory now has a regression test that fails if any parsed released-game catalog field is omitted from this ledger.
+
+Task 101 update:
+- Production unlock/obsolete gates are closed for queueing and cleanup: runtime production now requires all prerequisites and rejects any listed obsolete advance/wonder for unit/building/wonder production, matching retail's repeated prerequisite/obsolete loops.

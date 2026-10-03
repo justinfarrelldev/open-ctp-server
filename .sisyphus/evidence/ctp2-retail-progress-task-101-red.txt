@@ -1,0 +1,9 @@
+--- FAIL: TestRuntimeProductionRequiresAllAdvancePrerequisites (0.00s)
+    production_cost_runtime_test.go:54: queueProduction accepted IMPROVE_MULTI with only one of two prerequisites
+--- FAIL: TestRuntimeProductionObsoleteByAnyListedAdvance (0.00s)
+    production_cost_runtime_test.go:79: queueProduction accepted IMPROVE_OLD obsoleted by second listed advance
+--- FAIL: TestRuntimeProductionCleanupRemovesItemsAfterSecondObsoleteAdvance (0.00s)
+    production_cost_runtime_test.go:93: queue after obsolete cleanup = []engine.ProductionItem{engine.ProductionItem{ID:"IMPROVE_OLD", Kind:"building", Cost:1, Upkeep:0, Prerequisite:"", ObsoletedBy:"", Scope:"", Effects:[]engine.Effect(nil)}}, want empty
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.010s
+FAIL

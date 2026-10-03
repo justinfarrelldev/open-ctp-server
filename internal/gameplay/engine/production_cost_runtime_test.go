@@ -36,6 +36,64 @@ func TestRuntimeBuildingAndWonderProductionUsesPinnedCostAndPrerequisite(t *test
 	}
 }
 
+func TestRuntimeProductionRequiresAllAdvancePrerequisites(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	runtime := &rules.RuntimeRules{Production: []rules.RuntimeProduction{
+		{ID: "IMPROVE_MULTI", Kind: ProductionBuilding, Cost: 1, Prerequisites: []string{"ADVANCE_ONE", "ADVANCE_TWO"}},
+		{ID: "WONDER_MULTI", Kind: ProductionWonder, Cost: 1, Prerequisites: []string{"ADVANCE_ONE", "ADVANCE_TWO"}},
+	}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_MULTI", Domain: DomainLand, Movement: 1, Health: 1, Prerequisites: []string{"ADVANCE_ONE", "ADVANCE_TWO"}}}}
+	state.Nations = []Nation{{ID: "nation-a", Advances: []string{"ADVANCE_ONE"}}}
+
+	for _, item := range []ProductionItem{
+		{ID: "IMPROVE_MULTI", Kind: ProductionBuilding, Cost: 1},
+		{ID: "WONDER_MULTI", Kind: ProductionWonder, Cost: 1},
+		{ID: "UNIT_MULTI", Kind: ProductionUnit, Cost: 1},
+	} {
+		if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: item}, runtime); err == nil {
+			t.Fatalf("queueProduction accepted %s with only one of two prerequisites", item.ID)
+		}
+	}
+	state.Nations[0].Advances = append(state.Nations[0].Advances, "ADVANCE_TWO")
+	for _, item := range []ProductionItem{
+		{ID: "IMPROVE_MULTI", Kind: ProductionBuilding, Cost: 1},
+		{ID: "WONDER_MULTI", Kind: ProductionWonder, Cost: 1},
+		{ID: "UNIT_MULTI", Kind: ProductionUnit, Cost: 1},
+	} {
+		if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: item}, runtime); err != nil {
+			t.Fatalf("queueProduction(%s) with both prerequisites error = %v", item.ID, err)
+		}
+	}
+}
+
+func TestRuntimeProductionObsoleteByAnyListedAdvance(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	runtime := &rules.RuntimeRules{Production: []rules.RuntimeProduction{{ID: "IMPROVE_OLD", Kind: ProductionBuilding, Cost: 1, ObsoleteBy: []string{"ADVANCE_NEW_ONE", "ADVANCE_NEW_TWO"}}}, Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_OLD", Domain: DomainLand, Movement: 1, Health: 1, ObsoleteBy: []string{"ADVANCE_NEW_ONE", "ADVANCE_NEW_TWO"}}}}
+	state.Nations = []Nation{{ID: "nation-a", Advances: []string{"ADVANCE_NEW_TWO"}}}
+	for _, item := range []ProductionItem{
+		{ID: "IMPROVE_OLD", Kind: ProductionBuilding, Cost: 1},
+		{ID: "UNIT_OLD", Kind: ProductionUnit, Cost: 1},
+	} {
+		if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: item}, runtime); err == nil {
+			t.Fatalf("queueProduction accepted %s obsoleted by second listed advance", item.ID)
+		}
+	}
+}
+
+func TestRuntimeProductionCleanupRemovesItemsAfterSecondObsoleteAdvance(t *testing.T) {
+	state := task10State()
+	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
+	state.Cities[0].Queue = []ProductionItem{{ID: "IMPROVE_OLD", Kind: ProductionBuilding, Cost: 1}}
+	state.Nations = []Nation{{ID: "nation-a", Advances: []string{"ADVANCE_NEW_TWO"}}}
+	runtime := &rules.RuntimeRules{Production: []rules.RuntimeProduction{{ID: "IMPROVE_OLD", Kind: ProductionBuilding, Cost: 1, ObsoleteBy: []string{"ADVANCE_NEW_ONE", "ADVANCE_NEW_TWO"}}}}
+
+	removeIllegalCityQueueItems(&state, &state.Cities[0], runtime)
+	if len(state.Cities[0].Queue) != 0 {
+		t.Fatalf("queue after obsolete cleanup = %#v, want empty", state.Cities[0].Queue)
+	}
+}
+
 func TestRuntimePopulationRemovingUnitProductionRequiresSparePopulation(t *testing.T) {
 	state := task10State()
 	state = task10Apply(t, state, "player-a", CommandFoundCity, FoundCityPayload{UnitID: "settler-a", CityID: "city-a", Name: "Alpha"})
