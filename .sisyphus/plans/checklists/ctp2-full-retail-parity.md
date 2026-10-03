@@ -395,6 +395,7 @@
 - [x] Task 444: Remaining gameplay-bearing advance flags (`PlantNuke`, capitalization/infrastructure, pollution modifiers, `TriggerFeat`) are source-verified.
 - [x] Task 445: Field coverage ledger now has a regression guard requiring every parsed retail field to be mentioned.
 - [x] Task 446: Production unlock gates now require all runtime prerequisites and reject any listed obsolete advance during queueing and cleanup.
+- [x] Task 447: `UpgradeTo` is source-classified as released-data marker/non-retail executable; optional server upgrade command/projection/AI tests are verified.
 
 ## Detailed Remaining Retail Parity Ledger
 
@@ -425,8 +426,8 @@ This ledger is the authoritative remaining-task checklist. It must be kept curre
 - [ ] Verify `CanBeachAssault`, `Paratrooper`, and `ParatrooperTransport` beyond unload movement: legal target selection, transport requirements, and post-drop movement/combat restrictions.
 - [ ] Complete `VisionRange`, `VisionClass`, `CanSee`, `IsSubmarine`, `Stealth`, `CanSeeStealth`, `InvisibleForGlobeSat`, global radar, radar/listening-post interactions, and stale-fog legal action suppression.
 - [ ] Verify `NoZoc`/`IgnoreZOC`/ZOC movement stops and AI pathing behavior against retail.
-- [ ] Complete unit production restrictions: `BuildingRemovesAPop`, `CantBuild`, `OnlyBuildOne`, repeated `GovernmentType` gates, `NeedsCityGood`, `NoSlaves`, `EnableAdvance`, and `ObsoleteAdvance` are implemented; finish remaining `UpgradeTo` edge semantics and any uncovered production-cleanup edge cases. `HasPopAndCanBuild` city pseudo-units are rejected from normal queues, and `NoIndex`/`GLHidden` are presentation/setup metadata.
-- [ ] Complete upgrade semantics for `UpgradeTo`: costs, prerequisites, HP/fuel/movement carryover, legal projection, HTTP, AI use, and persistence.
+- [x] Complete unit production restrictions: `BuildingRemovesAPop`, `CantBuild`, `OnlyBuildOne`, repeated `GovernmentType` gates, `NeedsCityGood`, `NoSlaves`, `EnableAdvance`, and `ObsoleteAdvance` are implemented; `UpgradeTo` is source-classified as a released-data marker with optional fail-closed server execution; production-cleanup edge cases are covered. `HasPopAndCanBuild` city pseudo-units are rejected from normal queues, and `NoIndex`/`GLHidden` are presentation/setup metadata.
+- [x] Complete upgrade semantics for `UpgradeTo`: no retail source-backed upgrade cost exists; optional server upgrades require target prerequisites/government, spend movement, preserve HP proportionally, reset fuel from target stats, project safe legal actions, are AI-consumable, HTTP-routable through canonical commands, and persist through canonical state.
 - [x] Classify all unit sound/icon/sprite fields (`DefaultIcon`, `DefaultSprite`, `Sound*`) as presentation/setup metadata for server gameplay.
 
 ### Unit combat and special actions

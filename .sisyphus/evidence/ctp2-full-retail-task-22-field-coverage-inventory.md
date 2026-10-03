@@ -265,3 +265,6 @@ Task 100 update:
 
 Task 101 update:
 - Production unlock/obsolete gates are closed for queueing and cleanup: runtime production now requires all prerequisites and rejects any listed obsolete advance/wonder for unit/building/wonder production, matching retail's repeated prerequisite/obsolete loops.
+
+Task 102 update:
+- Unit `UpgradeTo` is source-classified as a released-data marker not parsed/executed by the retail source; the server's optional upgrade command remains fail-closed and covered for prerequisites, government gates, legal projection, AI use, and deterministic stat/HP/fuel/movement carryover.
