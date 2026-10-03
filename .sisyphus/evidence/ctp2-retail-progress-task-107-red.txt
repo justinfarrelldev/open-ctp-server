@@ -1,0 +1,5 @@
+--- FAIL: TestRetailEffectiveBuildingEverywhereAppliesBuildingEconomyEffects (0.00s)
+    effective_building_task107_test.go:41: effective-building production yield = 10, want 15
+FAIL
+FAIL	github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine	0.003s
+FAIL

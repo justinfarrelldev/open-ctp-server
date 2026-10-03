@@ -3279,6 +3279,7 @@ func cityLocalEffects(state State, city City) []Effect {
 			effects = append(effects, building.Effects...)
 		}
 	}
+	effects = append(effects, effectiveBuildingEffects(state, city)...)
 	for _, wonder := range state.Wonders {
 		if !wonder.Destroyed && !isObsoleteForPlayer(state, wonder.OwnerID, city.Obsolete, wonder.ObsoletedBy) && (wonder.Scope == "global" || wonder.OwnerID == city.OwnerID) {
 			effects = append(effects, wonder.Effects...)
@@ -3286,6 +3287,72 @@ func cityLocalEffects(state State, city City) []Effect {
 	}
 	normalizeEffects(effects)
 	return effects
+}
+
+func effectiveBuildingEffects(state State, city City) []Effect {
+	if !hasEffectiveBuildingMarker(state, city.OwnerID) {
+		return nil
+	}
+	runtime, err := runtimeRulesForState(state)
+	if err != nil || runtime == nil {
+		return nil
+	}
+	actual := make(map[string]bool, len(city.Buildings))
+	for _, building := range city.Buildings {
+		if !isObsoleteForPlayer(state, city.OwnerID, city.Obsolete, building.ObsoletedBy) {
+			actual[building.ID] = true
+		}
+	}
+	seen := map[string]bool{}
+	effects := []Effect(nil)
+	for _, wonder := range state.Wonders {
+		if !wonderAppliesToPlayer(state, wonder, city.OwnerID) {
+			continue
+		}
+		for _, effect := range wonder.Effects {
+			if effect.Kind != EffectBuildingEverywhere || effect.ID == "" || actual[effect.ID] || seen[effect.ID] {
+				continue
+			}
+			definition, ok := runtime.ProductionDefinition(effect.ID)
+			if !ok || definition.Kind != ProductionBuilding {
+				continue
+			}
+			seen[effect.ID] = true
+			for _, buildingEffect := range runtimeProductionEffects(definition) {
+				if effectAlreadyEmbeddedInWonder(wonder.Effects, buildingEffect) {
+					continue
+				}
+				effects = append(effects, buildingEffect)
+			}
+		}
+	}
+	return effects
+}
+
+func hasEffectiveBuildingMarker(state State, playerID string) bool {
+	for _, wonder := range state.Wonders {
+		if !wonderAppliesToPlayer(state, wonder, playerID) {
+			continue
+		}
+		for _, effect := range wonder.Effects {
+			if effect.Kind == EffectBuildingEverywhere && effect.ID != "" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func effectAlreadyEmbeddedInWonder(wonderEffects []Effect, candidate Effect) bool {
+	for _, existing := range wonderEffects {
+		if existing.Kind != candidate.Kind || existing.Value != candidate.Value {
+			continue
+		}
+		if existing.ID == candidate.ID || (candidate.ID != "" && strings.HasSuffix(existing.ID, ":"+candidate.ID)) {
+			return true
+		}
+	}
+	return false
 }
 
 func terrainYield(state State, tileID string) (Yield, error) {
