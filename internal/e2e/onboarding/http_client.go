@@ -104,12 +104,14 @@ func (c HTTPClient) ReadGame(ctx context.Context, actor Actor, gameID int64) (ga
 }
 
 func (c HTTPClient) CreateGame(ctx context.Context, actor Actor, lobbyID int64, name string) (int64, error) {
+	body := map[string]any{"session_id": actor.Session, "name": name, "password_protected": false, "password": ""}
+	if lobbyID > 0 {
+		body["lobby_id"] = lobbyID
+	}
 	var game struct {
 		ID int64 `json:"id"`
 	}
-	err := c.request(ctx, http.MethodPost, "/game/create_game", map[string]any{
-		"session_id": actor.Session, "name": name, "lobby_id": lobbyID, "password_protected": false, "password": "",
-	}, &game)
+	err := c.request(ctx, http.MethodPost, "/game/create_game", body, &game)
 	return game.ID, err
 }
 
@@ -133,6 +135,10 @@ func (c HTTPClient) SelectCountry(ctx context.Context, actor Actor, gameID int64
 
 func (c HTTPClient) AddAI(ctx context.Context, owner Actor, gameID, targetAccountID int64) error {
 	return c.request(ctx, http.MethodPost, "/game/add_ai", map[string]any{"session_id": owner.Session, "game_id": gameID, "target_account_id": targetAccountID}, nil)
+}
+
+func (c HTTPClient) AddManagedAI(ctx context.Context, owner Actor, gameID int64, country, name string) error {
+	return c.request(ctx, http.MethodPost, "/game/add_ai", map[string]any{"session_id": owner.Session, "game_id": gameID, "country": country, "name": name}, nil)
 }
 
 func (c HTTPClient) StartGame(ctx context.Context, actor Actor, gameID int64) error {
@@ -201,6 +207,10 @@ func (c HTTPClient) request(ctx context.Context, method, path string, body any, 
 	}
 	defer response.Body.Close()
 	if response.StatusCode == http.StatusBadRequest || response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusConflict {
+		body, _ := io.ReadAll(response.Body)
+		if len(body) != 0 {
+			return fmt.Errorf("%w: %s", ErrConflict, strings.TrimSpace(string(body)))
+		}
 		return ErrConflict
 	}
 	if response.StatusCode < 200 || response.StatusCode >= 300 {

@@ -3,11 +3,11 @@
   "entries": [
     {
       "path": "internal/game/create_game.go",
-      "sha256": "21d45128aa19ac8344c131c61b2dfa54df385251b0ac600233a17b07dc17faa7"
+      "sha256": "2bb41c562c8c5221d7c19f44f541ed71df1b988d5e067c15c8695b1fe6e49a87"
     },
     {
       "path": "internal/game/endpoints.go",
-      "sha256": "9d47803412b48b6e3d890c4e7764f27e7bf5db08a1b703c55064802072e34afa"
+      "sha256": "dbbc5b54dcbe88149e551689de412a5b1b5a7c978a47c57bd03000f6bd0fe67d"
     },
     {
       "path": "internal/game/game_handler.go",
@@ -126,6 +126,10 @@
       "sha256": "26a529824c572235e37d80aef9d60d7373fe002d354457c918f7f21d8517b764"
     },
     {
+      "path": "internal/gameplay/service/ai_worker.go",
+      "sha256": "f42d9c97a7e6b6eb42a7ee1597f634efe31550dfea37655227baf2053ee4ece9"
+    },
+    {
       "path": "internal/gameplay/service/deadline.go",
       "sha256": "ef2186c35b14b749ccafc3aadb172918a80ff70af893bc1582865fcdab7632dd"
     },
@@ -139,7 +143,7 @@
     },
     {
       "path": "internal/gameplay/store/store.go",
-      "sha256": "bc4f37bdaacc6b9891b7f1d4f4f387654b1f97b62f8d01ba92f7544da07b3b45"
+      "sha256": "81faa46c34211f58c9276aabb62c52458b234e3b2b5f73745bfc2aff990cb082"
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
@@ -147,7 +151,7 @@
     },
     {
       "path": "internal/runtime/runtime.go",
-      "sha256": "5c0a0c63a011ff19a27b3cd96853f00d2ed7bb80bbd6b997c0cb56fa6d5c02b8"
+      "sha256": "82f171d84e377620ba931436c02c134399fa48123b9735b4678fcb7c74d8fc9d"
     },
     {
       "path": "internal/world/config.go",
@@ -187,7 +191,7 @@
     },
     {
       "path": "main.go",
-      "sha256": "7b7332dad5d3f9623c9f73c65b8b575a4545075799cb353fbf8fc817b7b76f47"
+      "sha256": "540c2f62f4edef2848f1325f72d0511338f85c9086b0a56e2fb42af2783b90b2"
     },
     {
       "path": "supabase/migrations/20260719120000_gameplay_persistence_task2.sql",

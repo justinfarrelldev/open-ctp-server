@@ -488,7 +488,73 @@ func TestGameMutations_RejectNonSetupGames(t *testing.T) {
 	}
 }
 
-func TestAddAIRejectsMissingTargetAccount(t *testing.T) {
+func TestAddAICreatesServerManagedPlayerWhenTargetAccountIsOmitted(t *testing.T) {
+	sqlxDB, mock := newGameSQLMock(t)
+	store := newGameSessionStore(sqlxDB)
+
+	expectGameSessionLookup(mock, 55, 7)
+	mock.ExpectBegin()
+	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
+		WithArgs(int64(44)).
+		WillReturnRows(gameRow(44, 7, DefaultGameStatus, "Local Singleplayer", false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON))
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayersSelectByGameID)).
+		WithArgs(int64(44)).
+		WillReturnRows(gamePlayerRows(44, struct {
+			id        int64
+			accountID int64
+			country   string
+			ping      int
+		}{id: 1, accountID: 7, country: "america", ping: 0}))
+	mock.ExpectQuery(regexp.QuoteMeta(insertManagedAIAccountQuery)).
+		WithArgs("AI 1", sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(99)))
+	mock.ExpectExec(regexp.QuoteMeta(insertManagedAIPlayerQuery)).
+		WithArgs(int64(44), int64(99), "aztec").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByID)).
+		WithArgs(int64(44)).
+		WillReturnRows(gameRow(44, 7, DefaultGameStatus, "Local Singleplayer", false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON))
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayersSelectByGameID)).
+		WithArgs(int64(44)).
+		WillReturnRows(gamePlayerRowsWithControllers(44,
+			struct {
+				id         int64
+				accountID  int64
+				country    string
+				ping       int
+				controller string
+			}{id: 1, accountID: 7, country: "america", ping: 0, controller: "human"},
+			struct {
+				id         int64
+				accountID  int64
+				country    string
+				ping       int
+				controller string
+			}{id: 2, accountID: 99, country: "aztec", ping: 0, controller: "ai"},
+		))
+	mock.ExpectCommit()
+
+	req := httptest.NewRequest(http.MethodPost, "/game/add_ai", strings.NewReader(`{"game_id":44,"session_id":55,"country":"aztec","name":"AI 1"}`))
+	rr := httptest.NewRecorder()
+
+	AddAIHandler(rr, req, sqlxDB, store)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("got status %d want %d body=%q", rr.Code, http.StatusOK, rr.Body.String())
+	}
+	var response Game
+	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if len(response.Players) != 2 || response.Players[1].Controller != "ai" || response.Players[1].Country != "aztec" {
+		t.Fatalf("unexpected players: %+v", response.Players)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet sql expectations: %v", err)
+	}
+}
+
+func TestAddAIRejectsMissingCountryWhenCreatingManagedAI(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/game/add_ai", strings.NewReader(`{"game_id":44}`))
 	rr := httptest.NewRecorder()
 
@@ -497,8 +563,52 @@ func TestAddAIRejectsMissingTargetAccount(t *testing.T) {
 	if rr.Code != http.StatusBadRequest {
 		t.Fatalf("got status %d want %d", rr.Code, http.StatusBadRequest)
 	}
-	if strings.TrimSpace(rr.Body.String()) != "game_id and target_account_id must be specified" {
+	if strings.TrimSpace(rr.Body.String()) != "country must be specified when creating a server-managed AI player" {
 		t.Fatalf("got body %q", rr.Body.String())
+	}
+}
+
+func TestAddAIRejectsManagedAIWhenGameIsFull(t *testing.T) {
+	sqlxDB, mock := newGameSQLMock(t)
+	store := newGameSessionStore(sqlxDB)
+
+	expectGameSessionLookup(mock, 55, 7)
+	mock.ExpectBegin()
+	mock.ExpectQuery(regexp.QuoteMeta(gameSelectByIDForUpdate)).
+		WithArgs(int64(44)).
+		WillReturnRows(gameRow(44, 7, DefaultGameStatus, "Full Game", false, false, DefaultGameStyle, defaultRulesJSON, defaultExclusionsJSON))
+	fullPlayers := make([]struct {
+		id        int64
+		accountID int64
+		country   string
+		ping      int
+	}, MaxGamePlayers)
+	for index := range fullPlayers {
+		fullPlayers[index] = struct {
+			id        int64
+			accountID int64
+			country   string
+			ping      int
+		}{id: int64(index + 1), accountID: int64(700 + index), country: strings.ToLower(string(rune('a' + index))), ping: 0}
+	}
+	mock.ExpectQuery(regexp.QuoteMeta(gamePlayersSelectByGameID)).
+		WithArgs(int64(44)).
+		WillReturnRows(gamePlayerRows(44, fullPlayers...))
+	mock.ExpectRollback()
+
+	req := httptest.NewRequest(http.MethodPost, "/game/add_ai", strings.NewReader(`{"game_id":44,"session_id":55,"country":"aztec"}`))
+	rr := httptest.NewRecorder()
+
+	AddAIHandler(rr, req, sqlxDB, store)
+
+	if rr.Code != http.StatusConflict {
+		t.Fatalf("got status %d want %d body=%q", rr.Code, http.StatusConflict, rr.Body.String())
+	}
+	if strings.TrimSpace(rr.Body.String()) != "game already has the maximum supported 8 players" {
+		t.Fatalf("got body %q", rr.Body.String())
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet sql expectations: %v", err)
 	}
 }
 

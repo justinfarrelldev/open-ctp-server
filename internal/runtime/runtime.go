@@ -37,12 +37,14 @@ type Runtime struct {
 	Deadlines        *gameplayservice.DeadlineWorker
 	PendingTakeovers *gameplayservice.PendingTakeoverWorker
 	AIDriver         *ai.Driver
+	AIWorker         *gameplayservice.AIWorker
 }
 
 func New(db *sqlx.DB, config Config) *Runtime {
 	sessions := auth.NewSessionStore(db)
 	broker := gameplayevents.NewBroker()
-	service := gameplayservice.New(gameplaystore.New(db), config.Sources)
+	commandStore := gameplaystore.New(db)
+	service := gameplayservice.New(commandStore, config.Sources)
 	gateway := gameplayservice.NewAIGateway(service)
 	dispatcher := gameplayevents.NewDispatcher(db, broker)
 	newLimiter := func(name string, standard func() *limiter.Limiter) *limiter.Limiter {
@@ -119,5 +121,8 @@ func New(db *sqlx.DB, config Config) *Runtime {
 	deadlines.AfterCommit = dispatcher.DispatchOnce
 	pendingTakeovers := gameplayservice.NewPendingTakeoverWorker(service)
 	pendingTakeovers.AfterCommit = dispatcher.DispatchOnce
-	return &Runtime{Handler: mux, Dispatcher: dispatcher, Deadlines: deadlines, PendingTakeovers: pendingTakeovers, AIDriver: ai.NewDriver(gateway, gateway, ai.Config{ActionBudget: 1, History: gateway, Observe: config.ObserveAICommand, CloseoutAfterAction: true})}
+	aiDriver := ai.NewDriver(gateway, gateway, ai.Config{ActionBudget: 1, History: gateway, Observe: config.ObserveAICommand, CloseoutAfterAction: true})
+	aiWorker := gameplayservice.NewAIWorker(commandStore, aiDriver)
+	aiWorker.AfterCommit = dispatcher.DispatchOnce
+	return &Runtime{Handler: mux, Dispatcher: dispatcher, Deadlines: deadlines, PendingTakeovers: pendingTakeovers, AIDriver: aiDriver, AIWorker: aiWorker}
 }

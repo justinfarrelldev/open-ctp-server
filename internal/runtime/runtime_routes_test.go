@@ -12,6 +12,18 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+func TestRuntimeExposesAutonomousAIWorker(t *testing.T) {
+	db, mock := newRuntimeSQLMock(t)
+	defer db.Close()
+	runtime := New(db, Config{NewLimiter: func(string) *limiter.Limiter { return tollbooth.NewLimiter(1000000, nil) }})
+	if runtime.AIWorker == nil {
+		t.Fatal("runtime does not expose the autonomous AI worker")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unexpected SQL execution: %v", err)
+	}
+}
+
 func TestRouteSurfaceContract(t *testing.T) {
 	t.Run("rejects a mux without the lobby chat surface", func(t *testing.T) {
 		incorrect := http.NewServeMux()

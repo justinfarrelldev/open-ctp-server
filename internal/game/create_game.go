@@ -23,6 +23,7 @@ const (
 	DefaultGameStatus          = "setup"
 	DefaultStartingSettlers    = 1
 	DefaultStartingGold        = 100
+	MaxGamePlayers             = 8
 	defaultRulesJSON           = "[]"
 	defaultExclusionsJSON      = "{}"
 	ErrorPasswordTooShort      = "password must be longer than 6 characters"

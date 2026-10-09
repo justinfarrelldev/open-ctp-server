@@ -17,6 +17,7 @@ type PublicRuntime struct {
 	Driver              *ai.Driver
 	RunDueDeadlines     func(context.Context) error
 	RunPendingTakeovers func(context.Context) error
+	RunAutonomousAI     func(context.Context) error
 }
 
 func NewPublicRuntime(db *sqlx.DB, sources engine.Sources, seed func() (int64, error)) *PublicRuntime {
@@ -39,5 +40,5 @@ func RestartPublicRuntimeWithAIObserver(db *sqlx.DB, sources engine.Sources, see
 
 func newPublicRuntime(db *sqlx.DB, sources engine.Sources, seed func() (int64, error), observe func(ai.Submission)) *PublicRuntime {
 	runtime := serverruntime.New(db, serverruntime.Config{Sources: sources, StartSeed: seed, NewLimiter: func(string) *limiter.Limiter { return tollbooth.NewLimiter(1000000, nil) }, ObserveAICommand: observe})
-	return &PublicRuntime{Handler: runtime.Handler, Driver: runtime.AIDriver, RunDueDeadlines: runtime.Deadlines.RunOnce, RunPendingTakeovers: runtime.PendingTakeovers.RunOnce}
+	return &PublicRuntime{Handler: runtime.Handler, Driver: runtime.AIDriver, RunDueDeadlines: runtime.Deadlines.RunOnce, RunPendingTakeovers: runtime.PendingTakeovers.RunOnce, RunAutonomousAI: runtime.AIWorker.RunOnce}
 }

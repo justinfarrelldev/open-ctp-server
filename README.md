@@ -100,6 +100,21 @@ The Taskfile has multiple commands you can run that can save time. For example, 
 task run
 ```
 
+### Local Singleplayer with Server-Managed AI
+
+A local server can host a single-human game without a separate gameplay mode. Create a normal no-lobby game, select the human country, add server-managed AI slots, then start the game. AI slots are ordinary `game_players` with `controller_kind: "ai"`, so they use the same world generation, persistence, events, and command authority as multiplayer AI.
+
+Example flow against `http://localhost:9000`:
+
+1. Create/login an account and keep the returned `session_id`.
+2. `POST /game/create_game` without `lobby_id`.
+3. Configure setup with `/game/update_style`, `/game/update_rules`, `/game/update_starting_settlers`, and `/game/update_starting_gold` as desired.
+4. Choose the human civilization with `/game/select_country`.
+5. Add up to seven AI opponents by calling `/game/add_ai` with `game_id`, `session_id`, `country`, and optional `name` while omitting `target_account_id`.
+6. Start with `/game/start_game`.
+
+The production server also runs an autonomous AI worker. AI-controlled slots in both local singleplayer-style games and normal multiplayer games are driven through the same authoritative command service used by human clients.
+
 ### Starting the Test Suite
 
 You can also use this to start the test suite: 

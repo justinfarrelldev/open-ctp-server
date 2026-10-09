@@ -214,6 +214,17 @@ func (c *conn) query(query string, args []driver.NamedValue) (driver.Rows, error
 			return intArgFromValue(values[i][3]) < intArgFromValue(values[j][3]) || intArgFromValue(values[i][3]) == intArgFromValue(values[j][3]) && intArgFromValue(values[i][0]) < intArgFromValue(values[j][0])
 		})
 		return &rows{columns: []string{"game_id", "revision", "player_id", "deadline_at"}, values: values}, nil
+	case "select state.game_id, state.revision, state.canonical_state_json::text as canonical_state_json from world_turn_states as state join games on games.id = state.game_id where state.state_schema_version = 1 and games.status = 'started' order by state.game_id asc":
+		values := make([][]driver.Value, 0)
+		for gameID, turn := range c.store.turns {
+			game, ok := c.store.games[gameID]
+			if !ok || game.status != "started" {
+				continue
+			}
+			values = append(values, []driver.Value{int64(gameID), turn[10], turn[12]})
+		}
+		sort.Slice(values, func(i, j int) bool { return intArgFromValue(values[i][0]) < intArgFromValue(values[j][0]) })
+		return &rows{columns: []string{"game_id", "revision", "canonical_state_json"}, values: values}, nil
 	case "select state.game_id, state.state_schema_version, state.revision, state.last_event_sequence, state.canonical_state_json::text as canonical_state_json, snapshot.ruleset_canonical_json::text as ruleset_canonical_json, snapshot.ruleset_content_hash, snapshot.ruleset_version from world_turn_states as state join world_snapshots as snapshot on snapshot.game_id = state.game_id where state.game_id = $1", "select state.game_id, state.state_schema_version, state.revision, state.last_event_sequence, state.canonical_state_json::text as canonical_state_json, snapshot.ruleset_canonical_json::text as ruleset_canonical_json, snapshot.ruleset_content_hash, snapshot.ruleset_version from world_turn_states as state join world_snapshots as snapshot on snapshot.game_id = state.game_id where state.game_id = $1 for update of state":
 		gameID := intArg(args, 0)
 		turn, hasTurn := c.store.turns[gameID]
@@ -367,6 +378,19 @@ func (c *conn) query(query string, args []driver.NamedValue) (driver.Rows, error
 			return &rows{columns: []string{"id"}, values: [][]driver.Value{{id}}}, nil
 		}
 		return &rows{columns: []string{"id"}}, nil
+	case "insert into account (name, info, location, email, experience_level) values ($1, 'server-managed ai player', 'local', $2, 0) returning id":
+		email := stringArg(args, 1)
+		if _, exists := c.store.accounts[email]; exists {
+			return nil, c.unknown(query, "duplicate account")
+		}
+		id := c.store.nextID
+		c.store.nextID++
+		c.store.accounts[email] = id
+		c.store.names[id] = stringArg(args, 0)
+		if c.tx != nil {
+			c.tx.undo = append(c.tx.undo, func() { delete(c.store.accounts, email); delete(c.store.names, id) })
+		}
+		return &rows{columns: []string{"id"}, values: [][]driver.Value{{id}}}, nil
 	case "insert into account (name, info, location, email, experience_level) values ($1, $2, $3, $4, $5) returning id":
 		email := stringArg(args, 3)
 		if _, exists := c.store.accounts[email]; exists {
@@ -456,14 +480,17 @@ func (c *conn) query(query string, args []driver.NamedValue) (driver.Rows, error
 		columns := []string{"id", "created_at", "updated_at", "started_at", "lobby_id", "owner_account_id", "name", "password_protected", "password", "is_locked", "is_public", "style", "rules_json", "exclusions_json", "status", "starting_settlers", "starting_gold", "map_size", "climate", "wetness"}
 		if game, ok := c.store.games[intArg(args, 0)]; ok {
 			now := time.Now().UTC()
-			var startedAt, wetness driver.Value
+			var startedAt, lobbyID, wetness driver.Value
 			if game.startedAt != nil {
 				startedAt = *game.startedAt
+			}
+			if game.lobbyID > 0 {
+				lobbyID = game.lobbyID
 			}
 			if game.wetness != nil {
 				wetness = *game.wetness
 			}
-			return &rows{columns: columns, values: [][]driver.Value{{game.id, now, now, startedAt, game.lobbyID, game.ownerID, game.name, false, "", false, true, game.style, game.rulesJSON, game.exclusionsJSON, game.status, game.startingSettlers, game.startingGold, game.mapSize, game.climate, wetness}}}, nil
+			return &rows{columns: columns, values: [][]driver.Value{{game.id, now, now, startedAt, lobbyID, game.ownerID, game.name, false, "", false, true, game.style, game.rulesJSON, game.exclusionsJSON, game.status, game.startingSettlers, game.startingGold, game.mapSize, game.climate, wetness}}}, nil
 		}
 		return &rows{columns: columns}, nil
 	case "insert into games ( name, owner_account_id, lobby_id, password_protected, password, is_locked, is_public, style, rules_json, exclusions_json, status, starting_settlers, starting_gold ) values ( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13 ) returning id":
@@ -503,6 +530,29 @@ func (c *conn) query(query string, args []driver.NamedValue) (driver.Rows, error
 	default:
 		return nil, c.unknown(query, "unsupported query")
 	}
+}
+
+func (c *conn) insertGamePlayer(gameID, accountID int64, country, controller string) driver.Result {
+	c.store.mu.Lock()
+	defer c.store.mu.Unlock()
+	c.store.players[gameID] = append(c.store.players[gameID], accountID)
+	if c.store.countries[gameID] == nil {
+		c.store.countries[gameID] = map[int64]string{}
+	}
+	if c.store.controllers[gameID] == nil {
+		c.store.controllers[gameID] = map[int64]string{}
+	}
+	c.store.countries[gameID][accountID] = country
+	c.store.controllers[gameID][accountID] = controller
+	if c.tx != nil {
+		c.tx.undo = append(c.tx.undo, func() {
+			players := c.store.players[gameID]
+			c.store.players[gameID] = players[:len(players)-1]
+			delete(c.store.countries[gameID], accountID)
+			delete(c.store.controllers[gameID], accountID)
+		})
+	}
+	return driver.RowsAffected(1)
 }
 
 func (c *conn) exec(query string, args []driver.NamedValue) (driver.Result, error) {
@@ -614,20 +664,11 @@ func (c *conn) exec(query string, args []driver.NamedValue) (driver.Result, erro
 	}
 	if normalized == "insert into game_players (game_id, account_id) values ($1, $2)" {
 		gameID, accountID := intArg(args, 0), intArg(args, 1)
-		c.store.mu.Lock()
-		defer c.store.mu.Unlock()
-		c.store.players[gameID] = append(c.store.players[gameID], accountID)
-		if c.store.countries[gameID] == nil {
-			c.store.countries[gameID] = map[int64]string{}
-		}
-		if c.store.controllers[gameID] == nil {
-			c.store.controllers[gameID] = map[int64]string{}
-		}
-		c.store.controllers[gameID][accountID] = "human"
-		if c.tx != nil {
-			c.tx.undo = append(c.tx.undo, func() { players := c.store.players[gameID]; c.store.players[gameID] = players[:len(players)-1] })
-		}
-		return driver.RowsAffected(1), nil
+		return c.insertGamePlayer(gameID, accountID, "", "human"), nil
+	}
+	if normalized == "insert into game_players (game_id, account_id, country, controller_kind) values ($1, $2, $3, 'ai')" {
+		gameID, accountID := intArg(args, 0), intArg(args, 1)
+		return c.insertGamePlayer(gameID, accountID, stringArg(args, 2), "ai"), nil
 	}
 	if normalized == "update lobbies set last_activity_at = now(), updated_at = now() where id = $1" {
 		return driver.RowsAffected(1), nil

@@ -308,7 +308,7 @@
         },
         "/game/add_ai": {
             "post": {
-                "description": "This endpoint exists for future AI-player support and currently always returns 404 because AI players are not supported yet.",
+                "description": "When target_account_id is supplied, this endpoint converts an existing joined setup player to AI control. When target_account_id is omitted, the owner creates a server-managed AI account/player slot with the supplied country.",
                 "consumes": [
                     "application/json"
                 ],
@@ -319,13 +319,42 @@
                     "game"
                 ],
                 "summary": "Add an AI player",
+                "parameters": [
+                    {
+                        "description": "AI setup request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.AddAIArgs"
+                        }
+                    }
+                ],
                 "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Game"
+                        }
+                    },
                     "400": {
                         "description": "Bad Request",
                         "schema": {}
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
                     "404": {
-                        "description": "AI players are not supported yet",
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {}
                     }
                 }
@@ -2412,6 +2441,26 @@
                     "type": "string"
                 },
                 "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.AddAIArgs": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "type": "string"
+                },
+                "game_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "integer"
+                },
+                "target_account_id": {
                     "type": "integer"
                 }
             }

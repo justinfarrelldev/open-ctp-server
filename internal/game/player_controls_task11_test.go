@@ -25,9 +25,35 @@ func gamePlayerRows(gameID int64, players ...struct {
 	country   string
 	ping      int
 }) *sqlmock.Rows {
+	converted := make([]struct {
+		id         int64
+		accountID  int64
+		country    string
+		ping       int
+		controller string
+	}, 0, len(players))
+	for _, player := range players {
+		converted = append(converted, struct {
+			id         int64
+			accountID  int64
+			country    string
+			ping       int
+			controller string
+		}{id: player.id, accountID: player.accountID, country: player.country, ping: player.ping, controller: "human"})
+	}
+	return gamePlayerRowsWithControllers(gameID, converted...)
+}
+
+func gamePlayerRowsWithControllers(gameID int64, players ...struct {
+	id         int64
+	accountID  int64
+	country    string
+	ping       int
+	controller string
+}) *sqlmock.Rows {
 	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "game_id", "account_id", "joined_at", "country", "ping_ms", "controller_kind"})
 	for _, player := range players {
-		rows.AddRow(player.id, time.Now(), time.Now(), gameID, player.accountID, time.Now(), player.country, player.ping, "human")
+		rows.AddRow(player.id, time.Now(), time.Now(), gameID, player.accountID, time.Now(), player.country, player.ping, player.controller)
 	}
 	return rows
 }

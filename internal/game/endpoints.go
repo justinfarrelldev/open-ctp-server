@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
@@ -105,7 +107,9 @@ type UpdateExclusionsArgs struct {
 type AddAIArgs struct {
 	GameID          int64  `json:"game_id"`
 	SessionID       *int64 `json:"session_id"`
-	TargetAccountID int64  `json:"target_account_id"`
+	TargetAccountID int64  `json:"target_account_id,omitempty"`
+	Country         string `json:"country,omitempty"`
+	Name            string `json:"name,omitempty"`
 }
 
 func (a AddAIArgs) GetSessionID() *int64 { return a.SessionID }
@@ -493,15 +497,24 @@ func UpdateExclusions(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store
 	return applyGamePatch(w, db, store, args, args.GameId, gamePatch{ExclusionsJSON: args.ExclusionsJSON, HasExclusionsJSON: len(args.ExclusionsJSON) > 0})
 }
 
-// AddAI reserves the future AI-player route.
+const insertManagedAIAccountQuery = `INSERT INTO account (name, info, location, email, experience_level) VALUES ($1, 'Server-managed AI player', 'local', $2, 0) RETURNING id`
+
+const insertManagedAIPlayerQuery = `INSERT INTO game_players (game_id, account_id, country, controller_kind) VALUES ($1, $2, $3, 'ai')`
+
+// AddAI creates or assigns an AI-controlled setup player.
 //
 // @Summary Add an AI player
-// @Description This endpoint exists for future AI-player support and currently always returns 404 because AI players are not supported yet.
+// @Description When target_account_id is supplied, this endpoint converts an existing joined setup player to AI control. When target_account_id is omitted, the owner creates a server-managed AI account/player slot with the supplied country.
 // @Tags game
 // @Accept json
 // @Produce json
+// @Param body body AddAIArgs true "AI setup request body"
+// @Success 200 {object} Game
 // @Failure 400 {object} error "Bad Request"
-// @Failure 404 {object} error "AI players are not supported yet"
+// @Failure 401 {object} error "Unauthorized"
+// @Failure 403 {object} error "Forbidden"
+// @Failure 404 {object} error "Not Found"
+// @Failure 409 {object} error "Conflict"
 // @Router /game/add_ai [post]
 func AddAI(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.SessionStore) error {
 	if r.Method != http.MethodPost {
@@ -511,8 +524,13 @@ func AddAI(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.Sess
 	if err := decodeGameJSONBody(r, &args); err != nil {
 		return writeGameStatusError(w, http.StatusBadRequest, "an error occurred while decoding the request body:"+err.Error())
 	}
-	if args.GameID == 0 || args.TargetAccountID == 0 {
-		return writeGameStatusError(w, http.StatusBadRequest, "game_id and target_account_id must be specified")
+	if args.GameID == 0 {
+		return writeGameStatusError(w, http.StatusBadRequest, "game_id must be specified")
+	}
+	creatingManagedAI := args.TargetAccountID == 0
+	country := strings.TrimSpace(args.Country)
+	if creatingManagedAI && country == "" {
+		return writeGameStatusError(w, http.StatusBadRequest, "country must be specified when creating a server-managed AI player")
 	}
 	session, err := requireGameSession(w, store, args)
 	if err != nil {
@@ -541,15 +559,12 @@ func AddAI(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.Sess
 	if game.OwnerAccountID == nil || *game.OwnerAccountID != int64(session.AccountID) {
 		return writeGameStatusError(w, http.StatusForbidden, "only the game owner can assign AI control")
 	}
-	var playerID int64
-	if err := tx.Get(&playerID, `SELECT id FROM game_players WHERE game_id = $1 AND account_id = $2 FOR UPDATE`, args.GameID, args.TargetAccountID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return writeGameStatusError(w, http.StatusNotFound, "target account is not a game player")
+	if creatingManagedAI {
+		if err := createManagedAIPlayer(w, tx, args, country); err != nil {
+			return err
 		}
+	} else if err := assignExistingPlayerAI(w, tx, args); err != nil {
 		return err
-	}
-	if _, err := tx.Exec(`UPDATE game_players SET controller_kind = 'ai', updated_at = NOW() WHERE id = $1`, playerID); err != nil {
-		return fmt.Errorf("an error occurred while assigning AI control: %v", err)
 	}
 	updated, err := getGameWithPlayers(tx, args.GameID)
 	if err != nil {
@@ -560,4 +575,47 @@ func AddAI(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.Sess
 	}
 	committed = true
 	return writeGameJSONResponse(w, http.StatusOK, updated)
+}
+
+func createManagedAIPlayer(w http.ResponseWriter, tx *sqlx.Tx, args AddAIArgs, country string) error {
+	players, err := listGamePlayersByGameID(tx, args.GameID)
+	if err != nil {
+		return err
+	}
+	if len(players) >= MaxGamePlayers {
+		return writeGameStatusError(w, http.StatusConflict, fmt.Sprintf("game already has the maximum supported %d players", MaxGamePlayers))
+	}
+	for _, player := range players {
+		if strings.EqualFold(strings.TrimSpace(player.Country), country) {
+			return writeGameStatusError(w, http.StatusConflict, ErrorCountryAlreadyTaken)
+		}
+	}
+	slot := len(players) + 1
+	accountName := strings.TrimSpace(args.Name)
+	if accountName == "" {
+		accountName = fmt.Sprintf("AI %d", slot)
+	}
+	email := fmt.Sprintf("ai-game-%d-slot-%d-%d@open-ctp.local", args.GameID, slot, time.Now().UTC().UnixNano())
+	var accountID int64
+	if err := tx.QueryRowx(insertManagedAIAccountQuery, accountName, email).Scan(&accountID); err != nil {
+		return fmt.Errorf("an error occurred while creating the server-managed AI account: %v", err)
+	}
+	if _, err := tx.Exec(insertManagedAIPlayerQuery, args.GameID, accountID, country); err != nil {
+		return fmt.Errorf("an error occurred while creating the server-managed AI player: %v", err)
+	}
+	return nil
+}
+
+func assignExistingPlayerAI(w http.ResponseWriter, tx *sqlx.Tx, args AddAIArgs) error {
+	var playerID int64
+	if err := tx.Get(&playerID, `SELECT id FROM game_players WHERE game_id = $1 AND account_id = $2 FOR UPDATE`, args.GameID, args.TargetAccountID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return writeGameStatusError(w, http.StatusNotFound, "target account is not a game player")
+		}
+		return err
+	}
+	if _, err := tx.Exec(`UPDATE game_players SET controller_kind = 'ai', updated_at = NOW() WHERE id = $1`, playerID); err != nil {
+		return fmt.Errorf("an error occurred while assigning AI control: %v", err)
+	}
+	return nil
 }

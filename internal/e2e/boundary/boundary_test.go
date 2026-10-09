@@ -63,6 +63,21 @@ func TestProductionPackagesDoNotImportOrExposeE2ECode(t *testing.T) {
 	}
 }
 
+func TestProductionMainRunsAutonomousAIWorker(t *testing.T) {
+	root, err := testkit.RepositoryRoot(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	contents, err := os.ReadFile(filepath.Join(root, "main.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(contents)
+	if !strings.Contains(text, `runGameplayWorker("ai driver", runtime.AIWorker.RunOnce)`) {
+		t.Fatal("main.go does not start the autonomous AI worker")
+	}
+}
+
 func TestProductionAIGatewayRemainsSeparateFromHumanCommandExecution(t *testing.T) {
 	root, err := testkit.RepositoryRoot(".")
 	if err != nil {

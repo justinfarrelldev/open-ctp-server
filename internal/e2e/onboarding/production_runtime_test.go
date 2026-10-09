@@ -37,6 +37,152 @@ func deterministicSources(t *testing.T) engine.Sources {
 	return engine.Sources{Clock: kit.Clock, IDs: kit.IDs, RNG: deterministicRNG{}}
 }
 
+func TestPublicRuntimeStartsOneHumanSevenServerManagedAI(t *testing.T) {
+	database, telemetry, err := memorysql.Open(t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	db := sqlx.NewDb(database, memorysql.DriverName)
+	sources := deterministicSources(t)
+	seed := func() (int64, error) { return 808, nil }
+	runtime := NewPublicRuntime(db, sources, seed)
+	server := httptest.NewServer(runtime.Handler)
+	defer server.Close()
+	client := HTTPClient{BaseURL: server.URL, Client: &http.Client{}}
+	ctx := context.Background()
+
+	owner, err := client.Signup(ctx, "local-human", "local-human@example.invalid")
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameID, err := client.CreateGame(ctx, owner, 0, "localhost singleplayer")
+	if err != nil {
+		t.Fatal(err)
+	}
+	wetness := 50
+	if err := client.ConfigureGame(ctx, owner, gameID, GameSetup{Style: "sequential", MapSize: "medium", Climate: "temperate", Wetness: &wetness}); err != nil {
+		t.Fatal(err)
+	}
+	if err := client.SelectCountry(ctx, owner, gameID, "america"); err != nil {
+		t.Fatal(err)
+	}
+	for index, country := range []string{"aztec", "babylon", "canadian", "chinese", "egyptian", "english", "french"} {
+		if err := client.AddManagedAI(ctx, owner, gameID, country, fmt.Sprintf("Local AI %d", index+1)); err != nil {
+			t.Fatalf("add managed AI %s: %v", country, err)
+		}
+	}
+	if err := client.StartGame(ctx, owner, gameID); err != nil {
+		t.Fatal(err)
+	}
+	started, err := client.ReadGame(ctx, owner, gameID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(started.Players) != 8 {
+		t.Fatalf("started players = %d, want 8: %+v", len(started.Players), started.Players)
+	}
+	aiPlayers := 0
+	for _, player := range started.Players {
+		if player.Controller == engine.ControllerAI {
+			aiPlayers++
+		}
+	}
+	if aiPlayers != 7 {
+		t.Fatalf("AI players = %d, want 7: %+v", aiPlayers, started.Players)
+	}
+	var raw string
+	if err := db.GetContext(ctx, &raw, `SELECT canonical_state_json::text FROM world_turn_states WHERE game_id = $1 AND state_schema_version = 1`, gameID); err != nil {
+		t.Fatal(err)
+	}
+	state, err := engine.DecodeCanonicalStateJSON([]byte(raw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Players) != 8 || len(state.Units) != 8 {
+		t.Fatalf("canonical players=%d units=%d, want 8/8", len(state.Players), len(state.Units))
+	}
+	canonicalAI := 0
+	for _, player := range state.Players {
+		if player.Controller == engine.ControllerAI {
+			canonicalAI++
+		}
+	}
+	if canonicalAI != 7 {
+		t.Fatalf("canonical AI players = %d, want 7: %+v", canonicalAI, state.Players)
+	}
+	if telemetry.Unknown != nil {
+		t.Fatalf("unknown SQL = %v", telemetry.Unknown)
+	}
+}
+
+func TestPublicRuntimeAutonomousAIWorkerDrivesActiveMultiplayerAI(t *testing.T) {
+	database, telemetry, err := memorysql.Open(t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	db := sqlx.NewDb(database, memorysql.DriverName)
+	sources := deterministicSources(t)
+	seed := func() (int64, error) { return 22, nil }
+	runtime := NewPublicRuntime(db, sources, seed)
+	server := httptest.NewServer(runtime.Handler)
+	defer server.Close()
+	client := HTTPClient{BaseURL: server.URL, Client: &http.Client{}}
+	ctx := context.Background()
+
+	owner, err := client.Signup(ctx, "worker-human", "worker-human@example.invalid")
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameID, err := client.CreateGame(ctx, owner, 0, "worker multiplayer")
+	if err != nil {
+		t.Fatal(err)
+	}
+	wetness := 50
+	if err := client.ConfigureGame(ctx, owner, gameID, GameSetup{Style: "sequential", MapSize: "duel", Climate: "temperate", Wetness: &wetness}); err != nil {
+		t.Fatal(err)
+	}
+	if err := client.SelectCountry(ctx, owner, gameID, "america"); err != nil {
+		t.Fatal(err)
+	}
+	if err := client.AddManagedAI(ctx, owner, gameID, "aztec", "Worker AI"); err != nil {
+		t.Fatal(err)
+	}
+	if err := client.StartGame(ctx, owner, gameID); err != nil {
+		t.Fatal(err)
+	}
+	if revision, err := client.GameplayCommand(ctx, owner, gameID, "pass", 1, "worker-human-pass", map[string]any{}); err != nil || revision != 2 {
+		t.Fatalf("human pass revision=%d err=%v", revision, err)
+	}
+	if err := runtime.RunAutonomousAI(ctx); err != nil {
+		t.Fatal(err)
+	}
+	var raw string
+	if err := db.GetContext(ctx, &raw, `SELECT canonical_state_json::text FROM world_turn_states WHERE game_id = $1 AND state_schema_version = 1`, gameID); err != nil {
+		t.Fatal(err)
+	}
+	state, err := engine.DecodeCanonicalStateJSON([]byte(raw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.Revision < 4 {
+		t.Fatalf("revision after autonomous AI = %d, want at least 4", state.Revision)
+	}
+	foundAICity := false
+	for _, city := range state.Cities {
+		if strings.HasPrefix(city.OwnerID, "account-") && city.OwnerID != "account-1" {
+			foundAICity = true
+		}
+	}
+	if !foundAICity {
+		t.Fatalf("autonomous AI did not found a city: cities=%+v players=%+v", state.Cities, state.Players)
+	}
+	if telemetry.Unknown != nil {
+		t.Fatalf("unknown SQL = %v", telemetry.Unknown)
+	}
+}
+
 func TestPublicRuntimeUsesProductionAccountHandlerWithNamedMemoryStore(t *testing.T) {
 	db, telemetry, err := memorysql.Open(t.Name())
 	if err != nil {

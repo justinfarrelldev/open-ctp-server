@@ -61,6 +61,16 @@ WHERE state_schema_version = 1
 	AND (canonical_state_json #>> '{policy,deadline,at_unix}')::bigint <= $1
 ORDER BY deadline_at ASC, game_id ASC`
 
+const StartedGameplayAggregatesQuery = `SELECT
+	state.game_id,
+	state.revision,
+	state.canonical_state_json::text AS canonical_state_json
+FROM world_turn_states AS state
+JOIN games ON games.id = state.game_id
+WHERE state.state_schema_version = 1
+	AND games.status = 'started'
+ORDER BY state.game_id ASC`
+
 const selectReceiptQuery = `SELECT
   game_id, actor_player_id, idempotency_key, payload_sha256,
   result_json::text AS result_json, resulting_revision, resulting_event_sequence
@@ -128,6 +138,13 @@ type DueDeadline struct {
 	Revision   int64  `db:"revision"`
 	PlayerID   string `db:"player_id"`
 	DeadlineAt int64  `db:"deadline_at"`
+}
+
+// StartedAggregate is the minimal canonical gameplay state needed by autonomous workers.
+type StartedAggregate struct {
+	GameID             int64  `db:"game_id"`
+	Revision           int64  `db:"revision"`
+	CanonicalStateJSON []byte `db:"canonical_state_json"`
 }
 
 type CommandReceipt struct {
@@ -204,6 +221,18 @@ func (s *Store) FindDueLongTurnDeadlines(nowUnix int64) ([]DueDeadline, error) {
 		return nil, fmt.Errorf("reading due long-turn deadlines: %w", err)
 	}
 	return deadlines, nil
+}
+
+// FindStartedGameplayAggregates reads started games that may need autonomous workers.
+func (s *Store) FindStartedGameplayAggregates() ([]StartedAggregate, error) {
+	if s == nil || s.db == nil {
+		return nil, errors.New("gameplay store requires a database")
+	}
+	var aggregates []StartedAggregate
+	if err := s.db.Select(&aggregates, StartedGameplayAggregatesQuery); err != nil {
+		return nil, fmt.Errorf("reading started gameplay aggregates: %w", err)
+	}
+	return aggregates, nil
 }
 
 // LoadAggregateForUpdate is intentionally transaction-only: callers use the locked
