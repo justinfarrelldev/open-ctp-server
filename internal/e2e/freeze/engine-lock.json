@@ -87,7 +87,7 @@
     },
     {
       "path": "internal/gameplay/events/events.go",
-      "sha256": "62e706bac941a7218d92641f23e2d4d3e2cee84171a81d8703ee5a2b2510685f"
+      "sha256": "9d92141f98f0e2b2a2f49bfca8c8365b83562f480add382de831cada639dfe61"
     },
     {
       "path": "internal/gameplay/events/http.go",

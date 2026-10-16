@@ -80,6 +80,11 @@ func NewDispatcher(db *sqlx.DB, wakeup Wakeup) *Dispatcher {
 	return &Dispatcher{db: db, wakeup: wakeup}
 }
 
+type outboxEntry struct {
+	GameID   int64 `db:"game_id"`
+	Sequence int64 `db:"sequence"`
+}
+
 const undeliveredOutboxQuery = `SELECT o.game_id, o.sequence
 FROM gameplay_event_outbox o
 WHERE o.delivered_at IS NULL
@@ -107,25 +112,19 @@ func (d *Dispatcher) DispatchOnce(ctx context.Context) error {
 		}
 	}()
 
-	rows, err := tx.QueryxContext(ctx, undeliveredOutboxQuery)
-	if err != nil {
+	// Drain and close the SELECT before reusing this transaction's connection
+	// for UPDATEs. PostgreSQL row locks remain held until the transaction ends.
+	var pending []outboxEntry
+	if err := tx.SelectContext(ctx, &pending, undeliveredOutboxQuery); err != nil {
 		return fmt.Errorf("reading committed gameplay event outbox: %w", err)
 	}
-	defer rows.Close()
-	for rows.Next() {
-		var gameID, sequence int64
-		if err := rows.Scan(&gameID, &sequence); err != nil {
-			return fmt.Errorf("scanning gameplay event outbox: %w", err)
-		}
+	for _, entry := range pending {
 		if d.wakeup != nil {
-			d.wakeup.Publish(gameID)
+			d.wakeup.Publish(entry.GameID)
 		}
-		if _, err := tx.ExecContext(ctx, markOutboxDeliveredQuery, gameID, sequence); err != nil {
+		if _, err := tx.ExecContext(ctx, markOutboxDeliveredQuery, entry.GameID, entry.Sequence); err != nil {
 			return fmt.Errorf("marking gameplay event outbox delivery: %w", err)
 		}
-	}
-	if err := rows.Err(); err != nil {
-		return fmt.Errorf("iterating gameplay event outbox: %w", err)
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("committing gameplay event outbox delivery: %w", err)

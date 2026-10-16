@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"sync"
 	"testing"
@@ -91,6 +92,93 @@ func TestDispatcherDoesNotPublishWithoutCommittedOutboxRow(t *testing.T) {
 	}
 	if len(wakeup.gameIDs) != 0 {
 		t.Fatalf("published uncommitted event: %v", wakeup.gameIDs)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDispatcherReadsAllRowsBeforePublishingOrMarking(t *testing.T) {
+	t.Parallel()
+	readErr := errors.New("outbox read interrupted")
+	for _, tc := range []struct {
+		name    string
+		rows    *sqlmock.Rows
+		wantErr string
+	}{
+		{
+			name: "iteration error after first row",
+			rows: sqlmock.NewRows([]string{"game_id", "sequence"}).
+				AddRow(int64(7), int64(2)).AddRow(int64(7), int64(3)).RowError(1, readErr),
+			wantErr: readErr.Error(),
+		},
+		{
+			name: "scan error after first row",
+			rows: sqlmock.NewRows([]string{"game_id", "sequence"}).
+				AddRow(int64(7), int64(2)).AddRow(int64(7), "invalid-sequence"),
+			wantErr: "invalid-sequence",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer db.Close()
+			wakeup := &recordingWakeup{}
+			mock.ExpectBegin()
+			mock.ExpectQuery("SELECT o.game_id, o.sequence").WillReturnRows(tc.rows).RowsWillBeClosed()
+			// No UPDATE may run while the SELECT is still being consumed.
+			mock.ExpectRollback()
+
+			err = NewDispatcher(sqlx.NewDb(db, "sqlmock"), wakeup).DispatchOnce(context.Background())
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+				t.Errorf("DispatchOnce() error = %v, want %q", err, tc.wantErr)
+			}
+			if len(wakeup.gameIDs) != 0 {
+				t.Errorf("published before reading all outbox rows: %v", wakeup.gameIDs)
+			}
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestDispatcherRollsBackFailedDeliveryAndRetries(t *testing.T) {
+	t.Parallel()
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	wakeup := &recordingWakeup{}
+	dispatcher := NewDispatcher(sqlx.NewDb(db, "sqlmock"), wakeup)
+	updateErr := errors.New("delivery update failed")
+	for attempt := 0; attempt < 2; attempt++ {
+		rows := sqlmock.NewRows([]string{"game_id", "sequence"}).AddRow(int64(7), int64(2)).AddRow(int64(9), int64(1))
+		mock.ExpectBegin()
+		mock.ExpectQuery("SELECT o.game_id, o.sequence").WillReturnRows(rows).RowsWillBeClosed()
+		mock.ExpectExec("UPDATE gameplay_event_outbox").WithArgs(int64(7), int64(2)).WillReturnResult(sqlmock.NewResult(0, 1))
+		update := mock.ExpectExec("UPDATE gameplay_event_outbox").WithArgs(int64(9), int64(1))
+		if attempt == 0 {
+			update.WillReturnError(updateErr)
+			mock.ExpectRollback()
+		} else {
+			update.WillReturnResult(sqlmock.NewResult(0, 1))
+			mock.ExpectCommit()
+		}
+		err := dispatcher.DispatchOnce(context.Background())
+		if attempt == 0 && !errors.Is(err, updateErr) {
+			t.Fatalf("failed DispatchOnce() error = %v, want %v", err, updateErr)
+		}
+		if attempt == 1 && err != nil {
+			t.Fatalf("retry DispatchOnce() error = %v", err)
+		}
+	}
+	if got := wakeup.gameIDs; len(got) != 4 || got[0] != 7 || got[1] != 9 || got[2] != 7 || got[3] != 9 {
+		t.Fatalf("wakeup games = %v, want [7 9 7 9]", got)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)
