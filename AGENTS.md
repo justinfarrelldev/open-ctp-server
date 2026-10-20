@@ -20,4 +20,4 @@ Use atomic commits. You are not allowed to modify or skip the pre-commit hook.
 
 ## Reviews
 
-After all planned work has been implemented, you must do a thorough code review of the work you have done to ensure it fully implements what was specified in a maintainable, safe manner. This is not a toy project - spare no expense on maintainability and readability over the long-term. Make sure to verify mechanics with the CTP2 source code. Obvious bugs in the original source should be fixed - for example, do not keep features that would lead to crashing.
+After all planned work has been implemented, you must do a thorough code review of the work you have done to ensure it fully implements what was specified in a maintainable, safe manner. This is not a toy project - spare no expense on maintainability and readability over the long-term. Make sure to verify mechanics with the CTP2 source code (in ctp2/ctp2_released_game + ctp2_source_code). Obvious bugs in the original source should be fixed - for example, do not keep features that would lead to crashing.
