@@ -2,7 +2,7 @@
 
 ![Build](https://github.com/justinfarrelldev/open-ctp-server/actions/workflows/fly-deploy.yml/badge.svg) ![Server Status](https://img.shields.io/website?url=https%3A%2F%2Fopen-ctp-server.fly.dev%2Fhealth&label=Server%20Status)
 
-[API Documentation](https://open-ctp-server.fly.dev/docs/)
+[API Documentation](https://open-ctp-server.fly.dev/docs/) · [Viewer-safe client gameplay contract v2](docs/client-gameplay-contract-v2.md)
 
 ## What is this?
 

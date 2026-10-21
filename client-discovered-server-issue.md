@@ -1,12 +1,22 @@
 # Client-discovered server issues: authoritative map and gameplay contracts
 
-## Context and scope
+## Current implementation status
+
+Server contract v2 now implements the confirmed HTTP/progress/projection defects and supported map, city, queue, trade, quote/forecast, research-goal, movement-input and hybrid/resync contracts. See [the current wire contract and explicit feature boundaries](docs/client-gameplay-contract-v2.md) and [implementation/test evidence](plans/checklists/client-report-contracts.md).
+
+Canonical world downloads and terrain-derived ratings/pollution aggregates are retired, including for owners. Planning validates inputs before persistence, handles invalidated orders transactionally with private rejection results, and keeps completed-round history correctly labeled.
+
+**Not implemented:** retained multi-turn movement, mayor/governor automation, the exact slider optimizer, culture/style modeling and ruin rewards. Foreign statistics remain private. These are explicit false capability flags, not claims of completed retail features. Client UI/decoders/optimistic animation/full-model reconciliation still require client integration.
+
+The source inspection sections below are **historical evidence at the cited revisions**, not current-code descriptions. Implementation was verified with engine/mock/in-memory tests, not a running external game.
+
+## Original context and scope
 
 Discovered during the CTP2 client's original-game terrain/UI fidelity work. The supplied reference screenshots show connected rivers, river mouths meeting coastal surf, and river tiles retained as darkened explored terrain after a settler moves away.
 
-This report is based on **read-only source inspection**, not a failing request against a running server. No server implementation or tests have been changed. The only server-repository change made for this investigation is this report, explicitly requested by the user.
+The original investigation was based on **read-only source inspection**, not a failing request against a running server. At that time no server implementation or tests were changed. Subsequent server implementation is tracked in the current status above.
 
-The engine supports river-bearing terrain, but the normal generated-world contract and the viewer-safe projection do not currently carry the information needed by an authoritative client. This is not solvable by changing the client's texture selection alone.
+At the inspected revisions the engine supported river-bearing terrain, but normal generated-world and viewer-safe projection contracts did not carry the information needed by an authoritative client. This is not solvable by changing the client's texture selection alone.
 
 ### Source revisions and reading guide
 
@@ -14,9 +24,9 @@ The expanded frontend-linked requirements below were checked against client revi
 
 The original river/resource/ownership findings are retained below. [Frontend-linked implementation requirements](#frontend-linked-implementation-requirements) adds the required changes, their client consumers, reasons and acceptance cases. Related findings from [the separate interaction report](client-discovered-server-issues.md) are consolidated here without changing that report; its older revision and statements about this file being unchanged describe the earlier investigation, not this update.
 
-**Classification:** confirmed projection/gateway omissions and production-loss behavior are distinguished from new feature contracts and client defects. Proposed field/operation names are recommendations, not claims that an endpoint already exists. End Turn input dispatch, cursor alignment, asset decoding, missing client windows and rendering are not automatically server defects. No item in this report is claimed implemented or verified against a running game.
+**Classification:** confirmed projection/gateway omissions and production-loss behavior are distinguished from new feature contracts and client defects. Proposed field/operation names are recommendations, not claims that an endpoint already exists. End Turn input dispatch, cursor alignment, asset decoding, missing client windows and rendering are not automatically server defects. The original inspection was not a live-game reproduction; current implementation scope and verification are tracked above.
 
-## Confirmed data-loss points
+## Confirmed data-loss points (original inspected revisions)
 
 ### 1. The canonical gameplay engine has an independent river property
 
@@ -295,7 +305,7 @@ Use a shared manifest or cross-layer tests to prevent drift; preserve ownership,
 
 ## Server implementation acceptance checklist
 
-This is a documentation handoff, not a completed implementation plan. No checkbox below is marked fixed. Server implementation should follow its own `AGENTS.md`, existing plans and up-to-date `plans/checklists` entries, using red → green → refactor and original-source verification.
+This original handoff checklist remains a record of requested scope, not a claim that all retail features are complete. The live implementation checklist and wire contract linked above distinguish delivered server work, explicit unsupported feature decisions and remaining client work. Server implementation should follow its own `AGENTS.md`, existing plans and up-to-date `plans/checklists` entries, using red → green → refactor and original-source verification.
 
 - [ ] MAP-01: versioned generated river/good handoff, permitted territorial ownership and viewer-specific remembered facts, including legacy-unknown behavior.
 - [ ] MAP-02: effective inspectable tile yields/movement/goods cached in viewer projections/observations, with no hidden-state recomputation.

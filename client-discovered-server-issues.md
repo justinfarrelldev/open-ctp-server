@@ -1,16 +1,24 @@
 # Client-discovered server issues affecting CTP2 reference parity
 
-## Scope and evidence
+## Current implementation status
+
+The confirmed HTTP, future-queue progress, city/tile metadata and authorized trade-accounting defects now have server implementations and regression coverage. Atomic entry-addressed queues and supported city/Sleep/Wake/research-goal contracts are also available. The [v2 wire contract](docs/client-gameplay-contract-v2.md) and [live checklist](plans/checklists/client-report-contracts.md) describe exact semantics and verification.
+
+Canonical world/terrain-aggregate bypasses are also retired. Invalid planning inputs reject before persistence; previously valid orders invalidated during resolution reject privately without partial changes or stalled phases.
+
+**Feature gaps remain explicit:** governor/mayor priorities, the exact policy optimizer, retained multi-turn movement, culture/style and ruin rewards are unsupported, not silently emulated. Foreign history remains private. Client bindings/rendering/optimism/resync UI are separate work. The findings below retain the original pinned inspection as historical evidence, not claims about current code.
+
+## Original scope and evidence
 
 This report documents server findings from the CTP2 client's reference-image and interaction work. Server revision inspected: **`73e4f53245bc891bcda856ed3d2000768281eb1d`**.
 
-Findings below come from **read-only source inspection**, including the engine, viewer projection, HTTP gateway and existing tests. They have not been reproduced against a running server. Example scenarios are proposed in-memory test fixtures, not instructions to mutate a live game. No server implementation, tests, migrations, configuration or hooks were changed for this report.
+Findings below come from **read-only source inspection**, including the engine, viewer projection, HTTP gateway and existing tests. They have not been reproduced against a running server. Example scenarios are proposed in-memory test fixtures, not instructions to mutate a live game. No server implementation, tests, migrations, configuration or hooks were changed during that original investigation; later implementation is tracked above.
 
-The earlier, separately named report [client-discovered-server-issue.md](client-discovered-server-issue.md) contains detailed river/resource/territorial-ownership findings. It is preserved unchanged. This plural-named report adds the interaction findings and indexes the earlier metadata issues.
+The earlier, separately named report [client-discovered-server-issue.md](client-discovered-server-issue.md) contains detailed river/resource/territorial-ownership findings. That file was unchanged during the original inspection; both reports now carry the current implementation status. This plural-named report originally added interaction findings and indexed the earlier metadata issues.
 
 **Classification matters:** a gateway/projection inconsistency is a server defect; an operation not yet supported is a feature/contract gap; an unimplemented client window is neither. Not every unfinished client feature is blocked by the server.
 
-## Findings at a glance
+## Findings at a glance (original inspected revisions)
 
 | ID | Classification | Finding | Client impact |
 | --- | --- | --- | --- |
@@ -238,7 +246,7 @@ A server-owned optimization command, or a visibility-safe read-only evaluation/r
 
 Unimplemented manager/library/message windows, source-art parsing, cursor/animation rendering, stack selection, correct use of projected legal actions and consumption of metadata already sent by the server remain client responsibilities. These findings must not be used to label all unfinished client work as server-blocked.
 
-No item below is claimed fixed by this documentation:
+The original handoff list below records reported scope. Use the current implementation checklist linked above for delivered work and explicit unsupported feature decisions:
 
 - [ ] Reconcile advertised legal routes with the HTTP gateway and add cross-layer tests.
 - [ ] Fix non-head queue cancellation so unrelated current production is not destroyed.

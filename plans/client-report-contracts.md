@@ -41,11 +41,17 @@ freeze verification before closure.
    Publish public map bounds independently of discoveries. Retained orders, if
    implemented, must be server-owned and replay-safe, not client path retries.
 8. TURN-01 / SYNC-01: hybrid phase/action and revisioned receipt/current snapshot
-   regressions with persisted observations and idempotent replay.
+   regressions with persisted observations and idempotent replay. Validate planning
+   inputs before storing them; discard invalidated orders transactionally with
+   private semantic rejection results, while corrupt legacy envelopes fail closed.
+   Terminal resolution must stop later actions/economy, and history labels must
+   identify the completed round rather than the scheduler's next-round clock.
 9. Document wire contracts/capabilities and client decoder follow-up, update report
    acceptance status only for verified work, run full verification and final review.
 
 Feature requests that explicitly require a product/rules decision must be listed
 as unsupported, never advertised as executable or called implemented. Do not weaken
-validation or visibility to satisfy existing client fallbacks. The checklist must
+validation or visibility to satisfy existing client fallbacks. Retire canonical
+world and terrain-derived aggregate bypasses; bound command bodies and reject
+unrepresentable display facts instead of publishing overflowed prices/dimensions. The checklist must
 separate these decisions from implemented server defects.
