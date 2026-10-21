@@ -890,7 +890,12 @@ func TestTask7ProjectionExposesOwnedCityEconomyOnly(t *testing.T) {
 		t.Fatalf("owned city projection = %#v", own)
 	}
 	enemy := cities["city-b"]
-	if enemy.Yields != nil || enemy.Population != 0 || enemy.StoredFood != 0 || enemy.StoredProduction != 0 || len(enemy.Queue) != 0 || len(enemy.Buildings) != 0 {
+	// CTP2 tiledraw.cpp DrawCityNames displays observed city size/name for
+	// foreign cities too; production and economy remain private.
+	if enemy.Population != 9 {
+		t.Fatalf("visible foreign population was not projected: %#v", enemy)
+	}
+	if enemy.Yields != nil || enemy.StoredFood != 0 || enemy.StoredProduction != 0 || len(enemy.Queue) != 0 || len(enemy.Buildings) != 0 {
 		t.Fatalf("enemy economy leaked: %#v", enemy)
 	}
 }

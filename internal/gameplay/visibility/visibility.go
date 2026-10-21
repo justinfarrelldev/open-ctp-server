@@ -30,6 +30,9 @@ type TileProjection struct {
 	X         int                     `json:"x"`
 	Y         int                     `json:"y"`
 	Terrain   string                  `json:"terrain"`
+	River     *bool                   `json:"river,omitempty"`
+	GoodID    *string                 `json:"good_id,omitempty"`
+	OwnerID   *string                 `json:"owner_id,omitempty"`
 	Pollution int                     `json:"pollution,omitempty"`
 	Stale     bool                    `json:"stale"`
 	Observed  int                     `json:"observed_turn"`
@@ -94,6 +97,8 @@ type UnitProjection struct {
 
 type CityProjection struct {
 	ID                  string                  `json:"id"`
+	Name                string                  `json:"name,omitempty"`
+	TypeID              string                  `json:"type_id,omitempty"`
 	OwnerID             string                  `json:"owner_id"`
 	TileID              string                  `json:"tile_id"`
 	Population          int                     `json:"population,omitempty"`
@@ -123,12 +128,14 @@ type ResearchProjection struct {
 }
 
 type TradeRouteProjection struct {
-	ID                string `json:"id"`
-	SourceCityID      string `json:"source_city_id"`
-	DestinationCityID string `json:"destination_city_id"`
-	CrossesWater      bool   `json:"crosses_water,omitempty"`
-	PiratingArmyID    string `json:"pirating_army_id,omitempty"`
-	TransportCost     int    `json:"transport_cost,omitempty"`
+	ID                string  `json:"id"`
+	SourceCityID      string  `json:"source_city_id"`
+	DestinationCityID string  `json:"destination_city_id"`
+	CrossesWater      bool    `json:"crosses_water,omitempty"`
+	PiratingArmyID    string  `json:"pirating_army_id,omitempty"`
+	TransportCost     int     `json:"transport_cost,omitempty"`
+	GoodID            *string `json:"good_id,omitempty"`
+	Gold              *int    `json:"gold,omitempty"`
 }
 
 type DiplomacyRelationProjection struct {
@@ -216,10 +223,13 @@ func Update(state engine.State) (engine.State, error) {
 			if !ok {
 				continue
 			}
-			observation := engine.FogObservation{PlayerID: playerID, TileID: tile.ID, Turn: state.Phase.Turn, Terrain: tile.Terrain}
+			observation := engine.FogObservation{PlayerID: playerID, TileID: tile.ID, Turn: state.Phase.Turn, Terrain: tile.Terrain, River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), OwnerID: copyValue(&tile.OwnerID)}
 			if city, ok := cities[tile.ID]; ok {
 				observation.CityID = city.ID
 				observation.CityOwnerID = city.OwnerID
+				observation.CityName = city.Name
+				observation.CityTypeID = city.TypeID
+				observation.CityPopulation = copyValue(&city.Population)
 				observation.CityEffects = append([]engine.Effect(nil), city.Effects...)
 			}
 			memory[playerID+"\x00"+tileID] = observation
@@ -268,13 +278,13 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	}
 	for _, tile := range state.Tiles {
 		if visible[tile.ID] {
-			result.Tiles = append(result.Tiles, TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: tile.Terrain, Pollution: tile.Pollution, Observed: state.Phase.Turn, Planning: planning[tile.ID], Overlays: tileOverlayProjections(state, tile.ID)})
+			result.Tiles = append(result.Tiles, TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: tile.Terrain, River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), OwnerID: copyValue(&tile.OwnerID), Pollution: tile.Pollution, Observed: state.Phase.Turn, Planning: planning[tile.ID], Overlays: tileOverlayProjections(state, tile.ID)})
 			continue
 		}
 		if observation, ok := memory[tile.ID]; ok {
-			result.Tiles = append(result.Tiles, TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: observation.Terrain, Stale: true, Observed: observation.Turn})
+			result.Tiles = append(result.Tiles, TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: observation.Terrain, River: copyValue(observation.River), GoodID: copyValue(observation.GoodID), OwnerID: copyValue(observation.OwnerID), Stale: true, Observed: observation.Turn})
 			if observation.CityID != "" {
-				result.Cities = append(result.Cities, CityProjection{ID: observation.CityID, OwnerID: observation.CityOwnerID, TileID: tile.ID, Effects: append([]engine.Effect(nil), observation.CityEffects...), Stale: true, Observed: observation.Turn})
+				result.Cities = append(result.Cities, CityProjection{ID: observation.CityID, Name: observation.CityName, TypeID: observation.CityTypeID, Population: knownPopulation(observation.CityPopulation), OwnerID: observation.CityOwnerID, TileID: tile.ID, Effects: append([]engine.Effect(nil), observation.CityEffects...), Stale: true, Observed: observation.Turn})
 			}
 		}
 	}
@@ -333,7 +343,13 @@ func tradeRouteProjection(state engine.State, playerID string, visible map[strin
 		if !sourceOK || !destinationOK || !visible[source.TileID] || !visible[destination.TileID] {
 			continue
 		}
-		projection = append(projection, TradeRouteProjection{ID: route.ID, SourceCityID: route.SourceCityID, DestinationCityID: route.DestinationCityID, CrossesWater: route.CrossesWater, PiratingArmyID: route.PiratingArmyID, TransportCost: route.TransportCost})
+		projected := TradeRouteProjection{ID: route.ID, SourceCityID: route.SourceCityID, DestinationCityID: route.DestinationCityID, CrossesWater: route.CrossesWater, PiratingArmyID: route.PiratingArmyID, TransportCost: route.TransportCost}
+		// Sight of both cities reveals the route, not its private accounting.
+		if source.OwnerID == playerID || destination.OwnerID == playerID {
+			projected.GoodID = copyValue(&route.GoodID)
+			projected.Gold = copyValue(&route.Gold)
+		}
+		projection = append(projection, projected)
 	}
 	return projection
 }
@@ -419,7 +435,7 @@ func directionalRegardBonus(playerID, target string, relation engine.DiplomaticR
 }
 
 func projectCity(city engine.City, playerID string, observed int) CityProjection {
-	projection := CityProjection{ID: city.ID, OwnerID: city.OwnerID, TileID: city.TileID, Effects: append([]engine.Effect(nil), city.Effects...), Observed: observed}
+	projection := CityProjection{ID: city.ID, Name: city.Name, TypeID: city.TypeID, Population: city.Population, OwnerID: city.OwnerID, TileID: city.TileID, Effects: append([]engine.Effect(nil), city.Effects...), Observed: observed}
 	if city.OwnerID == playerID || city.ConvertedToPlayerID == playerID {
 		projection.ConvertedToPlayerID = city.ConvertedToPlayerID
 		projection.ConvertedBy = city.ConvertedBy

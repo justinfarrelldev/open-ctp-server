@@ -27,7 +27,7 @@ func (m *fogStateMatcher) Match(value driver.Value) bool {
 		return false
 	}
 	for _, observation := range state.Fog {
-		if observation.PlayerID == "account-9" && observation.TileID == "t3" && observation.Turn == 1 {
+		if observation.PlayerID == "account-9" && observation.TileID == "t3" && observation.Turn == 1 && observation.River != nil && *observation.River && observation.GoodID != nil && *observation.GoodID == "elephant" && observation.OwnerID != nil && *observation.OwnerID == "account-10" {
 			m.saw = true
 		}
 	}
@@ -46,7 +46,7 @@ func TestTask17AcceptedMovePersistsRefreshedFogAndProjectsOnlyVisibleTarget(t *t
 		Phase:         engine.PhaseState{Mode: "sequential", ModeVersion: "turn-policy-v1", Turn: 1, ActivePlayerOrder: []string{"account-9", "account-10"}},
 		Players:       []engine.Player{{ID: "account-9", NationID: "a", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}, {ID: "account-10", NationID: "b", Lifecycle: engine.PlayerActive, Controller: engine.ControllerHuman}},
 		RNG:           []engine.RNGDomainState{{Domain: engine.RNGDomainAI}, {Domain: engine.RNGDomainCombat}, {Domain: engine.RNGDomainSpecialAction}},
-		Tiles:         []engine.Tile{{ID: "t0", X: 0, Y: 0, Terrain: engine.TerrainPlains}, {ID: "t1", X: 1, Y: 0, Terrain: engine.TerrainPlains}, {ID: "t2", X: 2, Y: 0, Terrain: engine.TerrainPlains}, {ID: "t3", X: 3, Y: 0, Terrain: engine.TerrainPlains}},
+		Tiles:         []engine.Tile{{ID: "t0", X: 0, Y: 0, Terrain: engine.TerrainPlains}, {ID: "t1", X: 1, Y: 0, Terrain: engine.TerrainPlains}, {ID: "t2", X: 2, Y: 0, Terrain: engine.TerrainPlains}, {ID: "t3", X: 3, Y: 0, Terrain: engine.TerrainPlains, River: true, GoodID: "elephant", OwnerID: "account-10"}},
 		Units:         []engine.Unit{{ID: "scout", OwnerID: "account-9", TileID: "t0", Domain: engine.DomainLand, Movement: 2}, {ID: "hidden", OwnerID: "account-10", TileID: "t3", Domain: engine.DomainLand, Movement: 2}},
 	}
 	stateJSON, err := engine.CanonicalStateJSON(state)
@@ -80,7 +80,13 @@ func TestTask17AcceptedMovePersistsRefreshedFogAndProjectsOnlyVisibleTarget(t *t
 			visible = true
 		}
 	}
-	if !visible || !matcher.saw {
+	facts := false
+	for _, tile := range projection.Tiles {
+		if tile.ID == "t3" && tile.River != nil && *tile.River && tile.GoodID != nil && *tile.GoodID == "elephant" && tile.OwnerID != nil && *tile.OwnerID == "account-10" {
+			facts = true
+		}
+	}
+	if !visible || !facts || !matcher.saw {
 		t.Fatalf("accepted move did not durably reveal the legally visible target: projection=%s persisted=%v", result.ViewerProjection, matcher.saw)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
