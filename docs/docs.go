@@ -1961,7 +1961,7 @@ const docTemplate = `{
         },
         "/world/{game_id}": {
             "get": {
-                "description": "This endpoint returns the persisted generated world state for any authenticated account that is still joined to the game after the game has started.",
+                "description": "Canonical maps, generation seeds and foreign spawns are private. Use the gameplay events endpoint with X-Gameplay-Resync: current for a viewer-safe snapshot.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1971,7 +1971,7 @@ const docTemplate = `{
                 "tags": [
                     "world"
                 ],
-                "summary": "Get a generated world",
+                "summary": "Retired canonical world download",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1989,12 +1989,6 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/game.WorldReadResponseDocs"
-                        }
-                    },
                     "400": {
                         "description": "invalid request method, missing game_id, or invalid game_id",
                         "schema": {
@@ -2021,6 +2015,12 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "game has not started",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "410": {
+                        "description": "use viewer-safe gameplay current resync",
                         "schema": {
                             "type": "string"
                         }
@@ -2849,58 +2849,6 @@ const docTemplate = `{
                 }
             }
         },
-        "game.WorldGenerationHostParamsDocs": {
-            "type": "object",
-            "properties": {
-                "climate": {
-                    "type": "string"
-                },
-                "exclusions_json": {
-                    "type": "string"
-                },
-                "generator_version": {
-                    "type": "string"
-                },
-                "map_size": {
-                    "type": "string"
-                },
-                "rules_json": {
-                    "type": "string"
-                },
-                "seed": {
-                    "type": "integer"
-                },
-                "starting_gold": {
-                    "type": "integer"
-                },
-                "starting_settlers": {
-                    "type": "integer"
-                },
-                "style": {
-                    "type": "string"
-                },
-                "wetness": {
-                    "type": "integer"
-                }
-            }
-        },
-        "game.WorldPlayerSpawnDocs": {
-            "type": "object",
-            "properties": {
-                "account_id": {
-                    "type": "integer"
-                },
-                "country": {
-                    "type": "string"
-                },
-                "x": {
-                    "type": "integer"
-                },
-                "y": {
-                    "type": "integer"
-                }
-            }
-        },
         "game.WorldPollutionResponse": {
             "type": "object",
             "properties": {
@@ -2941,61 +2889,12 @@ const docTemplate = `{
                 }
             }
         },
-        "game.WorldReadResponseDocs": {
-            "type": "object",
-            "properties": {
-                "game_id": {
-                    "type": "integer"
-                },
-                "game_status": {
-                    "type": "string"
-                },
-                "generator_version": {
-                    "type": "string"
-                },
-                "host_params": {
-                    "$ref": "#/definitions/game.WorldGenerationHostParamsDocs"
-                },
-                "player_order": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "spawns": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/game.WorldPlayerSpawnDocs"
-                    }
-                },
-                "tiles": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/game.WorldTileDocs"
-                    }
-                }
-            }
-        },
         "game.WorldSpaceLayerErrorResponseDocs": {
             "type": "object",
             "properties": {
                 "error": {
                     "type": "string",
                     "example": "space layer is not supported for CTP2 worlds"
-                }
-            }
-        },
-        "game.WorldTileDocs": {
-            "type": "object",
-            "properties": {
-                "terrain": {
-                    "type": "string"
-                },
-                "x": {
-                    "type": "integer"
-                },
-                "y": {
-                    "type": "integer"
                 }
             }
         },

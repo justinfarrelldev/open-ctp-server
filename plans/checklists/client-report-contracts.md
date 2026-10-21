@@ -5,6 +5,7 @@
 - [x] Create implementation plan and this live checklist.
 - [x] HTTP-01: RED dispatch/drift tests, GREEN exact registrations, refactor and verify.
 - [x] MAP-01/CITY-01/TRADE-01: RED visibility/memory/legacy/isolation tests, GREEN projections and persistence, refactor and verify.
+- [x] Close discovered canonical `/world/{game_id}` fog bypass: RED no-snapshot-query regression; GREEN authenticated 410 retirement directing clients to viewer-safe current resync; existing authentication/membership tests retained.
 - [ ] MAP-01: RED versioned world metadata/generation/handoff tests, GREEN implementation, refactor and verify.
 - [ ] MAP-02/ECON-01: RED effective observation-safe facts and quote tests, GREEN implementation, refactor and verify.
 - [ ] QUEUE-01: RED non-head cancellation regression, GREEN preservation, source-check head changes.

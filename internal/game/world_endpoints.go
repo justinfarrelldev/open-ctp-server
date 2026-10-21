@@ -56,29 +56,17 @@ func requireReadableWorldGame(w http.ResponseWriter, r *http.Request, db *sqlx.D
 	return gameID, game, nil
 }
 
-func storedWorldToReadResponse(stored *world.StoredWorld) world.WorldReadResponse {
-	snapshot := stored.Snapshot.Clone()
-	return world.WorldReadResponse{
-		GameID:           snapshot.GameID,
-		GameStatus:       snapshot.GameStatus,
-		GeneratorVersion: snapshot.GeneratorVersion,
-		HostParams:       snapshot.Config.ToHostParams(),
-		PlayerOrder:      append([]int64(nil), snapshot.PlayerOrder...),
-		Spawns:           append([]world.PlayerSpawn(nil), snapshot.Spawns...),
-		Tiles:            append([]world.WorldTile(nil), snapshot.Tiles...),
-	}
-}
-
-// GetWorld returns the persisted generated world for an authenticated joined player.
+// GetWorld retires the unsafe canonical-map download. Joined players must use
+// gameplay current resync, which applies the same viewer filtering as receipts.
 //
-// @Summary Get a generated world
-// @Description This endpoint returns the persisted generated world state for any authenticated account that is still joined to the game after the game has started.
+// @Summary Retired canonical world download
+// @Description Canonical maps, generation seeds and foreign spawns are private. Use the gameplay events endpoint with X-Gameplay-Resync: current for a viewer-safe snapshot.
 // @Tags world
 // @Accept json
 // @Produce json
 // @Param game_id path int true "game ID"
 // @Param session_id query int true "session ID"
-// @Success 200 {object} WorldReadResponseDocs
+// @Failure 410 {string} string "use viewer-safe gameplay current resync"
 // @Failure 400 {string} string "invalid request method, missing game_id, or invalid game_id"
 // @Failure 401 {string} string "missing or invalid session"
 // @Failure 403 {string} string "only joined game players may perform this action"
@@ -91,20 +79,10 @@ func GetWorld(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.S
 		return writeGameStatusError(w, http.StatusBadRequest, "invalid request; request must be a GET request")
 	}
 
-	gameID, _, err := requireReadableWorldGame(w, r, db, store)
-	if err != nil {
+	if _, _, err := requireReadableWorldGame(w, r, db, store); err != nil {
 		return err
 	}
-
-	stored, err := world.NewStore(db).Read(gameID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return writeGameStatusError(w, http.StatusNotFound, fmt.Sprintf("world for game %d was not found", gameID))
-		}
-		return err
-	}
-
-	return writeGameJSONResponse(w, http.StatusOK, storedWorldToReadResponse(stored))
+	return writeGameStatusError(w, http.StatusGone, "canonical world download is disabled; use viewer-safe gameplay current resync")
 }
 
 // GetWorldSpaceLayer returns the documented CTP2 placeholder for the future space layer.
