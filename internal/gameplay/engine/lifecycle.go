@@ -545,10 +545,7 @@ func advanceResearch(state *State, runtime *rules.RuntimeRules) {
 		if nation.ResearchTargetID == "" {
 			continue
 		}
-		rate := researchRate(*state, *nation)
-		if rate < 1 {
-			rate = 1
-		}
+		rate := effectiveResearchRate(*state, *nation)
 		nation.ResearchProgress += rate
 		for nation.ResearchTargetID != "" {
 			advance, ok := runtime.Advance(nation.ResearchTargetID)
@@ -832,6 +829,16 @@ func maxSciencePercentForNation(nation Nation) int {
 		}
 	}
 	return maxSciencePercent
+}
+
+// effectiveResearchRate is shared by execution and display. The supported
+// research pipeline grants a minimum of one point even with zero net science.
+func effectiveResearchRate(state State, nation Nation) int {
+	rate := researchRate(state, nation)
+	if rate < 1 {
+		return 1
+	}
+	return rate
 }
 
 func researchRate(state State, nation Nation) int {

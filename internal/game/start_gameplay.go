@@ -195,6 +195,8 @@ func retailEngineTerrain(terrain string, runtime rules.RuntimeRules) string {
 		"grassland": "TERRAIN_GRASSLAND",
 		"forest":    "TERRAIN_FOREST",
 		"swamp":     "TERRAIN_SWAMP",
+		"desert":    "TERRAIN_DESERT",
+		"mountain":  "TERRAIN_MOUNTAIN",
 		"tundra":    "TERRAIN_TUNDRA",
 		"shelf":     "TERRAIN_WATER_SHELF",
 		"ocean":     "TERRAIN_WATER_DEEP",

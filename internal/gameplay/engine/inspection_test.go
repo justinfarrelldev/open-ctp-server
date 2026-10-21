@@ -87,6 +87,21 @@ func TestResearchForecastRecomputesOwnedRatesWithoutMutation(t *testing.T) {
 	}
 }
 
+func TestClientResearchForecastMatchesExecutionMinimumRate(t *testing.T) {
+	state := runtimeStartedState(t)
+	nation := nationForID(&state, "nation-a")
+	nation.ResearchTargetID = "ADVANCE_SYNTHETIC_ROOT"
+	nation.Effects = []Effect{{ID: "negative-science", Kind: EffectResearch, Value: -100}}
+	inspector, err := NewInspector(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	forecast := inspector.Research("player-a")
+	if forecast == nil || forecast.Rate == nil || *forecast.Rate != 1 || forecast.Status != "estimated" {
+		t.Fatalf("forecast ignored execution's minimum-one rate: %+v", forecast)
+	}
+}
+
 func TestRushQuoteMatchesExecutionAndDistinguishesStatuses(t *testing.T) {
 	state := task10State()
 	state.Nations = []Nation{{ID: "nation-a", Gold: 1000}}

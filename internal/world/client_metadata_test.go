@@ -79,6 +79,33 @@ func TestVersionedRiverGoodsGenerationPersistsAndIsDeterministic(t *testing.T) {
 	}
 }
 
+func TestRiverGoodsVersionPreservesBaseTerrainAndSpawnLineage(t *testing.T) {
+	input := fixtureGenerationInput()
+	legacy, _, err := GenerateWorld(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	input.GeneratorVersion = "ctp2-rivers-goods-v2"
+	input.HostParams.GeneratorVersion = input.GeneratorVersion
+	current, _, err := GenerateWorld(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(current.Spawns) != len(legacy.Spawns) || len(current.Tiles) != len(legacy.Tiles) {
+		t.Fatal("metadata version changed base world shape")
+	}
+	for index, tile := range current.Tiles {
+		if tile.X != legacy.Tiles[index].X || tile.Y != legacy.Tiles[index].Y || tile.Terrain != legacy.Tiles[index].Terrain {
+			t.Fatalf("metadata-only version changed base terrain at %d", index)
+		}
+	}
+	for index, spawn := range current.Spawns {
+		if spawn != legacy.Spawns[index] {
+			t.Fatalf("metadata-only version changed spawn %d", index)
+		}
+	}
+}
+
 func TestLegacyGeneratorDoesNotAcquireNewMetadata(t *testing.T) {
 	snapshot, _, err := GenerateWorld(fixtureGenerationInput())
 	if err != nil {

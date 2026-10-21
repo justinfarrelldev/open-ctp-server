@@ -79,7 +79,13 @@ func generateWorld(input GenerationInput) (generatedWorld, error) {
 		return generatedWorld{}, err
 	}
 
-	masterSeed, err := deriveGeneratorSeed(validated)
+	// V2 adds independent metadata; keep V1 base terrain/spawn lineage rather
+	// than needlessly changing geography alongside the river/resource contract.
+	terrainInput := validated
+	if validated.GeneratorVersion == RiverGoodsGeneratorVersion {
+		terrainInput.GeneratorVersion = "ctp2-first-v1"
+	}
+	masterSeed, err := deriveGeneratorSeed(terrainInput)
 	if err != nil {
 		return generatedWorld{}, fmt.Errorf("%w: %v", ErrWorldGenerationInvalidInput, err)
 	}

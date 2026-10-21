@@ -5,8 +5,18 @@ import (
 	"testing"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 	"github.com/justinfarrelldev/open-ctp-server/internal/world"
 )
+
+func TestRetailWorldHandoffKeepsEveryGeneratedTerrainFamily(t *testing.T) {
+	runtime := rules.RuntimeRules{Movement: rules.RuntimeMovement{Terrains: []rules.RuntimeTerrain{{ID: "TERRAIN_DESERT"}, {ID: "TERRAIN_MOUNTAIN"}, {ID: "TERRAIN_PLAINS"}}}}
+	for terrain, want := range map[string]string{"desert": "TERRAIN_DESERT", "mountain": "TERRAIN_MOUNTAIN"} {
+		if got := engineTerrainForRuntime(terrain, runtime); got != want {
+			t.Errorf("%s flattened to %s, want %s", terrain, got, want)
+		}
+	}
+}
 
 func TestWorldStartPreservesIndependentRiverAndGoods(t *testing.T) {
 	var tile world.WorldTile

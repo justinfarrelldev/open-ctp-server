@@ -112,5 +112,5 @@ func (i *Inspector) Research(actor string) *Forecast {
 		}
 		evaluated.Cities[index].Yields = yield
 	}
-	return finishForecast(result, advance.Cost-nation.ResearchProgress, researchRate(evaluated, *nation))
+	return finishForecast(result, advance.Cost-nation.ResearchProgress, effectiveResearchRate(evaluated, *nation))
 }

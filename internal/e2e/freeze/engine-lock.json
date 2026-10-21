@@ -27,7 +27,7 @@
     },
     {
       "path": "internal/game/start_gameplay.go",
-      "sha256": "46144c33bfc01bbf20034ab566930d917e5e2aed27e0a3023ff6b190ce54c0e8"
+      "sha256": "97e96b10a56e623e1942c2930e4b59ee9d0f24df4bbdb0c94b1991db18962d59"
     },
     {
       "path": "internal/game/world_contract_stubs.go",
@@ -71,7 +71,7 @@
     },
     {
       "path": "internal/gameplay/engine/forecasts.go",
-      "sha256": "04c95ab96b5f2de257c995dc857653aa2e3d047ceda8506ebb90d118654cf1e6"
+      "sha256": "8bd9dcd5f9a3a6c17b3831cf8ffef52a96ec68e68cd0fbe38efb7757da45585d"
     },
     {
       "path": "internal/gameplay/engine/government.go",
@@ -83,7 +83,7 @@
     },
     {
       "path": "internal/gameplay/engine/lifecycle.go",
-      "sha256": "12068b5e593c1955c7fca4e70d9083e63d398aad4a9102d347b22a96804f9ad5"
+      "sha256": "3ce17b13118a2e9a68873a53ba2e4ddfc4f9bf3199528000dbbd9e3e26e3e0e9"
     },
     {
       "path": "internal/gameplay/engine/policy_state.go",
@@ -203,7 +203,7 @@
     },
     {
       "path": "internal/world/generator.go",
-      "sha256": "de76f2abf1501375e7416698cb44ba348c6c2883d9a1869551f951cdbcae6230"
+      "sha256": "a33c10e983b5ecbd60c03488e0cae5933ede9770477949ca243752cd4dd9ef6f"
     },
     {
       "path": "internal/world/metadata.go",
