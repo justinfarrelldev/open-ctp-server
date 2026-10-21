@@ -139,7 +139,7 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 		RNG:           []engine.RNGDomainState{{Domain: engine.RNGDomainCombat, State: 1}, {Domain: engine.RNGDomainSpecialAction, State: 2}, {Domain: engine.RNGDomainAI, State: 3}, {Domain: engine.RNGDomainRiot, State: 4}},
 	}
 	for _, tile := range snapshot.Tiles {
-		state.Tiles = append(state.Tiles, engine.Tile{ID: tileID(tile.X, tile.Y), X: tile.X, Y: tile.Y, Terrain: engineTerrainForRuntime(tile.Terrain, runtime), Open: true})
+		state.Tiles = append(state.Tiles, engine.Tile{ID: tileID(tile.X, tile.Y), X: tile.X, Y: tile.Y, Terrain: engineTerrainForRuntime(tile.Terrain, runtime), River: tile.River, GoodID: tile.GoodID, Open: true})
 	}
 	for _, player := range players {
 		playerID := fmt.Sprintf("account-%d", player.AccountID)

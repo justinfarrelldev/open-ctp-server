@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultWorldStartGeneratorVersion = "ctp2-first-v1"
+	defaultWorldStartGeneratorVersion = world.RiverGoodsGeneratorVersion
 	defaultWorldStartMapSize          = "small"
 	defaultWorldStartClimate          = "temperate"
 	defaultWorldStartWetness          = 50

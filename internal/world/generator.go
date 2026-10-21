@@ -86,6 +86,9 @@ func generateWorld(input GenerationInput) (generatedWorld, error) {
 
 	rng := NewDeterministicRNG(masterSeed)
 	tiles, continents, nextRNG := generateTiles(validated, profile, climate, rng)
+	if validated.GeneratorVersion == RiverGoodsGeneratorVersion {
+		generateRiverGoods(tiles, profile, *validated.HostParams.Wetness, rng.Split("river-goods-v2"))
+	}
 	spawns, finalRNG, err := generateSpawns(validated, profile, tiles, continents, nextRNG)
 	if err != nil {
 		return generatedWorld{}, err

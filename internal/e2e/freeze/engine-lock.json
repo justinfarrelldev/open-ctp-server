@@ -27,11 +27,15 @@
     },
     {
       "path": "internal/game/start_gameplay.go",
-      "sha256": "d04393c070ac1f3e37722062e682a5caec2ba52144dc672c328027888068a0d2"
+      "sha256": "46144c33bfc01bbf20034ab566930d917e5e2aed27e0a3023ff6b190ce54c0e8"
     },
     {
       "path": "internal/game/world_contract_stubs.go",
-      "sha256": "90f6c522d25db1546c3d5adc2e24681bb2a90a38e2affe437674bce2f0cf5455"
+      "sha256": "a8ba7c4ddac34bf8419d60dd2b94cedaeede006e2a1ee4b7f91b28e6fd657033"
+    },
+    {
+      "path": "internal/game/world_endpoints.go",
+      "sha256": "fb02794542c4de6c14200a18605599e7ba7fb545abdd900dd5ba04b4062b3ebd"
     },
     {
       "path": "internal/gameplay/ai/ai.go",
@@ -163,11 +167,15 @@
     },
     {
       "path": "internal/world/contracts.go",
-      "sha256": "8ba45d2e9a220b7ee461a4af8fe0e1ac6cff5d1676686f13328939f883204dde"
+      "sha256": "eb18fb14f496e1d5ca432d6c69b5d9410f8c39ec766fb3bc90fe60af903b446c"
     },
     {
       "path": "internal/world/generator.go",
-      "sha256": "5b430bd0b64a1aad85879a34fb0083506cc74c109146824360e5f7f405126f75"
+      "sha256": "de76f2abf1501375e7416698cb44ba348c6c2883d9a1869551f951cdbcae6230"
+    },
+    {
+      "path": "internal/world/metadata.go",
+      "sha256": "17d9a948e7b6b35ba3280e3d0c616acf5ee3b99f4c91db51294aa8b7dcf82931"
     },
     {
       "path": "internal/world/models.go",
