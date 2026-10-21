@@ -265,12 +265,16 @@ func task13AdvanceProductionMovementScenario(h *task13Harness) string {
 		h.t.Fatalf("owner research did not unlock synthetic content: %+v", projection.Research)
 	}
 	city := task13OwnedCity(h.t, projection, h.ownerID)
-	buildingItem := engine.ProductionItem{ID: "task13-research-lab", Kind: engine.ProductionBuilding, Cost: 1, Prerequisite: "ADVANCE_SYNTHETIC_UNLOCK", Effects: []engine.Effect{{ID: "task13-lab-research", Kind: engine.EffectResearch, Value: 1}}}
-	h.Command(h.owner, "queue-production", "task13-queue-lab", map[string]any{"city_id": city.ID, "item": buildingItem})
+	// A public client consumes pinned production, never defines its own lab
+	// cost, prerequisite or research effect inside an executable request.
+	building := task13FindAction(h.t, projection, engine.CommandQueueProduction, func(action visibility.ActionProjection) bool {
+		return action.EntityID == city.ID && action.TargetID == "IMPROVE_SYNTHETIC"
+	})
+	h.SubmitAction(h.owner, "task13-queue-building", building)
 	h.CompleteRound("task13-produce-lab")
 	projection = h.OwnerProjection()
-	task13RequireBuilding(h.t, projection, h.ownerID, "task13-research-lab")
-	return "advance-unlock-production-building"
+	task13RequireBuilding(h.t, projection, h.ownerID, "IMPROVE_SYNTHETIC")
+	return "advance-progression-and-production-building"
 }
 
 func task13TerrainPublicWorksScenario(h *task13Harness) string {

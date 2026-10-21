@@ -164,11 +164,14 @@ func (c HTTPClient) GameplayCommand(ctx context.Context, actor Actor, gameID int
 	return result.Revision, nil
 }
 
+// ReadProjectedWorld is a complete viewer-safe current read, never a download of
+// generation inputs or the immutable canonical world snapshot.
 func (c HTTPClient) ReadProjectedWorld(ctx context.Context, actor Actor, gameID int64) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.endpoint(fmt.Sprintf("/world/%d?session_id=%d", gameID, actor.Session)), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.endpoint(fmt.Sprintf("/game/%d/events?session_id=%d", gameID, actor.Session)), nil)
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("X-Gameplay-Resync", "current")
 	response, err := c.client().Do(req)
 	if err != nil {
 		return nil, err
@@ -177,7 +180,46 @@ func (c HTTPClient) ReadProjectedWorld(ctx context.Context, actor Actor, gameID 
 	if response.StatusCode != http.StatusOK {
 		return nil, statusError(response.StatusCode)
 	}
-	return io.ReadAll(response.Body)
+	scanner := bufio.NewScanner(response.Body)
+	scanner.Buffer(make([]byte, 4096), 16<<20)
+	event, data := "", ""
+	for scanner.Scan() {
+		line := scanner.Text()
+		switch {
+		case strings.HasPrefix(line, "event:"):
+			event = strings.TrimSpace(strings.TrimPrefix(line, "event:"))
+		case strings.HasPrefix(line, "data:"):
+			if data != "" {
+				data += "\n"
+			}
+			data += strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+		case line == "":
+			if event == "resync" {
+				var envelope struct {
+					Revision *int64          `json:"current_revision"`
+					Snapshot json.RawMessage `json:"snapshot"`
+				}
+				if err := json.Unmarshal([]byte(data), &envelope); err != nil {
+					return nil, err
+				}
+				var projection struct {
+					Revision *int64 `json:"revision"`
+				}
+				if err := json.Unmarshal(envelope.Snapshot, &projection); err != nil {
+					return nil, err
+				}
+				if envelope.Revision == nil || projection.Revision == nil || *envelope.Revision != *projection.Revision {
+					return nil, fmt.Errorf("current resync revision mismatch")
+				}
+				return append([]byte(nil), envelope.Snapshot...), nil
+			}
+			event, data = "", ""
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return nil, fmt.Errorf("current resync did not return a viewer snapshot")
 }
 
 func (c HTTPClient) LeaveLobby(ctx context.Context, actor Actor, lobbyID int64) error {
