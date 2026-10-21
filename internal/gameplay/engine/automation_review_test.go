@@ -53,6 +53,21 @@ func TestRuinNomadsUseStarterInsteadOfAlphabeticallyEarlierFutureSettler(t *test
 	}
 }
 
+func TestRetainedMovementVictoryStopsLaterAutomaticOrders(t *testing.T) {
+	state := journeyState(t)
+	state.Cities[0].TileID = "t1"
+	state.Units[0].Movement = 0
+	state.Units = append(state.Units, Unit{ID: "z-reserve", OwnerID: "player-a", TileID: "t0", Domain: DomainLand, MaxMovement: 1})
+	for _, id := range []string{"traveller", "z-reserve"} {
+		state = runtimeApply(t, state, "player-a", CommandSetMovementOrder, map[string]any{"unit_id": id, "target_x": 7, "target_y": 0})
+	}
+	state = runtimeApply(t, state, "player-a", CommandRoundComplete, map[string]any{})
+	reserve, _ := unitByID(state, "z-reserve")
+	if !state.Terminal.Ended || reserve.TileID != "t0" {
+		t.Fatal("later automatic order executed after conquest victory")
+	}
+}
+
 func TestFoundingCityRemovesUnopenedRuinWithoutAwardingReward(t *testing.T) {
 	state := journeyState(t)
 	state = withTestRuin(t, state, "t0", 0, 0)

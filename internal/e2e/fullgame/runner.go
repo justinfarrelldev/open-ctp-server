@@ -369,6 +369,61 @@ func knownCaptureTargetStep(projection visibility.Projection, unitID string, tar
 	return path[:1], true
 }
 
+// Prefer public discovery boundaries, not arbitrary farthest remembered tiles.
+// Additional ruin recruits expose why repeatedly circling the northern map edge
+// is not a valid conquest exploration policy. Unknown cells contribute no terrain.
+func captureUnseenFrontierStep(projection visibility.Projection, mover visibility.UnitProjection) ([]string, bool) {
+	if projection.World == nil {
+		return nil, false
+	}
+	known := map[[2]int]bool{}
+	var origin visibility.TileProjection
+	for _, tile := range projection.Tiles {
+		known[[2]int{tile.X, tile.Y}] = true
+		if tile.ID == mover.TileID {
+			origin = tile
+		}
+	}
+	type candidate struct {
+		tile              visibility.TileProjection
+		unknown, distance int
+	}
+	var candidates []candidate
+	world := projection.World
+	for _, tile := range projection.Tiles {
+		if tile.ID == mover.TileID || tile.Terrain == "ocean" {
+			continue
+		}
+		unknown := 0
+		for dx := -1; dx <= 1; dx++ {
+			for dy := -1; dy <= 1; dy++ {
+				x, y := tile.X+dx, tile.Y+dy
+				if x >= world.MinX && y >= world.MinY && x-world.MinX < world.Width && y-world.MinY < world.Height && !known[[2]int{x, y}] {
+					unknown++
+				}
+			}
+		}
+		if unknown > 0 {
+			candidates = append(candidates, candidate{tile, unknown, abs(tile.X-origin.X) + abs(tile.Y-origin.Y)})
+		}
+	}
+	sort.Slice(candidates, func(i, j int) bool {
+		if candidates[i].distance != candidates[j].distance {
+			return candidates[i].distance < candidates[j].distance
+		}
+		if candidates[i].unknown != candidates[j].unknown {
+			return candidates[i].unknown > candidates[j].unknown
+		}
+		return candidates[i].tile.ID < candidates[j].tile.ID
+	})
+	for _, candidate := range candidates {
+		if path, ok := knownCaptureTargetStep(projection, mover.ID, candidate.tile); ok {
+			return path, true
+		}
+	}
+	return nil, false
+}
+
 func recoverCaptureFrontier(projection visibility.Projection, mover visibility.UnitProjection, unitID string, target *visibility.TileProjection) ([]string, bool) {
 	visited := map[string]bool{mover.TileID: true}
 	if target != nil {
@@ -389,10 +444,21 @@ func (r PublicConquestRunner) captureVisibleForeignCity(ctx context.Context, uni
 	activeUnitID := unitID
 	visited := make(map[string]bool)
 	trail := make([]string, 0)
+	// Ruin recruits can add mobile reserves mid-journey. Switching movers must
+	// not erase each unit's exploration history and trap them in short loops.
+	type searchHistory struct {
+		visited map[string]bool
+		trail   []string
+	}
+	histories := make(map[string]searchHistory)
 	var origin visibility.TileProjection
 	hasOrigin := false
 	moveTrace := make([]string, 0, 32)
+capture:
 	for {
+		if r.Transport.Terminal {
+			return nil
+		}
 		for budget.actions > 0 {
 			projection, err := r.Transport.Projection(ctx)
 			if err != nil {
@@ -407,9 +473,36 @@ func (r PublicConquestRunner) captureVisibleForeignCity(ctx context.Context, uni
 				return ErrNoVisibleFrontier
 			}
 			if selectedUnitID != activeUnitID {
+				histories[activeUnitID] = searchHistory{visited: visited, trail: trail}
 				activeUnitID = selectedUnitID
-				visited = make(map[string]bool)
-				trail = trail[:0]
+				history := histories[activeUnitID]
+				visited, trail = history.visited, history.trail
+				if visited == nil {
+					visited = make(map[string]bool)
+				}
+			}
+			if enemy, ok := visibleEnemy(decoded, mover); ok {
+				if mover.ArmyID == "" {
+					if _, err := r.Transport.Command(ctx, "army-create", map[string]json.RawMessage{"army_id": json.RawMessage(fmt.Sprintf("%q", "capture-army-"+mover.ID)), "unit_ids": json.RawMessage(fmt.Sprintf("[%q]", mover.ID))}); err != nil {
+						return err
+					}
+					mover.ArmyID = "capture-army-" + mover.ID
+				}
+				defender, err := ResolveVisibleArmy(projection, enemy.ID)
+				if err != nil {
+					return err
+				}
+				if _, err := r.Transport.Combat(ctx, mover.ArmyID, defender); err != nil {
+					return err
+				}
+				budget.actions--
+				if r.Transport.Terminal {
+					return nil
+				}
+				if err := budget.advance(ctx, r.Advance); err != nil {
+					return err
+				}
+				continue capture
 			}
 			var moverTile visibility.TileProjection
 			hasMoverTile := false
@@ -437,9 +530,11 @@ func (r PublicConquestRunner) captureVisibleForeignCity(ctx context.Context, uni
 							return fmt.Errorf("known city move unit=%s from=%s path=%v projection=%s: %w", activeUnitID, mover.TileID, path[:1], projection, err)
 						}
 						if reached {
-							return nil
+							if err := budget.advance(ctx, r.Advance); err != nil {
+								return err
+							}
 						}
-						continue
+						continue capture
 					}
 				}
 				if cityTarget != nil {
@@ -453,7 +548,34 @@ func (r PublicConquestRunner) captureVisibleForeignCity(ctx context.Context, uni
 					}
 				}
 			}
+			// Villages may leave an opponent with nomads/mercenaries but no city.
+			// Approach visible hostile assets instead of assuming one battle ends war.
+			if cityTarget == nil {
+				for _, enemy := range decoded.Units {
+					if enemy.OwnerID == "" || enemy.OwnerID == mover.OwnerID {
+						continue
+					}
+					for _, tile := range decoded.Tiles {
+						if tile.ID == enemy.TileID {
+							copy := tile
+							cityTarget = &copy
+							break
+						}
+					}
+					if cityTarget != nil {
+						break
+					}
+				}
+			}
 			visited[mover.TileID] = true
+			if cityTarget == nil {
+				if path, ok := captureUnseenFrontierStep(decoded, mover); ok {
+					if _, err := budget.move(ctx, r.Transport, activeUnitID, path); err != nil {
+						return err
+					}
+					continue capture
+				}
+			}
 			var path []string
 			var ok bool
 			searchTarget := cityTarget
