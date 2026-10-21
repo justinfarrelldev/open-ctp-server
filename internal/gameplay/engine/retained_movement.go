@@ -165,8 +165,14 @@ func advanceMovementOrders(state *State, runtime *rules.RuntimeRules) {
 	state.MovementOrders = nil
 	sort.Slice(orders, func(i, j int) bool { return orders[i].UnitID < orders[j].UnitID })
 	for _, order := range orders {
+		if state.Terminal.Ended {
+			break
+		}
 		if advanceMovementOrder(state, &order, runtime) {
 			state.MovementOrders = append(state.MovementOrders, order)
+		}
+		if winner, reason := evaluateVictory(*state, runtime); winner != "" {
+			endGame(state, winner, reason)
 		}
 	}
 }
@@ -204,12 +210,24 @@ func advanceMovementOrder(state *State, order *MovementOrder, runtime *rules.Run
 		if !ok {
 			break
 		}
-		canAfford := true
+		canAfford, impossible := true, false
 		for _, id := range order.UnitIDs {
 			member, _ := unitByID(*state, id)
-			if member.Movement < cost || (member.MaxFuel > 0 && member.Fuel < cost) {
+			if member.Movement < cost {
 				canAfford = false
+				if refreshedUnitMovement(*state, *member, runtime.Starter.Movement) < cost {
+					impossible = true
+				}
 			}
+			if member.MaxFuel > 0 && member.Fuel < cost {
+				canAfford = false
+				if member.MaxFuel < cost || !unitCanRefuel(*state, *member) {
+					impossible = true
+				}
+			}
+		}
+		if impossible {
+			break
 		}
 		if !canAfford {
 			return true
@@ -218,6 +236,10 @@ func advanceMovementOrder(state *State, order *MovementOrder, runtime *rules.Run
 			break
 		}
 		order.TileID = to.ID
+		if to.X == order.TargetX && to.Y == order.TargetY {
+			movementOrderNotice(state, *order, "completed")
+			return false
+		}
 		movers := make([]*Unit, 0, len(order.UnitIDs))
 		for _, id := range order.UnitIDs {
 			unit, _ := unitByID(*state, id)

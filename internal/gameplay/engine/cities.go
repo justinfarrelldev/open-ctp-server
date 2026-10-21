@@ -618,6 +618,12 @@ func foundCity(state *State, actor string, payload FoundCityPayload, runtimeOpti
 	city := City{ID: payload.CityID, TypeID: cityTypeID, Name: payload.Name, OwnerID: actor, FounderID: actor, TileID: tileID, Population: population, Buildings: buildings, Goods: cityGoodsInRadius(*state, tileID)}
 	seedStartingAgeCityBuildings(*state, &city, runtime)
 	state.Cities = append(state.Cities, city)
+	for index := range state.Tiles {
+		if state.Tiles[index].ID == tileID {
+			state.Tiles[index].Ruin = nil
+			break
+		}
+	}
 	return nil
 }
 

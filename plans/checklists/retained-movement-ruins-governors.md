@@ -27,7 +27,22 @@
   city production, not original empire-wide population/army/slider automation.
 - [x] Wire routes, legal actions/intents, snapshots/capabilities; regression tests.
   Engine, visibility and HTTP package suites pass.
-- [ ] Transactional service idempotency/reconnect coverage for new commands.
+- [x] Transactional service idempotency/reconnect coverage for new commands.
+  Isolated SQL mocks verify set/cancel journeys, governor enablement and ruin moves
+  persist authority and complete private receipt snapshots in one transaction;
+  replay reads the original receipt without re-executing or repaying rewards.
+  Exact HTTP payload dispatch/forged-field tests and cross-file route guards pass.
 - [ ] Update contracts/reports with implemented scope and remaining limitations.
-- [ ] Thorough source-backed code review and fix findings with regression tests.
+- [x] Thorough source-backed code review and fix findings with regression tests.
+  RED review regressions caught impossible-budget journeys, ZOC arrival mislabeled
+  as blocked, alphabetically earlier future settlers selected as nomads and ruins
+  retained under founded cities. GREEN fixes use real creation movement/HP bonuses,
+  explicit starter identity, bounded prerequisite recursion and source city-removal
+  semantics. Automatic journeys stop processing later orders on conquest victory.
+  Full-suite RED also caught an E2E assumption that one battle ends conquest:
+  villagers can leave additional hostile recruits without a city. The harness now
+  pursues visible hostile assets, preserves per-unit exploration history and seeks
+  public discovery boundaries, without hidden reads or larger turn/action budgets.
+  Verified clean/clean/restart conquest equality and refreshed observed hashes;
+  science events remain unchanged, with state hash updated for persisted ruin fog.
 - [ ] Full tests, vet, build, freeze guard, diff checks and atomic commits.

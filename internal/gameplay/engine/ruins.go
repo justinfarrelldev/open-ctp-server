@@ -121,12 +121,25 @@ func exploreRuin(state *State, playerID, tileID string, runtime *rules.RuntimeRu
 			choice := len(candidates) * ruin.ValueRoll / 10000
 			if settler {
 				choice = 0
+				// Retail takes its first land settler record. The canonical runtime
+				// sorts by ID, so use its explicit starter, not a future engineer.
+				for index, candidate := range candidates {
+					if candidate.ID == runtime.Starter.TypeID {
+						choice = index
+						break
+					}
+				}
 			}
 			definition := candidates[choice]
 			id := "ruin-unit:" + tileID
 			if _, exists := unitByID(*state, id); !exists {
 				unit := Unit{ID: id, OwnerID: playerID, TileID: tileID}
 				applyUnitDefinition(&unit, definition)
+				unit.MaxHealth += ownerWonderEffectSum(*state, playerID, EffectIncreaseHP) + ownerEffectSum(*state, playerID, EffectIncreaseHP)
+				if unit.MaxHealth < 1 {
+					unit.MaxHealth = 1
+				}
+				unit.Health = unit.MaxHealth
 				unit.Movement = refreshedUnitMovement(*state, unit, definition.Movement)
 				state.Units = append(state.Units, unit)
 				notice.RewardKind = "unit"
@@ -159,7 +172,7 @@ func missingRuinAdvances(nation Nation, runtime *rules.RuntimeRules, id string, 
 	if containsString(nation.Advances, id) {
 		return 0
 	}
-	if visiting[id] {
+	if visiting[id] || len(visiting) > limit {
 		return limit + 1
 	}
 	advance, ok := runtime.Advance(id)

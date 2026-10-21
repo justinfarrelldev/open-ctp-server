@@ -47,6 +47,10 @@ func TestClientReportedRoutesDispatchExactPayloads(t *testing.T) {
 		{"wake", engine.CommandWake, `{"unit_id":"agent"}`},
 		{"set-research-goal", engine.CommandSetResearchGoal, `{"advance_id":"advance"}`},
 		{"move", engine.CommandMoveUnit, `{"unit_id":"agent","target_x":0,"target_y":1}`},
+		{"set-movement-order", engine.CommandSetMovementOrder, `{"unit_id":"agent","target_x":7,"target_y":0}`},
+		{"cancel-movement-order", engine.CommandCancelMovementOrder, `{"unit_id":"agent"}`},
+		{"set-governor", engine.CommandSetGovernor, `{"city_id":"city","enabled":true,"priority":"science"}`},
+		{"set-governor", engine.CommandSetGovernor, `{"city_id":"city","enabled":false}`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.route+tc.payload, func(t *testing.T) {
@@ -95,50 +99,52 @@ func TestClientCommandBodyIsBoundedBeforeExecutor(t *testing.T) {
 // Inspect every literal action declaration, including branches that require rare
 // retail abilities. Runtime eligibility fixtures alone cannot detect route drift.
 func TestAdvertisedLiteralRoutesAndFieldsAreRegistered(t *testing.T) {
-	file, err := parser.ParseFile(token.NewFileSet(), "../visibility/visibility.go", nil, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
 	count := 0
-	ast.Inspect(file, func(node ast.Node) bool {
-		call, ok := node.(*ast.CallExpr)
-		if !ok {
-			return true
-		}
-		name, ok := call.Fun.(*ast.Ident)
-		if !ok || name.Name != "action" || len(call.Args) < 6 {
-			return true
-		}
-		route, ok := call.Args[1].(*ast.BasicLit)
-		if !ok || route.Kind != token.STRING {
-			return true
-		}
-		path, err := strconv.Unquote(route.Value)
+	for _, path := range []string{"../visibility/visibility.go", "../visibility/governors.go"} {
+		file, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
 		if err != nil {
 			t.Fatal(err)
 		}
-		definition, ok := commands[path]
-		if !ok {
-			t.Errorf("advertised route %q is unregistered", path)
-			return true
-		}
-		count++
-		ast.Inspect(call.Args[5], func(fieldNode ast.Node) bool {
-			literal, ok := fieldNode.(*ast.BasicLit)
-			if !ok || literal.Kind != token.STRING {
+		ast.Inspect(file, func(node ast.Node) bool {
+			call, ok := node.(*ast.CallExpr)
+			if !ok {
 				return true
 			}
-			field, err := strconv.Unquote(literal.Value)
+			name, ok := call.Fun.(*ast.Ident)
+			if !ok || name.Name != "action" || len(call.Args) < 6 {
+				return true
+			}
+			route, ok := call.Args[1].(*ast.BasicLit)
+			if !ok || route.Kind != token.STRING {
+				return true
+			}
+			path, err := strconv.Unquote(route.Value)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if !definition.allowed[field] {
-				t.Errorf("route %q rejects advertised field %q", path, field)
+			definition, ok := commands[path]
+			if !ok {
+				t.Errorf("advertised route %q is unregistered", path)
+				return true
 			}
+			count++
+			ast.Inspect(call.Args[5], func(fieldNode ast.Node) bool {
+				literal, ok := fieldNode.(*ast.BasicLit)
+				if !ok || literal.Kind != token.STRING {
+					return true
+				}
+				field, err := strconv.Unquote(literal.Value)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !definition.allowed[field] {
+					t.Errorf("route %q rejects advertised field %q", path, field)
+				}
+				return true
+			})
 			return true
 		})
-		return true
-	})
+	}
 	if count < 30 {
 		t.Fatalf("route drift guard inspected too few declarations: %d", count)
 	}
