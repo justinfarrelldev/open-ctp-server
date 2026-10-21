@@ -39,6 +39,8 @@ const (
 	CommandMoveUnit           = "move-unit"
 	CommandDisband            = "disband-unit"
 	CommandFortify            = "fortify-unit"
+	CommandSleep              = "sleep-unit"
+	CommandWake               = "wake-unit"
 	CommandUpgradeUnit        = "upgrade-unit"
 	CommandEmbark             = "embark-unit"
 	CommandDisembark          = "disembark-unit"
@@ -49,6 +51,8 @@ const (
 	CommandArmyJoin           = "join-army"
 	CommandArmyLeave          = "leave-army"
 	CommandFoundCity          = "found-city"
+	CommandRenameCity         = "rename-city"
+	CommandDisbandCity        = "disband-city"
 	CommandQueueProduction    = "queue-production"
 	CommandCancelProduction   = "cancel-production"
 	CommandEditProduction     = "edit-production"
@@ -268,6 +272,7 @@ type Unit struct {
 	IsSpecialForces        bool     `json:"is_special_forces,omitempty"`
 	ZOC                    bool     `json:"zoc,omitempty"`
 	Fortified              bool     `json:"fortified,omitempty"`
+	Asleep                 bool     `json:"asleep,omitempty"`
 	Veteran                bool     `json:"veteran,omitempty"`
 	Effects                []Effect `json:"effects,omitempty"`
 	Attack                 int      `json:"attack,omitempty"`
@@ -477,6 +482,7 @@ type FogObservation struct {
 	CityName       string          `json:"city_name,omitempty"`
 	CityTypeID     string          `json:"city_type_id,omitempty"`
 	CityPopulation *int            `json:"city_population,omitempty"`
+	CityArt        *CityArt        `json:"city_art,omitempty"`
 	CityEffects    []Effect        `json:"city_effects,omitempty"`
 }
 
@@ -663,7 +669,7 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 		eventType = EventCombatResolved
 	case CommandBombard:
 		eventType, eventPayload, err = applyBombard(state, command, sources, runtime)
-	case CommandFoundCity, CommandQueueProduction, CommandCancelProduction, CommandEditProduction, CommandRushBuy, CommandSetSpecialists, CommandCreateTradeRoute:
+	case CommandFoundCity, CommandRenameCity, CommandDisbandCity, CommandQueueProduction, CommandCancelProduction, CommandEditProduction, CommandRushBuy, CommandSetSpecialists, CommandCreateTradeRoute:
 		eventType, err = applyCityCommand(state, command, runtime)
 	default:
 		if isSpecialCommand(command.Type) {
@@ -798,7 +804,7 @@ func policyEnvelope(command Command, receiptSequence int64) turns.Command {
 	class := "non_hostile"
 	if command.Type == CommandCombat {
 		class = "hostile"
-	} else if command.Type == CommandFoundCity || command.Type == CommandQueueProduction || command.Type == CommandCancelProduction || command.Type == CommandEditProduction || command.Type == CommandRushBuy {
+	} else if command.Type == CommandFoundCity || command.Type == CommandRenameCity || command.Type == CommandDisbandCity || command.Type == CommandQueueProduction || command.Type == CommandCancelProduction || command.Type == CommandEditProduction || command.Type == CommandRushBuy {
 		class = "economic"
 	}
 	return turns.Command{Kind: turns.CommandAction, ActorID: command.ActorPlayerID, ActionClass: class, UnitOrArmyID: unitOrArmyID, ReceiptSequence: receiptSequence, Hostile: class == "hostile", TargetPlayerID: metadata.TargetPlayerID, CommandID: persisted.ID, IdempotencyKey: persisted.IdempotencyKey, Payload: payload}

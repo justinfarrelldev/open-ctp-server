@@ -64,6 +64,7 @@ type UnitProjection struct {
 	TransportID        string          `json:"transport_id,omitempty"`
 	ArmyID             string          `json:"army_id,omitempty"`
 	Fortified          bool            `json:"fortified"`
+	Asleep             bool            `json:"asleep,omitempty"`
 	Veteran            bool            `json:"veteran,omitempty"`
 	Domain             string          `json:"domain,omitempty"`
 	Movement           int             `json:"movement,omitempty"`
@@ -102,6 +103,7 @@ type CityProjection struct {
 	ID                  string                  `json:"id"`
 	Name                string                  `json:"name,omitempty"`
 	TypeID              string                  `json:"type_id,omitempty"`
+	Art                 *engine.CityArt         `json:"art,omitempty"`
 	OwnerID             string                  `json:"owner_id"`
 	TileID              string                  `json:"tile_id"`
 	Population          int                     `json:"population,omitempty"`
@@ -241,6 +243,7 @@ func Update(state engine.State) (engine.State, error) {
 				observation.CityName = city.Name
 				observation.CityTypeID = city.TypeID
 				observation.CityPopulation = copyValue(&city.Population)
+				observation.CityArt = inspector.CityArt(city.ID)
 				observation.CityEffects = append([]engine.Effect(nil), city.Effects...)
 			}
 			memory[playerID+"\x00"+tileID] = observation
@@ -311,7 +314,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 			applyInspection(&projected, observation.Inspection)
 			result.Tiles = append(result.Tiles, projected)
 			if observation.CityID != "" {
-				result.Cities = append(result.Cities, CityProjection{ID: observation.CityID, Name: observation.CityName, TypeID: observation.CityTypeID, Population: knownPopulation(observation.CityPopulation), OwnerID: observation.CityOwnerID, TileID: tile.ID, Effects: append([]engine.Effect(nil), observation.CityEffects...), Stale: true, Observed: observation.Turn})
+				result.Cities = append(result.Cities, CityProjection{ID: observation.CityID, Name: observation.CityName, TypeID: observation.CityTypeID, Art: copyValue(observation.CityArt), Population: knownPopulation(observation.CityPopulation), OwnerID: observation.CityOwnerID, TileID: tile.ID, Effects: append([]engine.Effect(nil), observation.CityEffects...), Stale: true, Observed: observation.Turn})
 			}
 		}
 	}
@@ -324,6 +327,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 			if unit.OwnerID == playerID {
 				projected.Domain, projected.Movement, projected.MaxMovement = unit.Domain, unit.Movement, unit.MaxMovement
 				projected.Veteran = unit.Veteran
+				projected.Asleep = unit.Asleep
 				projected.CargoCapacity = unit.CargoCapacity
 				projected.CargoDomains = append([]string(nil), unit.CargoDomains...)
 				projected.CargoClasses = append([]string(nil), unit.CargoClasses...)
@@ -350,6 +354,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	for _, city := range state.Cities {
 		if visible[city.TileID] {
 			projected := projectCity(city, playerID, state.Phase.Turn)
+			projected.Art = inspector.CityArt(city.ID)
 			projected.RushBuyQuote = inspector.RushBuy(city.ID, playerID)
 			projected.ProductionForecast = inspector.Production(city.ID, playerID)
 			result.Cities = append(result.Cities, projected)
@@ -1117,6 +1122,10 @@ func specialistActions(projection Projection, playerID string) []ActionProjectio
 }
 
 func productionActions(state engine.State, projection Projection, playerID string) []ActionProjection {
+	inspector, err := engine.NewInspector(state)
+	if err != nil {
+		return nil
+	}
 	actions := make([]ActionProjection, 0)
 	known := []string(nil)
 	if projection.Research != nil {
@@ -1125,6 +1134,14 @@ func productionActions(state engine.State, projection Projection, playerID strin
 	for _, city := range projection.Cities {
 		if city.OwnerID != playerID || city.Stale {
 			continue
+		}
+		name := city.Name
+		if name == "" {
+			name = "City " + city.ID
+		}
+		actions = append(actions, action(engine.CommandRenameCity, "rename-city", city.ID, "", engine.RenameCityPayload{CityID: city.ID, Name: name}, []string{"city_id", "name"}))
+		if inspector.CanDisband(city.ID, playerID) {
+			actions = append(actions, action(engine.CommandDisbandCity, "disband-city", city.ID, "", engine.CityIdentityPayload{CityID: city.ID}, []string{"city_id"}))
 		}
 		entries := make([]engine.QueueSelection, 0, len(city.Queue))
 		for _, queued := range city.Queue {
@@ -1256,6 +1273,13 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 	for _, unit := range projection.Units {
 		if unit.OwnerID != playerID {
 			continue
+		}
+		if !unit.InSpace && unit.TransportID == "" {
+			if unit.Asleep {
+				actions = append(actions, action(engine.CommandWake, "wake", unit.ID, "", map[string]string{"unit_id": unit.ID}, []string{"unit_id"}))
+			} else {
+				actions = append(actions, action(engine.CommandSleep, "sleep", unit.ID, "", map[string]string{"unit_id": unit.ID}, []string{"unit_id"}))
+			}
 		}
 		if unit.TransportID != "" {
 			actions = append(actions, disembarkActions(projection, tiles, units, unit)...)

@@ -226,26 +226,27 @@ type RetailCalendar struct {
 }
 
 type RetailConstants struct {
-	CityGrowthCoefficient          int `json:"city_growth_coefficient"`
-	UnconvertedIndulgenceGold      int `json:"unconverted_indulgence_gold"`
-	UnconvertedIndulgenceHappiness int `json:"unconverted_indulgence_happiness"`
-	ConvertedIndulgenceGold        int `json:"converted_indulgence_gold"`
-	ConvertedIndulgenceHappiness   int `json:"converted_indulgence_happiness"`
-	OtherFaithIndulgenceGold       int `json:"other_faith_indulgence_gold"`
-	OtherFaithIndulgenceHappiness  int `json:"other_faith_indulgence_happiness"`
-	ClericConversionPercent        int `json:"cleric_conversion_percent"`
-	TelevangelistConversionPercent int `json:"televangelist_conversion_percent"`
-	EmancipationUnhappinessTurns   int `json:"emancipation_unhappiness_turns"`
-	EmancipationUnhappinessAmount  int `json:"emancipation_unhappiness_amount"`
-	NukePopulationPercent          int `json:"nuke_population_percent"`
-	NukeKillTiles                  int `json:"nuke_kill_tiles"`
-	PollutionCausedByNuke          int `json:"pollution_caused_by_nuke"`
-	PiracyWastePercent             int `json:"piracy_waste_percent"`
-	VeteranCoefPercent             int `json:"veteran_coef_percent"`
-	BombardDestroyBuildingPercent  int `json:"bombard_destroy_building_percent"`
-	BombardKillPopulationPercent   int `json:"bombard_kill_population_percent"`
-	SpecialActionMoveCost          int `json:"special_action_move_cost"`
-	CaravanCoefPercent             int `json:"caravan_coef_percent"`
+	MaxDisbandSize                 *int `json:"max_disband_size,omitempty"`
+	CityGrowthCoefficient          int  `json:"city_growth_coefficient"`
+	UnconvertedIndulgenceGold      int  `json:"unconverted_indulgence_gold"`
+	UnconvertedIndulgenceHappiness int  `json:"unconverted_indulgence_happiness"`
+	ConvertedIndulgenceGold        int  `json:"converted_indulgence_gold"`
+	ConvertedIndulgenceHappiness   int  `json:"converted_indulgence_happiness"`
+	OtherFaithIndulgenceGold       int  `json:"other_faith_indulgence_gold"`
+	OtherFaithIndulgenceHappiness  int  `json:"other_faith_indulgence_happiness"`
+	ClericConversionPercent        int  `json:"cleric_conversion_percent"`
+	TelevangelistConversionPercent int  `json:"televangelist_conversion_percent"`
+	EmancipationUnhappinessTurns   int  `json:"emancipation_unhappiness_turns"`
+	EmancipationUnhappinessAmount  int  `json:"emancipation_unhappiness_amount"`
+	NukePopulationPercent          int  `json:"nuke_population_percent"`
+	NukeKillTiles                  int  `json:"nuke_kill_tiles"`
+	PollutionCausedByNuke          int  `json:"pollution_caused_by_nuke"`
+	PiracyWastePercent             int  `json:"piracy_waste_percent"`
+	VeteranCoefPercent             int  `json:"veteran_coef_percent"`
+	BombardDestroyBuildingPercent  int  `json:"bombard_destroy_building_percent"`
+	BombardKillPopulationPercent   int  `json:"bombard_kill_population_percent"`
+	SpecialActionMoveCost          int  `json:"special_action_move_cost"`
+	CaravanCoefPercent             int  `json:"caravan_coef_percent"`
 }
 
 type RetailCalendarPeriod struct {
@@ -490,7 +491,7 @@ func loadRetailConstants(path string) (RetailConstants, error) {
 	floatValues := map[string]int{}
 	for index := 0; index+1 < len(tokens); index++ {
 		switch tokens[index].value {
-		case "CITY_GROWTH_COEFFICIENT", "UNCONVERTED_INDULGENCE_GOLD", "UNCONVERTED_INDULGENCE_HAPPINESS", "CONVERTED_INDULGENCE_GOLD", "CONVERTED_INDULGENCE_HAPPINESS", "OTHER_FAITH_INDULGENCE_GOLD", "OTHER_FAITH_INDULGENCE_HAPPINESS", "EMANCIPATION_UNHAPPINESS_TURNS", "NUKE_KILL_TILES", "POLLUTION_CAUSED_BY_NUKE", "VETERAN_COEF":
+		case "CITY_GROWTH_COEFFICIENT", "UNCONVERTED_INDULGENCE_GOLD", "UNCONVERTED_INDULGENCE_HAPPINESS", "CONVERTED_INDULGENCE_GOLD", "CONVERTED_INDULGENCE_HAPPINESS", "OTHER_FAITH_INDULGENCE_GOLD", "OTHER_FAITH_INDULGENCE_HAPPINESS", "EMANCIPATION_UNHAPPINESS_TURNS", "NUKE_KILL_TILES", "POLLUTION_CAUSED_BY_NUKE", "VETERAN_COEF", "MAX_DISBAND_SIZE":
 			value, err := retailParseInt("CONST", tokens[index].value, tokens[index+1].value)
 			if err != nil {
 				return RetailConstants{}, err
@@ -510,7 +511,11 @@ func loadRetailConstants(path string) (RetailConstants, error) {
 			floatValues[tokens[index].value] = int(value)
 		}
 	}
-	return RetailConstants{CityGrowthCoefficient: values["CITY_GROWTH_COEFFICIENT"], UnconvertedIndulgenceGold: values["UNCONVERTED_INDULGENCE_GOLD"], UnconvertedIndulgenceHappiness: values["UNCONVERTED_INDULGENCE_HAPPINESS"], ConvertedIndulgenceGold: values["CONVERTED_INDULGENCE_GOLD"], ConvertedIndulgenceHappiness: values["CONVERTED_INDULGENCE_HAPPINESS"], OtherFaithIndulgenceGold: values["OTHER_FAITH_INDULGENCE_GOLD"], OtherFaithIndulgenceHappiness: values["OTHER_FAITH_INDULGENCE_HAPPINESS"], ClericConversionPercent: floatValues["CLERIC_CONVERSION_FACTOR"], TelevangelistConversionPercent: floatValues["TELEVANGELIST_CONVERSION_FACTOR"], EmancipationUnhappinessTurns: values["EMANCIPATION_UNHAPPINESS_TURNS"], EmancipationUnhappinessAmount: floatValues["EMANCIPATION_UNHAPPINESS_AMOUNT"], NukePopulationPercent: floatValues["NUKE_POPULATION_PERCENTAGE"], NukeKillTiles: values["NUKE_KILL_TILES"], PollutionCausedByNuke: values["POLLUTION_CAUSED_BY_NUKE"], PiracyWastePercent: floatValues["PIRACY_WASTE_COEFFICIENT"], VeteranCoefPercent: values["VETERAN_COEF"], BombardDestroyBuildingPercent: floatValues["BOMBARD_DESTROY_BUILDING_CHANCE"], BombardKillPopulationPercent: floatValues["BOMBARD_KILL_POP_CHANCE"], SpecialActionMoveCost: floatValues["SPECIAL_ACTION_MOVE_COST"], CaravanCoefPercent: floatValues["CARAVAN_COEF"]}, nil
+	var maxDisbandSize *int
+	if value, ok := values["MAX_DISBAND_SIZE"]; ok {
+		maxDisbandSize = &value
+	}
+	return RetailConstants{MaxDisbandSize: maxDisbandSize, CityGrowthCoefficient: values["CITY_GROWTH_COEFFICIENT"], UnconvertedIndulgenceGold: values["UNCONVERTED_INDULGENCE_GOLD"], UnconvertedIndulgenceHappiness: values["UNCONVERTED_INDULGENCE_HAPPINESS"], ConvertedIndulgenceGold: values["CONVERTED_INDULGENCE_GOLD"], ConvertedIndulgenceHappiness: values["CONVERTED_INDULGENCE_HAPPINESS"], OtherFaithIndulgenceGold: values["OTHER_FAITH_INDULGENCE_GOLD"], OtherFaithIndulgenceHappiness: values["OTHER_FAITH_INDULGENCE_HAPPINESS"], ClericConversionPercent: floatValues["CLERIC_CONVERSION_FACTOR"], TelevangelistConversionPercent: floatValues["TELEVANGELIST_CONVERSION_FACTOR"], EmancipationUnhappinessTurns: values["EMANCIPATION_UNHAPPINESS_TURNS"], EmancipationUnhappinessAmount: floatValues["EMANCIPATION_UNHAPPINESS_AMOUNT"], NukePopulationPercent: floatValues["NUKE_POPULATION_PERCENTAGE"], NukeKillTiles: values["NUKE_KILL_TILES"], PollutionCausedByNuke: values["POLLUTION_CAUSED_BY_NUKE"], PiracyWastePercent: floatValues["PIRACY_WASTE_COEFFICIENT"], VeteranCoefPercent: values["VETERAN_COEF"], BombardDestroyBuildingPercent: floatValues["BOMBARD_DESTROY_BUILDING_CHANCE"], BombardKillPopulationPercent: floatValues["BOMBARD_KILL_POP_CHANCE"], SpecialActionMoveCost: floatValues["SPECIAL_ACTION_MOVE_COST"], CaravanCoefPercent: floatValues["CARAVAN_COEF"]}, nil
 }
 
 func loadRetailEndGameYears(path string) (int, int, error) {

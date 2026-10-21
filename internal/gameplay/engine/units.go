@@ -88,8 +88,22 @@ func applyUnitCommand(state *State, command Command, runtime *rules.RuntimeRules
 		if err != nil || unit.TransportID != "" || !unitCanFortify(*unit) {
 			return "", invalidUnitAction(err)
 		}
-		unit.Fortified = true
+		unit.Fortified, unit.Asleep = true, false
 		return "unit.fortified", nil
+	case CommandSleep, CommandWake:
+		var payload unitPayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", err
+		}
+		unit, err := ownedUnit(state, command.ActorPlayerID, payload.UnitID)
+		if err != nil || unit.InSpace || unit.TransportID != "" {
+			return "", invalidUnitAction(err)
+		}
+		unit.Asleep = command.Type == CommandSleep
+		if unit.Asleep {
+			return "unit.slept", nil
+		}
+		return "unit.woke", nil
 	case CommandUpgradeUnit:
 		var payload upgradeUnitPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -485,6 +499,7 @@ func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *ru
 	}
 	for _, mover := range movers {
 		mover.TileID, mover.Movement, mover.Fortified = from.ID, mover.Movement-spent, false
+		mover.Asleep = false
 		if mover.MaxFuel > 0 {
 			mover.Fuel -= spent
 		}

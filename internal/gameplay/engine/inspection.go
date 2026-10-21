@@ -93,6 +93,27 @@ func (i *Inspector) MovementCost(tileID string) *int {
 	return nil
 }
 
+// CityArt contains semantic observed facts. AgeID is the current owner's
+// canonical age, not a guessed founder culture or client sprite recipe.
+type CityArt struct {
+	AgeID   string `json:"age_id,omitempty"`
+	Capital bool   `json:"capital"`
+}
+
+// CityArt requires the same current-visibility gate as Tile. Stale cities must
+// use their stored CityArt observation, including a nil legacy unknown.
+func (i *Inspector) CityArt(cityID string) *CityArt {
+	city, ok := cityByID(i.state, cityID)
+	if !ok {
+		return nil
+	}
+	art := &CityArt{Capital: hasEffect(cityEffects(i.state, *city), EffectCapitol)}
+	if nation := nationForID(&i.state, nationForPlayer(i.state, city.OwnerID)); nation != nil {
+		art.AgeID = nation.CurrentAgeID
+	}
+	return art
+}
+
 // RushBuyQuote is display-only. A cost is not an executable command field, and
 // purchasing must still satisfy the service's expected revision and engine checks.
 type RushBuyQuote struct {

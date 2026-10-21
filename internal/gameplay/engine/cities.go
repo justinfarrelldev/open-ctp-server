@@ -276,6 +276,18 @@ func applyCityCommand(state *State, command Command, runtime *rules.RuntimeRules
 			return "", err
 		}
 		return "city.founded", foundCity(state, command.ActorPlayerID, payload, runtime)
+	case CommandRenameCity:
+		var payload RenameCityPayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", err
+		}
+		return "city.renamed", renameCity(state, command.ActorPlayerID, payload)
+	case CommandDisbandCity:
+		var payload CityIdentityPayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", err
+		}
+		return "city.disbanded", disbandCity(state, command.ActorPlayerID, payload, runtime)
 	case CommandQueueProduction:
 		var payload QueueProductionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {

@@ -398,26 +398,27 @@ type RuntimeCalendar struct {
 }
 
 type RuntimeConstants struct {
-	CityGrowthCoefficient          int `json:"city_growth_coefficient,omitempty"`
-	UnconvertedIndulgenceGold      int `json:"unconverted_indulgence_gold,omitempty"`
-	UnconvertedIndulgenceHappiness int `json:"unconverted_indulgence_happiness,omitempty"`
-	ConvertedIndulgenceGold        int `json:"converted_indulgence_gold,omitempty"`
-	ConvertedIndulgenceHappiness   int `json:"converted_indulgence_happiness,omitempty"`
-	OtherFaithIndulgenceGold       int `json:"other_faith_indulgence_gold,omitempty"`
-	OtherFaithIndulgenceHappiness  int `json:"other_faith_indulgence_happiness,omitempty"`
-	ClericConversionPercent        int `json:"cleric_conversion_percent,omitempty"`
-	TelevangelistConversionPercent int `json:"televangelist_conversion_percent,omitempty"`
-	EmancipationUnhappinessTurns   int `json:"emancipation_unhappiness_turns,omitempty"`
-	EmancipationUnhappinessAmount  int `json:"emancipation_unhappiness_amount,omitempty"`
-	NukePopulationPercent          int `json:"nuke_population_percent,omitempty"`
-	NukeKillTiles                  int `json:"nuke_kill_tiles,omitempty"`
-	PollutionCausedByNuke          int `json:"pollution_caused_by_nuke,omitempty"`
-	PiracyWastePercent             int `json:"piracy_waste_percent,omitempty"`
-	VeteranCoefPercent             int `json:"veteran_coef_percent,omitempty"`
-	BombardDestroyBuildingPercent  int `json:"bombard_destroy_building_percent,omitempty"`
-	BombardKillPopulationPercent   int `json:"bombard_kill_population_percent,omitempty"`
-	SpecialActionMoveCost          int `json:"special_action_move_cost,omitempty"`
-	CaravanCoefPercent             int `json:"caravan_coef_percent,omitempty"`
+	MaxDisbandSize                 *int `json:"max_disband_size,omitempty"`
+	CityGrowthCoefficient          int  `json:"city_growth_coefficient,omitempty"`
+	UnconvertedIndulgenceGold      int  `json:"unconverted_indulgence_gold,omitempty"`
+	UnconvertedIndulgenceHappiness int  `json:"unconverted_indulgence_happiness,omitempty"`
+	ConvertedIndulgenceGold        int  `json:"converted_indulgence_gold,omitempty"`
+	ConvertedIndulgenceHappiness   int  `json:"converted_indulgence_happiness,omitempty"`
+	OtherFaithIndulgenceGold       int  `json:"other_faith_indulgence_gold,omitempty"`
+	OtherFaithIndulgenceHappiness  int  `json:"other_faith_indulgence_happiness,omitempty"`
+	ClericConversionPercent        int  `json:"cleric_conversion_percent,omitempty"`
+	TelevangelistConversionPercent int  `json:"televangelist_conversion_percent,omitempty"`
+	EmancipationUnhappinessTurns   int  `json:"emancipation_unhappiness_turns,omitempty"`
+	EmancipationUnhappinessAmount  int  `json:"emancipation_unhappiness_amount,omitempty"`
+	NukePopulationPercent          int  `json:"nuke_population_percent,omitempty"`
+	NukeKillTiles                  int  `json:"nuke_kill_tiles,omitempty"`
+	PollutionCausedByNuke          int  `json:"pollution_caused_by_nuke,omitempty"`
+	PiracyWastePercent             int  `json:"piracy_waste_percent,omitempty"`
+	VeteranCoefPercent             int  `json:"veteran_coef_percent,omitempty"`
+	BombardDestroyBuildingPercent  int  `json:"bombard_destroy_building_percent,omitempty"`
+	BombardKillPopulationPercent   int  `json:"bombard_kill_population_percent,omitempty"`
+	SpecialActionMoveCost          int  `json:"special_action_move_cost,omitempty"`
+	CaravanCoefPercent             int  `json:"caravan_coef_percent,omitempty"`
 }
 
 type RuntimeGaia struct {

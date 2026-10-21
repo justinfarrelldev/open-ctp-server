@@ -41,6 +41,10 @@ func TestClientReportedRoutesDispatchExactPayloads(t *testing.T) {
 		{"pillage", engine.CommandPillage, `{"unit_id":"agent"}`},
 		{"edit-production", engine.CommandEditProduction, `{"city_id":"city","entries":[{"entry_id":"city:queue:1"},{"item_id":"unit"}]}`},
 		{"cancel-production", engine.CommandCancelProduction, `{"city_id":"city","entry_id":"city:queue:1"}`},
+		{"rename-city", engine.CommandRenameCity, `{"city_id":"city","name":"Memphis"}`},
+		{"disband-city", engine.CommandDisbandCity, `{"city_id":"city"}`},
+		{"sleep", engine.CommandSleep, `{"unit_id":"agent"}`},
+		{"wake", engine.CommandWake, `{"unit_id":"agent"}`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.route+tc.payload, func(t *testing.T) {
