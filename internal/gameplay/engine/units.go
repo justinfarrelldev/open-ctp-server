@@ -612,6 +612,7 @@ func captureCityAt(state *State, actorID, tileID string, runtimes ...*rules.Runt
 			removeCapturedCapitolBuildings(&state.Cities[i])
 			resetCapturedCityEffects(&state.Cities[i])
 			state.Cities[i].OwnerID = actorID
+			state.Cities[i].Governor = nil
 			normalizeCityConversionOwner(&state.Cities[i])
 			state.Cities[i].ConquestDistress = conquestDistressForOwner(*state, actorID)
 			state.TradeRoutes = removeTradeRoutesTouchingCity(state.TradeRoutes, cityID)

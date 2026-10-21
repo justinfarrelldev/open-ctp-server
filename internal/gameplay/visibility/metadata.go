@@ -16,12 +16,13 @@ type ContractProjection struct {
 
 func contractProjection(projection Projection) *ContractProjection {
 	movement := projection.Rules != nil && projection.Rules.Movement != nil && projection.Rules.Movement.Configured
+	governor := projection.Rules != nil && len(projection.Rules.GovernorPriorities) > 0
 	return &ContractProjection{Version: 2, Features: map[string]bool{
 		"fog_metadata": true, "tile_inspection": true, "atomic_production_queue": true,
 		"city_orders": true, "retained_sleep": true, "research_goals": true,
 		"coordinate_move_intents": movement, "calendar": projection.Calendar != nil,
 		"production_notifications": true, "own_statistics_history": true,
-		"retained_movement_orders": movement, "governor": false, "policy_optimizer": false,
+		"retained_movement_orders": movement, "governor": governor, "policy_optimizer": false,
 		"city_culture_style": false, "ruin_rewards": movement, "foreign_statistics_history": false,
 	}}
 }

@@ -1192,12 +1192,18 @@ func recalculateRoundForCompletedTurn(state State, completedTurn int) (State, er
 			continue
 		}
 		city.Goods = cityGoodsInRadius(next, city.TileID)
+		if err := fillGovernorQueue(&next, city, runtime); err != nil {
+			return State{}, err
+		}
 		if err := completeProduction(&next, city, runtime); err != nil {
 			return State{}, err
 		}
 		city, ok = cityByID(next, cityID)
 		if !ok {
 			continue
+		}
+		if err := fillGovernorQueue(&next, city, runtime); err != nil {
+			return State{}, err
 		}
 		var franchiseOwnerID string
 		var franchiseLoss int
@@ -3585,6 +3591,11 @@ func validateProductionItem(item ProductionItem) error {
 }
 
 func validateCityState(state State) error {
+	for _, city := range state.Cities {
+		if err := validateGovernorState(city); err != nil {
+			return err
+		}
+	}
 	if state.RecalculatedTurn < 0 || state.RecalculatedTurn > state.Phase.Turn {
 		return errors.New("recalculated turn is invalid")
 	}

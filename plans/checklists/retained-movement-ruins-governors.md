@@ -18,9 +18,15 @@
   Verified engine, world, game and visibility packages. Source: GoodyHuts.cpp/.h,
   Advances::GetMinPrerequisites, UnitData.cpp initial movement, risks.txt villages
   profile and Const.txt RUINS_BOX_WIDTH/HEIGHT=6, RUINS_CHANCE_PER_BOX=1.0.
-- [ ] Governors RED: enable/disable/priorities, queue continuity and privacy tests.
-- [ ] Governors GREEN/REFACTOR: pinned-list city production automation.
-- [ ] Wire routes, legal actions/intents, snapshots/capabilities; regression tests.
+- [x] Governors RED: enable/disable/priorities, queue continuity and privacy tests.
+- [x] Governors GREEN/REFACTOR: pinned-list city production automation.
+  Engine tests failed on unsupported command; projection tests failed on missing
+  capability before wiring. Tests now pass for priorities, empty-queue continuity,
+  manual progress preservation, disable, restart and conquest reset. Source:
+  Governor::FillEmptyBuildQueues and released Building/WonderBuildLists; scope is
+  city production, not original empire-wide population/army/slider automation.
+- [x] Wire routes, legal actions/intents, snapshots/capabilities; regression tests.
+  Engine, visibility and HTTP package suites pass.
 - [ ] Transactional service idempotency/reconnect coverage for new commands.
 - [ ] Update contracts/reports with implemented scope and remaining limitations.
 - [ ] Thorough source-backed code review and fix findings with regression tests.

@@ -91,6 +91,7 @@ var commands = map[string]struct {
 	"sleep":                 {engine.CommandSleep, fields("unit_id")},
 	"wake":                  {engine.CommandWake, fields("unit_id")},
 	"rename-city":           {engine.CommandRenameCity, fields("city_id", "name")},
+	"set-governor":          {engine.CommandSetGovernor, fields("city_id", "enabled", "priority")},
 	"disband-city":          {engine.CommandDisbandCity, fields("city_id")},
 	"found-city":            {engine.CommandFoundCity, fields("unit_id", "city_id", "name")},
 	"army-create":           {engine.CommandArmyCreate, fields("army_id", "unit_ids")},

@@ -320,6 +320,7 @@ type City struct {
 	StoredProduction    int              `json:"stored_production,omitempty"`
 	Queue               []ProductionItem `json:"queue,omitempty"`
 	QueueSequence       uint64           `json:"queue_sequence,omitempty"`
+	Governor            *GovernorState   `json:"governor,omitempty"`
 	Buildings           []Building       `json:"buildings,omitempty"`
 	Obsolete            []string         `json:"obsolete,omitempty"`
 	Yields              Yield            `json:"yields,omitempty"`
@@ -674,6 +675,8 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 	switch command.Type {
 	case CommandSetMovementOrder, CommandCancelMovementOrder:
 		eventType, err = applyMovementOrder(state, command, runtime)
+	case CommandSetGovernor:
+		eventType, err = setGovernor(state, command, runtime)
 	case CommandSetWar, CommandEstablishContact, CommandProposeAgreement, CommandRespondAgreement:
 		eventType, eventPayload, err = applyDiplomacyCommand(state, command)
 	case CommandSetGovernment, CommandSetScienceRate, CommandSetPublicWorksRate, CommandSetSocialPolicy, CommandSetReadiness:
@@ -838,7 +841,7 @@ func policyEnvelope(command Command, receiptSequence int64) turns.Command {
 	class := "non_hostile"
 	if command.Type == CommandCombat {
 		class = "hostile"
-	} else if command.Type == CommandFoundCity || command.Type == CommandRenameCity || command.Type == CommandDisbandCity || command.Type == CommandQueueProduction || command.Type == CommandCancelProduction || command.Type == CommandEditProduction || command.Type == CommandRushBuy {
+	} else if command.Type == CommandFoundCity || command.Type == CommandRenameCity || command.Type == CommandDisbandCity || command.Type == CommandQueueProduction || command.Type == CommandCancelProduction || command.Type == CommandEditProduction || command.Type == CommandRushBuy || command.Type == CommandSetGovernor {
 		class = "economic"
 	}
 	return turns.Command{Kind: turns.CommandAction, ActorID: command.ActorPlayerID, ActionClass: class, UnitOrArmyID: unitOrArmyID, ReceiptSequence: receiptSequence, Hostile: class == "hostile", TargetPlayerID: metadata.TargetPlayerID, CommandID: persisted.ID, IdempotencyKey: persisted.IdempotencyKey, Payload: payload}
@@ -1278,6 +1281,10 @@ func cloneStateForNormalization(state State) State {
 	}
 	state.Cities = append([]City(nil), state.Cities...)
 	for index := range state.Cities {
+		if state.Cities[index].Governor != nil {
+			governor := *state.Cities[index].Governor
+			state.Cities[index].Governor = &governor
+		}
 		if state.Cities[index].Specialists != nil {
 			state.Cities[index].Specialists = cloneIntMap(state.Cities[index].Specialists)
 		}

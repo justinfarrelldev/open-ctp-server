@@ -124,6 +124,7 @@ type CityProjection struct {
 	Yields              *engine.Yield           `json:"yields,omitempty"`
 	RushBuyQuote        *engine.RushBuyQuote    `json:"rush_buy_quote,omitempty"`
 	ProductionForecast  *engine.Forecast        `json:"production_forecast,omitempty"`
+	Governor            *engine.GovernorState   `json:"governor,omitempty"`
 	Stale               bool                    `json:"stale"`
 	Observed            int                     `json:"observed_turn"`
 }
@@ -180,6 +181,7 @@ type DiplomacyProjection struct {
 
 type RulesProjection struct {
 	ContentHash         string                                      `json:"content_hash"`
+	GovernorPriorities  []string                                    `json:"governor_priorities,omitempty"`
 	Units               []rules.RuntimeUnitDefinition               `json:"units,omitempty"`
 	Production          []rules.RuntimeProduction                   `json:"production,omitempty"`
 	Advances            []rules.RuntimeAdvanceDefinition            `json:"advances,omitempty"`
@@ -498,6 +500,7 @@ func projectCity(city engine.City, playerID string, observed int) CityProjection
 		projection.ConvertedBy = city.ConvertedBy
 	}
 	if city.OwnerID == playerID {
+		projection.Governor = copyValue(city.Governor)
 		projection.Population = city.Population
 		projection.Happiness = city.Happiness
 		projection.CrimePercent = city.CrimePercent
@@ -546,6 +549,7 @@ func rulesProjection(state engine.State) *RulesProjection {
 	ai := cloneRuntimeAI(runtime.AI)
 	return &RulesProjection{
 		ContentHash:         runtime.ContentHash,
+		GovernorPriorities:  engine.GovernorPriorities(&runtime),
 		Units:               append([]rules.RuntimeUnitDefinition(nil), runtime.Units...),
 		Production:          append([]rules.RuntimeProduction(nil), runtime.Production...),
 		Advances:            append([]rules.RuntimeAdvanceDefinition(nil), runtime.Advances...),
@@ -641,6 +645,7 @@ func legalActions(state engine.State, projection Projection, playerID string) []
 	actions = append(actions, tradeRouteActions(state, projection, playerID)...)
 	actions = append(actions, specialistActions(projection, playerID)...)
 	actions = append(actions, productionActions(state, projection, playerID)...)
+	actions = append(actions, governorActions(projection, playerID)...)
 	actions = append(actions, publicWorksTerrainActions(projection, playerID)...)
 	actions = append(actions, unitActions(projection, playerID)...)
 	sort.Slice(actions, func(i, j int) bool {
