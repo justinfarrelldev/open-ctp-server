@@ -64,6 +64,12 @@ func TestRetailAIAutoPlayMaintainsProductionAndUnitPresence(t *testing.T) {
 	}
 	last := records[len(records)-1]
 	if last.Units == 0 {
+		for _, nation := range state.Nations {
+			t.Logf("inert nation %s research=%s progress=%d advances=%v gold=%d", nation.ID, nation.ResearchTargetID, nation.ResearchProgress, nation.Advances, nation.Gold)
+		}
+		for _, city := range state.Cities {
+			t.Logf("inert city %s owner=%s pop=%d stored=%d yields=%+v queue=%+v", city.ID, city.OwnerID, city.Population, city.StoredProduction, city.Yields, city.Queue)
+		}
 		t.Fatalf("retail autoplay became inert with zero units at turn %d; full-game mechanics need continuing unit production", last.Turn)
 	}
 	nonRoundLate := 0
@@ -224,6 +230,7 @@ func applyRetailAICommand(t *testing.T, state engine.State, actor string, candid
 	command := engine.Command{SchemaVersion: engine.CommandSchemaV1, ID: fmt.Sprintf("retail-ai-%03d-%02d-%s", turnIndex, actionIndex, candidate.Type), ActorPlayerID: actor, Type: candidate.Type, Payload: candidate.Payload}
 	next, _, _, err := engine.Apply(state, command, state.Rules, retailAISources())
 	if err != nil {
+		t.Logf("rejected autoplay candidate turn=%d actor=%s command=%s payload=%s: %v", state.Phase.Turn, actor, candidate.Type, candidate.Payload, err)
 		return state, false
 	}
 	return next, true

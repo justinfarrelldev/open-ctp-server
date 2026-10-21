@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility"
 )
 
@@ -44,6 +45,7 @@ func TestTask11PlannerUsesProjectionForProductionTerrainTransportAndCombat(t *te
 			{ID: "attacker", OwnerID: "ai", TileID: "home", ArmyID: "army-a", Movement: 1, Domain: engine.DomainLand, Attack: 1},
 			{ID: "defender", OwnerID: "foe", TileID: "enemy", ArmyID: "army-b", Domain: engine.DomainLand, Attack: 1},
 		},
+		Rules:     &visibility.RulesProjection{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_WARRIOR", Domain: engine.DomainLand, Movement: 1, Health: 1, ProductionCost: 1}}},
 		Cities:    []visibility.CityProjection{{ID: "city", OwnerID: "ai", TileID: "home"}},
 		Diplomacy: &visibility.DiplomacyProjection{PublicWorks: 1},
 	}

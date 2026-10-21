@@ -228,6 +228,7 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 			candidates = append(candidates, candidate(engine.CommandFortify, unit.ID, unit.TileID, 20, map[string]string{"unit_id": unit.ID}))
 		}
 	}
+	candidates = append(candidates, emergencyQueueCandidates(projection, playerID)...)
 	candidates = append(candidates, productionCandidates(projection, playerID)...)
 	sort.Slice(candidates, func(i, j int) bool { return Compare(candidates[i], candidates[j]) < 0 })
 	return candidates, nil
@@ -291,6 +292,9 @@ func researchCandidates(projection visibility.Projection, playerID string) []Can
 	availableSet := make(map[string]bool, len(available))
 	for _, advanceID := range available {
 		availableSet[advanceID] = true
+	}
+	if advanceID, ok := emergencyDefenderResearch(projection, playerID); ok {
+		return []Candidate{candidate(engine.CommandSetResearch, playerID, advanceID, 800, map[string]string{"advance_id": advanceID})}
 	}
 	if projection.Rules != nil && projection.Rules.AI != nil {
 		if advanceID, ok := firstAIListItem(projection.Rules.AI.AdvanceLists, availableSet); ok {
@@ -978,7 +982,9 @@ func productionCandidates(projection visibility.Projection, playerID string) []C
 			item, ok = bestProjectedCityProduction(projection, city)
 		}
 		if !ok {
-			item = engine.ProductionItem{ID: "ai-unit-" + city.ID, Kind: engine.ProductionUnit, Cost: 1}
+			// Absence of buildable catalog content is not permission to invent
+			// a production item; continue research/economy via normal commands.
+			continue
 		}
 		if city.Population <= 1 && productionItemRemovesPopulation(item) {
 			continue

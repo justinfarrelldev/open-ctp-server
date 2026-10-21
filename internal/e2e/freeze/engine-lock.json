@@ -39,7 +39,11 @@
     },
     {
       "path": "internal/gameplay/ai/ai.go",
-      "sha256": "fc74b1680866377effad56cd9f2b876ec2ca5757b2493bb7fba473a8c820b25c"
+      "sha256": "04a5d4cd0655964945d8bfc53098e42d6cace398a5e52e1420559910a43db7b4"
+    },
+    {
+      "path": "internal/gameplay/ai/defender_research.go",
+      "sha256": "63a77d3d16ca20067ebea91acd088f19fb693e1d6d1f488f2f6c38752b8b1d24"
     },
     {
       "path": "internal/gameplay/combat/http.go",
