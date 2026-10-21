@@ -42,6 +42,30 @@ func TestClientCityArtUsesObservedAgeAndCapitalNotFreshHiddenChanges(t *testing.
 	}
 }
 
+func TestClientResearchGoalsAreOwnerOnlyAndAdvertiseClear(t *testing.T) {
+	state := clientMetadataState()
+	pin, err := rules.ServerOwnedSyntheticRuleset()
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Rules = engine.RulesPin{Version: pin.CompatibilityVersion, ContentHash: pin.ContentHash, Definitions: pin.CanonicalJSON}
+	state.Nations = []engine.Nation{{ID: "a", ResearchGoalID: "ADVANCE_SYNTHETIC_UNLOCK", ResearchTargetID: "ADVANCE_SYNTHETIC_ROOT"}, {ID: "b"}}
+	owner, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if owner.Research == nil || owner.Research.GoalID != "ADVANCE_SYNTHETIC_UNLOCK" || !hasAction(owner.LegalActions, engine.CommandSetResearchGoal) {
+		t.Fatal("owner goal/clear action absent")
+	}
+	foreign, err := Project(state, "b")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if foreign.Research != nil && foreign.Research.GoalID != "" {
+		t.Fatal("foreign research goal disclosed")
+	}
+}
+
 func TestClientDistinctOrdersAreAdvertisedAndSleepIsPrivate(t *testing.T) {
 	state := clientMetadataState()
 	pin, err := rules.ServerOwnedSyntheticRuleset()

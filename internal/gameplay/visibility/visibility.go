@@ -130,6 +130,7 @@ type CityProjection struct {
 type ResearchProjection struct {
 	Advances  []string         `json:"advances,omitempty"`
 	TargetID  string           `json:"target_id,omitempty"`
+	GoalID    string           `json:"goal_id,omitempty"`
 	Progress  int              `json:"progress,omitempty"`
 	Available []string         `json:"available,omitempty"`
 	Forecast  *engine.Forecast `json:"forecast,omitempty"`
@@ -499,7 +500,7 @@ func projectCity(city engine.City, playerID string, observed int) CityProjection
 }
 
 func researchProjection(state engine.State, nation engine.Nation) *ResearchProjection {
-	projection := &ResearchProjection{Advances: append([]string(nil), nation.Advances...), TargetID: nation.ResearchTargetID, Progress: nation.ResearchProgress}
+	projection := &ResearchProjection{Advances: append([]string(nil), nation.Advances...), TargetID: nation.ResearchTargetID, GoalID: nation.ResearchGoalID, Progress: nation.ResearchProgress}
 	if runtime, ok := runtimeRules(state); ok {
 		for _, advance := range runtime.Advances {
 			if projectionAdvanceAvailable(nation, runtime, advance.ID) {
@@ -610,6 +611,7 @@ func legalActions(state engine.State, projection Projection, playerID string) []
 		actions = append(actions, action(engine.CommandPass, "pass", playerID, "", map[string]any{}, nil))
 	}
 	actions = append(actions, researchActions(projection, playerID)...)
+	actions = append(actions, researchGoalActions(state, playerID)...)
 	actions = append(actions, governmentActions(projection, playerID)...)
 	actions = append(actions, diplomacyActions(projection, playerID)...)
 	actions = append(actions, tradeRouteActions(state, projection, playerID)...)
@@ -629,6 +631,35 @@ func legalActions(state engine.State, projection Projection, playerID string) []
 		}
 		return actions[i].Command < actions[j].Command
 	})
+	return actions
+}
+
+func researchGoalActions(state engine.State, playerID string) []ActionProjection {
+	runtime, ok := runtimeRules(state)
+	if !ok {
+		return nil
+	}
+	var nation engine.Nation
+	found := false
+	for _, candidate := range state.Nations {
+		if candidate.ID == nationForPlayer(state, playerID) {
+			nation = candidate
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil
+	}
+	actions := []ActionProjection{}
+	if nation.ResearchGoalID != "" {
+		actions = append(actions, action(engine.CommandSetResearchGoal, "set-research-goal", playerID, "", map[string]string{"advance_id": ""}, []string{"advance_id"}))
+	}
+	for _, advance := range runtime.Advances {
+		if advance.ID != nation.ResearchGoalID && engine.CanSetResearchGoal(nation, runtime, advance.ID) {
+			actions = append(actions, action(engine.CommandSetResearchGoal, "set-research-goal", playerID, advance.ID, map[string]string{"advance_id": advance.ID}, []string{"advance_id"}))
+		}
+	}
 	return actions
 }
 

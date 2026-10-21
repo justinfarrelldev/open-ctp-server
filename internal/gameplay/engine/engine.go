@@ -60,6 +60,7 @@ const (
 	CommandSetSpecialists     = "set-specialists"
 	CommandCreateTradeRoute   = "create-trade-route"
 	CommandSetResearch        = "set-research"
+	CommandSetResearchGoal    = "set-research-goal"
 	CommandCombat             = "combat"
 	CommandBombard            = "bombard"
 	CommandNuclearAttack      = "nuclear-attack"
@@ -355,6 +356,7 @@ type Nation struct {
 	Readiness            string              `json:"readiness,omitempty"`
 	GovernmentID         string              `json:"government_id,omitempty"`
 	ResearchTargetID     string              `json:"research_target_id,omitempty"`
+	ResearchGoalID       string              `json:"research_goal_id,omitempty"`
 	ResearchProgress     int                 `json:"research_progress,omitempty"`
 	CurrentAgeID         string              `json:"current_age_id,omitempty"`
 	GaiaCompletionTurn   int                 `json:"gaia_completion_turn,omitempty"`
@@ -662,7 +664,7 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 		eventType, eventPayload, err = applyDiplomacyCommand(state, command)
 	case CommandSetGovernment, CommandSetScienceRate, CommandSetPublicWorksRate, CommandSetSocialPolicy, CommandSetReadiness:
 		eventType, eventPayload, err = applyGovernmentCommand(state, command, runtime)
-	case CommandSetResearch, CommandRoundComplete, CommandEndGame, CommandLeaveGame, CommandTakeoverAI:
+	case CommandSetResearch, CommandSetResearchGoal, CommandRoundComplete, CommandEndGame, CommandLeaveGame, CommandTakeoverAI:
 		eventType, eventPayload, err = applyLifecycleCommand(state, command, runtime)
 	case CommandCombat:
 		combatResult, eventPayload, err = applyCombat(state, command, sources, runtime)

@@ -22,6 +22,17 @@ type setResearchPayload struct {
 
 func applyLifecycleCommand(state *State, command Command, runtime *rules.RuntimeRules) (string, json.RawMessage, error) {
 	switch command.Type {
+	case CommandSetResearchGoal:
+		var payload struct {
+			AdvanceID *string `json:"advance_id"`
+		}
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", nil, err
+		}
+		if payload.AdvanceID == nil {
+			return "", nil, errors.New("research goal requires advance_id; use an explicit empty string to clear")
+		}
+		return setResearchGoal(state, command.ActorPlayerID, setResearchPayload{AdvanceID: *payload.AdvanceID}, runtime)
 	case CommandSetResearch:
 		var payload setResearchPayload
 		if err := json.Unmarshal(command.Payload, &payload); err != nil {
@@ -98,6 +109,7 @@ func setResearch(state *State, actorID string, payload setResearchPayload, runti
 	}
 	nation.ResearchTargetID = payload.AdvanceID
 	nation.ResearchProgress = 0
+	nation.ResearchGoalID = "" // Explicit manual research replaces goal routing.
 	payloadJSON, _ := json.Marshal(struct {
 		AdvanceID string `json:"advance_id"`
 	}{AdvanceID: payload.AdvanceID})
@@ -553,6 +565,7 @@ func advanceResearch(state *State, runtime *rules.RuntimeRules) {
 			sort.Strings(nation.Advances)
 			maybeEnterAdvanceAge(nation, advance, *runtime)
 			applyAdvanceTriggerFeat(state, nation, advance, runtime)
+			clearCompletedResearchGoal(nation)
 			nation.ResearchTargetID = nextResearchAdvance(*nation, *runtime)
 			if nation.ResearchTargetID == "" {
 				nation.ResearchProgress = 0
@@ -922,6 +935,7 @@ func GrantStartingAgeAdvances(state *State, runtime *rules.RuntimeRules, startAg
 			}
 		}
 		sort.Strings(nation.Advances)
+		clearCompletedResearchGoal(nation)
 		if nation.ResearchTargetID == "" {
 			nation.ResearchTargetID = nextResearchAdvance(*nation, *runtime)
 		}
@@ -929,6 +943,11 @@ func GrantStartingAgeAdvances(state *State, runtime *rules.RuntimeRules, startAg
 }
 
 func nextResearchAdvance(nation Nation, runtime rules.RuntimeRules) string {
+	if nation.ResearchGoalID != "" {
+		if next, err := researchGoalNext(nation, runtime, nation.ResearchGoalID); err == nil && next != "" {
+			return next
+		}
+	}
 	for _, advance := range runtime.Advances {
 		if canResearchAdvance(nation, runtime, advance.ID) {
 			return advance.ID
