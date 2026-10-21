@@ -199,20 +199,23 @@ type ActionProjection struct {
 }
 
 type Projection struct {
-	Revision         int64                  `json:"revision"`
-	Turn             int                    `json:"turn"`
-	Tiles            []TileProjection       `json:"tiles"`
-	Units            []UnitProjection       `json:"units"`
-	Cities           []CityProjection       `json:"cities"`
-	TradeRoutes      []TradeRouteProjection `json:"trade_routes,omitempty"`
-	Research         *ResearchProjection    `json:"research,omitempty"`
-	Diplomacy        *DiplomacyProjection   `json:"diplomacy,omitempty"`
-	Rules            *RulesProjection       `json:"rules,omitempty"`
-	CityReports      []engine.CityReport    `json:"city_reports,omitempty"`
-	LegalActions     []ActionProjection     `json:"legal_actions,omitempty"`
-	EmbassyPlayerIDs []string               `json:"embassy_player_ids,omitempty"`
-	PlanningStatus   string                 `json:"planning_status,omitempty"`
-	World            *WorldProjection       `json:"world,omitempty"`
+	Revision         int64                     `json:"revision"`
+	Turn             int                       `json:"turn"`
+	Tiles            []TileProjection          `json:"tiles"`
+	Units            []UnitProjection          `json:"units"`
+	Cities           []CityProjection          `json:"cities"`
+	TradeRoutes      []TradeRouteProjection    `json:"trade_routes,omitempty"`
+	Research         *ResearchProjection       `json:"research,omitempty"`
+	Diplomacy        *DiplomacyProjection      `json:"diplomacy,omitempty"`
+	Rules            *RulesProjection          `json:"rules,omitempty"`
+	CityReports      []engine.CityReport       `json:"city_reports,omitempty"`
+	Notifications    []engine.Notification     `json:"notifications,omitempty"`
+	Statistics       []engine.StatisticsSample `json:"statistics,omitempty"`
+	LegalActions     []ActionProjection        `json:"legal_actions,omitempty"`
+	EmbassyPlayerIDs []string                  `json:"embassy_player_ids,omitempty"`
+	PlanningStatus   string                    `json:"planning_status,omitempty"`
+	World            *WorldProjection          `json:"world,omitempty"`
+	Calendar         *engine.CalendarDisplay   `json:"calendar,omitempty"`
 }
 
 // Update records only what each player can currently observe. The returned state
@@ -284,7 +287,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	if err != nil {
 		return Projection{}, err
 	}
-	result := Projection{Revision: state.Revision, Turn: state.Phase.Turn, PlanningStatus: planningStatus(state, playerID), Rules: rulesProjection(state), World: worldProjection(state)}
+	result := Projection{Revision: state.Revision, Turn: state.Phase.Turn, PlanningStatus: planningStatus(state, playerID), Rules: rulesProjection(state), World: worldProjection(state), Calendar: inspector.Calendar()}
 	viewerNationID := nationForPlayer(state, playerID)
 	for _, nation := range state.Nations {
 		if nation.ID != viewerNationID {
@@ -297,10 +300,16 @@ func Project(state engine.State, playerID string) (Projection, error) {
 		result.Research.Forecast = inspector.Research(playerID)
 		result.Diplomacy = diplomacyProjection(state, playerID, nation)
 		result.CityReports = cloneCityReports(nation.CityReports)
+		result.Statistics = append([]engine.StatisticsSample(nil), nation.Statistics...)
 		for _, embassyPlayer := range state.Players {
 			if embassyPlayer.ID != playerID && engine.HasEffectiveEmbassyWith(state, playerID, embassyPlayer.ID) {
 				result.EmbassyPlayerIDs = append(result.EmbassyPlayerIDs, embassyPlayer.ID)
 			}
+		}
+	}
+	for _, notification := range state.Notifications {
+		if notification.PlayerID == playerID {
+			result.Notifications = append(result.Notifications, notification)
 		}
 	}
 	for _, tile := range state.Tiles {

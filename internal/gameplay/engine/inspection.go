@@ -114,6 +114,25 @@ func (i *Inspector) CityArt(cityID string) *CityArt {
 	return art
 }
 
+// CalendarDisplay is an authoritative year; localization/BC-AD formatting remain
+// client presentation. Absent displays indicate no versioned timescale in the pin.
+type CalendarDisplay struct {
+	Version string `json:"version"`
+	Turn    int    `json:"turn"`
+	Year    int64  `json:"year"`
+}
+
+func (i *Inspector) Calendar() *CalendarDisplay {
+	if i.runtime == nil {
+		return nil
+	}
+	year, ok := i.runtime.Calendar.YearAtTurn(i.state.Phase.Turn)
+	if !ok {
+		return nil
+	}
+	return &CalendarDisplay{Version: "ctp2-timescale-v1", Turn: i.state.Phase.Turn, Year: year}
+}
+
 // RushBuyQuote is display-only. A cost is not an executable command field, and
 // purchasing must still satisfy the service's expected revision and engine checks.
 type RushBuyQuote struct {

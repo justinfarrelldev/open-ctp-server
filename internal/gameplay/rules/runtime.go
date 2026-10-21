@@ -394,7 +394,17 @@ type RuntimeVictory struct {
 }
 
 type RuntimeCalendar struct {
-	FinalTurn int `json:"final_turn"`
+	FinalTurn int                     `json:"final_turn"`
+	EpochTurn int                     `json:"epoch_turn,omitempty"`
+	StartYear *int                    `json:"start_year,omitempty"`
+	Periods   []RuntimeCalendarPeriod `json:"periods,omitempty"`
+}
+
+// RuntimeCalendarPeriod uses the retail zero-based source turn scale; EpochTurn
+// identifies its corresponding canonical gameplay turn (one for new retail pins).
+type RuntimeCalendarPeriod struct {
+	StartTurn    int `json:"start_turn"`
+	YearsPerTurn int `json:"years_per_turn"`
 }
 
 type RuntimeConstants struct {

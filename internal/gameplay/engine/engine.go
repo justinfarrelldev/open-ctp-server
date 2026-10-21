@@ -344,6 +344,7 @@ type Nation struct {
 	Advances             []string            `json:"advances,omitempty"`
 	Embassies            []string            `json:"embassies,omitempty"`
 	CityReports          []CityReport        `json:"city_reports,omitempty"`
+	Statistics           []StatisticsSample  `json:"statistics,omitempty"`
 	PublicWorks          int                 `json:"public_works,omitempty"`
 	Gold                 int                 `json:"gold,omitempty"`
 	FranchiseProduction  int                 `json:"franchise_production,omitempty"`
@@ -548,6 +549,7 @@ type State struct {
 	Phase            PhaseState           `json:"phase"`
 	Policy           TurnPolicyState      `json:"policy"`
 	Fog              []FogObservation     `json:"fog"`
+	Notifications    []Notification       `json:"notifications,omitempty"`
 	RNG              []RNGDomainState     `json:"rng"`
 	Deadlines        []Deadline           `json:"deadlines"`
 	Victory          VictoryState         `json:"victory"`
@@ -1267,6 +1269,7 @@ func cloneStateForNormalization(state State) State {
 		state.Policy.Deadline = &deadline
 	}
 	state.Fog = append([]FogObservation(nil), state.Fog...)
+	state.Notifications = append([]Notification(nil), state.Notifications...)
 	state.RNG = append([]RNGDomainState(nil), state.RNG...)
 	state.Deadlines = append([]Deadline(nil), state.Deadlines...)
 	return state

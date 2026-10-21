@@ -108,6 +108,37 @@ func TestClientRushQuoteIsSeparateAndRevisionBound(t *testing.T) {
 	}
 }
 
+func TestClientCalendarProjectsOnlyPinnedYearData(t *testing.T) {
+	state := inspectionState(t)
+	runtime, err := rules.CompileRuntime(state.Rules.Definitions, state.Rules.ContentHash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	start := -4000
+	runtime.Calendar = rules.RuntimeCalendar{EpochTurn: 1, StartYear: &start, Periods: []rules.RuntimeCalendarPeriod{{StartTurn: 0, YearsPerTurn: 50}}}
+	definitions, hash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Rules.Definitions = definitions
+	state.Rules.ContentHash = hash
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	calendar, ok := metadataWire(t, projection)["calendar"].(map[string]any)
+	if !ok || calendar["year"] != float64(-3850) || calendar["turn"] != float64(state.Phase.Turn) {
+		t.Fatalf("calendar not pinned to current turn: %v", calendar)
+	}
+	legacy, err := Project(clientMetadataState(), "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := metadataWire(t, legacy)["calendar"]; ok {
+		t.Fatal("legacy/synthetic game invented a calendar")
+	}
+}
+
 func TestClientPublicBoundsDoNotGrowWithExploration(t *testing.T) {
 	state := clientMetadataState()
 	first, err := Project(state, "a")

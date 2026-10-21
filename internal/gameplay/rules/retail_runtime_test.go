@@ -53,8 +53,17 @@ func TestProjectRetailRuntimeIncludesCompleteReleasedCatalog(t *testing.T) {
 	if runtime.PollutionModel == nil || runtime.PollutionModel.PopulationStart != 16 || runtime.PollutionModel.PopulationRatio != 15 || runtime.PollutionModel.ProductionStart != 300 || runtime.PollutionModel.ProductionRatio != 1 {
 		t.Fatalf("runtime pollution model = %+v", runtime.PollutionModel)
 	}
-	if runtime.Calendar.FinalTurn != 1000 {
-		t.Fatalf("runtime final turn = %d, want retail 2300 AD turn 1000", runtime.Calendar.FinalTurn)
+	if runtime.Calendar.FinalTurn != 1001 {
+		t.Fatalf("runtime final turn = %d, want one-based retail 2300 AD turn 1001", runtime.Calendar.FinalTurn)
+	}
+	if first, ok := runtime.Calendar.YearAtTurn(1); !ok || first != -4000 {
+		t.Fatalf("initial retail year=%d known=%t", first, ok)
+	}
+	if final, ok := runtime.Calendar.YearAtTurn(runtime.Calendar.FinalTurn); !ok || final != 2300 {
+		t.Fatalf("terminal retail year=%d known=%t", final, ok)
+	}
+	if runtime.Constants.MaxDisbandSize == nil || *runtime.Constants.MaxDisbandSize != 3 {
+		t.Fatal("retail MAX_DISBAND_SIZE was not pinned")
 	}
 	if runtime.Constants.CityGrowthCoefficient != 175 || runtime.Constants.UnconvertedIndulgenceGold != 3 || runtime.Constants.UnconvertedIndulgenceHappiness != 2 || runtime.Constants.ConvertedIndulgenceGold != 5 || runtime.Constants.ConvertedIndulgenceHappiness != 4 || runtime.Constants.OtherFaithIndulgenceGold != 2 || runtime.Constants.OtherFaithIndulgenceHappiness != 1 || runtime.Constants.ClericConversionPercent != 20 || runtime.Constants.TelevangelistConversionPercent != 40 || runtime.Constants.EmancipationUnhappinessTurns != 5 || runtime.Constants.EmancipationUnhappinessAmount != -3 || runtime.Constants.NukePopulationPercent != 75 || runtime.Constants.NukeKillTiles != 5 || runtime.Constants.PollutionCausedByNuke != 1000000 || runtime.Constants.PiracyWastePercent != 80 || runtime.Constants.VeteranCoefPercent != 50 || runtime.Constants.BombardDestroyBuildingPercent != 10 || runtime.Constants.BombardKillPopulationPercent != 10 || runtime.Constants.SpecialActionMoveCost != 100 || runtime.Constants.CaravanCoefPercent != 4 {
 		t.Fatalf("runtime constants = %+v", runtime.Constants)
@@ -98,7 +107,7 @@ func TestRetailRuntimeProjectionRoundTripsTerminalCalendar(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CompileRuntime(retail projection) error = %v", err)
 	}
-	if restarted.Calendar.FinalTurn != 1000 || !sameStringSlices(restarted.VictoryEvaluatorIDs(), []string{"bloodlust_conquest", "diplomatic_world_union", "score_2300", "science_gaia_controller"}) {
+	if restarted.Calendar.FinalTurn != 1001 || !sameStringSlices(restarted.VictoryEvaluatorIDs(), []string{"bloodlust_conquest", "diplomatic_world_union", "score_2300", "science_gaia_controller"}) {
 		t.Fatalf("restarted runtime terminal config = final_turn:%d victory:%#v", restarted.Calendar.FinalTurn, restarted.VictoryEvaluatorIDs())
 	}
 }

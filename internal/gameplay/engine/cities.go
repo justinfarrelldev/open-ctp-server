@@ -1219,6 +1219,7 @@ func RecalculateRound(state State) (State, error) {
 	}
 	applyReadinessSupportTax(&next, runtime)
 	updateNationMaxCityCounts(&next)
+	recordTurnStatistics(&next)
 	next.RecalculatedTurn = next.Phase.Turn
 	return next, nil
 }
@@ -2519,11 +2520,25 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 	}
 	switch item.Kind {
 	case ProductionUnit:
-		return completeUnitProduction(state, city, item, runtime)
+		if runtime == nil {
+			return nil
+		}
+		if _, known := runtime.Unit(item.ID); !known {
+			return nil
+		}
+		count := len(state.Units)
+		if err := completeUnitProduction(state, city, item, runtime); err != nil {
+			return err
+		}
+		unitID := ""
+		if len(state.Units) > count {
+			unitID = state.Units[len(state.Units)-1].ID
+		}
+		return recordProductionNotification(state, *city, item, unitID)
 	case ProductionBuilding:
 		city.Buildings = append(city.Buildings, Building{ID: item.ID, Upkeep: item.Upkeep, ObsoletedBy: item.ObsoletedBy, Effects: item.Effects})
 		applyBuildingTriggerFeats(state, city.OwnerID, item.ID, runtime)
-		return nil
+		return recordProductionNotification(state, *city, item, "")
 	case ProductionWonder:
 		if wonderExists(*state, item.ID) {
 			city.StoredProduction = 0
@@ -2531,7 +2546,7 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 		}
 		state.Wonders = append(state.Wonders, Wonder{ID: item.ID, OwnerID: city.OwnerID, CityID: city.ID, Scope: item.Scope, ObsoletedBy: item.ObsoletedBy, Effects: item.Effects})
 		applyWonderCompletionEffects(state, state.Wonders[len(state.Wonders)-1], runtime)
-		return nil
+		return recordProductionNotification(state, *city, item, "")
 	default:
 		return errors.New("unsupported production kind")
 	}

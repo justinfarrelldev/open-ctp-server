@@ -1126,7 +1126,7 @@ func scoreWinner(state State, runtime *rules.RuntimeRules) string {
 	scores := make(map[string]int)
 	for _, city := range state.Cities {
 		if player, ok := playerByIDValue(state, city.OwnerID); ok && player.Lifecycle == PlayerActive {
-			scores[city.OwnerID] += city.Yields.Victory + city.Yields.Food + city.Yields.Production + city.Yields.Gold
+			scores[city.OwnerID] += cityScore(city)
 		}
 	}
 	winner, best, tied := "", 0, false
