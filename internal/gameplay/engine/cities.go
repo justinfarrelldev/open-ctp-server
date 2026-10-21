@@ -2438,14 +2438,9 @@ func completeProduction(state *State, city *City, runtime *rules.RuntimeRules) e
 	}
 	production := yield.Production
 	if nation := nationForID(state, nationForPlayer(*state, city.OwnerID)); nation != nil && production > 0 {
-		publicWorks := production * publicWorksPercentForNation(*nation) / 100
-		if publicWorks > production {
-			publicWorks = production
-		}
-		if publicWorks > 0 {
-			nation.PublicWorks += publicWorks
-			production -= publicWorks
-		}
+		var publicWorks int
+		production, publicWorks = allocateProduction(production, publicWorksPercentForNation(*nation))
+		nation.PublicWorks += publicWorks
 	}
 	city.StoredProduction += production
 	item := city.Queue[0]

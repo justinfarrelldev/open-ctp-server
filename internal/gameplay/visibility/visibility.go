@@ -26,18 +26,21 @@ const (
 )
 
 type TileProjection struct {
-	ID        string                  `json:"id"`
-	X         int                     `json:"x"`
-	Y         int                     `json:"y"`
-	Terrain   string                  `json:"terrain"`
-	River     *bool                   `json:"river,omitempty"`
-	GoodID    *string                 `json:"good_id,omitempty"`
-	OwnerID   *string                 `json:"owner_id,omitempty"`
-	Pollution int                     `json:"pollution,omitempty"`
-	Stale     bool                    `json:"stale"`
-	Observed  int                     `json:"observed_turn"`
-	Planning  *TilePlanning           `json:"planning,omitempty"`
-	Overlays  []TileOverlayProjection `json:"overlays,omitempty"`
+	ID           string                  `json:"id"`
+	X            int                     `json:"x"`
+	Y            int                     `json:"y"`
+	Terrain      string                  `json:"terrain"`
+	River        *bool                   `json:"river,omitempty"`
+	GoodID       *string                 `json:"good_id,omitempty"`
+	OwnerID      *string                 `json:"owner_id,omitempty"`
+	Yields       *engine.TileYield       `json:"yields,omitempty"`
+	YieldContext string                  `json:"yield_context,omitempty"`
+	MovementCost *int                    `json:"movement_cost,omitempty"`
+	Pollution    int                     `json:"pollution,omitempty"`
+	Stale        bool                    `json:"stale"`
+	Observed     int                     `json:"observed_turn"`
+	Planning     *TilePlanning           `json:"planning,omitempty"`
+	Overlays     []TileOverlayProjection `json:"overlays,omitempty"`
 }
 
 type TileOverlayProjection struct {
@@ -116,15 +119,18 @@ type CityProjection struct {
 	Queue               []engine.ProductionItem `json:"queue,omitempty"`
 	Buildings           []engine.Building       `json:"buildings,omitempty"`
 	Yields              *engine.Yield           `json:"yields,omitempty"`
+	RushBuyQuote        *engine.RushBuyQuote    `json:"rush_buy_quote,omitempty"`
+	ProductionForecast  *engine.Forecast        `json:"production_forecast,omitempty"`
 	Stale               bool                    `json:"stale"`
 	Observed            int                     `json:"observed_turn"`
 }
 
 type ResearchProjection struct {
-	Advances  []string `json:"advances,omitempty"`
-	TargetID  string   `json:"target_id,omitempty"`
-	Progress  int      `json:"progress,omitempty"`
-	Available []string `json:"available,omitempty"`
+	Advances  []string         `json:"advances,omitempty"`
+	TargetID  string           `json:"target_id,omitempty"`
+	Progress  int              `json:"progress,omitempty"`
+	Available []string         `json:"available,omitempty"`
+	Forecast  *engine.Forecast `json:"forecast,omitempty"`
 }
 
 type TradeRouteProjection struct {
@@ -203,12 +209,17 @@ type Projection struct {
 	LegalActions     []ActionProjection     `json:"legal_actions,omitempty"`
 	EmbassyPlayerIDs []string               `json:"embassy_player_ids,omitempty"`
 	PlanningStatus   string                 `json:"planning_status,omitempty"`
+	World            *WorldProjection       `json:"world,omitempty"`
 }
 
 // Update records only what each player can currently observe. The returned state
 // remains the single canonical authority and is safe to persist/reload unchanged.
 func Update(state engine.State) (engine.State, error) {
 	if err := engine.ValidateState(state); err != nil {
+		return engine.State{}, err
+	}
+	inspector, err := engine.NewInspector(state)
+	if err != nil {
 		return engine.State{}, err
 	}
 	visible := visibleTiles(state)
@@ -223,7 +234,7 @@ func Update(state engine.State) (engine.State, error) {
 			if !ok {
 				continue
 			}
-			observation := engine.FogObservation{PlayerID: playerID, TileID: tile.ID, Turn: state.Phase.Turn, Terrain: tile.Terrain, River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), OwnerID: copyValue(&tile.OwnerID)}
+			observation := engine.FogObservation{PlayerID: playerID, TileID: tile.ID, Turn: state.Phase.Turn, Terrain: engine.EffectiveTerrain(state, tile.ID), River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), OwnerID: copyValue(&tile.OwnerID), Inspection: inspector.Tile(tile.ID)}
 			if city, ok := cities[tile.ID]; ok {
 				observation.CityID = city.ID
 				observation.CityOwnerID = city.OwnerID
@@ -235,7 +246,7 @@ func Update(state engine.State) (engine.State, error) {
 			memory[playerID+"\x00"+tileID] = observation
 		}
 	}
-	state.Fog = state.Fog[:0]
+	state.Fog = make([]engine.FogObservation, 0, len(memory))
 	for _, observation := range memory {
 		state.Fog = append(state.Fog, observation)
 	}
@@ -255,19 +266,27 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	if err := engine.ValidateState(state); err != nil {
 		return Projection{}, err
 	}
-	visible := visibleTiles(state)[playerID]
-	memory := memoryByTile(state.Fog, playerID)
-	planning, err := planningTiles(state, playerID, visible)
+	inspector, err := engine.NewInspector(state)
 	if err != nil {
 		return Projection{}, err
 	}
-	result := Projection{Revision: state.Revision, Turn: state.Phase.Turn, PlanningStatus: planningStatus(state, playerID), Rules: rulesProjection(state)}
+	visible := visibleTiles(state)[playerID]
+	memory := memoryByTile(state.Fog, playerID)
+	planning, err := planningTiles(state, playerID, visible, inspector)
+	if err != nil {
+		return Projection{}, err
+	}
+	result := Projection{Revision: state.Revision, Turn: state.Phase.Turn, PlanningStatus: planningStatus(state, playerID), Rules: rulesProjection(state), World: worldProjection(state)}
 	viewerNationID := nationForPlayer(state, playerID)
 	for _, nation := range state.Nations {
 		if nation.ID != viewerNationID {
 			continue
 		}
 		result.Research = researchProjection(state, nation)
+		if result.Research == nil {
+			result.Research = &ResearchProjection{}
+		}
+		result.Research.Forecast = inspector.Research(playerID)
 		result.Diplomacy = diplomacyProjection(state, playerID, nation)
 		result.CityReports = cloneCityReports(nation.CityReports)
 		for _, embassyPlayer := range state.Players {
@@ -278,11 +297,15 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	}
 	for _, tile := range state.Tiles {
 		if visible[tile.ID] {
-			result.Tiles = append(result.Tiles, TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: tile.Terrain, River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), OwnerID: copyValue(&tile.OwnerID), Pollution: tile.Pollution, Observed: state.Phase.Turn, Planning: planning[tile.ID], Overlays: tileOverlayProjections(state, tile.ID)})
+			projected := TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: engine.EffectiveTerrain(state, tile.ID), River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), OwnerID: copyValue(&tile.OwnerID), Observed: state.Phase.Turn, Planning: planning[tile.ID]}
+			applyInspection(&projected, inspector.Tile(tile.ID))
+			result.Tiles = append(result.Tiles, projected)
 			continue
 		}
 		if observation, ok := memory[tile.ID]; ok {
-			result.Tiles = append(result.Tiles, TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: observation.Terrain, River: copyValue(observation.River), GoodID: copyValue(observation.GoodID), OwnerID: copyValue(observation.OwnerID), Stale: true, Observed: observation.Turn})
+			projected := TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: observation.Terrain, River: copyValue(observation.River), GoodID: copyValue(observation.GoodID), OwnerID: copyValue(observation.OwnerID), Stale: true, Observed: observation.Turn}
+			applyInspection(&projected, observation.Inspection)
+			result.Tiles = append(result.Tiles, projected)
 			if observation.CityID != "" {
 				result.Cities = append(result.Cities, CityProjection{ID: observation.CityID, Name: observation.CityName, TypeID: observation.CityTypeID, Population: knownPopulation(observation.CityPopulation), OwnerID: observation.CityOwnerID, TileID: tile.ID, Effects: append([]engine.Effect(nil), observation.CityEffects...), Stale: true, Observed: observation.Turn})
 			}
@@ -322,7 +345,10 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	}
 	for _, city := range state.Cities {
 		if visible[city.TileID] {
-			result.Cities = append(result.Cities, projectCity(city, playerID, state.Phase.Turn))
+			projected := projectCity(city, playerID, state.Phase.Turn)
+			projected.RushBuyQuote = inspector.RushBuy(city.ID, playerID)
+			projected.ProductionForecast = inspector.Production(city.ID, playerID)
+			result.Cities = append(result.Cities, projected)
 		}
 	}
 	result.TradeRoutes = tradeRouteProjection(state, playerID, visible)
@@ -1946,26 +1972,6 @@ func action(command, route, entityID, targetID string, payload any, fields []str
 	return ActionProjection{Command: command, Route: route, EntityID: entityID, TargetID: targetID, Fields: append([]string(nil), fields...), Payload: encoded}
 }
 
-func tileOverlayProjections(state engine.State, tileID string) []TileOverlayProjection {
-	result := make([]TileOverlayProjection, 0)
-	for _, overlay := range state.Overlays {
-		if overlay.TileID != tileID {
-			continue
-		}
-		result = append(result, TileOverlayProjection{Kind: overlay.Kind, ImprovementID: overlay.ImprovementID, Remaining: overlay.Remaining})
-	}
-	sort.Slice(result, func(i, j int) bool {
-		if result[i].Kind != result[j].Kind {
-			return result[i].Kind < result[j].Kind
-		}
-		if result[i].ImprovementID != result[j].ImprovementID {
-			return result[i].ImprovementID < result[j].ImprovementID
-		}
-		return result[i].Remaining < result[j].Remaining
-	})
-	return result
-}
-
 func projectedTiles(projection Projection) map[string]TileProjection {
 	result := make(map[string]TileProjection, len(projection.Tiles))
 	for _, tile := range projection.Tiles {
@@ -2226,7 +2232,7 @@ func planningStatus(state engine.State, playerID string) string {
 	return PlanningStatusOpen
 }
 
-func planningTiles(state engine.State, playerID string, visible map[string]bool) (map[string]*TilePlanning, error) {
+func planningTiles(state engine.State, playerID string, visible map[string]bool, inspector *engine.Inspector) (map[string]*TilePlanning, error) {
 	result := make(map[string]*TilePlanning)
 	if len(state.Rules.Definitions) == 0 || string(state.Rules.Definitions) == "null" {
 		return result, nil
@@ -2255,8 +2261,12 @@ func planningTiles(state engine.State, playerID string, visible map[string]bool)
 		if !ok {
 			return nil, errors.New("visible tile terrain is unavailable to the runtime movement model")
 		}
+		cost := inspector.MovementCost(tile.ID)
+		if cost == nil {
+			return nil, errors.New("visible movement cost is unavailable")
+		}
 		result[tile.ID] = &TilePlanning{
-			Cost:       projectedTerrainCost(state, tile.ID, terrain.Cost),
+			Cost:       *cost,
 			Domains:    append([]string(nil), terrain.Domains...),
 			Accessible: tile.OwnerID == "" || tile.OwnerID == playerID || (runtime.Movement.OpenAccess && tile.Open),
 		}
@@ -2265,7 +2275,7 @@ func planningTiles(state engine.State, playerID string, visible map[string]bool)
 		return result, nil
 	}
 	for _, unit := range state.Units {
-		if unit.OwnerID == playerID || !unit.ZOC || unit.TransportID == "" && !visible[unit.TileID] {
+		if unit.OwnerID == playerID || !unit.ZOC || unit.TransportID != "" || !unitVisibleToPlayer(state, playerID, visible, unit) {
 			continue
 		}
 		for tileID, planning := range result {
@@ -2277,19 +2287,6 @@ func planningTiles(state engine.State, playerID string, visible map[string]bool)
 		}
 	}
 	return result, nil
-}
-
-func projectedTerrainCost(state engine.State, tileID string, base int) int {
-	cost := base
-	for _, overlay := range state.Overlays {
-		if overlay.TileID == tileID && overlay.Kind == "improvement" && overlay.Remaining == 0 {
-			cost += overlay.MovementCostDelta
-		}
-	}
-	if cost < 1 {
-		return 1
-	}
-	return cost
 }
 
 func Plan(projection Projection, unitID, targetTileID string) ([]string, error) {

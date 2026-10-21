@@ -462,19 +462,20 @@ type TurnPolicyState struct {
 // FogObservation contains only facts observed by this player. Nil metadata means
 // unknown (including legacy saves), never a request to backfill hidden authority.
 type FogObservation struct {
-	PlayerID       string   `json:"player_id"`
-	TileID         string   `json:"tile_id"`
-	Turn           int      `json:"turn"`
-	Terrain        string   `json:"terrain"`
-	River          *bool    `json:"river,omitempty"`
-	GoodID         *string  `json:"good_id,omitempty"`
-	OwnerID        *string  `json:"owner_id,omitempty"`
-	CityID         string   `json:"city_id,omitempty"`
-	CityOwnerID    string   `json:"city_owner_id,omitempty"`
-	CityName       string   `json:"city_name,omitempty"`
-	CityTypeID     string   `json:"city_type_id,omitempty"`
-	CityPopulation *int     `json:"city_population,omitempty"`
-	CityEffects    []Effect `json:"city_effects,omitempty"`
+	PlayerID       string          `json:"player_id"`
+	TileID         string          `json:"tile_id"`
+	Turn           int             `json:"turn"`
+	Terrain        string          `json:"terrain"`
+	River          *bool           `json:"river,omitempty"`
+	GoodID         *string         `json:"good_id,omitempty"`
+	OwnerID        *string         `json:"owner_id,omitempty"`
+	Inspection     *TileInspection `json:"inspection,omitempty"`
+	CityID         string          `json:"city_id,omitempty"`
+	CityOwnerID    string          `json:"city_owner_id,omitempty"`
+	CityName       string          `json:"city_name,omitempty"`
+	CityTypeID     string          `json:"city_type_id,omitempty"`
+	CityPopulation *int            `json:"city_population,omitempty"`
+	CityEffects    []Effect        `json:"city_effects,omitempty"`
 }
 
 type RNGDomainState struct {
