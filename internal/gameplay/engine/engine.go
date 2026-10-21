@@ -51,6 +51,7 @@ const (
 	CommandFoundCity          = "found-city"
 	CommandQueueProduction    = "queue-production"
 	CommandCancelProduction   = "cancel-production"
+	CommandEditProduction     = "edit-production"
 	CommandRushBuy            = "rush-buy"
 	CommandSetSpecialists     = "set-specialists"
 	CommandCreateTradeRoute   = "create-trade-route"
@@ -311,6 +312,7 @@ type City struct {
 	StarvationTurns     int              `json:"starvation_turns,omitempty"`
 	StoredProduction    int              `json:"stored_production,omitempty"`
 	Queue               []ProductionItem `json:"queue,omitempty"`
+	QueueSequence       uint64           `json:"queue_sequence,omitempty"`
 	Buildings           []Building       `json:"buildings,omitempty"`
 	Obsolete            []string         `json:"obsolete,omitempty"`
 	Yields              Yield            `json:"yields,omitempty"`
@@ -592,6 +594,10 @@ func Apply(state State, command Command, pin RulesPin, sources Sources) (State, 
 	if err != nil {
 		return State{}, nil, Result{}, err
 	}
+	next, err = WithQueueIdentities(next)
+	if err != nil {
+		return State{}, nil, Result{}, err
+	}
 	if command.Type != CommandSetWar && command.Type != CommandTakeoverAI && (command.Type == CommandPass || next.Phase.Mode == turns.ModeLongTurn || next.Phase.Mode == turns.ModeSimultaneous || next.Phase.Mode == turns.ModeHybrid) {
 		return applyPolicyCommand(next, command, runtime, sources)
 	}
@@ -657,7 +663,7 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 		eventType = EventCombatResolved
 	case CommandBombard:
 		eventType, eventPayload, err = applyBombard(state, command, sources, runtime)
-	case CommandFoundCity, CommandQueueProduction, CommandCancelProduction, CommandRushBuy, CommandSetSpecialists, CommandCreateTradeRoute:
+	case CommandFoundCity, CommandQueueProduction, CommandCancelProduction, CommandEditProduction, CommandRushBuy, CommandSetSpecialists, CommandCreateTradeRoute:
 		eventType, err = applyCityCommand(state, command, runtime)
 	default:
 		if isSpecialCommand(command.Type) {
@@ -792,7 +798,7 @@ func policyEnvelope(command Command, receiptSequence int64) turns.Command {
 	class := "non_hostile"
 	if command.Type == CommandCombat {
 		class = "hostile"
-	} else if command.Type == CommandFoundCity || command.Type == CommandQueueProduction || command.Type == CommandCancelProduction || command.Type == CommandRushBuy {
+	} else if command.Type == CommandFoundCity || command.Type == CommandQueueProduction || command.Type == CommandCancelProduction || command.Type == CommandEditProduction || command.Type == CommandRushBuy {
 		class = "economic"
 	}
 	return turns.Command{Kind: turns.CommandAction, ActorID: command.ActorPlayerID, ActionClass: class, UnitOrArmyID: unitOrArmyID, ReceiptSequence: receiptSequence, Hostile: class == "hostile", TargetPlayerID: metadata.TargetPlayerID, CommandID: persisted.ID, IdempotencyKey: persisted.IdempotencyKey, Payload: payload}

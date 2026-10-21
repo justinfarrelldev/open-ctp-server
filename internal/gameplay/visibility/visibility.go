@@ -266,6 +266,10 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	if err := engine.ValidateState(state); err != nil {
 		return Projection{}, err
 	}
+	state, err := engine.WithQueueIdentities(state)
+	if err != nil {
+		return Projection{}, err
+	}
 	inspector, err := engine.NewInspector(state)
 	if err != nil {
 		return Projection{}, err
@@ -1100,8 +1104,13 @@ func productionActions(state engine.State, projection Projection, playerID strin
 		if city.OwnerID != playerID || city.Stale {
 			continue
 		}
+		entries := make([]engine.QueueSelection, 0, len(city.Queue))
+		for _, queued := range city.Queue {
+			entries = append(entries, engine.QueueSelection{EntryID: queued.EntryID})
+		}
+		actions = append(actions, action(engine.CommandEditProduction, "edit-production", city.ID, "", engine.EditProductionPayload{CityID: city.ID, Entries: entries}, []string{"city_id", "entries"}))
 		for index, queued := range city.Queue {
-			actions = append(actions, action(engine.CommandCancelProduction, "cancel-production", city.ID, queued.ID, map[string]string{"city_id": city.ID, "item_id": queued.ID}, []string{"city_id", "item_id"}))
+			actions = append(actions, action(engine.CommandCancelProduction, "cancel-production", city.ID, queued.EntryID, map[string]string{"city_id": city.ID, "entry_id": queued.EntryID}, []string{"city_id", "entry_id"}))
 			rushCost := projectedRushBuyCost(projection, city, queued)
 			if index == 0 && rushCost > 0 && projection.Diplomacy != nil && projection.Diplomacy.Gold >= rushCost {
 				actions = append(actions, action(engine.CommandRushBuy, "rush-buy", city.ID, queued.ID, map[string]string{"city_id": city.ID}, []string{"city_id"}))

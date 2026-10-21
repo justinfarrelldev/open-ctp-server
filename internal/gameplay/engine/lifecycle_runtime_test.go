@@ -90,6 +90,19 @@ func TestRetailIncreaseScientistsWonderAddsCityResearch(t *testing.T) {
 
 func TestTask6ResearchCompletesAdvancesAndUnlocksProduction(t *testing.T) {
 	state := runtimeStartedState(t)
+	// Production definitions belong to the pinned server rules, never to the
+	// request. Keep this unlock fixture explicit now that unknown IDs fail closed.
+	runtime, err := rules.CompileRuntime(state.Rules.Definitions, state.Rules.ContentHash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtime.Units = append(runtime.Units, rules.RuntimeUnitDefinition{ID: "UNIT_UNLOCKED", Domain: DomainLand, Movement: 1, Health: 1, ProductionCost: 1, Prerequisites: []string{"ADVANCE_SYNTHETIC_ROOT"}})
+	definitions, hash, err := rules.CanonicalRuntimeDefinitions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Rules.Definitions = definitions
+	state.Rules.ContentHash = hash
 	state.Phase.ActivePlayerOrder = []string{"player-a"}
 	state.Nations[0].Effects = []Effect{{ID: "research-lab", Kind: EffectResearch, Value: 1}}
 	state.Cities = []City{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}, {ID: "city-b", OwnerID: "player-b", TileID: "tile-b"}}

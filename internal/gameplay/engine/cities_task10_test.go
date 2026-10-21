@@ -546,7 +546,7 @@ func TestTask10CityCommandAuthorizationAndQueueRejections(t *testing.T) {
 	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: ProductionItem{ID: "built", Kind: ProductionWonder, Cost: 1}}, nil); err == nil {
 		t.Fatal("existing wonder accepted")
 	}
-	item := ProductionItem{ID: "repeat", Kind: ProductionUnit, Cost: 1}
+	item := ProductionItem{ID: "repeat", Kind: ProductionBuilding, Cost: 1}
 	if err := queueProduction(&state, "player-a", QueueProductionPayload{CityID: "city-a", Item: item}, nil); err != nil {
 		t.Fatal(err)
 	}

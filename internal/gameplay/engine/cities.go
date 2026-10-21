@@ -207,6 +207,7 @@ type Yield struct {
 
 type ProductionItem struct {
 	ID           string   `json:"id"`
+	EntryID      string   `json:"entry_id,omitempty"`
 	Kind         string   `json:"kind"`
 	Cost         int      `json:"cost"`
 	Upkeep       int      `json:"upkeep,omitempty"`
@@ -245,8 +246,9 @@ type QueueProductionPayload struct {
 }
 
 type CancelProductionPayload struct {
-	CityID string `json:"city_id"`
-	ItemID string `json:"item_id"`
+	CityID  string `json:"city_id"`
+	ItemID  string `json:"item_id,omitempty"`
+	EntryID string `json:"entry_id,omitempty"`
 }
 
 type RushBuyPayload struct {
@@ -286,6 +288,12 @@ func applyCityCommand(state *State, command Command, runtime *rules.RuntimeRules
 			return "", err
 		}
 		return "production.cancelled", cancelProduction(state, command.ActorPlayerID, payload)
+	case CommandEditProduction:
+		var payload EditProductionPayload
+		if err := decodePayload(command.Payload, &payload); err != nil {
+			return "", err
+		}
+		return "production.edited", editProduction(state, command.ActorPlayerID, payload, runtime)
 	case CommandRushBuy:
 		var payload RushBuyPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
@@ -716,6 +724,19 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if !ok || city.OwnerID != actor {
 		return errors.New("city is not owned by actor")
 	}
+	if payload.Item.EntryID != "" || len(city.Queue) >= MaxProductionQueueEntries {
+		return errors.New("production append is invalid")
+	}
+	if runtime != nil {
+		canonical, err := canonicalProductionItem(runtime, payload.Item.ID)
+		if err != nil {
+			return err
+		}
+		if payload.Item.Kind != "" && payload.Item.Kind != canonical.Kind {
+			return errors.New("production kind does not match rules")
+		}
+		payload.Item = canonical
+	}
 	if err := validateProductionItem(payload.Item); err != nil {
 		return err
 	}
@@ -763,11 +784,20 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 		return errors.New("wonder already exists")
 	}
 	for _, item := range city.Queue {
-		if item.ID == payload.Item.ID {
+		if item.ID == payload.Item.ID && payload.Item.Kind != ProductionUnit {
 			return errors.New("production item already queued")
 		}
 	}
-	city.Queue = append(city.Queue, payload.Item)
+	identified, err := identifiedQueue(*city)
+	if err != nil {
+		return err
+	}
+	identified.Queue = append(identified.Queue, payload.Item)
+	identified, err = identifiedQueue(identified)
+	if err != nil {
+		return err
+	}
+	*city = identified
 	return nil
 }
 
@@ -1007,21 +1037,33 @@ func applyRuntimeProductionDefaults(item ProductionItem, runtime *rules.RuntimeR
 
 func cancelProduction(state *State, actor string, payload CancelProductionPayload) error {
 	city, ok := cityByID(*state, payload.CityID)
-	if !ok || city.OwnerID != actor || payload.ItemID == "" {
-		return errors.New("production item is not owned by actor")
+	if !ok || city.OwnerID != actor || (payload.ItemID == "") == (payload.EntryID == "") {
+		return errors.New("production cancellation is invalid")
 	}
-	for i, item := range city.Queue {
-		if item.ID == payload.ItemID {
-			city.Queue = append(city.Queue[:i], city.Queue[i+1:]...)
-			// Only the current item owns progress. Keep the existing no-refund
-			// head-cancellation policy, not a penalty for unrelated future orders.
-			if i == 0 {
-				city.StoredProduction = 0
+	identified, err := identifiedQueue(*city)
+	if err != nil {
+		return err
+	}
+	selected := -1
+	for index, item := range identified.Queue {
+		if payload.EntryID != "" && item.EntryID == payload.EntryID || payload.ItemID != "" && item.ID == payload.ItemID {
+			if selected >= 0 {
+				return errors.New("production content identity is ambiguous; use entry_id")
 			}
-			return nil
+			selected = index
 		}
 	}
-	return errors.New("production item is not queued")
+	if selected < 0 {
+		return errors.New("production item is not queued")
+	}
+	identified.Queue = append(identified.Queue[:selected], identified.Queue[selected+1:]...)
+	// Existing supported policy: actual head removal has no refund. Future
+	// entry edits must never consume an unchanged head's production.
+	if selected == 0 {
+		identified.StoredProduction = 0
+	}
+	*city = identified
+	return nil
 }
 
 func rushBuyProduction(state *State, actor string, payload RushBuyPayload, runtime *rules.RuntimeRules) error {
@@ -1116,6 +1158,10 @@ func RecalculateRound(state State) (State, error) {
 		return State{}, err
 	}
 	next, err := canonicalClone(state)
+	if err != nil {
+		return State{}, err
+	}
+	next, err = WithQueueIdentities(next)
 	if err != nil {
 		return State{}, err
 	}
@@ -3541,9 +3587,16 @@ func validateCityState(state State) error {
 				return errors.New("building is invalid")
 			}
 		}
+		entryIDs := make(map[string]bool, len(city.Queue))
 		for _, item := range city.Queue {
 			if err := validateProductionItem(item); err != nil {
 				return err
+			}
+			if item.EntryID != "" {
+				if entryIDs[item.EntryID] {
+					return errors.New("duplicate production entry identity")
+				}
+				entryIDs[item.EntryID] = true
 			}
 		}
 	}
