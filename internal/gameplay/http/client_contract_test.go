@@ -46,6 +46,7 @@ func TestClientReportedRoutesDispatchExactPayloads(t *testing.T) {
 		{"sleep", engine.CommandSleep, `{"unit_id":"agent"}`},
 		{"wake", engine.CommandWake, `{"unit_id":"agent"}`},
 		{"set-research-goal", engine.CommandSetResearchGoal, `{"advance_id":"advance"}`},
+		{"move", engine.CommandMoveUnit, `{"unit_id":"agent","target_x":0,"target_y":1}`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.route+tc.payload, func(t *testing.T) {

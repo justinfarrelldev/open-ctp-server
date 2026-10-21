@@ -67,7 +67,7 @@
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "0198f7f463fbe79b1435be39327c449d1e084cb2a8652bd4b99ffbef96a23c91"
+      "sha256": "e93503c48870e3d7930f0b864be44bb8730214331aaa745c2e9fbd32d83f2813"
     },
     {
       "path": "internal/gameplay/engine/forecasts.go",
@@ -111,7 +111,7 @@
     },
     {
       "path": "internal/gameplay/engine/units.go",
-      "sha256": "bbcc3b2f0ad412483ae93cfd01a89cb11ad559d808a70c2ff60c6376958dc7fa"
+      "sha256": "115ee991bd8e67bb25c362c155b7257c4bf8c3e71c11337377ec4a500e387fca"
     },
     {
       "path": "internal/gameplay/engine/war.go",
@@ -127,7 +127,7 @@
     },
     {
       "path": "internal/gameplay/http/http.go",
-      "sha256": "de8d3c2f559bdef1da1c47b8a21fccaaac3259e805f3341d42bed727af83a09d"
+      "sha256": "aa9232bd49acf24b1fe96223372229af26e62ec544928d29de180d9deb479516"
     },
     {
       "path": "internal/gameplay/rules/calendar.go",
@@ -183,11 +183,11 @@
     },
     {
       "path": "internal/gameplay/visibility/metadata.go",
-      "sha256": "70a91abf7eb8a4f9e67656ec5fab51d2fd1fa0f9724e403557a9ec89fcc8beb4"
+      "sha256": "d5a3a4e06720baba8eea1b9f06af0210c2b899715a23b7126c0112f8113ea3b6"
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "495ca074de6a96953cc33e6bbbcdeea7fe95a1724c878b2820ac8c7265ffd3d0"
+      "sha256": "324c54082ab48da35dc9fb8628d2cc701e2c83b2a2c79a763ea1fbd5010a6bd5"
     },
     {
       "path": "internal/runtime/runtime.go",

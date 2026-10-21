@@ -15,8 +15,10 @@ const maxArmySize = 12
 var ErrObstructed = errors.New("movement obstructed")
 
 type moveUnitPayload struct {
-	UnitID string   `json:"unit_id"`
-	Path   []string `json:"path"`
+	UnitID  string   `json:"unit_id"`
+	Path    []string `json:"path,omitempty"`
+	TargetX *int     `json:"target_x,omitempty"`
+	TargetY *int     `json:"target_y,omitempty"`
 }
 
 type unitPayload struct {
@@ -74,8 +76,8 @@ func applyUnitCommand(state *State, command Command, runtime *rules.RuntimeRules
 	}
 	switch command.Type {
 	case CommandMoveUnit:
-		var payload moveUnitPayload
-		if err := decodePayload(command.Payload, &payload); err != nil {
+		payload, err := decodeMovePayload(command.Payload)
+		if err != nil {
 			return "", err
 		}
 		return EventUnitMoved, moveUnit(state, command.ActorPlayerID, payload, runtime)
@@ -444,8 +446,22 @@ func unitHasRetailCapabilityMetadata(unit Unit) bool {
 
 func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *rules.RuntimeRules) error {
 	unit, err := ownedUnit(state, actorID, payload.UnitID)
-	if err != nil || unit.TransportID != "" || len(payload.Path) == 0 {
+	if err != nil || unit.TransportID != "" {
 		return invalidUnitAction(err)
+	}
+	if payload.TargetX != nil || payload.TargetY != nil {
+		if payload.TargetX == nil || payload.TargetY == nil || len(payload.Path) != 0 {
+			return ErrObstructed
+		}
+		for _, tile := range state.Tiles {
+			if tile.X == *payload.TargetX && tile.Y == *payload.TargetY {
+				payload.Path = []string{tile.ID}
+				break
+			}
+		}
+	}
+	if len(payload.Path) == 0 {
+		return ErrObstructed
 	}
 	from, ok := tileByID(*state, unit.TileID)
 	if !ok {
@@ -508,6 +524,46 @@ func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *ru
 	captureCityAt(state, actorID, from.ID, runtime)
 	state.Fog = append(state.Fog, FogObservation{PlayerID: actorID, TileID: from.ID, Turn: state.Phase.Turn})
 	return nil
+}
+
+// preflightCoordinateMove validates the new tentative coordinate contract before
+// storing planning intent. A baseline-invalid attempt must not poison an entire
+// hybrid resolution. Final execution still revalidates and resolves collisions.
+// Legacy path-envelope queuing/replay semantics remain unchanged.
+func preflightCoordinateMove(state State, command Command, runtime *rules.RuntimeRules) error {
+	if !coordinateMoveRequested(command.Payload) {
+		return nil
+	}
+	payload, err := decodeMovePayload(command.Payload)
+	if err != nil {
+		return err
+	}
+	candidate, err := canonicalClone(state)
+	if err != nil {
+		return err
+	}
+	return moveUnit(&candidate, command.ActorPlayerID, payload, runtime)
+}
+
+func coordinateMoveRequested(raw json.RawMessage) bool {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return false
+	}
+	_, x := fields["target_x"]
+	_, y := fields["target_y"]
+	return x || y
+}
+
+func decodeMovePayload(raw json.RawMessage) (moveUnitPayload, error) {
+	var payload moveUnitPayload
+	if err := decodePayload(raw, &payload); err != nil {
+		return payload, err
+	}
+	if coordinateMoveRequested(raw) && (payload.TargetX == nil || payload.TargetY == nil || len(payload.Path) > 0) {
+		return payload, ErrObstructed
+	}
+	return payload, nil
 }
 
 func recordCircumnavigationColumns(state *State, unit *Unit, columns []int, runtime *rules.RuntimeRules) {

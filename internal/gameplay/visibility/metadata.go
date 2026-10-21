@@ -2,6 +2,26 @@ package visibility
 
 import "github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
 
+// ContractProjection versions the projection independently of persisted state.
+// Features describe supported contracts, not permission to bypass action/phase
+// validation. False feature decisions must not be emulated by local mutations.
+type ContractProjection struct {
+	Version  int             `json:"version"`
+	Features map[string]bool `json:"features"`
+}
+
+func contractProjection(projection Projection) *ContractProjection {
+	movement := projection.Rules != nil && projection.Rules.Movement != nil && projection.Rules.Movement.Configured
+	return &ContractProjection{Version: 2, Features: map[string]bool{
+		"fog_metadata": true, "tile_inspection": true, "atomic_production_queue": true,
+		"city_orders": true, "retained_sleep": true, "research_goals": true,
+		"coordinate_move_intents": movement, "calendar": projection.Calendar != nil,
+		"production_notifications": true, "own_statistics_history": true,
+		"retained_movement_orders": false, "governor": false, "policy_optimizer": false,
+		"city_culture_style": false, "ruin_rewards": false, "foreign_statistics_history": false,
+	}}
+}
+
 // WorldProjection describes the public playable coordinate graph, not hidden
 // terrain or generator inputs. Current engine adjacency does not wrap either axis.
 type WorldProjection struct {

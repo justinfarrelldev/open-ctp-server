@@ -212,6 +212,8 @@ type Projection struct {
 	Notifications    []engine.Notification     `json:"notifications,omitempty"`
 	Statistics       []engine.StatisticsSample `json:"statistics,omitempty"`
 	LegalActions     []ActionProjection        `json:"legal_actions,omitempty"`
+	ActionIntents    []ActionProjection        `json:"action_intents,omitempty"`
+	Contract         *ContractProjection       `json:"contract"`
 	EmbassyPlayerIDs []string                  `json:"embassy_player_ids,omitempty"`
 	PlanningStatus   string                    `json:"planning_status,omitempty"`
 	World            *WorldProjection          `json:"world,omitempty"`
@@ -377,6 +379,8 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	sort.Slice(result.TradeRoutes, func(i, j int) bool { return result.TradeRoutes[i].ID < result.TradeRoutes[j].ID })
 	sort.Strings(result.EmbassyPlayerIDs)
 	result.LegalActions = legalActions(state, result, playerID)
+	result.ActionIntents = movementIntents(state, result, playerID)
+	result.Contract = contractProjection(result)
 	return result, nil
 }
 
@@ -641,6 +645,23 @@ func legalActions(state engine.State, projection Projection, playerID string) []
 		return actions[i].Command < actions[j].Command
 	})
 	return actions
+}
+
+// movementIntents authorizes input shape, not hidden legality or predicted
+// outcomes. The client supplies a public coordinate and may animate provisionally;
+// the normal engine revalidates the entire move and receipts remain authoritative.
+func movementIntents(state engine.State, projection Projection, playerID string) []ActionProjection {
+	if !viewerCanAct(state, projection, playerID) || projection.PlanningStatus == PlanningStatusQueued || projection.Rules == nil || projection.Rules.Movement == nil || !projection.Rules.Movement.Configured {
+		return nil
+	}
+	intents := []ActionProjection{}
+	for _, unit := range projection.Units {
+		if unit.OwnerID != playerID || unit.TileID == "" || unit.TransportID != "" || unit.InSpace || unit.Movement <= 0 || unit.Domain == "" {
+			continue
+		}
+		intents = append(intents, action(engine.CommandMoveUnit, "move", unit.ID, "", map[string]string{"unit_id": unit.ID}, []string{"unit_id", "target_x", "target_y"}))
+	}
+	return intents
 }
 
 func researchGoalActions(state engine.State, playerID string) []ActionProjection {

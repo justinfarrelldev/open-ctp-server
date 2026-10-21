@@ -723,6 +723,11 @@ func applyPolicyCommand(next State, command Command, runtime *rules.RuntimeRules
 			return State{}, nil, Result{}, err
 		}
 	}
+	if !resolved.Immediate && command.Type == CommandMoveUnit {
+		if err := preflightCoordinateMove(next, command, runtime); err != nil {
+			return State{}, nil, Result{}, err
+		}
+	}
 	next = next.WithTurnPolicyState(resolvedPolicy)
 	if resolved.Resolved {
 		next.Phase.ResolutionLocked = true
