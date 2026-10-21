@@ -210,6 +210,7 @@ type Projection struct {
 	Rules            *RulesProjection          `json:"rules,omitempty"`
 	CityReports      []engine.CityReport       `json:"city_reports,omitempty"`
 	Notifications    []engine.Notification     `json:"notifications,omitempty"`
+	MovementOrders   []engine.MovementOrder    `json:"movement_orders,omitempty"`
 	Statistics       []engine.StatisticsSample `json:"statistics,omitempty"`
 	LegalActions     []ActionProjection        `json:"legal_actions,omitempty"`
 	ActionIntents    []ActionProjection        `json:"action_intents,omitempty"`
@@ -307,6 +308,12 @@ func Project(state engine.State, playerID string) (Projection, error) {
 			if embassyPlayer.ID != playerID && engine.HasEffectiveEmbassyWith(state, playerID, embassyPlayer.ID) {
 				result.EmbassyPlayerIDs = append(result.EmbassyPlayerIDs, embassyPlayer.ID)
 			}
+		}
+	}
+	for _, order := range state.MovementOrders {
+		if order.PlayerID == playerID {
+			order.UnitIDs = append([]string(nil), order.UnitIDs...)
+			result.MovementOrders = append(result.MovementOrders, order)
 		}
 	}
 	for _, notification := range state.Notifications {
@@ -623,6 +630,9 @@ func legalActions(state engine.State, projection Projection, playerID string) []
 	} else {
 		actions = append(actions, action(engine.CommandPass, "pass", playerID, "", map[string]any{}, nil))
 	}
+	for _, order := range projection.MovementOrders {
+		actions = append(actions, action(engine.CommandCancelMovementOrder, "cancel-movement-order", order.UnitID, "", map[string]string{"unit_id": order.UnitID}, []string{"unit_id"}))
+	}
 	actions = append(actions, researchActions(projection, playerID)...)
 	actions = append(actions, researchGoalActions(state, playerID)...)
 	actions = append(actions, governmentActions(projection, playerID)...)
@@ -656,10 +666,13 @@ func movementIntents(state engine.State, projection Projection, playerID string)
 	}
 	intents := []ActionProjection{}
 	for _, unit := range projection.Units {
-		if unit.OwnerID != playerID || unit.TileID == "" || unit.TransportID != "" || unit.InSpace || unit.Movement <= 0 || unit.Domain == "" {
+		if unit.OwnerID != playerID || unit.TileID == "" || unit.TransportID != "" || unit.InSpace || unit.Domain == "" {
 			continue
 		}
-		intents = append(intents, action(engine.CommandMoveUnit, "move", unit.ID, "", map[string]string{"unit_id": unit.ID}, []string{"unit_id", "target_x", "target_y"}))
+		intents = append(intents, action(engine.CommandSetMovementOrder, "set-movement-order", unit.ID, "", map[string]string{"unit_id": unit.ID}, []string{"unit_id", "target_x", "target_y"}))
+		if unit.Movement > 0 {
+			intents = append(intents, action(engine.CommandMoveUnit, "move", unit.ID, "", map[string]string{"unit_id": unit.ID}, []string{"unit_id", "target_x", "target_y"}))
+		}
 	}
 	return intents
 }

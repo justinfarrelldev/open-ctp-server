@@ -78,6 +78,7 @@ func applyLifecycleCommand(state *State, command Command, runtime *rules.Runtime
 			endGame(state, winner, reason)
 			return EventTerminal, terminalPayload(state), nil
 		}
+		advanceMovementOrders(state, runtime)
 		return "round.completed", json.RawMessage(`{}`), nil
 	default:
 		return "", nil, errors.New("unsupported lifecycle command")

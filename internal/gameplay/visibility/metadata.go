@@ -21,7 +21,7 @@ func contractProjection(projection Projection) *ContractProjection {
 		"city_orders": true, "retained_sleep": true, "research_goals": true,
 		"coordinate_move_intents": movement, "calendar": projection.Calendar != nil,
 		"production_notifications": true, "own_statistics_history": true,
-		"retained_movement_orders": false, "governor": false, "policy_optimizer": false,
+		"retained_movement_orders": movement, "governor": false, "policy_optimizer": false,
 		"city_culture_style": false, "ruin_rewards": false, "foreign_statistics_history": false,
 	}}
 }

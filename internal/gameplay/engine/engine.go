@@ -538,6 +538,7 @@ type State struct {
 	Units            []Unit               `json:"units"`
 	Cities           []City               `json:"cities"`
 	Armies           []Army               `json:"armies"`
+	MovementOrders   []MovementOrder      `json:"movement_orders,omitempty"`
 	Nations          []Nation             `json:"nations"`
 	AchievedFeatIDs  []string             `json:"achieved_feat_ids,omitempty"`
 	Wonders          []Wonder             `json:"wonders,omitempty"`
@@ -660,8 +661,11 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 	if command.Type == CommandNoop {
 		return eventType, eventPayload, combatResult, nil
 	}
+	cancelManualMovementOrders(state, command)
 	var err error
 	switch command.Type {
+	case CommandSetMovementOrder, CommandCancelMovementOrder:
+		eventType, err = applyMovementOrder(state, command, runtime)
 	case CommandSetWar, CommandEstablishContact, CommandProposeAgreement, CommandRespondAgreement:
 		eventType, eventPayload, err = applyDiplomacyCommand(state, command)
 	case CommandSetGovernment, CommandSetScienceRate, CommandSetPublicWorksRate, CommandSetSocialPolicy, CommandSetReadiness:
@@ -681,6 +685,9 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 		} else {
 			eventType, err = applyUnitCommand(state, command, runtime)
 		}
+	}
+	if err == nil {
+		pruneMovementOrders(state)
 	}
 	return eventType, eventPayload, combatResult, err
 }
@@ -888,6 +895,7 @@ func completePolicyRound(state *State, runtime *rules.RuntimeRules) error {
 	if winner, reason := evaluateVictory(*state, runtime); winner != "" {
 		endGame(state, winner, reason)
 	}
+	advanceMovementOrders(state, runtime)
 	return nil
 }
 
@@ -1021,6 +1029,9 @@ func ValidateState(state State) error {
 		if nation.Readiness != "" && !supportedReadiness(nation.Readiness) {
 			return errors.New("nation readiness is unsupported")
 		}
+	}
+	if err := validateMovementOrders(state); err != nil {
+		return err
 	}
 	if err := validateUnitState(state); err != nil {
 		return err
@@ -1259,6 +1270,10 @@ func cloneStateForNormalization(state State) State {
 			state.Cities[index].Buildings[building].Effects = append([]Effect(nil), state.Cities[index].Buildings[building].Effects...)
 		}
 	}
+	state.MovementOrders = append([]MovementOrder(nil), state.MovementOrders...)
+	for index := range state.MovementOrders {
+		state.MovementOrders[index].UnitIDs = append([]string(nil), state.MovementOrders[index].UnitIDs...)
+	}
 	state.Armies = append([]Army(nil), state.Armies...)
 	for index := range state.Armies {
 		state.Armies[index].UnitIDs = append([]string(nil), state.Armies[index].UnitIDs...)
@@ -1314,6 +1329,10 @@ func normalizeState(state *State) {
 	sort.Slice(state.Units, func(i, j int) bool { return state.Units[i].ID < state.Units[j].ID })
 	sort.Slice(state.Cities, func(i, j int) bool { return state.Cities[i].ID < state.Cities[j].ID })
 	sort.Slice(state.Armies, func(i, j int) bool { return state.Armies[i].ID < state.Armies[j].ID })
+	sort.Slice(state.MovementOrders, func(i, j int) bool { return state.MovementOrders[i].UnitID < state.MovementOrders[j].UnitID })
+	for index := range state.MovementOrders {
+		sort.Strings(state.MovementOrders[index].UnitIDs)
+	}
 	sort.Slice(state.Nations, func(i, j int) bool { return state.Nations[i].ID < state.Nations[j].ID })
 	sort.Slice(state.Wonders, func(i, j int) bool { return state.Wonders[i].ID < state.Wonders[j].ID })
 	sort.Slice(state.Diplomacy, func(i, j int) bool { return state.Diplomacy[i].ID < state.Diplomacy[j].ID })

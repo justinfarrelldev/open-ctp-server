@@ -79,6 +79,8 @@ var commands = map[string]struct {
 	"set-research":          {engine.CommandSetResearch, fields("advance_id")},
 	"set-research-goal":     {engine.CommandSetResearchGoal, fields("advance_id")},
 	"move":                  {engine.CommandMoveUnit, fields("unit_id", "path", "target_x", "target_y")},
+	"set-movement-order":    {engine.CommandSetMovementOrder, fields("unit_id", "target_x", "target_y")},
+	"cancel-movement-order": {engine.CommandCancelMovementOrder, fields("unit_id")},
 	"disband":               {engine.CommandDisband, fields("unit_id")},
 	"embark":                {engine.CommandEmbark, fields("unit_id", "transport_id")},
 	"disembark":             {engine.CommandDisembark, fields("unit_id", "tile_id")},

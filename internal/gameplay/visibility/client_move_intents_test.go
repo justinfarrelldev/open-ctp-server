@@ -18,7 +18,7 @@ func TestClientMovementIntentsDoNotDescribeHiddenPassability(t *testing.T) {
 	}
 	firstWire := metadataWire(t, first)
 	intents, ok := firstWire["action_intents"].([]any)
-	if !ok || len(intents) != 1 {
+	if !ok || len(intents) != 2 {
 		t.Fatalf("missing fog-safe movement input: %v", firstWire["action_intents"])
 	}
 	state.Tiles[11].Terrain = engine.TerrainOcean
@@ -44,7 +44,7 @@ func TestClientMovementIntentsDoNotDescribeHiddenPassability(t *testing.T) {
 		t.Fatalf("missing versioned contract: %v", contract)
 	}
 	features, ok := contract["features"].(map[string]any)
-	if !ok || features["coordinate_move_intents"] != true || features["retained_movement_orders"] != false || features["policy_optimizer"] != false || features["governor"] != false {
+	if !ok || features["coordinate_move_intents"] != true || features["retained_movement_orders"] != true || features["policy_optimizer"] != false || features["governor"] != false {
 		t.Fatalf("unsupported features were not explicit: %v", features)
 	}
 }
