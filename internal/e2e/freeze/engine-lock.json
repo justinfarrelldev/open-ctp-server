@@ -27,7 +27,7 @@
     },
     {
       "path": "internal/game/start_gameplay.go",
-      "sha256": "97e96b10a56e623e1942c2930e4b59ee9d0f24df4bbdb0c94b1991db18962d59"
+      "sha256": "c0601b24699b5696ff826e071686081c25e8d4aae36fe51bf4a2aadc8308635a"
     },
     {
       "path": "internal/game/world_contract_stubs.go",
@@ -171,7 +171,7 @@
     },
     {
       "path": "internal/gameplay/service/service.go",
-      "sha256": "0efb46d777a430c8f6f2042e2fc95627f08ff9cbb25da6138c0abb829bcbf535"
+      "sha256": "639278eca51b0ff59b3ae4192f331d299926000d51fd4ab2f13cf97c4dd9bea7"
     },
     {
       "path": "internal/gameplay/service/takeover.go",

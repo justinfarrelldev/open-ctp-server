@@ -35,6 +35,9 @@ func TestWorldStartPreservesIndependentRiverAndGoods(t *testing.T) {
 	if !state.Tiles[0].River || state.Tiles[0].GoodID != "TERRAIN_PLAINS_GOOD_TWO" {
 		t.Fatalf("world metadata lost: %+v", state.Tiles[0])
 	}
+	if len(state.Fog) == 0 || state.Fog[0].River == nil || !*state.Fog[0].River {
+		t.Fatal("initial sight was not remembered before the first move")
+	}
 	raw, err := engine.CanonicalStateJSON(state)
 	if err != nil {
 		t.Fatal(err)

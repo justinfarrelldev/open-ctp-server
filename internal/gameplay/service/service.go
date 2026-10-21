@@ -192,6 +192,13 @@ func (s *Service) executeControllerCommand(ctx context.Context, request CommandR
 	if err := validateAuthority(state, actorID, controller, request.Type); err != nil {
 		return Result{}, err
 	}
+	// Preserve pre-transition sight as well as post-transition sight. This also
+	// safely upgrades legacy saves with empty/incomplete memory, but only for
+	// cells currently visible before this command, never hidden backfills.
+	state, err = visibility.Update(state)
+	if err != nil {
+		return Result{}, fmt.Errorf("recording pre-command visibility: %w", err)
+	}
 	next, engineEvents, applied, err := engine.Apply(state, engine.Command{SchemaVersion: engine.CommandSchemaV1, ID: request.CommandID, ActorPlayerID: actorID, IdempotencyKey: request.IdempotencyKey, Type: request.Type, Payload: canonicalPayload(request.Payload)}, rulesPin(aggregate.Ruleset), s.sources)
 	if err != nil {
 		return Result{}, commandError(422, "gameplay command is invalid: "+err.Error())

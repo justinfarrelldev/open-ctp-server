@@ -14,6 +14,7 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 	gameplaystore "github.com/justinfarrelldev/open-ctp-server/internal/gameplay/store"
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility"
 	"github.com/justinfarrelldev/open-ctp-server/internal/world"
 )
 
@@ -177,7 +178,9 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 	if err := engine.ValidateState(state); err != nil {
 		return engine.State{}, err
 	}
-	return state, nil
+	// Initial vision must be canonical before the first command can move its
+	// sources away. Current snapshots are read-only and cannot repair lost sight.
+	return visibility.Update(state)
 }
 
 func tileID(x, y int) string { return fmt.Sprintf("tile-%d-%d", x, y) }
