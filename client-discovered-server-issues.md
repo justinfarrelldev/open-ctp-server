@@ -210,7 +210,7 @@ The current source still has the important distinctions:
 - `world.WorldTile` has coordinates and terrain only; the ordinary generated-world contract cannot carry river/resource placement into gameplay.
 - City ownership and city-available goods do not substitute for per-tile ownership/resource coordinates.
 
-Any correction must preserve viewer-specific last observations, never expose current hidden canonical changes, and keep server generation/versioning authoritative. Adding visible projection fields alone does not create rivers/resources in the normal world-generation handoff.
+Any correction must preserve viewer-specific last observations, never expose current hidden canonical changes, and keep server generation/versioning authoritative. Per-tile ownership/borders on never-discovered cells are forbidden even through a separate public endpoint; only permitted observed ownership may be projected. Adding visible projection fields alone does not create rivers/resources in the normal world-generation handoff.
 
 ## Optimize Sliders — clarified source behavior, not a claimed engine bug
 
@@ -224,6 +224,15 @@ The earlier statement that the button's behavior could not be deduced is therefo
 `set-social-policy` already applies policy values, but a mutation endpoint alone is not a read-only counterfactual optimizer. No matching optimizer or verified complete trial-evaluation contract has been established in this investigation. For example, canonical worked-tile IDs are not part of `CityProjection`. Do not repeatedly mutate a live game to probe candidate policies, or assume the AI's currently projected policy payload is this exact optimizer result.
 
 A server-owned optimization command, or a visibility-safe read-only evaluation/recommendation contract using the actual engine calculations, is a recommended design direction—not a claim that an already-promised endpoint is broken. Specify specialist side effects, deterministic tie-breaking, prerequisites and revision behavior before implementing. Tests should use in-memory states/mocked stores, cover economic/happiness constraints and no-solution/empty-city cases, and verify that evaluation alone never mutates persisted gameplay.
+
+## Interaction topology requirements
+
+`$CTPCLIENT/IDEAL_INTERACTION_TOPOLOGY.md` governs every contract in this report:
+
+- Server authority applies to singleplayer and multiplayer. On disagreement the client must show “resynchronizing”, revert speculation and replace its full authoritative model from the current viewer-safe snapshot.
+- Ambiguous movement should animate optimistically before server confirmation, without inventing hidden terrain. The server validates every action; optimistic presentation never changes canonical authority.
+- Never-discovered cells remain completely obscured. Terrain, goods, rivers, ownership, planning previews, notifications and route details must not bypass that boundary. Remembered cells use only the viewer's last observations, never fresh hidden facts.
+- Hybrid is the primary multiplayer mode. Test planning/queued resolution, conflict components, inactive/component-external players, phase-appropriate pass/round-complete actions, revisions, retries and reconnects explicitly; sequential-only coverage is insufficient.
 
 ## Client responsibility and remediation checklist
 
