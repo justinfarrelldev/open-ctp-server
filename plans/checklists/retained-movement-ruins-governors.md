@@ -32,7 +32,9 @@
   persist authority and complete private receipt snapshots in one transaction;
   replay reads the original receipt without re-executing or repaying rewards.
   Exact HTTP payload dispatch/forged-field tests and cross-file route guards pass.
-- [ ] Update contracts/reports with implemented scope and remaining limitations.
+- [x] Update contracts/reports with implemented scope and remaining limitations.
+  Published routes, payloads, owner-private persistence, geometric-route stops,
+  villages-only probabilities/results and production-only governor boundaries.
 - [x] Thorough source-backed code review and fix findings with regression tests.
   RED review regressions caught impossible-budget journeys, ZOC arrival mislabeled
   as blocked, alphabetically earlier future settlers selected as nomads and ruins
@@ -45,4 +47,12 @@
   public discovery boundaries, without hidden reads or larger turn/action budgets.
   Verified clean/clean/restart conquest equality and refreshed observed hashes;
   science events remain unchanged, with state hash updated for persisted ruin fog.
-- [ ] Full tests, vet, build, freeze guard, diff checks and atomic commits.
+- [x] Full tests, vet, build, freeze guard, diff checks and atomic commits.
+  `GOMAXPROCS=4 go test -timeout=16m -p=2 ./... -count=1` passes, including
+  fullgame/retail autoplay and clean/clean/restart acceptance. Race tests pass for
+  all gameplay packages plus game/world. `go vet ./...`, `go build ./...` and
+  `git diff --check` pass. Freeze coverage grows from 64 to 69 reviewed production
+  files; no prior entries removed. Explicit released-catalog governor/nomad tests
+  execute real pinned building lists and UNIT_SETTLER. A focused terminal-boundary
+  regression also verifies that conquest stops later automatic journeys.
+  All commits use the unchanged pre-commit hook. No live service/client mutations.

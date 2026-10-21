@@ -36,8 +36,8 @@ Never-discovered cells are absent. Public bounds are not permission to fill them
 with terrain. Ownership/borders, previews, notifications and trade data must not
 provide an alternative hidden-map lookup.
 
-Visible tiles include explicit `river`, `good_id` and territorial `owner_id` facts.
-`false`, `""` and `""` respectively mean known no-river/no-deposit/neutral. Omitted
+Visible tiles include explicit `river`, `good_id`, `ruin` and territorial `owner_id`
+facts. `false`, `""`, `false` and `""` mean known no-river/no-deposit/no-ruin/neutral. Omitted
 metadata in legacy observations means **unknown**, not an authoritative negative.
 Each remembered tile uses its viewer's last observation, observation turn and
 `stale: true`; hidden canonical changes are not copied or recomputed into it.
@@ -62,10 +62,12 @@ pre-transition and post-transition sight, so moving away cannot erase first sigh
 A legacy current view can be recorded; a legacy hidden observation cannot be
 backfilled from hidden authority.
 
-New games use `ctp2-rivers-goods-v2`: deterministic independent river/good metadata,
-server-owned seed/version, bounded draining river paths and canonical good IDs.
-V2 deliberately retains V1's base terrain/spawn lineage for identical parameters;
-metadata uses separate RNG domains. Existing V1 snapshots are not regenerated.
+New games use `ctp2-ruins-v3`: independent deterministic ruin placement in addition
+to V2 rivers/goods, with a server-owned seed/version. V3 retains V2 terrain,
+river/good and spawn output; it selects at most one land ruin per complete 6x6 box,
+excluding starting units' coordinates. Private reward rolls are persisted at game
+start. V2 retains V1's base terrain/spawn lineage. Existing V1/V2 games are not
+regenerated and do not acquire new ruins.
 Retail terrain families are retained through startup; synthetic rules remain a
 separate supported ruleset, not a retail numerical/artwork substitute.
 
@@ -112,10 +114,38 @@ Hybrid is the primary multiplayer mode:
 
 A queued receipt acknowledges intent, not completed movement. Keep provisional
 animation separate from the canonical model. Do not infer a resolved outcome from
-path artwork or replay stale segments next round. Multi-turn retained destinations
-are **not supported** (`retained_movement_orders: false`); the supported operation
-is an atomic current-turn path/adjacent coordinate attempt. A future retained-order
-feature needs explicit persistence, cancellation and replanning semantics.
+path artwork or replay stale segments next round.
+
+### Retained movement
+
+When `retained_movement_orders` is true, `set-movement-order` takes `unit_id`,
+`target_x`, `target_y` plus the shared envelope. Both coordinates are required,
+non-null public map coordinates; unlike `move`, the destination need not be
+adjacent or reachable this turn. It applies an affordable prefix immediately and
+persists the destination for the exact unit/army membership. It can be accepted
+with zero current movement. In simultaneous/hybrid planning the receipt queues
+intent; execution occurs at resolution, not at preview time.
+
+Owner-only `movement_orders` survives reconnect and includes unit/army/member IDs,
+expected current tile, destination coordinates and originating `command_id`.
+`cancel-movement-order` takes `unit_id` (any member cancels the stack's journey).
+A new destination replaces the old one. Successful manual unit/army commands,
+changed membership, ownership or displacement cancel the old intent.
+
+Once per new round, after movement refresh and in stable unit-ID order, the server
+continues remaining journeys. The route steps diagonally toward the destination,
+then along its remaining axis; it does not search hidden terrain or route around
+obstacles. Every step reuses authoritative movement/access/domain/fuel checks and
+uses the slowest member's budget. Exhausted movement retains a feasible order;
+blocked/occupied/permanently unaffordable steps stop it with a generic private
+notice. Entering enemy ZOC stops the journey, except arrival is completion.
+There is no automatic combat or attack authorization. To detour, submit a new
+waypoint/destination. No order progresses after terminal resolution.
+
+`movement_order.completed` / `.stopped` notifications identify the unit and original
+command, without revealing hidden obstruction details. Set/cancel, movement,
+rewards, receipts and notifications persist in the same command transaction;
+retrying an idempotency key cannot advance again.
 
 ## Atomic production queues
 
@@ -180,9 +210,27 @@ not a client-selected cost. Keep client row selection keyed by entry ID.
   Sleep does not grant fortification. Explicit accepted movement wakes movers;
   Fortify also clears sleep. Cargo/in-space sleep changes are not advertised.
 
-Governor/mayor decisions and priorities remain **unsupported**, not client-side
-simulations. Do not enable those controls merely because rename/disband now exist.
-Culture/style are also unavailable rather than inferred from a city type/owner ID.
+### City governors / mayors
+
+When `governor` is true, `set-governor` takes `city_id`, explicit non-null `enabled`,
+and an enabled priority from `rules.governor_priorities`. Supported pinned focuses
+are growth, production, gold, science, happiness, defense and offense; a pin lacking
+the corresponding retail building/wonder lists does not advertise that focus.
+On first enable, a priority is required; subsequent calls may retain it. Disable
+uses `enabled: false`. Owner-private city `governor: {enabled, priority}` survives
+reconnect; nil means no governor. Foreign observations never include settings.
+
+The governor fills an empty production queue on enable and during each city round,
+including after a completed build. It selects the first legal item in the pinned
+focus building list, then other focus lists, then wonders in the same focus order.
+All ordinary production restrictions/costs and stable queue identities apply.
+Manual nonempty queues and stored progress are never replaced by a priority change;
+disabling keeps existing production. Conquest/revolution resets the former owner's
+governor. `governor.production_selected` privately identifies city/tile/content.
+
+This is autonomous **city production** management, not full original empire AI:
+it does not reassign specialists, manage armies, spend public works, rush-spend gold
+or optimize national sliders. Culture/style remain unavailable.
 
 ## Quotes, accounting and research
 
@@ -254,8 +302,27 @@ older samples/legacy history are unavailable. A sample is labeled with the round
 actually completed, not the scheduler's already-advanced next-round clock. Foreign
 rankings/history are private.
 Do not label this bounded own history a complete omniscient whole-match archive.
-Ruin rewards/results are unsupported because the current canonical engine has no
-ruin discovery/reward contract. Screenshot fixtures must never create real rewards.
+### Ruin discovery and rewards
+
+`ruin_rewards` advertises authoritative discovery on successful movement (including
+intermediate atomic path tiles), disembarkation or combat entry. Sight alone does
+not open a ruin. The first explorer consumes it in the same transaction; a rejected
+atomic path consumes nothing, and revisiting/replaying cannot award twice. Founding
+a city on an unopened ruin removes it without a reward, matching city construction.
+
+The persisted `villages-only-v1` profile follows released `risks.txt`
+`RISK_VILLAGES_ONLY`: 30% gold (150–299), 15% eligible advance, 25% land mercenary,
+5% city, 5% starting land settler, 20% empty. Advance/unit eligibility uses pinned
+content and the source prerequisite limits (1 / 2 unknown advances); unavailable
+or unsafe rewards become empty rather than crashing. Advance age/feat/research
+handling and unit creation bonuses are authoritative. Unit rewards respect stack
+capacity. Barbarian-risk profiles are **not implemented**.
+
+A private `ruin.explored` notice has a stable ID, turn, tile, `reward_kind`
+(`gold`, `advance`, `unit`, `city`, `empty`) and the applicable `amount`, `content_id`,
+`unit_id` or `city_id`. Hidden rolls and eligibility candidates are never projected.
+Visible `ruin` presence becomes a stored fog fact; another player's hidden discovery
+does not update stale memory. Screenshot fixtures must never create real rewards.
 
 ## Remaining client work and feature boundaries
 
@@ -267,8 +334,8 @@ Use installed asset catalogs locally; no copied art, SDL handles or sprite pixel
 are server facts.
 
 Explicitly unimplemented feature requests remain backlog, not fixed defects:
-retained multi-turn movement orders, governor/priority automation, the exact slider
-optimizer, culture/style modeling and ruin rewards. Foreign statistics are a
+the exact slider optimizer, culture/style modeling, barbarian ruin profiles and
+full empire-wide governor population/army/public-works automation. Foreign statistics are a
 permission decision, not missing client data to work around. Do not advertise or
 fake any of these features. See `plans/checklists/client-report-contracts.md` for
 red/green/refactor evidence, original-source references and verification status.

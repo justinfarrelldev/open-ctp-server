@@ -6,7 +6,7 @@ Server contract v2 now implements the confirmed HTTP/progress/projection defects
 
 Canonical world downloads and terrain-derived ratings/pollution aggregates are retired, including for owners. Planning validates inputs before persistence, handles invalidated orders transactionally with private rejection results, and keeps completed-round history correctly labeled.
 
-**Not implemented:** retained multi-turn movement, mayor/governor automation, the exact slider optimizer, culture/style modeling and ruin rewards. Foreign statistics remain private. These are explicit false capability flags, not claims of completed retail features. Client UI/decoders/optimistic animation/full-model reconciliation still require client integration.
+**Newly implemented:** retained destination movement with cancellation/reconnect, authoritative villages-only ruin rewards and pinned-list city-production governors. See [the current contract](docs/client-gameplay-contract-v2.md) for exact scope and payloads. Barbarian ruin profiles, empire-wide governor population/army/public-works management, the exact slider optimizer and culture/style remain unimplemented. Foreign statistics stay private; client integration is separate.
 
 The source inspection sections below are **historical evidence at the cited revisions**, not current-code descriptions. Implementation was verified with engine/mock/in-memory tests, not a running external game.
 
@@ -312,10 +312,10 @@ This original handoff checklist remains a record of requested scope, not a claim
 - [ ] CITY-01/02: real names/type and explicitly supported culture/age/capital/population memory semantics.
 - [ ] HTTP-01: route/field manifest consistency and authenticated dispatch tests for advertised actions.
 - [ ] QUEUE-01/02/03: preserve unrelated head progress, support atomic stable-entry edits and source-allowed repeated unit orders.
-- [ ] ORDERS-01: explicitly supported city/governor/Sentinel contracts without substituting different operations.
+- [x] ORDERS-01: city/Sleep orders and authoritative city-production governor priorities have explicit contracts; full empire governor/slider automation remains out of scope.
 - [ ] TRADE-01 / ECON-01: permitted route goods/income and separate authoritative display quotes/forecasts.
 - [ ] POLICY-01 / RESEARCH-01: verified optimizer/evaluation and persistent goal contracts if those features are supported.
-- [ ] MOVE-01: documented and tested retained-order semantics, distinct from current-turn atomic path execution.
+- [x] MOVE-01: documented and tested server-retained destinations, distinct from atomic current-turn movement; bounded geometric routing stops safely rather than omniscient replanning.
 - [ ] PRESENTATION-01: public world/calendar metadata and permitted notification/history contracts needed for the reference workflows.
 - [ ] TURN-01 / SYNC-01: phase/action/receipt/event-resume regressions for the existing APIs; isolate any demonstrated server failure from the known client consumption gaps.
 - [ ] Cross-cutting: every added fact survives canonical serialization, schema compatibility, mocked persistence, replay and idempotent readback without bypassing visibility. Use in-memory fixtures/injected stores/isolated HTTP stubs, not real server calls or file-mutating tests. Run normal server checks and unmodified commit hooks before implementation commits.

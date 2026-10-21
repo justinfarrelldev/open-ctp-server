@@ -6,7 +6,7 @@ The confirmed HTTP, future-queue progress, city/tile metadata and authorized tra
 
 Canonical world/terrain-aggregate bypasses are also retired. Invalid planning inputs reject before persistence; previously valid orders invalidated during resolution reject privately without partial changes or stalled phases.
 
-**Feature gaps remain explicit:** governor/mayor priorities, the exact policy optimizer, retained multi-turn movement, culture/style and ruin rewards are unsupported, not silently emulated. Foreign history remains private. Client bindings/rendering/optimism/resync UI are separate work. The findings below retain the original pinned inspection as historical evidence, not claims about current code.
+**Current feature scope:** retained movement destinations, villages-only ruin rewards and city-production governor priorities are implemented authoritatively; see [the current contract](docs/client-gameplay-contract-v2.md). Barbarian ruin profiles, full empire governor population/army/public-works management, the exact policy optimizer and culture/style remain unsupported. Foreign history stays private. Client bindings/rendering/optimism/resync UI are separate work. Findings below retain the original pinned inspection as historical evidence.
 
 ## Original scope and evidence
 
@@ -253,7 +253,7 @@ The original handoff list below records reported scope. Use the current implemen
 - [ ] Define/source-check atomic indexed queue editing and production-transfer semantics.
 - [ ] Decide repeated-unit queue support and stable entry identities.
 - [ ] Project authoritative city names and visibility-safe remembered names; define permitted city-art metadata.
-- [ ] Define distinct Sentinel/Sleep, city rename/disband and mayor contracts where supported.
+- [x] Define distinct Sleep, city rename/disband and city-production mayor contracts, without claiming full empire governor automation.
 - [ ] Define viewer-safe per-route goods/income projection.
 - [ ] Address the earlier river/resource/ownership generation/projection/fog-memory chain.
 - [ ] Establish a source-verified server-authoritative Optimize Sliders contract if that feature is supported.
