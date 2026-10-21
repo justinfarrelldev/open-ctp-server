@@ -247,6 +247,7 @@ type Tile struct {
 	OwnerID   string `json:"owner_id,omitempty"`
 	Open      bool   `json:"open"`
 	Pollution int    `json:"pollution,omitempty"`
+	Ruin      *Ruin  `json:"ruin,omitempty"`
 }
 
 type Unit struct {
@@ -478,6 +479,7 @@ type FogObservation struct {
 	Terrain        string          `json:"terrain"`
 	River          *bool           `json:"river,omitempty"`
 	GoodID         *string         `json:"good_id,omitempty"`
+	Ruin           *bool           `json:"ruin,omitempty"`
 	OwnerID        *string         `json:"owner_id,omitempty"`
 	Inspection     *TileInspection `json:"inspection,omitempty"`
 	CityID         string          `json:"city_id,omitempty"`
@@ -661,6 +663,12 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 	if command.Type == CommandNoop {
 		return eventType, eventPayload, combatResult, nil
 	}
+	previousLocations := make(map[string]string)
+	if command.Type == CommandCombat || command.Type == CommandDisembark {
+		for _, unit := range state.Units {
+			previousLocations[unit.ID] = unit.TileID
+		}
+	}
 	cancelManualMovementOrders(state, command)
 	var err error
 	switch command.Type {
@@ -687,6 +695,12 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 		}
 	}
 	if err == nil {
+		for _, id := range sortedKeys(previousLocations) {
+			previous := previousLocations[id]
+			if unit, ok := unitByID(*state, id); ok && unit.TileID != "" && unit.TileID != previous {
+				exploreRuin(state, unit.OwnerID, unit.TileID, runtime)
+			}
+		}
 		pruneMovementOrders(state)
 	}
 	return eventType, eventPayload, combatResult, err
@@ -1030,6 +1044,9 @@ func ValidateState(state State) error {
 			return errors.New("nation readiness is unsupported")
 		}
 	}
+	if err := validateRuins(state); err != nil {
+		return err
+	}
 	if err := validateMovementOrders(state); err != nil {
 		return err
 	}
@@ -1247,6 +1264,12 @@ func cloneIntMap(input map[string]int) map[string]int {
 func cloneStateForNormalization(state State) State {
 	state.Overlays = append([]TileOverlay(nil), state.Overlays...)
 	state.Tiles = append([]Tile(nil), state.Tiles...)
+	for index := range state.Tiles {
+		if state.Tiles[index].Ruin != nil {
+			ruin := *state.Tiles[index].Ruin
+			state.Tiles[index].Ruin = &ruin
+		}
+	}
 	state.Units = append([]Unit(nil), state.Units...)
 	for index := range state.Units {
 		state.Units[index].CargoDomains = append([]string(nil), state.Units[index].CargoDomains...)

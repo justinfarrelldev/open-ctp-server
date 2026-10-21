@@ -140,7 +140,14 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 		RNG:           []engine.RNGDomainState{{Domain: engine.RNGDomainCombat, State: 1}, {Domain: engine.RNGDomainSpecialAction, State: 2}, {Domain: engine.RNGDomainAI, State: 3}, {Domain: engine.RNGDomainRiot, State: 4}},
 	}
 	for _, tile := range snapshot.Tiles {
-		state.Tiles = append(state.Tiles, engine.Tile{ID: tileID(tile.X, tile.Y), X: tile.X, Y: tile.Y, Terrain: engineTerrainForRuntime(tile.Terrain, runtime), River: tile.River, GoodID: tile.GoodID, Open: true})
+		var ruin *engine.Ruin
+		if tile.Ruin {
+			rng := world.NewDeterministicRNG(int64(snapshot.Turn.RNGState)).Split("ruin-roll:" + tileID(tile.X, tile.Y))
+			next, typeRoll := rng.Intn(100)
+			_, valueRoll := next.Intn(10000)
+			ruin = &engine.Ruin{Profile: engine.VillageRuinProfile, TypeRoll: typeRoll, ValueRoll: valueRoll}
+		}
+		state.Tiles = append(state.Tiles, engine.Tile{ID: tileID(tile.X, tile.Y), X: tile.X, Y: tile.Y, Terrain: engineTerrainForRuntime(tile.Terrain, runtime), River: tile.River, GoodID: tile.GoodID, Ruin: ruin, Open: true})
 	}
 	for _, player := range players {
 		playerID := fmt.Sprintf("account-%d", player.AccountID)

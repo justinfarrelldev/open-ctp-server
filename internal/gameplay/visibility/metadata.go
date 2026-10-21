@@ -22,7 +22,7 @@ func contractProjection(projection Projection) *ContractProjection {
 		"coordinate_move_intents": movement, "calendar": projection.Calendar != nil,
 		"production_notifications": true, "own_statistics_history": true,
 		"retained_movement_orders": movement, "governor": false, "policy_optimizer": false,
-		"city_culture_style": false, "ruin_rewards": false, "foreign_statistics_history": false,
+		"city_culture_style": false, "ruin_rewards": movement, "foreign_statistics_history": false,
 	}}
 }
 
@@ -75,6 +75,11 @@ func worldDimension(low, high int) (int, bool) {
 		return 0, false
 	}
 	return int(span) + 1, true
+}
+
+func ruinPresence(tile engine.Tile) *bool {
+	present := tile.Ruin != nil
+	return &present
 }
 
 // applyInspection never reads authority: stale callers pass stored observations.

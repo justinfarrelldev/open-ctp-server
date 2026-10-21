@@ -82,7 +82,7 @@ func generateWorld(input GenerationInput) (generatedWorld, error) {
 	// V2 adds independent metadata; keep V1 base terrain/spawn lineage rather
 	// than needlessly changing geography alongside the river/resource contract.
 	terrainInput := validated
-	if validated.GeneratorVersion == RiverGoodsGeneratorVersion {
+	if validated.GeneratorVersion == RiverGoodsGeneratorVersion || validated.GeneratorVersion == RuinGeneratorVersion {
 		terrainInput.GeneratorVersion = "ctp2-first-v1"
 	}
 	masterSeed, err := deriveGeneratorSeed(terrainInput)
@@ -92,12 +92,16 @@ func generateWorld(input GenerationInput) (generatedWorld, error) {
 
 	rng := NewDeterministicRNG(masterSeed)
 	tiles, continents, nextRNG := generateTiles(validated, profile, climate, rng)
-	if validated.GeneratorVersion == RiverGoodsGeneratorVersion {
+	if validated.GeneratorVersion == RiverGoodsGeneratorVersion || validated.GeneratorVersion == RuinGeneratorVersion {
 		generateRiverGoods(tiles, profile, *validated.HostParams.Wetness, rng.Split("river-goods-v2"))
 	}
 	spawns, finalRNG, err := generateSpawns(validated, profile, tiles, continents, nextRNG)
 	if err != nil {
 		return generatedWorld{}, err
+	}
+
+	if validated.GeneratorVersion == RuinGeneratorVersion {
+		generateRuins(tiles, spawns, profile, rng.Split("ruins-v3"))
 	}
 
 	turn := MutableTurnState{

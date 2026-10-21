@@ -55,6 +55,7 @@ type WorldTile struct {
 	Terrain string `json:"terrain"`
 	River   bool   `json:"river,omitempty"`
 	GoodID  string `json:"good_id,omitempty"`
+	Ruin    bool   `json:"ruin,omitempty"`
 }
 
 type PlayerSpawn struct {

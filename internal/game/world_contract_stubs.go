@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultWorldStartGeneratorVersion = world.RiverGoodsGeneratorVersion
+	defaultWorldStartGeneratorVersion = world.RuinGeneratorVersion
 	defaultWorldStartMapSize          = "small"
 	defaultWorldStartClimate          = "temperate"
 	defaultWorldStartWetness          = 50

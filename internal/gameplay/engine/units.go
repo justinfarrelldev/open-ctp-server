@@ -523,6 +523,9 @@ func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *ru
 	}
 	captureCityAt(state, actorID, from.ID, runtime)
 	state.Fog = append(state.Fog, FogObservation{PlayerID: actorID, TileID: from.ID, Turn: state.Phase.Turn})
+	for _, tileID := range payload.Path {
+		exploreRuin(state, actorID, tileID, runtime)
+	}
 	return nil
 }
 

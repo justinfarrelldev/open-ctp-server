@@ -32,6 +32,7 @@ type TileProjection struct {
 	Terrain      string                  `json:"terrain"`
 	River        *bool                   `json:"river,omitempty"`
 	GoodID       *string                 `json:"good_id,omitempty"`
+	Ruin         *bool                   `json:"ruin,omitempty"`
 	OwnerID      *string                 `json:"owner_id,omitempty"`
 	Yields       *engine.TileYield       `json:"yields,omitempty"`
 	YieldContext string                  `json:"yield_context,omitempty"`
@@ -243,7 +244,7 @@ func Update(state engine.State) (engine.State, error) {
 			if !ok {
 				continue
 			}
-			observation := engine.FogObservation{PlayerID: playerID, TileID: tile.ID, Turn: state.Phase.Turn, Terrain: engine.EffectiveTerrain(state, tile.ID), River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), OwnerID: copyValue(&tile.OwnerID), Inspection: inspector.Tile(tile.ID)}
+			observation := engine.FogObservation{PlayerID: playerID, TileID: tile.ID, Turn: state.Phase.Turn, Terrain: engine.EffectiveTerrain(state, tile.ID), River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), Ruin: ruinPresence(tile), OwnerID: copyValue(&tile.OwnerID), Inspection: inspector.Tile(tile.ID)}
 			if city, ok := cities[tile.ID]; ok {
 				observation.CityID = city.ID
 				observation.CityOwnerID = city.OwnerID
@@ -323,13 +324,13 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	}
 	for _, tile := range state.Tiles {
 		if visible[tile.ID] {
-			projected := TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: engine.EffectiveTerrain(state, tile.ID), River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), OwnerID: copyValue(&tile.OwnerID), Observed: state.Phase.Turn, Planning: planning[tile.ID]}
+			projected := TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: engine.EffectiveTerrain(state, tile.ID), River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), Ruin: ruinPresence(tile), OwnerID: copyValue(&tile.OwnerID), Observed: state.Phase.Turn, Planning: planning[tile.ID]}
 			applyInspection(&projected, inspector.Tile(tile.ID))
 			result.Tiles = append(result.Tiles, projected)
 			continue
 		}
 		if observation, ok := memory[tile.ID]; ok {
-			projected := TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: observation.Terrain, River: copyValue(observation.River), GoodID: copyValue(observation.GoodID), OwnerID: copyValue(observation.OwnerID), Stale: true, Observed: observation.Turn}
+			projected := TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: observation.Terrain, River: copyValue(observation.River), GoodID: copyValue(observation.GoodID), Ruin: copyValue(observation.Ruin), OwnerID: copyValue(observation.OwnerID), Stale: true, Observed: observation.Turn}
 			applyInspection(&projected, observation.Inspection)
 			result.Tiles = append(result.Tiles, projected)
 			if observation.CityID != "" {

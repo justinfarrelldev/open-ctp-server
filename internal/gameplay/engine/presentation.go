@@ -12,15 +12,17 @@ const (
 // Notification is an immutable owner-authorized semantic result. It is not a
 // canonical event payload or a request to reveal target terrain to other viewers.
 type Notification struct {
-	ID        string `json:"id"`
-	PlayerID  string `json:"player_id"`
-	Kind      string `json:"kind"`
-	Turn      int    `json:"turn"`
-	CityID    string `json:"city_id,omitempty"`
-	TileID    string `json:"tile_id,omitempty"`
-	ContentID string `json:"content_id,omitempty"`
-	UnitID    string `json:"unit_id,omitempty"`
-	CommandID string `json:"command_id,omitempty"`
+	ID         string `json:"id"`
+	PlayerID   string `json:"player_id"`
+	Kind       string `json:"kind"`
+	Turn       int    `json:"turn"`
+	CityID     string `json:"city_id,omitempty"`
+	TileID     string `json:"tile_id,omitempty"`
+	ContentID  string `json:"content_id,omitempty"`
+	UnitID     string `json:"unit_id,omitempty"`
+	CommandID  string `json:"command_id,omitempty"`
+	RewardKind string `json:"reward_kind,omitempty"`
+	Amount     int    `json:"amount,omitempty"`
 }
 
 // StatisticsSample records actual completed-turn nation facts, not forecasts.
