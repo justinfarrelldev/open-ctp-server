@@ -596,8 +596,11 @@ func legalActions(state engine.State, projection Projection, playerID string) []
 		return nil
 	}
 	actions := make([]ActionProjection, 0)
-	if projection.PlanningStatus == PlanningStatusOpen {
+	if projection.PlanningStatus == PlanningStatusOpen || projection.PlanningStatus == PlanningStatusQueued {
 		actions = append(actions, action(engine.CommandRoundComplete, "round-complete", playerID, "", map[string]any{}, nil))
+		if projection.PlanningStatus == PlanningStatusQueued {
+			return actions
+		}
 	} else {
 		actions = append(actions, action(engine.CommandPass, "pass", playerID, "", map[string]any{}, nil))
 	}
@@ -625,14 +628,33 @@ func legalActions(state engine.State, projection Projection, playerID string) []
 }
 
 func viewerCanAct(state engine.State, projection Projection, playerID string) bool {
-	if state.Terminal.Ended || playerID == "" {
+	if state.Terminal.Ended || state.Phase.ResolutionLocked || playerID == "" {
 		return false
 	}
-	if projection.PlanningStatus == PlanningStatusOpen {
+	eligible := false
+	for _, player := range state.Players {
+		if player.ID == playerID && player.Lifecycle == engine.PlayerActive {
+			eligible = true
+			break
+		}
+	}
+	if !eligible {
+		return false
+	}
+	switch projection.PlanningStatus {
+	case PlanningStatusOpen, PlanningStatusQueued:
 		return true
-	}
-	if state.Phase.ResolutionLocked || len(state.Phase.ActivePlayerOrder) == 0 || state.Phase.ActivePlayerIndex < 0 || state.Phase.ActivePlayerIndex >= len(state.Phase.ActivePlayerOrder) {
+	case PlanningStatusClosed:
 		return false
+	}
+	if len(state.Phase.ActivePlayerOrder) == 0 || state.Phase.ActivePlayerIndex < 0 || state.Phase.ActivePlayerIndex >= len(state.Phase.ActivePlayerOrder) {
+		return false
+	}
+	if state.Phase.Mode == turns.ModeHybrid && state.Policy.Stage == turns.StageConflict {
+		index := state.Policy.ComponentIndex
+		if index < 0 || index >= len(state.Policy.Components) || !containsString(state.Policy.Components[index], playerID) {
+			return false
+		}
 	}
 	return state.Phase.ActivePlayerOrder[state.Phase.ActivePlayerIndex] == playerID
 }
