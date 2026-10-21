@@ -1013,7 +1013,11 @@ func cancelProduction(state *State, actor string, payload CancelProductionPayloa
 	for i, item := range city.Queue {
 		if item.ID == payload.ItemID {
 			city.Queue = append(city.Queue[:i], city.Queue[i+1:]...)
-			city.StoredProduction = 0 // Supported default: cancelled production has no refund.
+			// Only the current item owns progress. Keep the existing no-refund
+			// head-cancellation policy, not a penalty for unrelated future orders.
+			if i == 0 {
+				city.StoredProduction = 0
+			}
 			return nil
 		}
 	}
