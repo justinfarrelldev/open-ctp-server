@@ -7,48 +7,10 @@ import (
 	"regexp"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
-	world "github.com/justinfarrelldev/open-ctp-server/internal/world"
 )
-
-const testWorldSnapshotSelectByGameIDQuery = `SELECT
-	game_id,
-	created_at,
-	updated_at,
-	game_status,
-	generator_version,
-	style,
-	rules_json::text AS rules_json,
-	exclusions_json::text AS exclusions_json,
-	starting_settlers,
-	starting_gold,
-	seed,
-	wetness,
-	map_size,
-	climate,
-	player_order_json::text AS player_order_json,
-	spawns_json::text AS spawns_json,
-	tiles_json::text AS tiles_json
-FROM world_snapshots
-WHERE game_id = $1`
-
-const testWorldTurnStateSelectByGameIDQuery = `SELECT
-	game_id,
-	created_at,
-	updated_at,
-	turn_number,
-	current_player_index,
-	active_player_order_json::text AS active_player_order_json,
-	recalculation_count,
-	rng_state,
-	ratings_json::text AS ratings_json,
-	pollution_json::text AS pollution_json,
-	last_recalculated_at
-FROM world_turn_states
-WHERE game_id = $1`
 
 // Authenticated membership is not permission to download hidden geography, the
 // generation seed or foreign spawns. No snapshot query may run on this endpoint.
@@ -181,40 +143,4 @@ func expectReadableWorldAccess(mock sqlmock.Sqlmock, sessionID int64, accountID 
 				ping      int
 			}{id: 1, accountID: int64(accountID), country: "Greeks", ping: 0},
 		))
-}
-
-func expectWorldRead(mock sqlmock.Sqlmock, snapshot world.WorldSnapshot, turn world.MutableTurnState, snapshotCreatedAt time.Time, snapshotUpdatedAt time.Time, turnCreatedAt time.Time, turnUpdatedAt time.Time) {
-	playerOrderJSON, err := world.CanonicalString(snapshot.PlayerOrder)
-	if err != nil {
-		panic(err)
-	}
-	spawnsJSON, err := world.CanonicalString(snapshot.Spawns)
-	if err != nil {
-		panic(err)
-	}
-	tilesJSON, err := world.CanonicalString(snapshot.Tiles)
-	if err != nil {
-		panic(err)
-	}
-	activePlayerOrderJSON, err := world.CanonicalString(turn.ActivePlayerOrder)
-	if err != nil {
-		panic(err)
-	}
-	ratingsJSON, err := world.CanonicalString(turn.Ratings)
-	if err != nil {
-		panic(err)
-	}
-	pollutionJSON, err := world.CanonicalString(turn.Pollution)
-	if err != nil {
-		panic(err)
-	}
-
-	mock.ExpectQuery(regexp.QuoteMeta(testWorldSnapshotSelectByGameIDQuery)).
-		WithArgs(snapshot.GameID).
-		WillReturnRows(sqlmock.NewRows([]string{"game_id", "created_at", "updated_at", "game_status", "generator_version", "style", "rules_json", "exclusions_json", "starting_settlers", "starting_gold", "seed", "wetness", "map_size", "climate", "player_order_json", "spawns_json", "tiles_json"}).
-			AddRow(snapshot.GameID, snapshotCreatedAt, snapshotUpdatedAt, snapshot.GameStatus, snapshot.GeneratorVersion, snapshot.Config.Style, snapshot.Config.RulesJSON, snapshot.Config.ExclusionsJSON, snapshot.Config.StartingSettlers, snapshot.Config.StartingGold, snapshot.Config.Seed, snapshot.Config.Wetness, snapshot.Config.MapSize, snapshot.Config.Climate, playerOrderJSON, spawnsJSON, tilesJSON))
-	mock.ExpectQuery(regexp.QuoteMeta(testWorldTurnStateSelectByGameIDQuery)).
-		WithArgs(snapshot.GameID).
-		WillReturnRows(sqlmock.NewRows([]string{"game_id", "created_at", "updated_at", "turn_number", "current_player_index", "active_player_order_json", "recalculation_count", "rng_state", "ratings_json", "pollution_json", "last_recalculated_at"}).
-			AddRow(snapshot.GameID, turnCreatedAt, turnUpdatedAt, turn.TurnNumber, turn.CurrentPlayerIndex, activePlayerOrderJSON, turn.RecalculationCount, "99", ratingsJSON, pollutionJSON, turn.LastRecalculatedAt))
 }

@@ -82,6 +82,16 @@ func TestClientReportedRoutesDispatchExactPayloads(t *testing.T) {
 	}
 }
 
+func TestClientCommandBodyIsBoundedBeforeExecutor(t *testing.T) {
+	executor := &recordingExecutor{}
+	body := `{"session_id":1,"expected_revision":2,"idempotency_key":"key","command_id":"move","unit_id":"` + strings.Repeat("x", 1<<20) + `","path":["tile"]}`
+	response := httptest.NewRecorder()
+	authenticatedHandler(executor).ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/game/9/move", strings.NewReader(body)))
+	if response.Code != http.StatusRequestEntityTooLarge || executor.calls != 0 {
+		t.Fatalf("oversized command reached authority: status=%d calls=%d", response.Code, executor.calls)
+	}
+}
+
 // Inspect every literal action declaration, including branches that require rare
 // retail abilities. Runtime eligibility fixtures alone cannot detect route drift.
 func TestAdvertisedLiteralRoutesAndFieldsAreRegistered(t *testing.T) {

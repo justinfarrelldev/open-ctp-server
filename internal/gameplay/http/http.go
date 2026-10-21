@@ -15,6 +15,8 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/service"
 )
 
+const maxCommandBodyBytes = 256 << 10
+
 type executor interface {
 	ExecuteCommand(context.Context, *auth.Session, service.CommandRequest) (service.Result, error)
 }
@@ -163,6 +165,7 @@ func fields(names ...string) map[string]bool {
 // @Failure 401 {object} map[string]string "missing or invalid session"
 // @Failure 403 {object} map[string]string "game membership or controller is not authorized"
 // @Failure 409 {object} map[string]string "stale revision or idempotency conflict"
+// @Failure 413 {object} map[string]string "command body exceeds 256 KiB"
 // @Failure 422 {object} map[string]string "invalid command phase or terminal game"
 // @Failure 429 {object} ratelimit.Message "rate limit exceeded"
 // @Router /game/{game_id}/{command} [post]
@@ -181,11 +184,20 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound)
 		return
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, maxCommandBodyBytes)
 	var raw map[string]json.RawMessage
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&raw); err != nil || len(raw) == 0 || decoder.Decode(&struct{}{}) != io.EOF {
+	if err := decoder.Decode(&raw); err != nil {
+		writeBodyError(w, err)
+		return
+	}
+	if len(raw) == 0 {
 		writeError(w, http.StatusBadRequest)
+		return
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		writeBodyError(w, err)
 		return
 	}
 	for field := range raw {
@@ -236,6 +248,15 @@ func route(path string) (int64, string, error) {
 		return 0, "", errors.New("invalid game id")
 	}
 	return id, parts[2], nil
+}
+
+func writeBodyError(w http.ResponseWriter, err error) {
+	var oversized *http.MaxBytesError
+	if errors.As(err, &oversized) {
+		writeError(w, http.StatusRequestEntityTooLarge)
+		return
+	}
+	writeError(w, http.StatusBadRequest)
 }
 
 func writeError(w http.ResponseWriter, status int) {

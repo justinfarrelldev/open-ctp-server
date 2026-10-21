@@ -526,41 +526,23 @@ func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *ru
 	return nil
 }
 
-// preflightCoordinateMove validates the new tentative coordinate contract before
-// storing planning intent. A baseline-invalid attempt must not poison an entire
-// hybrid resolution. Final execution still revalidates and resolves collisions.
-// Legacy path-envelope queuing/replay semantics remain unchanged.
-func preflightCoordinateMove(state State, command Command, runtime *rules.RuntimeRules) error {
-	if !coordinateMoveRequested(command.Payload) {
-		return nil
-	}
-	payload, err := decodeMovePayload(command.Payload)
-	if err != nil {
-		return err
-	}
-	candidate, err := canonicalClone(state)
-	if err != nil {
-		return err
-	}
-	return moveUnit(&candidate, command.ActorPlayerID, payload, runtime)
-}
-
-func coordinateMoveRequested(raw json.RawMessage) bool {
-	var fields map[string]json.RawMessage
-	if err := json.Unmarshal(raw, &fields); err != nil {
-		return false
-	}
-	_, x := fields["target_x"]
-	_, y := fields["target_y"]
-	return x || y
-}
-
+// decodeMovePayload accepts either a path or a complete coordinate pair. Wire
+// shape validation is shared by immediate execution, planning and replay.
 func decodeMovePayload(raw json.RawMessage) (moveUnitPayload, error) {
 	var payload moveUnitPayload
 	if err := decodePayload(raw, &payload); err != nil {
 		return payload, err
 	}
-	if coordinateMoveRequested(raw) && (payload.TargetX == nil || payload.TargetY == nil || len(payload.Path) > 0) {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return payload, ErrObstructed
+	}
+	_, x := fields["target_x"]
+	_, y := fields["target_y"]
+	_, path := fields["path"]
+	// Presence, not length, selects the wire shape. Even []/null cannot
+	// silently combine a path field with coordinate input.
+	if (x || y) && (payload.TargetX == nil || payload.TargetY == nil || path) {
 		return payload, ErrObstructed
 	}
 	return payload, nil

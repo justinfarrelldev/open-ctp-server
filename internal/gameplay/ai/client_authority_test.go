@@ -46,6 +46,13 @@ func TestClientAIUsesAtomicQueueInsertForNewlyUnlockedEmergencyDefender(t *testi
 	t.Fatal("newly available defender did not interrupt expensive settler queue")
 }
 
+func TestClientEmergencyQueueDoesNotChooseAPopulationRemovingDefender(t *testing.T) {
+	projection := visibility.Projection{Cities: []visibility.CityProjection{{ID: "home", OwnerID: "a", Population: 1, Queue: []engine.ProductionItem{{ID: "UNIT_SETTLER", EntryID: "q1", Kind: engine.ProductionUnit, Cost: 100}}}}, Rules: &visibility.RulesProjection{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER", Effects: []rules.RuntimeStarterEffect{{Kind: engine.EffectSettler}}}, {ID: "pop-defender", Domain: engine.DomainLand, Attack: 1, ProductionCost: 1, Effects: []rules.RuntimeStarterEffect{{Kind: engine.EffectBuildingRemovesPopulation}}}}}, LegalActions: []visibility.ActionProjection{{Command: engine.CommandEditProduction, EntityID: "home"}}}
+	if candidates := emergencyQueueCandidates(projection, "a"); len(candidates) != 0 {
+		t.Fatalf("emergency editor selected known-illegal population removal: %+v", candidates)
+	}
+}
+
 func TestClientUndefendedAIResearchesAnAvailableCheapDefenderUnlock(t *testing.T) {
 	projection := visibility.Projection{
 		Cities:   []visibility.CityProjection{{ID: "home", OwnerID: "a", Population: 1}},

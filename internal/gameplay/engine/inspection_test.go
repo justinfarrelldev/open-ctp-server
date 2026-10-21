@@ -2,6 +2,7 @@ package engine
 
 import (
 	"bytes"
+	"math"
 	"testing"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
@@ -99,6 +100,20 @@ func TestClientResearchForecastMatchesExecutionMinimumRate(t *testing.T) {
 	forecast := inspector.Research("player-a")
 	if forecast == nil || forecast.Rate == nil || *forecast.Rate != 1 || forecast.Status != "estimated" {
 		t.Fatalf("forecast ignored execution's minimum-one rate: %+v", forecast)
+	}
+}
+
+func TestClientUnrepresentableRushQuoteNeverPublishesANegativePrice(t *testing.T) {
+	state := task10State()
+	state.Nations = []Nation{{ID: "nation-a", Gold: math.MaxInt}}
+	state.Cities = []City{{ID: "home", OwnerID: "player-a", TileID: "a", Queue: []ProductionItem{{ID: "huge", Kind: ProductionUnit, Cost: math.MaxInt}}}}
+	inspector, err := NewInspector(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	quote := inspector.RushBuy("home", "player-a")
+	if quote.Status != "unavailable" || quote.Cost != nil {
+		t.Fatalf("unrepresentable execution price was advertised: %+v", quote)
 	}
 }
 

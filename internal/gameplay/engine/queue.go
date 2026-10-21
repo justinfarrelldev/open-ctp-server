@@ -100,7 +100,11 @@ func canonicalProductionItem(runtime *rules.RuntimeRules, id string) (Production
 			item.ObsoletedBy = production.ObsoleteBy[0]
 		}
 	}
-	if unit, ok := runtime.Unit(id); ok {
+	unit, hasUnit := runtime.Unit(id)
+	if item.Kind == ProductionUnit && !hasUnit {
+		return ProductionItem{}, errors.New("production unit definition is unavailable")
+	}
+	if hasUnit {
 		item.Kind = ProductionUnit
 		if unit.ProductionCost > 0 {
 			item.Cost = unit.ProductionCost
@@ -182,7 +186,7 @@ func editProduction(state *State, actor string, payload EditProductionPayload, r
 	if len(target.Queue) > 0 {
 		newHead = target.Queue[0].EntryID
 	}
-	if oldHead != newHead {
+	if oldHead != "" && oldHead != newHead {
 		target.StoredProduction = 0
 	}
 	// No candidate state escapes until every entry is validated successfully.

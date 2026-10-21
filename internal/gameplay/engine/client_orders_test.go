@@ -37,6 +37,16 @@ func TestClientRenameCityValidatesIdentityAndName(t *testing.T) {
 	}
 }
 
+func TestClientRenameDoesNotProbeUndiscoveredCityNames(t *testing.T) {
+	state := task10State()
+	state.Tiles = append(state.Tiles, Tile{ID: "far", X: 20, Terrain: TerrainPlains, OwnerID: "player-b"})
+	state.Cities = []City{{ID: "home", Name: "Home", OwnerID: "player-a", TileID: "a", Population: 2}, {ID: "hidden", Name: "Secret", OwnerID: "player-b", TileID: "far", Population: 2}}
+	next := task10Apply(t, state, "player-a", CommandRenameCity, RenameCityPayload{CityID: "home", Name: "Secret"})
+	if next.Cities[0].Name != "Secret" || next.Cities[1].Name != "Secret" {
+		t.Fatal("city names must not be treated as global identities")
+	}
+}
+
 func TestClientSleepIsDistinctFromFortifyAndPersistsUntilWake(t *testing.T) {
 	state := task10State()
 	asleep := task10Apply(t, state, "player-a", CommandSleep, unitPayload{UnitID: "settler-a"})

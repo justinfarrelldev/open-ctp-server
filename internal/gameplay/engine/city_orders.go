@@ -33,11 +33,8 @@ func renameCity(state *State, actor string, payload RenameCityPayload) error {
 			return errors.New("city name is invalid")
 		}
 	}
-	for _, other := range state.Cities {
-		if other.ID != city.ID && other.Name == name {
-			return errors.New("city name is unavailable")
-		}
-	}
+	// Names are presentation, not identities (CityData::SetName). Global
+	// uniqueness would turn rejected renames into an unknown-city-name oracle.
 	city.Name = name
 	return nil
 }

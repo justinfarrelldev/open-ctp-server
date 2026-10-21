@@ -178,6 +178,15 @@ func TestSimultaneousPolicyResolutionSuppressesDeterministicSameDestinationColli
 	}
 }
 
+// legacyQueuedCommand simulates a persisted pre-validation envelope. New API
+// submissions must reject these inputs, while corrupt/legacy rows still fail
+// closed at replay rather than being mislabeled as an ordinary order conflict.
+func legacyQueuedCommand(state State, command Command) State {
+	policy := state.AsTurnPolicyState()
+	policy.Queue = append(policy.Queue, policyEnvelope(command, state.EventSequence+1))
+	return state.WithTurnPolicyState(policy)
+}
+
 func TestSimultaneousPolicyResolutionKeepsBaselineInvalidMoveFatal(t *testing.T) {
 	state := task8State()
 	state.Phase.Mode = "simultaneous"
@@ -194,7 +203,7 @@ func TestSimultaneousPolicyResolutionKeepsBaselineInvalidMoveFatal(t *testing.T)
 	}
 
 	state, _ = applyPolicyTestCommand(t, state, policyCommand("queued-a", "player-a"))
-	state, _ = applyPolicyTestCommand(t, state, movePolicyCommand(t, "queued-b", "player-b", "land-2", "d"))
+	state = legacyQueuedCommand(state, movePolicyCommand(t, "queued-b", "player-b", "land-2", "d"))
 
 	_, _, err := resolvePolicyReplay(t, state)
 	if !errors.Is(err, ErrObstructed) {
@@ -208,7 +217,7 @@ func TestSimultaneousPolicyResolutionKeepsNonMovementReplayErrorsFatal(t *testin
 	state.Phase.BaseRevision = state.Revision
 
 	payload := json.RawMessage(`"not-an-object"`)
-	state, _ = applyPolicyTestCommand(t, state, Command{SchemaVersion: CommandSchemaV1, ID: "queued-a", ActorPlayerID: "player-a", Type: CommandFoundCity, Payload: payload})
+	state = legacyQueuedCommand(state, Command{SchemaVersion: CommandSchemaV1, ID: "queued-a", ActorPlayerID: "player-a", Type: CommandFoundCity, Payload: payload})
 	state, _ = applyPolicyTestCommand(t, state, policyCommand("queued-b", "player-b"))
 
 	_, _, err := resolvePolicyReplay(t, state)

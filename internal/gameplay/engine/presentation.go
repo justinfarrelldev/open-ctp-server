@@ -16,10 +16,11 @@ type Notification struct {
 	PlayerID  string `json:"player_id"`
 	Kind      string `json:"kind"`
 	Turn      int    `json:"turn"`
-	CityID    string `json:"city_id"`
-	TileID    string `json:"tile_id"`
-	ContentID string `json:"content_id"`
+	CityID    string `json:"city_id,omitempty"`
+	TileID    string `json:"tile_id,omitempty"`
+	ContentID string `json:"content_id,omitempty"`
 	UnitID    string `json:"unit_id,omitempty"`
+	CommandID string `json:"command_id,omitempty"`
 }
 
 // StatisticsSample records actual completed-turn nation facts, not forecasts.
@@ -37,13 +38,13 @@ func cityScore(city City) int {
 	return city.Yields.Victory + city.Yields.Food + city.Yields.Production + city.Yields.Gold
 }
 
-func recordTurnStatistics(state *State) {
+func recordTurnStatistics(state *State, completedTurn int) {
 	for index := range state.Nations {
 		nation := &state.Nations[index]
-		if len(nation.Statistics) > 0 && nation.Statistics[len(nation.Statistics)-1].Turn == state.Phase.Turn {
+		if len(nation.Statistics) > 0 && nation.Statistics[len(nation.Statistics)-1].Turn == completedTurn {
 			continue
 		}
-		sample := StatisticsSample{Turn: state.Phase.Turn}
+		sample := StatisticsSample{Turn: completedTurn}
 		for _, city := range state.Cities {
 			if nationForPlayer(*state, city.OwnerID) != nation.ID {
 				continue
@@ -79,9 +80,28 @@ func recordProductionNotification(state *State, city City, item ProductionItem, 
 		return err
 	}
 	notification := Notification{ID: "production:" + hashBytes(raw), PlayerID: city.OwnerID, Kind: "production.completed", Turn: state.Phase.Turn, CityID: city.ID, TileID: city.TileID, ContentID: item.ID, UnitID: unitID}
+	appendNotification(state, notification)
+	return nil
+}
+
+func recordRejectedOrderNotification(state *State, command Command) error {
+	recipe := struct {
+		Revision            int64
+		Turn                int
+		PlayerID, CommandID string
+	}{state.Revision + 1, state.Phase.Turn, command.ActorPlayerID, command.ID}
+	raw, err := json.Marshal(recipe)
+	if err != nil {
+		return err
+	}
+	appendNotification(state, Notification{ID: "order-rejected:" + hashBytes(raw), PlayerID: command.ActorPlayerID, Kind: "order.rejected", Turn: state.Phase.Turn, CommandID: command.ID})
+	return nil
+}
+
+func appendNotification(state *State, notification Notification) {
 	for _, existing := range state.Notifications {
 		if existing.ID == notification.ID {
-			return nil
+			return
 		}
 	}
 	state.Notifications = append(state.Notifications, notification)
@@ -89,7 +109,7 @@ func recordProductionNotification(state *State, city City, item ProductionItem, 
 	// busy empire evict every other player's pending results.
 	count, first := 0, 0
 	for index := len(state.Notifications) - 1; index >= 0; index-- {
-		if state.Notifications[index].PlayerID != city.OwnerID {
+		if state.Notifications[index].PlayerID != notification.PlayerID {
 			continue
 		}
 		count++
@@ -101,11 +121,10 @@ func recordProductionNotification(state *State, city City, item ProductionItem, 
 	if count == NotificationWindow {
 		retained := make([]Notification, 0, len(state.Notifications))
 		for index, notice := range state.Notifications {
-			if index >= first || notice.PlayerID != city.OwnerID {
+			if index >= first || notice.PlayerID != notification.PlayerID {
 				retained = append(retained, notice)
 			}
 		}
 		state.Notifications = retained
 	}
-	return nil
 }

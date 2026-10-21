@@ -1363,6 +1363,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "413": {
+                        "description": "command body exceeds 256 KiB",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "422": {
                         "description": "invalid command phase or terminal game",
                         "schema": {
@@ -2036,17 +2045,14 @@ const docTemplate = `{
         },
         "/world/{game_id}/pollution": {
             "get": {
-                "description": "This endpoint returns the persisted read-only world pollution summary for any authenticated account that is still joined to the started game.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Legacy pollution weights undiscovered terrain. Use legally observed gameplay tile pollution instead.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "world"
                 ],
-                "summary": "Get world pollution",
+                "summary": "Retired canonical world pollution",
                 "parameters": [
                     {
                         "type": "integer",
@@ -2064,14 +2070,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/game.WorldPollutionResponse"
-                        }
-                    },
                     "400": {
-                        "description": "invalid request method, missing game_id, or invalid game_id",
+                        "description": "invalid request",
                         "schema": {
                             "type": "string"
                         }
@@ -2083,13 +2083,13 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "only joined game players may perform this action",
+                        "description": "joined game player required",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "404": {
-                        "description": "game or persisted world not found",
+                        "description": "game not found",
                         "schema": {
                             "type": "string"
                         }
@@ -2098,6 +2098,15 @@ const docTemplate = `{
                         "description": "game has not started",
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    "410": {
+                        "description": "use viewer-safe gameplay current resync",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "500": {
@@ -2111,17 +2120,14 @@ const docTemplate = `{
         },
         "/world/{game_id}/ratings": {
             "get": {
-                "description": "This endpoint returns the persisted read-only world ratings summary for any authenticated account that is still joined to the started game.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Legacy ratings count undiscovered terrain. Use the viewer-safe gameplay projection's own statistics instead.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "world"
                 ],
-                "summary": "Get world ratings",
+                "summary": "Retired canonical world ratings",
                 "parameters": [
                     {
                         "type": "integer",
@@ -2139,14 +2145,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/game.WorldRatingsResponse"
-                        }
-                    },
                     "400": {
-                        "description": "invalid request method, missing game_id, or invalid game_id",
+                        "description": "invalid request",
                         "schema": {
                             "type": "string"
                         }
@@ -2158,13 +2158,13 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "only joined game players may perform this action",
+                        "description": "joined game player required",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "404": {
-                        "description": "game or persisted world not found",
+                        "description": "game not found",
                         "schema": {
                             "type": "string"
                         }
@@ -2173,6 +2173,15 @@ const docTemplate = `{
                         "description": "game has not started",
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    "410": {
+                        "description": "use viewer-safe gameplay current resync",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "500": {
@@ -2845,46 +2854,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "wetness": {
-                    "type": "integer"
-                }
-            }
-        },
-        "game.WorldPollutionResponse": {
-            "type": "object",
-            "properties": {
-                "game_id": {
-                    "type": "integer"
-                },
-                "global_pollution": {
-                    "type": "integer"
-                },
-                "tile_pollution_count": {
-                    "type": "integer"
-                },
-                "turn": {
-                    "type": "integer"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "game.WorldRatingsResponse": {
-            "type": "object",
-            "properties": {
-                "economic": {
-                    "type": "integer"
-                },
-                "military": {
-                    "type": "integer"
-                },
-                "overall": {
-                    "type": "integer"
-                },
-                "pollution": {
-                    "type": "integer"
-                },
-                "science": {
                     "type": "integer"
                 }
             }

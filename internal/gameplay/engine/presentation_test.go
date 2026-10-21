@@ -29,7 +29,7 @@ func TestClientPresentationWindowsAreBoundedPerOwner(t *testing.T) {
 	}
 	for turn := 1; turn <= StatisticsWindow+3; turn++ {
 		state.Phase.Turn = turn
-		recordTurnStatistics(&state)
+		recordTurnStatistics(&state, state.Phase.Turn)
 	}
 	for _, nation := range state.Nations {
 		if len(nation.Statistics) != StatisticsWindow || nation.Statistics[0].Turn != 4 {

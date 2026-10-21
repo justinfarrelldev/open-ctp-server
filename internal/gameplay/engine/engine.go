@@ -723,8 +723,8 @@ func applyPolicyCommand(next State, command Command, runtime *rules.RuntimeRules
 			return State{}, nil, Result{}, err
 		}
 	}
-	if !resolved.Immediate && command.Type == CommandMoveUnit {
-		if err := preflightCoordinateMove(next, command, runtime); err != nil {
+	if !resolved.Immediate && resolverCommand.Kind == turns.CommandAction {
+		if err := preflightPlanningCommand(next, command, runtime, sources); err != nil {
 			return State{}, nil, Result{}, err
 		}
 	}
@@ -752,25 +752,29 @@ func applyPolicyCommand(next State, command Command, runtime *rules.RuntimeRules
 		if err != nil {
 			return State{}, nil, Result{}, err
 		}
-		replayedEventType, replayedEventPayload, _, err := applyValidatedMutation(&next, replayed, runtime, sources)
+		trial, replayedEventType, replayedEventPayload, err := planningCommandTrial(next, replayed, runtime, sources)
 		if err != nil {
-			suppressed, suppressErr := suppressDeterministicPlanningMoveCollision(replayBaseline, replayed, runtime, sources, err)
+			suppressed, suppressErr := planningOrderValidAtBaseline(replayBaseline, replayed, runtime, sources)
 			if suppressErr != nil {
 				return State{}, nil, Result{}, suppressErr
 			}
 			if suppressed {
+				if err := recordRejectedOrderNotification(&next, replayed); err != nil {
+					return State{}, nil, Result{}, err
+				}
 				continue
 			}
 			return State{}, nil, Result{}, err
 		}
+		next = trial
 		if replayedEventType == EventPlayerDisconnected {
 			resolvedDisconnectPayload = append(json.RawMessage(nil), replayedEventPayload...)
 		}
 	}
-	if resolved.Resolved {
+	if resolved.Resolved && !next.Terminal.Ended {
 		next.Phase.ResolutionLocked = false
 	}
-	if resolved.Resolved && next.Policy.Stage == turns.StagePlanning {
+	if resolved.Resolved && !next.Terminal.Ended && next.Policy.Stage == turns.StagePlanning {
 		if err := completePolicyRound(&next, runtime); err != nil {
 			return State{}, nil, Result{}, err
 		}
@@ -833,23 +837,47 @@ func decodeQueuedCommand(queued turns.Command) (Command, error) {
 	return command, nil
 }
 
-func suppressDeterministicPlanningMoveCollision(replayBaseline State, command Command, runtime *rules.RuntimeRules, sources Sources, replayErr error) (bool, error) {
-	if command.Type != CommandMoveUnit || !errors.Is(replayErr, ErrObstructed) {
-		return false, nil
+// preflightPlanningCommand validates mechanics before storing an intent. Every
+// eligible planner can act in this isolated trial, not just ActivePlayerIndex.
+func preflightPlanningCommand(state State, command Command, runtime *rules.RuntimeRules, sources Sources) error {
+	state.Phase.ResolutionLocked = true
+	_, _, _, err := planningCommandTrial(state, command, runtime, sources)
+	return err
+}
+
+// planningCommandTrial never leaks partial mutations from a failed order into
+// resolution. Noop is explicitly non-mutating and needs no deep-copy allocation.
+func planningCommandTrial(state State, command Command, runtime *rules.RuntimeRules, sources Sources) (State, string, json.RawMessage, error) {
+	if state.Terminal.Ended {
+		return State{}, "", nil, errors.New("game is already terminal")
 	}
+	trial := state
+	if command.Type != CommandNoop {
+		var err error
+		trial, err = canonicalClone(state)
+		if err != nil {
+			return State{}, "", nil, err
+		}
+	}
+	eventType, payload, _, err := applyValidatedMutation(&trial, command, runtime, sources)
+	return trial, eventType, payload, err
+}
+
+// A previously valid order may be invalidated by earlier ordered actions. Reject
+// it privately and continue; invalid/corrupt legacy stored orders still fail
+// closed. Checking the untouched round baseline distinguishes these cases.
+func planningOrderValidAtBaseline(replayBaseline State, command Command, runtime *rules.RuntimeRules, sources Sources) (bool, error) {
 	baseline, err := canonicalClone(replayBaseline)
 	if err != nil {
 		return false, err
 	}
 	_, _, _, err = applyValidatedMutation(&baseline, command, runtime, sources)
-	if err != nil {
-		return false, nil
-	}
-	return true, nil
+	return err == nil, nil
 }
 
 func completePolicyRound(state *State, runtime *rules.RuntimeRules) error {
-	next, err := RecalculateRound(*state)
+	// The policy scheduler has already advanced its clock before execution.
+	next, err := recalculateRoundForCompletedTurn(*state, state.Phase.Turn-1)
 	if err != nil {
 		return err
 	}

@@ -35,6 +35,8 @@ func TestClientCoordinateMoveDoesNotRequireHiddenTileIdentity(t *testing.T) {
 		`{"unit_id":"land","target_x":99,"target_y":99}`,
 		`{"unit_id":"land","target_x":1}`,
 		`{"unit_id":"land","target_x":1,"target_y":0,"path":["b"]}`,
+		`{"unit_id":"land","target_x":1,"target_y":0,"path":[]}`,
+		`{"unit_id":"land","target_x":1,"target_y":0,"path":null}`,
 		`{"unit_id":"land","target_x":null,"target_y":null,"path":["b"]}`,
 	} {
 		before, err := CanonicalStateJSON(state)

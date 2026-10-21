@@ -1,8 +1,9 @@
 package engine
 
 import (
-	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 	"sort"
+
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 )
 
 // Inspector reuses the game's pinned rules for read-only display calculations.
@@ -161,6 +162,13 @@ func (i *Inspector) RushBuy(cityID, actor string) *RushBuyQuote {
 		return quote
 	}
 	cost := rushBuyCost(*city, item, rushBuyTypeCoefficient(i.state, actor, item, i.runtime))
+	if cost < 1 && city.StoredProduction < item.Cost {
+		// Execution rejects nonpositive prices for unfinished production, e.g.
+		// overflow or an unrepresentably small coefficient. Never display a
+		// negative purchase price or claim that this item is already funded.
+		quote.Status = "unavailable"
+		return quote
+	}
 	quote.Cost = &cost
 	quote.Status = "available"
 	if cost == 0 {

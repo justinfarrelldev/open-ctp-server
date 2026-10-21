@@ -397,32 +397,6 @@ definitions:
       wetness:
         type: integer
     type: object
-  game.WorldPollutionResponse:
-    properties:
-      game_id:
-        type: integer
-      global_pollution:
-        type: integer
-      tile_pollution_count:
-        type: integer
-      turn:
-        type: integer
-      updated_at:
-        type: string
-    type: object
-  game.WorldRatingsResponse:
-    properties:
-      economic:
-        type: integer
-      military:
-        type: integer
-      overall:
-        type: integer
-      pollution:
-        type: integer
-      science:
-        type: integer
-    type: object
   game.WorldSpaceLayerErrorResponseDocs:
     properties:
       error:
@@ -824,6 +798,12 @@ paths:
             type: object
         "409":
           description: stale revision or idempotency conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "413":
+          description: command body exceeds 256 KiB
           schema:
             additionalProperties:
               type: string
@@ -1997,10 +1977,8 @@ paths:
       - world
   /world/{game_id}/pollution:
     get:
-      consumes:
-      - application/json
-      description: This endpoint returns the persisted read-only world pollution summary
-        for any authenticated account that is still joined to the started game.
+      description: Legacy pollution weights undiscovered terrain. Use legally observed
+        gameplay tile pollution instead.
       parameters:
       - description: game ID
         in: path
@@ -2015,12 +1993,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/game.WorldPollutionResponse'
         "400":
-          description: invalid request method, missing game_id, or invalid game_id
+          description: invalid request
           schema:
             type: string
         "401":
@@ -2028,30 +2002,34 @@ paths:
           schema:
             type: string
         "403":
-          description: only joined game players may perform this action
+          description: joined game player required
           schema:
             type: string
         "404":
-          description: game or persisted world not found
+          description: game not found
           schema:
             type: string
         "409":
           description: game has not started
           schema:
             type: string
+        "410":
+          description: use viewer-safe gameplay current resync
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: internal server error
           schema:
             type: string
-      summary: Get world pollution
+      summary: Retired canonical world pollution
       tags:
       - world
   /world/{game_id}/ratings:
     get:
-      consumes:
-      - application/json
-      description: This endpoint returns the persisted read-only world ratings summary
-        for any authenticated account that is still joined to the started game.
+      description: Legacy ratings count undiscovered terrain. Use the viewer-safe
+        gameplay projection's own statistics instead.
       parameters:
       - description: game ID
         in: path
@@ -2066,12 +2044,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/game.WorldRatingsResponse'
         "400":
-          description: invalid request method, missing game_id, or invalid game_id
+          description: invalid request
           schema:
             type: string
         "401":
@@ -2079,22 +2053,28 @@ paths:
           schema:
             type: string
         "403":
-          description: only joined game players may perform this action
+          description: joined game player required
           schema:
             type: string
         "404":
-          description: game or persisted world not found
+          description: game not found
           schema:
             type: string
         "409":
           description: game has not started
           schema:
             type: string
+        "410":
+          description: use viewer-safe gameplay current resync
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: internal server error
           schema:
             type: string
-      summary: Get world ratings
+      summary: Retired canonical world ratings
       tags:
       - world
   /world/{game_id}/space:

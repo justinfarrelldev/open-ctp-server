@@ -2,6 +2,7 @@ package ai
 
 import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/rules"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility"
 )
 
@@ -41,7 +42,7 @@ func emergencyQueueCandidates(projection visibility.Projection, playerID string)
 		}
 		bestID, bestCost := "", 0
 		for _, unit := range projection.Rules.Units {
-			if !runtimeUnitAvailable(unit, known) || unit.Attack <= 0 && unit.Defense <= 0 || unit.Domain != engine.DomainLand && unit.Domain != engine.DomainAmphibious || runtimeUnitHasEffect(unit, engine.EffectSettler) || runtimeUnitHasEffect(unit, engine.EffectCantBuild) || runtimeUnitHasEffect(unit, engine.EffectHasPopAndCanBuild) || unit.NeedsCityGoodID != "" || unit.RequiredGovernmentID != "" || len(unit.RequiredGovernmentIDs) > 0 {
+			if !simpleEmergencyDefender(unit) || !runtimeUnitAvailable(unit, known) {
 				continue
 			}
 			cost := productionCost(unit)
@@ -70,7 +71,7 @@ func emergencyQueueCandidates(projection visibility.Projection, playerID string)
 
 // emergencyDefenderResearch prevents an undefended civilization from committing
 // all early production to expensive expansion while a cheap defender is one
-// available advance away. It uses only projected catalogs, goods and own state.
+// available advance away. It uses only projected catalogs and own state.
 func emergencyDefenderResearch(projection visibility.Projection, playerID string) (string, bool) {
 	if !shouldProduceEmergencyMilitaryUnit(projection, playerID) || projection.Research == nil || projection.Rules == nil {
 		return "", false
@@ -92,17 +93,37 @@ func emergencyDefenderResearch(projection visibility.Projection, playerID string
 		}
 		future[advance] = true
 		for _, unit := range projection.Rules.Units {
-			if unit.Domain != engine.DomainLand && unit.Domain != engine.DomainAmphibious || unit.Attack <= 0 && unit.Defense <= 0 || runtimeUnitHasEffect(unit, engine.EffectSettler) || runtimeUnitHasEffect(unit, engine.EffectCantBuild) || runtimeUnitHasEffect(unit, engine.EffectHasPopAndCanBuild) || !runtimeUnitAvailable(unit, future) {
-				continue
-			}
-			if unit.NeedsCityGoodID != "" || unit.RequiredGovernmentID != "" || len(unit.RequiredGovernmentIDs) > 0 {
+			if !simpleEmergencyDefender(unit) || !runtimeUnitAvailable(unit, future) {
 				continue
 			}
 			production, research := productionCost(unit), costs[advance]
-			if bestAdvance == "" || production < bestProduction || production == bestProduction && (research < bestResearch || research == bestResearch && (advance < bestAdvance || advance == bestAdvance && unit.ID < bestUnit)) {
+			earlierID := advance < bestAdvance || advance == bestAdvance && unit.ID < bestUnit
+			betterResearch := research < bestResearch || research == bestResearch && earlierID
+			if bestAdvance == "" || production < bestProduction || production == bestProduction && betterResearch {
 				bestAdvance, bestUnit, bestProduction, bestResearch = advance, unit.ID, production, research
 			}
 		}
 	}
 	return bestAdvance, bestAdvance != ""
+}
+
+// simpleEmergencyDefender deliberately excludes population-consuming and
+// specialized prerequisite paths instead of guessing city/government eligibility.
+// Execution still validates all remaining rules through the normal command gate.
+func simpleEmergencyDefender(unit rules.RuntimeUnitDefinition) bool {
+	if unit.Domain != engine.DomainLand && unit.Domain != engine.DomainAmphibious {
+		return false
+	}
+	if unit.Attack <= 0 && unit.Defense <= 0 {
+		return false
+	}
+	if unit.NeedsCityGoodID != "" || unit.RequiredGovernmentID != "" || len(unit.RequiredGovernmentIDs) > 0 {
+		return false
+	}
+	for _, blocked := range []string{engine.EffectSettler, engine.EffectCantBuild, engine.EffectHasPopAndCanBuild, engine.EffectBuildingRemovesPopulation} {
+		if runtimeUnitHasEffect(unit, blocked) {
+			return false
+		}
+	}
+	return true
 }

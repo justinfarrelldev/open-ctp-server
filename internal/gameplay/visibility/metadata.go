@@ -1,6 +1,10 @@
 package visibility
 
-import "github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
+import (
+	"math"
+
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
+)
 
 // ContractProjection versions the projection independently of persisted state.
 // Features describe supported contracts, not permission to bypass action/phase
@@ -52,7 +56,25 @@ func worldProjection(state engine.State) *WorldProjection {
 			maxY = tile.Y
 		}
 	}
-	return &WorldProjection{MinX: minX, MinY: minY, Width: maxX - minX + 1, Height: maxY - minY + 1}
+	width, widthOK := worldDimension(minX, maxX)
+	height, heightOK := worldDimension(minY, maxY)
+	if !widthOK || !heightOK {
+		return nil
+	}
+	return &WorldProjection{MinX: minX, MinY: minY, Width: width, Height: height}
+}
+
+func worldDimension(low, high int) (int, bool) {
+	if high < low {
+		return 0, false
+	}
+	// Unsigned subtraction represents the full nonnegative signed-coordinate
+	// distance without overflowing. Check before converting/adding the endpoint.
+	span := uint64(high) - uint64(low)
+	if span >= uint64(math.MaxInt) {
+		return 0, false
+	}
+	return int(span) + 1, true
 }
 
 // applyInspection never reads authority: stale callers pass stored observations.

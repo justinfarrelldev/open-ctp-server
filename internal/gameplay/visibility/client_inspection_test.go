@@ -2,6 +2,7 @@ package visibility
 
 import (
 	"encoding/json"
+	"math"
 	"testing"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
@@ -136,6 +137,20 @@ func TestClientCalendarProjectsOnlyPinnedYearData(t *testing.T) {
 	}
 	if _, ok := metadataWire(t, legacy)["calendar"]; ok {
 		t.Fatal("legacy/synthetic game invented a calendar")
+	}
+}
+
+func TestClientUnrepresentableBoundsDoNotPublishOverflowedCameraSizes(t *testing.T) {
+	state := clientMetadataState()
+	state.Units = nil
+	state.Cities = nil
+	state.Tiles = []engine.Tile{{ID: "min", X: math.MinInt, Terrain: engine.TerrainPlains}, {ID: "max", X: math.MaxInt, Terrain: engine.TerrainPlains}}
+	projection, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if projection.World != nil {
+		t.Fatalf("unrepresentable extent became a fabricated camera size: %+v", projection.World)
 	}
 }
 

@@ -1159,6 +1159,10 @@ func positiveRushBuyCoefficient(value float64) float64 {
 // RecalculateRound applies the city pipeline once for the current resolved turn.
 // It has no external authority: callers persist the returned canonical state through the aggregate.
 func RecalculateRound(state State) (State, error) {
+	return recalculateRoundForCompletedTurn(state, state.Phase.Turn)
+}
+
+func recalculateRoundForCompletedTurn(state State, completedTurn int) (State, error) {
 	if err := ValidateState(state); err != nil {
 		return State{}, err
 	}
@@ -1219,7 +1223,7 @@ func RecalculateRound(state State) (State, error) {
 	}
 	applyReadinessSupportTax(&next, runtime)
 	updateNationMaxCityCounts(&next)
-	recordTurnStatistics(&next)
+	recordTurnStatistics(&next, completedTurn)
 	next.RecalculatedTurn = next.Phase.Turn
 	return next, nil
 }

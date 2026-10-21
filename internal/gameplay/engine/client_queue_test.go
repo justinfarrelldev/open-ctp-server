@@ -175,6 +175,32 @@ func TestClientQueueCompletionPreservesRemainingDuplicateIdentity(t *testing.T) 
 	}
 }
 
+func TestClientProductionUnitNeedsExecutablePinnedDefinition(t *testing.T) {
+	runtime := rules.RuntimeRules{Production: []rules.RuntimeProduction{{ID: "ghost", Kind: ProductionUnit, Cost: 10}}}
+	if _, err := canonicalProductionItem(&runtime, "ghost"); err == nil {
+		t.Fatal("production stub without an executable unit definition was accepted")
+	}
+}
+
+func TestClientAtomicInsertIntoEmptyQueuePreservesUnassignedProduction(t *testing.T) {
+	state := task10State()
+	state.Cities = []City{{ID: "home", OwnerID: "player-a", TileID: "a", Population: 2, StoredProduction: 40}}
+	pin, err := rules.ServerOwnedSyntheticRuleset()
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtime, err := rules.CompileRuntime(pin.CanonicalJSON, pin.ContentHash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := editProduction(&state, "player-a", EditProductionPayload{CityID: "home", Entries: []QueueSelection{{ItemID: runtime.Starter.TypeID}}}, &runtime); err != nil {
+		t.Fatal(err)
+	}
+	if state.Cities[0].StoredProduction != 40 {
+		t.Fatal("starting an empty queue destroyed unassigned/carryover production unlike append")
+	}
+}
+
 func TestClientCancelFutureProductionPreservesCurrentProgress(t *testing.T) {
 	state := task10State()
 	state.Cities = []City{{ID: "home", OwnerID: "player-a", TileID: "a", StoredProduction: 40, Queue: []ProductionItem{{ID: "hoplite", Kind: ProductionUnit, Cost: 100}, {ID: "granary", Kind: ProductionBuilding, Cost: 50}}}}
