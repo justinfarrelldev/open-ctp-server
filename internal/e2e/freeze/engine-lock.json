@@ -95,7 +95,7 @@
     },
     {
       "path": "internal/gameplay/http/http.go",
-      "sha256": "b5756f0c7aae892df4f4b99d96832fcaa0832005c63fbdc4b9b252cef1dccf0d"
+      "sha256": "45c713052a1e2798855e668d315887e2927207ed32b483518424361f7bc65435"
     },
     {
       "path": "internal/gameplay/rules/retail_catalog.go",

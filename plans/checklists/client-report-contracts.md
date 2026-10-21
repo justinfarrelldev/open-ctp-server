@@ -3,7 +3,7 @@
 - [x] Read client ideal interaction topology and both reports completely.
 - [x] Tighten both requirements documents for fog-safe ownership, optimistic presentation/rollback, full-state resync and hybrid play.
 - [x] Create implementation plan and this live checklist.
-- [ ] HTTP-01: RED dispatch/drift tests, GREEN exact registrations, refactor and verify.
+- [x] HTTP-01: RED dispatch/drift tests, GREEN exact registrations, refactor and verify.
 - [ ] MAP-01/CITY-01/TRADE-01: RED visibility/memory/legacy/isolation tests, GREEN projections and persistence, refactor and verify.
 - [ ] MAP-01: RED versioned world metadata/generation/handoff tests, GREEN implementation, refactor and verify.
 - [ ] MAP-02/ECON-01: RED effective observation-safe facts and quote tests, GREEN implementation, refactor and verify.
@@ -18,4 +18,6 @@
 
 ## Evidence
 
-Implementation not yet started. Optional feature decisions are not completed features.
+- HTTP-01 RED: all 18 reported routes plus unregistered pillage returned 404; literal-action drift guard identified missing registrations.
+- HTTP-01 GREEN/refactor: exact HTTP payload registrations (including both lawsuit targets), shared dispatch tests and forged-field rejection pass; `go test ./internal/gameplay/http -count=1` passes. Existing authenticated service still performs all gameplay validation. Source: `UnitData.cpp` CanInjoin/CanExpel, existing `special.go` payload decoders and engine tests. Freeze hash renewed for the reviewed adapter.
+- Optional feature decisions are not completed features.
