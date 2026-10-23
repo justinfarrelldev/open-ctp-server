@@ -12,7 +12,7 @@ Scope: `known-server-issue.md` and `server-client-schisms.md`; server only. No l
 - [x] RED → GREEN → refactor: original-catalog terrain goods generation; explicit version lineage.
 - [x] RED → GREEN → refactor: public turn context and bounded timing/protocol observability; no fabricated AI progress or route guarantee.
 - [x] Document new contracts and server/client delivery boundary in reports.
-- [ ] Thorough source/security/maintainability review, full tests, race-focused tests, vet/build, freeze verification, diff checks; atomic commits.
+- [x] Thorough source/security/maintainability review, full tests, race-focused tests, vet/build, freeze verification, diff checks; atomic commits.
 
 ## Evidence
 
@@ -45,3 +45,12 @@ SSE race regression strengthened to prove a commit during initial projection act
 Additional review RED: resync used revision as SSE ID and failed to advance the stream cursor after a full snapshot. GREEN: query durable last-event sequence atomically with revision/state, include `event_cursor`, use it as SSE ID and adopt it for subsequent durable reads. Unequal-counter and snapshot→delta wakeup regressions pass; events/memorysql/onboarding pass. This fixes repeated full-snapshot wakeups without changing command identities or durable ordering.
 
 Synthetic fixture movement now also preserves the previous flattened-land one-point policy rather than introducing unrequested terrain-cost gameplay drift. Its dedicated RED→GREEN test passes. Clean/clean/restart observations for accepted rows 1–4, 6 and 7 retain their expected winners/reasons and unchanged budgets; refreshed their actually observed metadata/name-dependent state/event hashes. Optional row 5 exhausts its 48-turn diplomatic budget on BOTH this revision and an isolated pre-change `fbc9c0c` worktree. Its existing artifact pin/acceptance registry were not fabricated or weakened; that pre-existing optional observer debt is outside these repairs. Temporary observation tests/worktree were removed.
+
+## Final verification and review
+
+- `GOMAXPROCS=4 go test -timeout=16m -p=2 ./... -count=1 -coverprofile=/tmp/server-repair-coverage.out` passes, including the default fullgame/onboarding suites and unchanged retail 80-turn continuity checks. Total coverage: 81.0%; engine: 86.5%. The pre-existing CI engine-coverage target of 90% remains unmet; no threshold or hook was weakened and no claim is made that that separate coverage gate is fixed.
+- Fresh `go test -race -count=1` passes for auth, engine, visibility, service, HTTP, events, game and world.
+- `go vet ./...`, `go build ./...`, 77-file freeze verification, gofmt and `git diff --check` pass. Freeze coverage expands from 69 to 77 files, including the new resource policy and credential-safe authentication store; campaign allowlist/import guards remain unchanged.
+- Final review rechecked original-source mechanics, authoritative query/edit sharing, capacity/identity rollback, owner/phase/fog privacy, safe private/public diagnostics, immutable replay, durable cursor/revision separation, generator/version/legacy lineage and unsupported-feature boundaries. Current server requirements are complete; all active checklist boxes are checked.
+- The initial full runs correctly exposed the synthetic-yield regression and a stale SSE SQL test fixture. Both were repaired and the complete suite rerun successfully. Optional row-5 diplomatic observer debt is independently reproduced on the pre-change baseline and documented above, not hidden by a skip, larger budget or forged hash.
+- No live service/game acceptance, client modifications, installed-asset changes, database migration, hook modification or hook bypass. Atomic commits execute the existing Swagger hook normally.

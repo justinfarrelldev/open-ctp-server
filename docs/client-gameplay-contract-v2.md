@@ -4,14 +4,19 @@ The client ideal interaction topology applies to local singleplayer and multipla
 The server owns canonical state, rules, generation and validation. This document
 supersedes architecture suggestions in the two client-discovered issue reports;
 their pinned source excerpts describe the older investigation, not current code.
+See [server contract repairs](server-contract-repairs.md) for complete production
+options, structured rejections, provenance, observed river geometry and turn/read
+observability.
 
 ## Reading and reconciling
 
 - Command receipts contain the complete viewer projection at their revision.
 - `GET /game/{game_id}/events?session_id=...` with
   `X-Gameplay-Resync: current` returns a finite SSE `resync` response containing
-  `current_revision` and `snapshot`. Validate that the snapshot revision matches
-  the envelope. Normal event streaming remains the invalidation/resume path.
+  `current_revision`, durable `event_cursor`, and `snapshot`. Validate that the
+  snapshot revision matches the envelope; resume using the durable cursor, not
+  the revision. Resync SSE `id` is the durable event sequence. Normal event
+  streaming remains the invalidation/resume path.
 - On disagreement, show **resynchronizing**, revert tentative presentation, replace
   the full authoritative model from a current viewer snapshot, then resume input.
   Do not patch invented geography into an empty snapshot or read canonical events.
@@ -25,6 +30,9 @@ their pinned source excerpts describe the older investigation, not current code.
   omniscient fallback, including for the game owner or local play.
 - Command bodies are bounded at 256 KiB; oversized requests return 413 before
   command execution. Shared and command-specific field validation still applies.
+- Gameplay rejections include safe `code`, `message`, and `correlation_id` alongside
+  `error`. A persistent rejection and a later successful refresh are separate
+  facts. Ordinary current snapshots are replication, not proof of fault recovery.
 
 `contract.version` is `2`. `contract.features` identifies supported contracts and
 explicitly unavailable features. A feature flag is not phase/entity authorization:
@@ -41,8 +49,11 @@ facts. `false`, `""`, `false` and `""` mean known no-river/no-deposit/no-ruin/ne
 metadata in legacy observations means **unknown**, not an authoritative negative.
 Each remembered tile uses its viewer's last observation, observation turn and
 `stale: true`; hidden canonical changes are not copied or recomputed into it.
-Rivers are independent of base terrain. Connect artwork only to legally known
-neighbors; a renderer must not request extra hidden cells to complete a river mouth.
+Rivers are independent of base terrain. When `observed_river_geometry` is true,
+`river_geometry` carries the legitimate center tile's original SW/NW/NE/SE art
+edges and beach-mouth discriminator, retained under fog. This does not project
+neighbor cells. Missing geometry is unknown, not zero connectivity; a renderer
+must not treat unknown neighbors as no-river or request hidden cells to finish art.
 
 Inspectable tiles also carry:
 
@@ -62,14 +73,18 @@ pre-transition and post-transition sight, so moving away cannot erase first sigh
 A legacy current view can be recorded; a legacy hidden observation cannot be
 backfilled from hidden authority.
 
-New games use `ctp2-ruins-v3`: independent deterministic ruin placement in addition
-to V2 rivers/goods, with a server-owned seed/version. V3 retains V2 terrain,
-river/good and spawn output; it selects at most one land ruin per complete 6x6 box,
-excluding starting units' coordinates. Private reward rolls are persisted at game
-start. V2 retains V1's base terrain/spawn lineage. Existing V1/V2 games are not
-regenerated and do not acquire new ruins.
-Retail terrain families are retained through startup; synthetic rules remain a
-separate supported ruleset, not a retail numerical/artwork substitute.
+New games use `ctp2-original-goods-v4`: V1 terrain/spawns, V2 rivers and V3 ruins,
+with resource placement pinned to `ctp2-original-resources-v1`, not four fabricated
+variants per terrain or installed GOG extensions. Public `world.generator_version`
+and `world.resource_catalog` identify this policy without exposing seeds. V3
+selects at most one land ruin per complete 6x6 box, excluding starting coordinates;
+private reward rolls are persisted at game start. Older versions/saves are not
+regenerated. Later terrain changes may legitimately retain deposits.
+Terrain families are retained through startup; unsupported new terrain rejects
+rather than silently flattening deposits onto plains. Synthetic rules are explicit
+bounded fixtures (`rules.family: synthetic`), not a retail numerical/artwork
+substitute. New retail pins encode `rules.family: retail`; unlabelled old runtime
+pins expose `unknown`. Keep the exact pinned `rules.content_hash`.
 
 ## Optimistic movement and hybrid play
 
@@ -191,6 +206,20 @@ games resolve content metadata server-side. Unknown client-defined items reject.
 Sparse synthetic catalog costs use the server's documented one-point default,
 not a client-selected cost. Keep client row selection keyed by entry ID.
 
+### Complete append eligibility
+
+`production_options` is an owned, currently observed city's complete revision-,
+city- and content-hash-bound atomic-append query. `status: complete` with `items: []`
+means no append choices; `unavailable` is not complete-empty or unlocked. All
+eligible units/buildings/wonders/conversions are considered, including nonempty
+queues. This uses execution validation, not projection-local predicates.
+
+Retaining the ordered queue and adding one advertised item is the documented
+operation. Arbitrary Insert/reorder/head changes/templates still require whole-edit
+validation and can reject atomically with a safe code/correlation. Costs are
+server-owned; no prospective turns are invented. See the supplement for exact wire
+fields, phase/controller boundaries, unavailable semantics and error codes.
+
 ## Cities and distinct orders
 
 - Owned/visible cities expose real `name`/`type_id` and observed population.
@@ -198,6 +227,10 @@ not a client-selected cost. Keep client row selection keyed by entry ID.
 - `art.age_id` is the current owner's canonical age; `art.capital` uses effective
   capital rules. These facts, name/type/population are remembered only as observed.
   They are not guessed founder culture or a guarantee of a particular sprite.
+- Founding accepts an omitted/empty name for an authoritative, own-only neutral
+  `City N` default. Human action suggestions, AI and ruin defaults never contain
+  unit/account IDs. Localized civilization-name lists are not pinned; existing
+  saved/custom/foreign names are not overwritten.
 - `rename-city`: `city_id`, `name`; trims whitespace, rejects empty/control/overlong
   names and enforces ownership. Names are at most 128 Unicode codepoints.
   Duplicates are allowed: city IDs, not names, identify cities. Checking global
@@ -323,6 +356,22 @@ A private `ruin.explored` notice has a stable ID, turn, tile, `reward_kind`
 `unit_id` or `city_id`. Hidden rolls and eligibility candidates are never projected.
 Visible `ruin` presence becomes a stored fog fact; another player's hidden discovery
 does not update stale memory. Screenshot fixtures must never create real rewards.
+
+### Committed turn/read observability
+
+`turn_context` exposes matching revision/turn, mode, committed scheduler status,
+and the public active actor in sequential/long-turn modes. `live_progress` is false;
+hybrid private participants/orders are not exposed. `unit_route_preview` and
+`live_resolution_progress` capabilities are explicitly false. Do not turn general
+cost/destination intent into a green unit-route guarantee or fabricated nation strip.
+
+Command `Server-Timing` measures gateway execution. Event `X-Gameplay-Read-Mode`
+distinguishes `current` from `stream`; initial-read timing is separate. Failed
+initial reads return safe 503 before success headers. Streaming subscribes before
+its durable initial read to prevent lost commit wakeups. No retry/idempotency/cursor
+or event-rate-limit semantics are changed; the old resync-ID/revision confusion
+is corrected to use a durable `event_cursor`. Private injected command metrics separate
+lock/load, engine resolution, visibility and persistence; they never enter receipts.
 
 ## Remaining client work and feature boundaries
 

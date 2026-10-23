@@ -1,9 +1,33 @@
 # Retail production: incomplete eligibility contract and opaque Add rejection
 
-## Status and scope
+## Server resolution
 
-**Confirmed source-level contract gaps; the exact cause of the reported live
-“none of the units can be added” failure is not yet established.**
+The server contract gaps below are implemented. See
+`docs/server-contract-repairs.md`, `docs/client-gameplay-contract-v2.md` and
+`plans/checklists/server-contract-repairs.md` for current wire semantics and test
+records. This delivery is **server only**; no client code or live games changed.
+
+- [x] Complete authoritative owned-city `production_options`, including all
+  eligible items on nonempty queues, with exact revision/city/hash binding and
+  complete-empty versus unavailable semantics.
+- [x] Shared read-only eligibility and execution checks; no per-candidate world
+  serialization, RNG/events or queue identity allocation.
+- [x] Precise safe rejection codes/messages/correlation and private redacted
+  production diagnostics; credentials never appear in the new diagnostics or
+  existing authentication-store logs.
+- [x] Explicit pinned rules family and original resource-generation provenance.
+- [x] Document atomic-append versus whole-edit boundaries and queued-versus-executed
+  semantics without weakening validation or inventing forecast turns.
+
+**The original live click was not reproduced, and no claim is made that changing
+only the server fixes the client's catalog-as-permission or rejection UI defects.**
+The investigation below is preserved as a historical baseline: its statements
+about missing fields/old source behavior are superseded by the contracts above.
+
+## Original investigation status and scope
+
+**Confirmed source-level contract gaps at the investigated baseline; the exact
+cause of the reported live “none of the units can be added” failure was not established.**
 
 The report follows the switch from synthetic to retail rules: the client lists
 retail units, but pressing Build → Add appears to resynchronize rather than add
@@ -271,29 +295,27 @@ replace synthetic content in a newly started, correctly configured game.
 Use in-memory fixtures and mocked HTTP gateways for regressions; do not mutate a
 user's live game, write user files, or contact a live server in tests.
 
-## 6. Proposed regression/acceptance requirements — NOT completed
+## 6. Server regression/acceptance requirements — completed
 
-- [ ] One empty owned city advertises at least two independently eligible unit
-  IDs, and each unchanged-state advertised append passes authoritative validation.
-- [ ] A nonempty queue still exposes all applicable production choices; appending
-  a duplicate unit preserves distinct entry IDs and unchanged-head progress.
-- [ ] Table tests compare projection and validation for CantBuild,
-  HasPopAndCanBuild, population, advances/obsolescence, government, city goods
-  including imports, park-ranger/global wonder restrictions, effective building
-  prerequisites, nuclear restrictions and duplicate non-unit items.
-- [ ] Full atomic edits cover retained entries, Insert/reorder/head changes,
-  saved-template batches, capacity 256/257, explicit empty versus null/missing,
-  foreign/stale/missing IDs and invalid-edit rollback with no mutation.
-- [ ] Options are complete and revision-bound, or explicitly unavailable; no
-  partial/unknown result is interpreted as a complete empty or unlocked list.
-- [ ] Viewer privacy tests exclude foreign city eligibility and hidden reasons;
-  no canonical-state endpoint, foreign inspection or secret-dependent detail leaks.
-- [ ] HTTP rejection tests preserve safe codes/correlation while keeping private
-  engine diagnostics and credentials out of responses.
-- [ ] Client mocked accessible Add uses exact received identities, distinguishes
-  rejection/recovery, and retains queued-versus-executed semantics in all modes.
-- [ ] A server-owner live acceptance check verifies a newly pinned retail game,
-  eligible Add, continuation on a nonempty queue and subsequent unit completion.
+- [x] Empty owned city advertises multiple eligible unit IDs; each unchanged-state
+  advertised atomic append passes authoritative validation.
+- [x] Nonempty queue retains complete choices; duplicate units have independent
+  entry identities and unchanged-head funding survives.
+- [x] Projection/execution comparisons cover CantBuild, HasPopAndCanBuild,
+  population, advances/obsolescence, government, imported city goods, park/global
+  wonder restrictions, effective buildings, nuclear restrictions and duplicates.
+- [x] Atomic edit regressions cover retained rows, reorder/head changes, batches,
+  256/257 boundaries, explicit empty versus null/missing, invalid/foreign/missing
+  identities and complete rollback, plus stale-revision service rejection.
+- [x] Complete-empty and unavailable are distinct and revision/city/hash-bound.
+- [x] Owner/phase/privacy and safe error/logging regressions protect foreign data
+  and credentials; canonical world endpoints remain retired.
+- [x] Existing command receipt/replay/planning/production-completion tests remain
+  authoritative; no preview bypass, identity rebase or synthetic-as-retail alias.
+
+Outside this server-only delivery: client mocked Add/rendering/rejection recovery
+integration, and a server-owner live retail acceptance session. Neither was
+performed or falsely marked verified; tests use in-memory/mock gateways only.
 
 Retail UI authority remains the released source at
 `$CTPCLIENT/ctp2_source/ctp2_code/`, not the Apolyton Edition:
@@ -305,7 +327,7 @@ The original local script path is not permission to execute asset SLIC or infer
 private eligibility client-side. Those semantics belong on the authoritative
 server, with explicit supported/deferred differences.
 
-## 7. Verification actually performed
+## 7. Historical verification performed during the original investigation
 
 Read-only source/call-chain investigation plus this focused existing test run:
 
