@@ -587,16 +587,19 @@ func foundCity(state *State, actor string, payload FoundCityPayload, runtimeOpti
 	if len(runtimeOptions) > 0 {
 		runtime = runtimeOptions[0]
 	}
-	if payload.UnitID == "" || payload.CityID == "" || payload.Name == "" {
-		return errors.New("found city unit, city id, and name are required")
+	if payload.UnitID == "" || payload.CityID == "" {
+		return errors.New("found city unit and city id are required")
 	}
+	if payload.Name == "" {
+		payload.Name = defaultCityName(*state, actor)
+	}
+	name, err := normalizedCityName(payload.Name)
+	if err != nil {
+		return err
+	}
+	payload.Name = name
 	if _, exists := cityByID(*state, payload.CityID); exists {
 		return errors.New("city id already exists")
-	}
-	for _, city := range state.Cities {
-		if city.Name == payload.Name {
-			return errors.New("city name already exists")
-		}
 	}
 	unit, err := ownedUnit(state, actor, payload.UnitID)
 	if err != nil || unit.TransportID != "" || unit.ArmyID != "" || !hasEffect(unit.Effects, EffectSettler) {

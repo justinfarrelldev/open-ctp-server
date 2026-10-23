@@ -219,7 +219,7 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 		}
 		isSettler := hasEffect(unit.Effects, engine.EffectSettler)
 		if unit.ArmyID == "" && unit.TransportID == "" && unit.TileID != "" && isSettler && !cityTiles[unit.TileID] && (ownedCityCount == 0 || expansionEnabled && ownedCityCount < 3) {
-			candidates = append(candidates, candidate(engine.CommandFoundCity, unit.ID, unit.TileID, 900, map[string]string{"unit_id": unit.ID, "city_id": "ai-city-" + unit.ID, "name": "AI-" + playerID + "-" + unit.ID}))
+			candidates = append(candidates, candidate(engine.CommandFoundCity, unit.ID, unit.TileID, 900, map[string]string{"unit_id": unit.ID, "city_id": "ai-city-" + unit.ID, "name": ""}))
 		}
 		if unit.ArmyID == "" && unit.TransportID == "" && unit.TileID != "" && (!isSettler || !expansionEnabled) {
 			candidates = append(candidates, candidate(engine.CommandArmyCreate, unit.ID, "", 180, map[string]any{"army_id": "ai-army-" + unit.ID, "unit_ids": []string{unit.ID}}))

@@ -24,19 +24,27 @@ func renameCity(state *State, actor string, payload RenameCityPayload) error {
 	if !ok || city.OwnerID != actor {
 		return errors.New("city is not owned by actor")
 	}
-	name := strings.TrimSpace(payload.Name)
-	if name == "" || !utf8.ValidString(name) || utf8.RuneCountInString(name) > 128 {
-		return errors.New("city name is invalid")
-	}
-	for _, letter := range name {
-		if unicode.IsControl(letter) {
-			return errors.New("city name is invalid")
-		}
+	name, err := normalizedCityName(payload.Name)
+	if err != nil {
+		return err
 	}
 	// Names are presentation, not identities (CityData::SetName). Global
 	// uniqueness would turn rejected renames into an unknown-city-name oracle.
 	city.Name = name
 	return nil
+}
+
+func normalizedCityName(input string) (string, error) {
+	name := strings.TrimSpace(input)
+	if name == "" || !utf8.ValidString(name) || utf8.RuneCountInString(name) > 128 {
+		return "", errors.New("city name is invalid")
+	}
+	for _, letter := range name {
+		if unicode.IsControl(letter) {
+			return "", errors.New("city name is invalid")
+		}
+	}
+	return name, nil
 }
 
 // disbandCitySettler source-checks CityData::Disband: size cap, not the last

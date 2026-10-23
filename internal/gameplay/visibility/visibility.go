@@ -1228,7 +1228,7 @@ func productionActions(state engine.State, projection Projection, playerID strin
 		}
 		name := city.Name
 		if name == "" {
-			name = "City " + city.ID
+			name = projectedCitySuggestion(projection, playerID)
 		}
 		actions = append(actions, action(engine.CommandRenameCity, "rename-city", city.ID, "", engine.RenameCityPayload{CityID: city.ID, Name: name}, []string{"city_id", "name"}))
 		if inspector.CanDisband(city.ID, playerID) {
@@ -1301,6 +1301,16 @@ func positiveProjectedRushBuyCoefficient(value float64) float64 {
 	return value
 }
 
+func projectedCitySuggestion(projection Projection, playerID string) string {
+	names := make([]string, 0)
+	for _, city := range projection.Cities {
+		if city.OwnerID == playerID && !city.Stale {
+			names = append(names, city.Name)
+		}
+	}
+	return engine.SuggestedCityName(names)
+}
+
 func unitActions(projection Projection, playerID string) []ActionProjection {
 	tiles := projectedTiles(projection)
 	units := projectedUnits(projection)
@@ -1328,7 +1338,7 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 			actions = append(actions, action(engine.CommandFortify, "fortify", unit.ID, unit.TileID, map[string]string{"unit_id": unit.ID}, []string{"unit_id"}))
 		}
 		if unit.ArmyID == "" && unit.TileID != "" && hasEffect(unit.Effects, engine.EffectSettler) && !cityOnTile(projection, unit.TileID) {
-			actions = append(actions, action(engine.CommandFoundCity, "found-city", unit.ID, unit.TileID, map[string]string{"unit_id": unit.ID, "city_id": "client-city-" + unit.ID, "name": "City " + unit.ID}, []string{"unit_id", "city_id", "name"}))
+			actions = append(actions, action(engine.CommandFoundCity, "found-city", unit.ID, unit.TileID, map[string]string{"unit_id": unit.ID, "city_id": "client-city-" + unit.ID, "name": projectedCitySuggestion(projection, playerID)}, []string{"unit_id", "city_id", "name"}))
 		}
 		actions = append(actions, upgradeActions(projection, unit)...)
 		actions = append(actions, moveActions(projection, tiles, unit)...)

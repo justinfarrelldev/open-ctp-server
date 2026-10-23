@@ -8,7 +8,7 @@ Scope: `known-server-issue.md` and `server-client-schisms.md`; server only. No l
 - [x] RED → GREEN → refactor: safe structured command rejections and correlated private diagnostics.
 - [x] RED → GREEN → refactor: explicit pinned rules provenance.
 - [x] RED → GREEN → refactor: observed river geometry with persisted fog memory and no hidden-neighbor records.
-- [ ] RED → GREEN → refactor: nontechnical city default names for human/AI/ruin paths, without foreign-name oracles.
+- [x] RED → GREEN → refactor: nontechnical city default names for human/AI/ruin paths, without foreign-name oracles.
 - [ ] RED → GREEN → refactor: original-catalog terrain goods generation; explicit version lineage.
 - [ ] RED → GREEN → refactor: public turn context and bounded timing/protocol observability; no fabricated AI progress or route guarantee.
 - [ ] Document new contracts and server/client delivery boundary in reports.
@@ -25,3 +25,5 @@ Rejections RED: HTTP returned only the generic error field. GREEN/refactor: allo
 Provenance RED: projected rules family absent. GREEN/refactor: synthetic manifest provenance, new retail runtime `family` included in canonical pin, and `unknown` for unlabelled legacy runtime pins. Existing hashes remain the identity; old games are not migrated or heuristically labelled retail. Rules/visibility/game tests pass.
 
 River RED: a visible frontier river lacked its legitimate NW/SE artwork when SE continuation was hidden. GREEN/refactor: versioned 4-bit SW/NW/NE/SE art facts plus beach-mouth discriminator and observed revision, indexed once in Inspector. Visible tiles only; persisted in last-observed inspection, never recalculated for fog or legacy unknowns. Original `tiledmap.cpp:1100,1420–1520` computes art from neighboring rivers; `UnseenCell.cpp:52` snapshots TileInfo. All 16 edge patterns, beach suppression, hidden-neighbor absence, fog/reload/hidden changes/reveal tests pass; engine/visibility/service suites pass. This deliberately reveals only the legitimate center tile artwork, not neighbor entities or terrain.
+
+Naming RED: omitted default rejected, supplied names unvalidated, global founding-name check exposed foreign names. GREEN/refactor: shared bounded/control-safe name normalization for founding/rename; duplicate display names allowed (IDs identify cities). Human action suggests own-only `City N`, AI omits a custom name, and ruin cities use the same neutral default. Original `CivilisationData.cpp:165–221` chooses per-player names; localized civilization lists are not pinned today, so neutral fallback is explicit rather than fake Roman/civilization names. Existing saved names are not overwritten. Found/foreign-name/invalid rollback/ruin/visibility and engine/visibility/AI/service tests pass.

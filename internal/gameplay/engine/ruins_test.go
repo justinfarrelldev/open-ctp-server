@@ -69,7 +69,7 @@ func TestRuinEmptyAndCityAndIntermediateTiles(t *testing.T) {
 			if exists != tc.city {
 				t.Fatalf("city reward existence=%v", exists)
 			}
-			if exists && (city.OwnerID != "player-a" || city.Population < 1) {
+			if exists && (city.OwnerID != "player-a" || city.Population < 1 || city.Name != "City 1") {
 				t.Fatal("invalid reward city")
 			}
 			if len(state.Notifications) != 1 {
