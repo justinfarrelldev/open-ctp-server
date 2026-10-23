@@ -21,16 +21,21 @@ func TestStreamSubscribesBeforeInitialDurableRead(t *testing.T) {
 	defer db.Close()
 	xdb := sqlx.NewDb(db, "sqlmock")
 	broker := NewBroker()
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
+	reads := 0
 	handler := NewHandler(xdb, auth.NewSessionStore(xdb), ProjectorFuncs{Snapshot: func(_ Viewer, _ []byte) ([]byte, error) {
 		// A commit here is after the initial durable read, but before the old
 		// implementation subscribed: its wakeup was lost until another command.
 		if broker.subscriberCount(9) != 1 {
 			t.Error("initial read raced ahead of wakeup subscription")
 		}
-		broker.Publish(9)
-		cancel()
+		reads++
+		if reads == 1 {
+			broker.Publish(9)
+		} else {
+			cancel()
+		}
 		return []byte(`{}`), nil
 	}}, broker)
 	now := time.Now()
@@ -38,8 +43,14 @@ func TestStreamSubscribesBeforeInitialDurableRead(t *testing.T) {
 	mock.ExpectQuery("SELECT id, account_id FROM game_players").WithArgs(int64(9), 4).WillReturnRows(sqlmock.NewRows([]string{"id", "account_id"}).AddRow(42, 4))
 	mock.ExpectQuery("SELECT min\\(sequence\\)").WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"min"}).AddRow(1))
 	mock.ExpectQuery(regexp.QuoteMeta(snapshotForResyncQuery)).WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"revision", "canonical_state_json"}).AddRow(1, `{}`))
+	mock.ExpectQuery(regexp.QuoteMeta(terminalStateQuery)).WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"last_event_sequence", "canonical_state_json"}).AddRow(1, `{"terminal":{"ended":false}}`))
+	mock.ExpectQuery("SELECT min\\(sequence\\)").WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"min"}).AddRow(1))
+	mock.ExpectQuery(regexp.QuoteMeta(snapshotForResyncQuery)).WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"revision", "canonical_state_json"}).AddRow(2, `{}`))
 	writer := streamRecorder{httptest.NewRecorder()}
 	handler.ServeHTTP(writer, httptest.NewRequest(http.MethodGet, "/game/9/events?session_id=22", nil).WithContext(ctx))
+	if reads != 2 {
+		t.Fatalf("projection-time commit wasn't reread: %d", reads)
+	}
 	if broker.subscriberCount(9) != 0 {
 		t.Fatal("subscription leaked on disconnect")
 	}

@@ -532,6 +532,17 @@ definitions:
       status:
         type: string
     type: object
+  service.Rejection:
+    properties:
+      code:
+        type: string
+      correlation_id:
+        type: string
+      error:
+        type: string
+      message:
+        type: string
+    type: object
 info:
   contact:
     email: justinfarrellwebdev@gmail.com
@@ -781,9 +792,7 @@ paths:
         "400":
           description: malformed or unknown command field
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/service.Rejection'
         "401":
           description: missing or invalid session
           schema:
@@ -793,31 +802,27 @@ paths:
         "403":
           description: game membership or controller is not authorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/service.Rejection'
         "409":
           description: stale revision or idempotency conflict
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/service.Rejection'
         "413":
           description: command body exceeds 256 KiB
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/service.Rejection'
         "422":
-          description: invalid command phase or terminal game
+          description: invalid command phase, queue or production prerequisite
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/service.Rejection'
         "429":
           description: rate limit exceeded
           schema:
             $ref: '#/definitions/ratelimit.Message'
+        "500":
+          description: safe internal error with correlation identity
+          schema:
+            $ref: '#/definitions/service.Rejection'
       summary: Submit a gameplay command
       tags:
       - gameplay

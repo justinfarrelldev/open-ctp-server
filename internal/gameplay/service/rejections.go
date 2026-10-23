@@ -3,9 +3,13 @@ package service
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"errors"
+	"io"
 	"log/slog"
+	"sync/atomic"
+	"time"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine/turns"
@@ -66,13 +70,10 @@ func defaultRejectionCode(status int) string {
 // PublicRejection only accepts allowlisted codes, never Error.Message. Correlation
 // identity is server-generated and independent of credentials and command text.
 func PublicRejection(err error) Rejection {
-	code := defaultRejectionCode(StatusCode(err))
+	code := rejectionCode(err)
 	correlation := ""
 	var target *Error
 	if errors.As(err, &target) {
-		if _, ok := rejectionMessages[target.Code]; ok {
-			code = target.Code
-		}
 		correlation = target.CorrelationID
 	}
 	if correlation == "" {
@@ -81,12 +82,29 @@ func PublicRejection(err error) Rejection {
 	return Rejection{Error: "gameplay request rejected", Code: code, Message: rejectionMessages[code], CorrelationID: correlation}
 }
 
-func newCorrelationID() string {
+func rejectionCode(err error) string {
+	var target *Error
+	if errors.As(err, &target) {
+		if _, ok := rejectionMessages[target.Code]; ok {
+			return target.Code
+		}
+	}
+	return defaultRejectionCode(StatusCode(err))
+}
+
+var fallbackCorrelationSequence atomic.Uint64
+
+func newCorrelationID() string { return correlationIDFrom(rand.Reader) }
+
+func correlationIDFrom(reader io.Reader) string {
 	var id [16]byte
-	// crypto/rand failure is process-fatal in modern Go; fail closed rather than
-	// falling back to command IDs or credentials as diagnostic identities.
-	if _, err := rand.Read(id[:]); err != nil {
-		panic("gameplay correlation entropy unavailable")
+	if _, err := io.ReadFull(reader, id[:]); err != nil {
+		// Correlation IDs are NOT authentication tokens. Entropy failure must
+		// not crash an error response or fall back to request credentials/IDs.
+		binary.BigEndian.PutUint64(id[:8], uint64(time.Now().UnixNano()))
+		binary.BigEndian.PutUint64(id[8:], fallbackCorrelationSequence.Add(1))
+		digest := sha256.Sum256(id[:])
+		return "fallback-" + hex.EncodeToString(digest[:16])
 	}
 	return hex.EncodeToString(id[:])
 }
@@ -101,7 +119,7 @@ func engineRejection(err error) error {
 	var phase *turns.Error
 	if errors.As(err, &production) {
 		code = production.Code
-	} else if errors.As(err, &phase) {
+	} else if errors.Is(err, engine.ErrPhaseRestricted) || errors.As(err, &phase) {
 		code = "phase_restricted"
 	}
 	return &Error{Status: 422, Code: code, Message: "gameplay command is invalid: " + err.Error(), Cause: err}

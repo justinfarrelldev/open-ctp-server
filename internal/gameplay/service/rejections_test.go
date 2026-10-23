@@ -12,6 +12,36 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine/turns"
 )
 
+func TestCorrelationEntropyFailureDoesNotCrashOrUseRequestIdentity(t *testing.T) {
+	first := correlationIDFrom(bytes.NewReader(nil))
+	second := correlationIDFrom(bytes.NewReader(nil))
+	if first == "" || first == second {
+		t.Fatalf("missing/nonunique fallback: %q %q", first, second)
+	}
+}
+
+func TestEnginePhaseAndMalformedQueueRemainDistinctAtServiceBoundary(t *testing.T) {
+	svc, _ := newMockService(t)
+	for _, tc := range []struct {
+		locked        bool
+		payload, code string
+	}{
+		{true, `{"city_id":"home","entries":[]}`, "phase_restricted"},
+		{false, `{"city_id":"home","entries":"SECRET"}`, "queue_shape"},
+	} {
+		state := testState()
+		state.Phase.ResolutionLocked = tc.locked
+		_, _, _, err := engine.Apply(state, engine.Command{SchemaVersion: engine.CommandSchemaV1, ID: "test", ActorPlayerID: "7", Type: engine.CommandEditProduction, Payload: []byte(tc.payload)}, state.Rules, svc.sources)
+		if err == nil {
+			t.Fatal("invalid command accepted")
+		}
+		public := PublicRejection(engineRejection(err))
+		if public.Code != tc.code || strings.Contains(public.Message, "SECRET") {
+			t.Fatalf("wrong/unsafe category: %+v (private %v)", public, err)
+		}
+	}
+}
+
 func TestRejectionCodesNeverUsePrivateErrorText(t *testing.T) {
 	for _, code := range []string{"queue_identity", "queue_shape", "queue_capacity", "content_unavailable", "production_prerequisite"} {
 		public := PublicRejection(engineRejection(&engine.ProductionError{Code: code, Detail: errors.New("SECRET hidden wonder")}))

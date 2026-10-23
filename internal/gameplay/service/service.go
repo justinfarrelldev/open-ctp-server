@@ -125,7 +125,7 @@ func (s *Service) executeControllerCommand(ctx context.Context, request CommandR
 	outcome := "accepted"
 	defer func() {
 		if resultErr != nil {
-			outcome = PublicRejection(resultErr).Code
+			outcome = rejectionCode(resultErr)
 		}
 		metric := meter.finish(outcome)
 		if s.ObserveCommand != nil {

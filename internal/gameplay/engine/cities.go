@@ -303,7 +303,9 @@ func applyCityCommand(state *State, command Command, runtime *rules.RuntimeRules
 	case CommandEditProduction:
 		var payload EditProductionPayload
 		if err := decodePayload(command.Payload, &payload); err != nil {
-			return "", err
+			// Decoder text can contain user-authored field names. Keep this
+			// private diagnostic static rather than logging arbitrary input.
+			return "", productionFailure("queue_shape", "production edit payload has an invalid shape")
 		}
 		return "production.edited", editProduction(state, command.ActorPlayerID, payload, runtime)
 	case CommandRushBuy:
@@ -807,31 +809,31 @@ func productionEligibility(state State, actor string, city City, input *Producti
 		return errors.New("city population is insufficient")
 	}
 	if payload.Item.Kind == ProductionUnit && (anyActiveWonderEffect(state, EffectFreeSlaves) || anyActiveWonderEffect(state, EffectProhibitSlavers)) && productionHasFreeSlavesBlockedEffect(payload.Item, runtime) {
-		return errors.New("production prerequisite is not met")
+		return errors.New("production prerequisite: global slavery prohibition")
 	}
 	if payload.Item.Kind == ProductionUnit && productionGovernmentMismatch(state, actor, payload.Item, runtime) {
-		return errors.New("production prerequisite is not met")
+		return errors.New("production prerequisite: government mismatch")
 	}
 	if payload.Item.Kind == ProductionUnit && !productionCityGoodSatisfied(state, city, payload.Item, runtime) {
-		return errors.New("production prerequisite is not met")
+		return errors.New("production prerequisite: required city good unavailable")
 	}
 	if payload.Item.Kind == ProductionUnit && productionHasRuntimeUnitEffect(payload.Item, runtime, EffectHasPopAndCanBuild) {
-		return errors.New("production prerequisite is not met")
+		return errors.New("production prerequisite: special population unit is not city-buildable")
 	}
 	if payload.Item.Kind == ProductionUnit && productionHasNuclearAttackEffect(payload.Item, runtime) && NuclearAttacksEliminated(state, actor) {
-		return errors.New("production prerequisite is not met")
+		return errors.New("production prerequisite: nuclear units eliminated")
 	}
 	if payload.Item.Kind == ProductionUnit && productionHasSlaverEffect(payload.Item, runtime) && playerHasUnitEffect(state, actor, EffectNoSlaves) {
-		return errors.New("production prerequisite is not met")
+		return errors.New("production prerequisite: incompatible no-slaves unit")
 	}
 	if payload.Item.Kind == ProductionUnit && productionHasNoSlavesEffect(payload.Item, runtime) && playerHasSlaverUnit(state, actor) {
-		return errors.New("production prerequisite is not met")
+		return errors.New("production prerequisite: incompatible slaver unit")
 	}
 	if payload.Item.Kind == ProductionUnit && productionHasCreateParkEffect(payload.Item, runtime) && !anyActiveWonderEffect(state, EffectEnableParkRangers) {
-		return errors.New("production prerequisite is not met")
+		return errors.New("production prerequisite: park rangers not enabled")
 	}
 	if payload.Item.Kind == ProductionBuilding && productionHasNuclearPlantEffect(payload.Item) && anyActiveWonderEffect(state, EffectEliminateNukes) {
-		return errors.New("production prerequisite is not met")
+		return errors.New("production prerequisite: nuclear plants eliminated")
 	}
 	if payload.Item.Kind == ProductionBuilding && cityHasBuilding(city, payload.Item.ID) {
 		return errors.New("building already exists")
@@ -3773,7 +3775,7 @@ func requireProductionUnlock(state State, city City, item ProductionItem, runtim
 		if production, ok := runtime.ProductionDefinition(item.ID); ok {
 			seaCity := cityIsSea(state, city, runtime)
 			if production.CantBuildInSea && seaCity || production.CantBuildOnLand && !seaCity || production.CoastalOnly && !cityIsCoastal(state, city, runtime) {
-				return errors.New("production prerequisite is not met")
+				return errors.New("production prerequisite: city placement")
 			}
 			if item.Prerequisite != "" && len(production.Prerequisites) > 0 && !containsString(production.Prerequisites, item.Prerequisite) {
 				return errors.New("production prerequisite is not met")
@@ -3783,7 +3785,7 @@ func requireProductionUnlock(state State, city City, item ProductionItem, runtim
 			}
 			for _, requiredBuilding := range production.RequiredBuildings {
 				if !cityHasEffectiveBuilding(state, city, requiredBuilding) {
-					return errors.New("production prerequisite is not met")
+					return errors.New("production prerequisite: required effective building unavailable")
 				}
 			}
 			if len(production.ObsoleteBy) > 0 {
@@ -3793,7 +3795,7 @@ func requireProductionUnlock(state State, city City, item ProductionItem, runtim
 		if item.Kind == ProductionUnit {
 			if unit, ok := runtime.Unit(item.ID); ok {
 				if runtimeUnitHasEffect(unit, EffectCantBuild) {
-					return errors.New("production prerequisite is not met")
+					return errors.New("production prerequisite: CantBuild unit")
 				}
 				if item.Prerequisite != "" && len(unit.Prerequisites) > 0 && !containsString(unit.Prerequisites, item.Prerequisite) {
 					return errors.New("production prerequisite is not met")
@@ -3808,7 +3810,7 @@ func requireProductionUnlock(state State, city City, item ProductionItem, runtim
 		}
 	}
 	if !hasAllPrerequisites(state, city, prerequisites) || isProductionObsoleteByAny(state, city, obsoleteBy) {
-		return errors.New("production prerequisite is not met")
+		return errors.New("production prerequisite: missing prerequisite or obsolete content")
 	}
 	return nil
 }

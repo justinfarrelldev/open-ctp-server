@@ -11,7 +11,7 @@ Scope: `known-server-issue.md` and `server-client-schisms.md`; server only. No l
 - [x] RED → GREEN → refactor: nontechnical city default names for human/AI/ruin paths, without foreign-name oracles.
 - [x] RED → GREEN → refactor: original-catalog terrain goods generation; explicit version lineage.
 - [x] RED → GREEN → refactor: public turn context and bounded timing/protocol observability; no fabricated AI progress or route guarantee.
-- [ ] Document new contracts and server/client delivery boundary in reports.
+- [x] Document new contracts and server/client delivery boundary in reports.
 - [ ] Thorough source/security/maintainability review, full tests, race-focused tests, vet/build, freeze verification, diff checks; atomic commits.
 
 ## Evidence
@@ -37,3 +37,7 @@ Observability RED: no turn context, gateway duration or injectable stage timings
 Security review RED: existing authentication store logged full bearer session structs/IDs on every gameplay read, plus raw DB errors. GREEN/refactor: remove credential-bearing success logs and use fixed failure labels; error values remain private to callers. Auth and gameplay HTTP/events/service suites pass, including captured create/read/delete/error log regression. This closes the pre-existing auth-path leak alongside the new diagnostic-path safeguards.
 
 Full-suite review RED found new synthetic terrain families lacked explicit economic yields, blocking turn resolution after the corrected nonflattening startup. GREEN: new synthetic land records retain the previous flattened-plains fixture economy, and shelf retains ocean fixture output, with no retail claim. Added a regression working every generated synthetic terrain; rules/engine suites and onboarding now pass. Integration continuations pass after this repair; remaining failures are reviewed snapshot/event pins (new map/catalog/observation/name metadata), not weakened budgets or skipped gameplay checks.
+
+Rejection review RED: separate prerequisite branches still collapsed internally, a locked sequential phase and malformed entries decoder lost their safe categories, and OpenAPI lacked the new envelope. GREEN/refactor: distinct static private branch diagnostics, safe phase sentinel, decoder-shape classification without user-authored text, typed OpenAPI schema, and captured HTTP/engine/service regressions. Entropy failure now uses a server-only noncredential fallback correlation identity instead of panicking; telemetry classification avoids unnecessary correlation allocation. Batch tests additionally cover exact 256 success, 257 rejection, typed identity/shape/content failures and no funding/identity mutation.
+
+SSE race regression strengthened to prove a commit during initial projection actually causes a second durable read, with subscription cleanup on disconnect. Contract supplement and both reports explicitly separate completed server items from client-only and live verification, without claiming those external outcomes.

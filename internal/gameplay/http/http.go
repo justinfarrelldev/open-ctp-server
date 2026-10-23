@@ -166,12 +166,13 @@ func fields(names ...string) map[string]bool {
 // @Param command path string true "command name"
 // @Param command body CommandRequestDocs true "command envelope plus command-specific payload"
 // @Success 200 {object} CommandResponseDocs
-// @Failure 400 {object} map[string]string "malformed or unknown command field"
+// @Failure 400 {object} service.Rejection "malformed or unknown command field"
 // @Failure 401 {object} map[string]string "missing or invalid session"
-// @Failure 403 {object} map[string]string "game membership or controller is not authorized"
-// @Failure 409 {object} map[string]string "stale revision or idempotency conflict"
-// @Failure 413 {object} map[string]string "command body exceeds 256 KiB"
-// @Failure 422 {object} map[string]string "invalid command phase or terminal game"
+// @Failure 403 {object} service.Rejection "game membership or controller is not authorized"
+// @Failure 409 {object} service.Rejection "stale revision or idempotency conflict"
+// @Failure 413 {object} service.Rejection "command body exceeds 256 KiB"
+// @Failure 422 {object} service.Rejection "invalid command phase, queue or production prerequisite"
+// @Failure 500 {object} service.Rejection "safe internal error with correlation identity"
 // @Failure 429 {object} ratelimit.Message "rate limit exceeded"
 // @Router /game/{game_id}/{command} [post]
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

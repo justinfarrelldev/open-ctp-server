@@ -23,7 +23,7 @@ func TestOpenAPIDocumentsGameplayCommandRoute(t *testing.T) {
 	if !ok || !strings.Contains(string(path), "post") || !strings.Contains(string(path), "429") {
 		t.Fatalf("gameplay command route or rate-limit response is undocumented: %s", path)
 	}
-	for _, name := range []string{"gameplayhttp.CommandRequestDocs", "gameplayhttp.CommandResponseDocs"} {
+	for _, name := range []string{"gameplayhttp.CommandRequestDocs", "gameplayhttp.CommandResponseDocs", "service.Rejection"} {
 		if _, ok := document.Definitions[name]; !ok {
 			t.Fatalf("missing gameplay OpenAPI schema %q", name)
 		}

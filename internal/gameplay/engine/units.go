@@ -188,12 +188,15 @@ func decodePayload(raw json.RawMessage, target any) error {
 	return nil
 }
 
+// ErrPhaseRestricted is safe to classify without disclosing mechanical causes.
+var ErrPhaseRestricted = errors.New("action is not eligible in this phase")
+
 func activeActor(state State, actorID string) error {
 	if (state.Phase.Mode == "simultaneous" || state.Phase.Mode == "hybrid") && state.Phase.ResolutionLocked {
 		return nil
 	}
 	if state.Phase.ResolutionLocked || state.Phase.ActivePlayerOrder[state.Phase.ActivePlayerIndex] != actorID {
-		return errors.New("action is not eligible in this phase")
+		return ErrPhaseRestricted
 	}
 	return nil
 }

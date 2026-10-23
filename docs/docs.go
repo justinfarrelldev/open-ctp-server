@@ -1330,10 +1330,7 @@ const docTemplate = `{
                     "400": {
                         "description": "malformed or unknown command field",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/service.Rejection"
                         }
                     },
                     "401": {
@@ -1348,43 +1345,37 @@ const docTemplate = `{
                     "403": {
                         "description": "game membership or controller is not authorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/service.Rejection"
                         }
                     },
                     "409": {
                         "description": "stale revision or idempotency conflict",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/service.Rejection"
                         }
                     },
                     "413": {
                         "description": "command body exceeds 256 KiB",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/service.Rejection"
                         }
                     },
                     "422": {
-                        "description": "invalid command phase or terminal game",
+                        "description": "invalid command phase, queue or production prerequisite",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/service.Rejection"
                         }
                     },
                     "429": {
                         "description": "rate limit exceeded",
                         "schema": {
                             "$ref": "#/definitions/ratelimit.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "safe internal error with correlation identity",
+                        "schema": {
+                            "$ref": "#/definitions/service.Rejection"
                         }
                     }
                 }
@@ -3056,6 +3047,23 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.Rejection": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "correlation_id": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
                     "type": "string"
                 }
             }
