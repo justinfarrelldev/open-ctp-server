@@ -15,6 +15,13 @@ func TestNewSyntheticTerrainFamiliesSupportEconomyWithoutFlattening(t *testing.T
 		t.Fatal(err)
 	}
 	for _, terrain := range runtime.Movement.Terrains {
+		wantCost := 1
+		if terrain.ID == TerrainForest {
+			wantCost = 2
+		}
+		if terrain.Cost != wantCost {
+			t.Errorf("synthetic %s movement drifted from pre-handoff fixture policy: %d", terrain.ID, terrain.Cost)
+		}
 		state := task10State()
 		state.Tiles[0].Terrain = terrain.ID
 		if _, err := terrainYieldWithRuntime(state, "a", &runtime); err != nil {
