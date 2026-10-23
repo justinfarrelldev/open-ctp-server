@@ -179,14 +179,27 @@ are transmitted and no hidden tiles may be requested to complete a river mouth.
 
 ## City display names
 
-Founding accepts an optional name: omitted/empty uses neutral `City N`, considering
-only the player's own city names. Found actions suggest the same safe name; AI and
-ruin-created cities use the authoritative default. Custom founding/rename names
-share trimmed, 128-codepoint, valid-Unicode/control-safe validation. Duplicate
-display names are allowed; globally checking names would disclose unknown cities.
-Stable entity IDs remain separate. Existing saved/custom/foreign names are not
-silently renamed. Localized civilization naming lists are not pinned yet: neutral
-fallback is explicit, not a claim of civilization-specific original names.
+Founding accepts an optional name. New retail pins now import the original
+civilization's ordered city names and English localized strings; omitted/empty
+founding names, AI, ruins and own-only suggestions share that chooser. Legacy pins
+without names retain neutral `City N`. Custom names remain trimmed, 128-codepoint,
+valid-Unicode/control-safe display data; duplicate display names are legal, while
+entity IDs remain stable. Existing saved/custom/foreign names are not silently
+renamed. See [city development contract](city-development-contract.md).
+
+## AI production, national territory and city influence
+
+Idle-city production now beats closeout/routine exploration with the unchanged
+one-action AI budget, using that city's complete authoritative eligible items.
+A real public-runtime regression verifies an AI queues and completes units.
+
+New retail pins also import original national border radii and city-size influence
+thresholds. Founding claims territory and distinct per-tile city influence;
+capture/growth/shrink/removal update assignments. Visible/fog tile projection
+includes observed `influence_city_id`, with known empty versus unknown semantics.
+Explicit viewer/participant IDs and persisted palette slots survive loss of units.
+Source quirks, bounded topology, historical national claims, legacy pins and client
+rendering boundaries are documented in the linked contract.
 
 ## Committed turn context and timings
 

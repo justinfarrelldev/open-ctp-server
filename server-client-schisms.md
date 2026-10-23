@@ -37,11 +37,13 @@ renderer/SDL change or visual screenshot acceptance is claimed.
 - [x] Test default/custom/foreign-name independence, invalid-name rollback, ruin
   names, own-only suggestions and persisted observed name behavior.
 
-The explicit current policy is neutral, own-only `City N`. Original civilization
-name lists are not pinned/localized today; this does not pretend every nation is
-Roman. Original `CivilisationData` chooses per-player names, and `CityData::SetName`
-does not make names global identities. Existing saved/user/foreign names are not
-silently overwritten.
+New retail pins now contain original civilization-specific city lists and English
+strings from `civilisation.txt` / `civ_str.txt`, with source-order selection and
+owner-only collision checks. Legacy pins retain neutral `City N`; existing
+saved/user/foreign names are not silently overwritten. Original `CivilisationData`
+chooses per-player names, and `CityData::SetName` does not make names global
+identities. See `docs/city-development-contract.md` for naming, AI production and
+authoritative national/city-influence borders plus stable player/color identities.
 
 **Client-only follow-up:** render received names separately from IDs, retain naming
 input/rename flows and fix caption/panel clipping. No UI work was done here.

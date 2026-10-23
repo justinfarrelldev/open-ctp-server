@@ -24,6 +24,13 @@ records. This delivery is **server only**; no client code or live games changed.
   See `docs/retail-startup-contract.md` and
   `plans/checklists/retail-starting-advances.md`; existing saves are not rewritten.
 
+- [x] Subsequent AI/city-development reports: ordinary legal production now
+  outranks closeout/routine exploration with the unchanged one-action worker;
+  original civilization-specific names are pinned; new retail founding claims
+  national territory and distinct city influence. Observed influence has fog memory,
+  and explicit viewer/player/palette identities no longer rely on surviving units.
+  See `docs/city-development-contract.md` and both city-development checklists.
+
 The investigation below is preserved as a historical baseline: its statements
 about missing fields/old source behavior are superseded by the contracts above.
 

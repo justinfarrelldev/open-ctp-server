@@ -240,6 +240,19 @@ validation and can reject atomically with a safe code/correlation. Costs are
 server-owned; no prospective turns are invented. See the supplement for exact wire
 fields, phase/controller boundaries, unavailable semantics and error codes.
 
+## Territory, influence and player identity
+
+Observed tiles expose national `owner_id` and distinct `influence_city_id`.
+An explicit `""` is known unowned/no city influence; omitted older fog facts are
+unknown, not empty. Fog retains last observed values, never hidden current changes.
+New retail pins claim source-driven national/influence radii on founding and update
+influence on growth/shrink/capture/removal. Do not calculate assignments client-side.
+
+Use `viewer_player_id` and public `players[]` (`id`, `nation_id`, optional
+`civilization_id`, optional persisted `color_index`) for identity and palette slots,
+not surviving units. Client RGBA/political/dashed influence rendering remains client
+work. [Exact source/topology/legacy semantics](city-development-contract.md).
+
 ## Cities and distinct orders
 
 - Owned/visible cities expose real `name`/`type_id` and observed population.
@@ -247,10 +260,12 @@ fields, phase/controller boundaries, unavailable semantics and error codes.
 - `art.age_id` is the current owner's canonical age; `art.capital` uses effective
   capital rules. These facts, name/type/population are remembered only as observed.
   They are not guessed founder culture or a guarantee of a particular sprite.
-- Founding accepts an omitted/empty name for an authoritative, own-only neutral
-  `City N` default. Human action suggestions, AI and ruin defaults never contain
-  unit/account IDs. Localized civilization-name lists are not pinned; existing
-  saved/custom/foreign names are not overwritten.
+- New retail pins import original civilization city-name lists from
+  `civilisation.txt` and English `civ_str.txt`. Founding with omitted/empty name,
+  human suggestions, AI and ruins use the selected civilization's ordered names
+  and only own-name collision checks. Legacy pins retain neutral `City N`; existing
+  saved/custom/foreign names are not overwritten. See
+  [city development contract](city-development-contract.md).
 - `rename-city`: `city_id`, `name`; trims whitespace, rejects empty/control/overlong
   names and enforces ownership. Names are at most 128 Unicode codepoints.
   Duplicates are allowed: city IDs, not names, identify cities. Checking global
