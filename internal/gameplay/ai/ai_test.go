@@ -576,10 +576,12 @@ func TestPlannerSettlesExpansionSettlerAwayFromExistingCities(t *testing.T) {
 func TestPlannerMovesUnescortedSettlerOutOfCityBeforeArmyCreation(t *testing.T) {
 	input, err := json.Marshal(visibility.Projection{
 		PlanningStatus: visibility.PlanningStatusOpen,
-		Cities:         []visibility.CityProjection{{ID: "capital", OwnerID: "ai", TileID: "capital-tile"}},
-		Units:          []visibility.UnitProjection{{ID: "settler", OwnerID: "ai", TileID: "capital-tile", Domain: engine.DomainLand, Movement: 1, Effects: []engine.Effect{{ID: "settle", Kind: engine.EffectSettler}}}},
-		Tiles:          []visibility.TileProjection{{ID: "capital-tile", X: 0, Y: 0, Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{engine.DomainLand}, Accessible: true}}, {ID: "frontier", X: 1, Y: 0, Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{engine.DomainLand}, Accessible: true}}},
-		Rules:          &visibility.RulesProjection{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER"}}},
+		// Keep the capital productive: idle-city maintenance now intentionally
+		// outranks routine exploration; this regression isolates move vs formation.
+		Cities: []visibility.CityProjection{{ID: "capital", OwnerID: "ai", TileID: "capital-tile", Queue: []engine.ProductionItem{{ID: "existing", Kind: engine.ProductionUnit, Cost: 20}}}},
+		Units:  []visibility.UnitProjection{{ID: "settler", OwnerID: "ai", TileID: "capital-tile", Domain: engine.DomainLand, Movement: 1, Effects: []engine.Effect{{ID: "settle", Kind: engine.EffectSettler}}}},
+		Tiles:  []visibility.TileProjection{{ID: "capital-tile", X: 0, Y: 0, Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{engine.DomainLand}, Accessible: true}}, {ID: "frontier", X: 1, Y: 0, Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{engine.DomainLand}, Accessible: true}}},
+		Rules:  &visibility.RulesProjection{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_SETTLER"}}},
 	})
 	if err != nil {
 		t.Fatal(err)

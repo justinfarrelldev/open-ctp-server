@@ -962,24 +962,28 @@ func productionCandidates(projection visibility.Projection, playerID string) []C
 		if city.OwnerID != playerID || city.Stale || len(city.Queue) != 0 {
 			continue
 		}
+		choices, legal, available := cityProductionChoices(projection, city)
+		if !available {
+			continue
+		}
 		item, ok := engine.ProductionItem{}, false
 		if shouldProduceEmergencyMilitaryUnit(projection, playerID) {
-			item, ok = bestProjectedCombatUnitProduction(projection)
+			item, ok = bestProjectedCombatUnitProduction(choices)
 		}
 		if !ok && shouldProduceExpansionSettler(projection, playerID) {
-			item, ok = bestProjectedSettlerProduction(projection)
+			item, ok = bestProjectedSettlerProduction(choices)
 		}
 		if !ok && shouldProduceMilitaryUnit(projection, playerID) {
-			item, ok = bestProjectedCombatUnitProduction(projection)
+			item, ok = bestProjectedCombatUnitProduction(choices)
 		}
 		if !ok {
-			item, ok = bestProjectedCityProduction(projection, city)
+			item, ok = bestProjectedCityProduction(choices, city)
 		}
 		if !ok {
-			item, ok = bestProjectedUnitProduction(projection)
+			item, ok = bestProjectedUnitProduction(choices)
 		}
 		if ok && city.Population <= 1 && productionItemRemovesPopulation(item) {
-			item, ok = bestProjectedCityProduction(projection, city)
+			item, ok = bestProjectedCityProduction(choices, city)
 		}
 		if !ok {
 			// Absence of buildable catalog content is not permission to invent
@@ -989,7 +993,13 @@ func productionCandidates(projection visibility.Projection, playerID string) []C
 		if city.Population <= 1 && productionItemRemovesPopulation(item) {
 			continue
 		}
-		candidates = append(candidates, candidate(engine.CommandQueueProduction, city.ID, item.ID, 90, map[string]any{"city_id": city.ID, "item": item}))
+		if legal != nil {
+			item = legal[item.ID]
+		}
+		// Filling an idle city outranks closeout (100), routine exploration
+		// (150) and army formation (180), but not urgent policy/combat work.
+		// This must remain useful with the production runtime's one-action budget.
+		candidates = append(candidates, candidate(engine.CommandQueueProduction, city.ID, item.ID, 300, map[string]any{"city_id": city.ID, "item": item}))
 	}
 	return candidates
 }
