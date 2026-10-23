@@ -121,6 +121,14 @@ That does not migrate an existing synthetic-pinned game. Start a new game to use
 new retail content; verify its family and hash instead of assuming compatibility
 version proves provenance.
 
+The subsequent startup omission is also repaired for new retail pins: original
+DiffDB human/AI chance/cap grants, current age and legal initial research are
+initialized before persistence. Toolmaking is guaranteed at all six difficulties.
+Population-one Warrior and population-two Settler options/Add are regression-tested
+through real server growth, without relaxing the population-one Settler rejection.
+Existing saves are not modified. See [retail startup contract](retail-startup-contract.md)
+and `plans/checklists/retail-starting-advances.md` for exact scope and source evidence.
+
 New games use `ctp2-original-goods-v4`. Public `world.generator_version` and
 `world.resource_catalog: "ctp2-original-resources-v1"` pin the generation policy
 without exposing seeds or unexplored geography. V4 retains V1 base terrain/spawns,

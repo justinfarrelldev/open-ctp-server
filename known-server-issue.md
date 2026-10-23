@@ -18,6 +18,11 @@ records. This delivery is **server only**; no client code or live games changed.
 - [x] Explicit pinned rules family and original resource-generation provenance.
 - [x] Document atomic-append versus whole-edit boundaries and queued-versus-executed
   semantics without weakening validation or inventing forecast turns.
+- [x] Initialize new retail games with original difficulty-based starting grants,
+  current age and legal research before persistence. Verify population-one Warrior
+  and naturally grown population-two Settler options/Add across all six profiles.
+  See `docs/retail-startup-contract.md` and
+  `plans/checklists/retail-starting-advances.md`; existing saves are not rewritten.
 
 The investigation below is preserved as a historical baseline: its statements
 about missing fields/old source behavior are superseded by the contracts above.
@@ -67,7 +72,7 @@ No server source/test file was changed: the temporary overlay only supplies the
 external diagnostic harness. This is an engine reproduction using the actual
 persisted state, not a claim to have captured the historical HTTP click.
 
-## Confirmed startup omission: default advances are never initialized
+## Confirmed startup omission — repaired for new retail games
 
 Follow-up at unchanged server `a27b65a` confirms this is not normal released CTP2
 starting behavior. Read-only database inspection of the newer **retail game59**
@@ -80,7 +85,7 @@ all production choices were empty immediately after founding, not just hidden
 while another player was acting. Later pass receipts correctly say `unavailable`
 for phase restrictions; those are a separate state.
 
-### Exact server startup path
+### Startup path at the investigated `a27b65a` baseline
 
 - `internal/game/start_gameplay.go::initialGameplayState` (around lines124–201)
   appends nations at line171 with only ID, PublicWorks and Gold. It creates starter
@@ -112,24 +117,37 @@ not something the human must research before being allowed a first Warrior.
 Other initial advances are difficulty/chance-dependent; do not grant all of them
 unconditionally or treat this as a demand for a client-side random roll.
 
-### Required server repair and immediate workaround
+### Implemented server repair and existing-game workaround
 
-Initialize the actual startup path from an explicit pinned starting-age/difficulty
-policy: guaranteed and deterministic chance/cap grants, earlier-age grants for
-later starts, and an initial legal research target. Preserve server authority,
-transactional persistence, deterministic RNG/replay and human/AI distinctions.
-Add startup integration regressions, not only helper tests: a first-age human
-starts with Toolmaking and a legal research target, and its freshly founded
-population-one city advertises/accepts Warrior while still rejecting Settler;
-cover all six difficulty profiles, later-age starts and restart/idempotent state.
-Do not silently rewrite existing saves as part of new-game initialization.
+- [x] Import and pin all six original DiffDB starting-advance profiles, preserving
+  source row order, human/AI chance pairs and controller-specific cumulative caps.
+  Guaranteed grants count toward the total but still apply even beyond the cap.
+- [x] Initialize the actual new-game path before visibility/persistence, with
+  deterministic per-player server-owned chance streams, strictly earlier-age
+  grants for later starts, stored current age and an initial legal research target.
+- [x] Support explicit `difficulty:<id>` and `start-age:<AGE_ID>` owner setup choices;
+  defaults are medium/first age. Invalid starting selections fail safely without
+  persisting a partial world. The selected policy is covered by the pin hash.
+- [x] Test actual startup across all six profiles: a freshly founded population-one
+  city advertises/accepts Warrior and still hides/rejects Settler.
+- [x] Test real pinned economic growth from population one to two, without assigning
+  population or food stores: Settler then appears in complete production options
+  and the authoritative atomic Add succeeds, for all six difficulty profiles.
+- [x] Test later ages, source cap/chance boundaries, malformed-policy rollback,
+  public transactional persistence, canonical restart and immutable receipt replay.
+  A persisted one-time marker prevents regranting; legacy saves are not initialized.
 
-Until repaired, selecting **Toolmaking** manually in Science and completing it
-unlocks Warrior. Waiting alone does not discover it when the human research target
-is empty. Settler separately requires population growth above one. The previous
-in-memory positive control already verified that Toolmaking alone permits the
-same atomic Warrior Add. No server source/configuration or game was changed by
-this follow-up; only this diagnostic report was updated.
+Original `Player::InitPlayer`, `DiffDB::ParseAdvanceChances`, `Advances::InitialAdvance`
+and both installations' original starting chance facts were checked. This is the
+starting-discovery difficulty policy, not a claim to implement every difficulty
+handicap/bonus or asset SLIC. See `docs/retail-startup-contract.md` for exact scope.
+
+Restart the server and create a **new retail game** to use this repair. Existing
+pre-fix games (including 58/59) are deliberately unchanged: selecting **Toolmaking**
+manually in Science and completing it remains the non-destructive workaround.
+Waiting with an empty target does not research anything. Settler independently
+requires population above one. No live game/database or client was modified by
+this implementation; all new regressions use isolated fixtures/mock gateways.
 
 ## Original investigation status and scope
 

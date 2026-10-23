@@ -86,6 +86,26 @@ bounded fixtures (`rules.family: synthetic`), not a retail numerical/artwork
 substitute. New retail pins encode `rules.family: retail`; unlabelled old runtime
 pins expose `unknown`. Keep the exact pinned `rules.content_hash`.
 
+### Retail starting discoveries
+
+New retail pins include versioned starting-advance policy, initialized before
+new-game persistence. Original DiffDB human/AI chances and caps apply in source
+order; guaranteed grants bypass the cap (but count toward it). Default starting
+settings are medium/first age; owner setup may use `difficulty:<id>` and
+`start-age:<AGE_ID>` in `rules_json`. Public `rules.starting_difficulty` and
+`rules.start_age_id` identify this pin selection, not permission to infer grants.
+
+All six source profiles guarantee Toolmaking, so a fresh population-one city can
+build Warrior. Settler remains unavailable at population one; after authoritative
+growth to population two it becomes an eligible option. Consume actual complete
+`production_options`, not a client population/tech approximation.
+
+Later-age starts grant strictly earlier-age discoveries instead of first-age chance
+rolls. A legal initial research target is selected after grants. This only applies
+to new games: old saves/pins are not rewritten or rerolled. See
+[retail startup contract](retail-startup-contract.md) for source semantics, supported
+settings, deterministic RNG, restart behavior and difficulty scope boundaries.
+
 ## Optimistic movement and hybrid play
 
 An `action_intents` entry authorizes **input shape**, not a hidden outcome. A move
