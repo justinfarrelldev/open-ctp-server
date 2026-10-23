@@ -13,6 +13,13 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility"
 )
 
+func TestPublicHumanRouteSupportsRushBuyAfterProductionStarts(t *testing.T) {
+	route, err := publicRoute(engine.CommandRushBuy)
+	if err != nil || route != "rush-buy" {
+		t.Fatalf("rush-buy route = %q, %v", route, err)
+	}
+}
+
 type recordingHumanHTTPClient struct {
 	command HumanCommand
 	calls   int

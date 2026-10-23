@@ -193,7 +193,7 @@ func TestCatalogRowSevenDeclaresDelayedSimultaneousScienceGaiaReachability(t *te
 	if row.Restart.Point != AcceptanceRestartAfterCompletedTurn || row.Restart.CompletedTurn != 12 {
 		t.Fatalf("catalog row 7 restart = %#v, want completed turn 12", row.Restart)
 	}
-	if row.Observed.Winner != "account-1" || row.Observed.StateHash != "91116985cb5795ce5844a0aad1e46be1f363bc0494c5065435e22be631b3fe08" || row.Observed.EventHash != "19335904c44fe48855da0219a6ef4c2fbbb05cea2b666cf7f8612fcf19523531" {
+	if row.Observed.Winner != "account-1" || row.Observed.StateHash != "0a64794717ed4dad37803454e0c9b9f36745bfe4542ee561662cd5d3aaa62219" || row.Observed.EventHash != "b0034dd932db638db16db42c05041deff3a72dad781e849e0d0a8dbf45a5c3a8" {
 		t.Fatalf("catalog row 7 observed artifacts drift: %#v", row.Observed)
 	}
 }

@@ -163,7 +163,7 @@ func publicRoute(commandType string) (string, error) {
 		engine.CommandProposeAgreement: "propose-agreement", engine.CommandRespondAgreement: "respond-agreement",
 		engine.CommandEmbark: "embark", engine.CommandDisembark: "disembark", engine.CommandCombat: "combat",
 		engine.CommandTerraform: "terraform", engine.CommandBuildImprovement: "build-improvement", engine.CommandCancelTerraform: "cancel-terraform",
-		engine.CommandQueueProduction: "queue-production", engine.CommandCancelProduction: "cancel-production",
+		engine.CommandQueueProduction: "queue-production", engine.CommandCancelProduction: "cancel-production", engine.CommandRushBuy: "rush-buy",
 		engine.CommandFortify: "fortify", engine.CommandFoundCity: "found-city", engine.CommandArmyCreate: "army-create",
 		engine.CommandEstablishEmbassy: "establish-embassy",
 	}
