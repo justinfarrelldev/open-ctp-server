@@ -182,6 +182,8 @@ type DiplomacyProjection struct {
 }
 
 type RulesProjection struct {
+	StartingDifficulty  string                                      `json:"starting_difficulty,omitempty"`
+	StartAgeID          string                                      `json:"start_age_id,omitempty"`
 	Family              string                                      `json:"family"`
 	ContentHash         string                                      `json:"content_hash"`
 	GovernorPriorities  []string                                    `json:"governor_priorities,omitempty"`
@@ -563,7 +565,13 @@ func rulesProjection(state engine.State) *RulesProjection {
 	if family != "retail" && family != "synthetic" {
 		family = "unknown"
 	}
+	startingDifficulty, startAgeID := "", ""
+	if runtime.StartingAdvances != nil {
+		startingDifficulty = runtime.StartingAdvances.DifficultyID
+		startAgeID = runtime.StartAgeID
+	}
 	return &RulesProjection{
+		StartingDifficulty: startingDifficulty, StartAgeID: startAgeID,
 		Family:              family,
 		ContentHash:         runtime.ContentHash,
 		GovernorPriorities:  engine.GovernorPriorities(&runtime),

@@ -555,6 +555,9 @@ func startGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.
 	snapshot.Turn = turn.Clone()
 	snapshot = ApplyWorldSpawnCountries(snapshot, players)
 	if err := createStartedGameplay(tx, snapshot, game, players, sources); err != nil {
+		if errors.Is(err, errStartingAdvanceSetup) {
+			return writeGameStatusError(w, http.StatusBadRequest, errStartingAdvanceSetup.Error())
+		}
 		if errors.Is(err, world.ErrWorldAlreadyExists) {
 			return writeGameStatusError(w, http.StatusConflict, err.Error())
 		}

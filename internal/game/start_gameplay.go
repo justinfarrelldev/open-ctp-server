@@ -49,15 +49,18 @@ func serverRuntimePin() (engine.RulesPin, error) {
 }
 
 func serverRuntimePinForSetupRules(setupRules string) (engine.RulesPin, error) {
-	if strings.EqualFold(os.Getenv(retailRulesModeEnv), "retail") {
-		return retailRuntimePin(os.Getenv(retailGameDataEnv))
-	}
 	var options []string
 	if err := json.Unmarshal([]byte(setupRules), &options); err != nil {
-		return engine.RulesPin{}, fmt.Errorf("decode game rules configuration: %w", err)
+		return engine.RulesPin{}, fmt.Errorf("%w: game rule options must be strings", errStartingAdvanceSetup)
+	}
+	if strings.EqualFold(os.Getenv(retailRulesModeEnv), "retail") {
+		return retailRuntimePin(os.Getenv(retailGameDataEnv), options...)
 	}
 	selected := make([]string, 0)
 	for _, option := range options {
+		if strings.HasPrefix(option, "difficulty:") || strings.HasPrefix(option, "start-age:") {
+			return engine.RulesPin{}, fmt.Errorf("%w: retail rules are required", errStartingAdvanceSetup)
+		}
 		if !strings.HasPrefix(option, "victory:") {
 			continue
 		}
@@ -74,7 +77,7 @@ func serverRuntimePinForSetupRules(setupRules string) (engine.RulesPin, error) {
 	return engine.RulesPin{Version: ruleset.CompatibilityVersion, ContentHash: ruleset.ContentHash, Definitions: json.RawMessage(append([]byte(nil), ruleset.CanonicalJSON...))}, nil
 }
 
-func retailRuntimePin(dataDir string) (engine.RulesPin, error) {
+func retailRuntimePin(dataDir string, options ...string) (engine.RulesPin, error) {
 	if strings.TrimSpace(dataDir) == "" {
 		return engine.RulesPin{}, fmt.Errorf("%s is required when %s=retail", retailGameDataEnv, retailRulesModeEnv)
 	}
@@ -83,6 +86,9 @@ func retailRuntimePin(dataDir string) (engine.RulesPin, error) {
 		return engine.RulesPin{}, err
 	}
 	runtime := rules.ProjectRetailRuntime(db)
+	if err := configureRetailStartingAdvances(&runtime, options); err != nil {
+		return engine.RulesPin{}, err
+	}
 	definitions, contentHash, err := rules.CanonicalRuntimeDefinitions(runtime)
 	if err != nil {
 		return engine.RulesPin{}, err
@@ -190,6 +196,10 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 		}
 	}
 	sort.Strings(state.Phase.ActivePlayerOrder)
+	state, err = engine.InitializeStartingAdvances(state, &runtime, startingAdvanceRolls(snapshot.Turn.RNGState))
+	if err != nil {
+		return engine.State{}, fmt.Errorf("initialize starting advances: %w", err)
+	}
 	if err := engine.ValidateState(state); err != nil {
 		return engine.State{}, err
 	}
