@@ -71,6 +71,21 @@ func TestIdleProductionOutranksRoutineExploration(t *testing.T) {
 	}
 }
 
+func TestPlannerDoesNotTryFoundingInsideForeignNationalTerritory(t *testing.T) {
+	foreign := "other"
+	p := visibility.Projection{Units: []visibility.UnitProjection{{ID: "settler", OwnerID: "ai", TileID: "site", Domain: engine.DomainLand, Effects: []engine.Effect{{Kind: engine.EffectSettler}}}}, Tiles: []visibility.TileProjection{{ID: "site", OwnerID: &foreign}}}
+	raw, _ := json.Marshal(p)
+	candidates, err := Plan(raw, "ai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range candidates {
+		if c.Type == engine.CommandFoundCity {
+			t.Fatalf("planner loops on a claimed foreign site: %+v", c)
+		}
+	}
+}
+
 func TestProductionPriorityDoesNotInventIneligibleItems(t *testing.T) {
 	for _, mode := range []string{"empty", "unavailable", "foreign", "stale", "queued", "only-legal-unit"} {
 		t.Run(mode, func(t *testing.T) {
