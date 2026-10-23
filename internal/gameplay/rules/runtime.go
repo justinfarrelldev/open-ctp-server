@@ -28,6 +28,7 @@ type RuntimeRules struct {
 	Movement             RuntimeMovement                       `json:"movement"`
 	Ages                 []RuntimeAgeDefinition                `json:"ages,omitempty"`
 	StartAgeID           string                                `json:"start_age_id,omitempty"`
+	StartingAdvances     *RuntimeStartingAdvances              `json:"starting_advances,omitempty"`
 	EndAgeID             string                                `json:"end_age_id,omitempty"`
 	Advances             []RuntimeAdvanceDefinition            `json:"advances,omitempty"`
 	TerrainImprovements  []RuntimeTerrainImprovementDefinition `json:"terrain_improvements,omitempty"`
@@ -729,6 +730,9 @@ func compileRuntimeProjectionDefinitions(definitions []byte, contentHash string)
 }
 
 func validateRuntimeProjection(runtime RuntimeRules) error {
+	if err := ValidateStartingAdvances(runtime); err != nil {
+		return err
+	}
 	if err := validateRuntimeProjectionVictory(runtime.Victory); err != nil {
 		return err
 	}

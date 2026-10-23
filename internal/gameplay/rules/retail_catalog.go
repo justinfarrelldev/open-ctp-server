@@ -13,20 +13,21 @@ import (
 // records the released-game catalog and exact source values before server
 // gameplay support is implemented for each behavior-bearing field.
 type RetailRules struct {
-	Units                 []RetailUnit                 `json:"units"`
-	Advances              []RetailAdvance              `json:"advances"`
-	Ages                  []RetailAge                  `json:"ages,omitempty"`
-	Feats                 []RetailFeat                 `json:"feats,omitempty"`
-	Wonders               []RetailWonder               `json:"wonders"`
-	Buildings             []RetailBuilding             `json:"buildings"`
-	TerrainImprovements   []RetailTerrainImprovement   `json:"terrain_improvements"`
-	Terrains              []RetailTerrain              `json:"terrains"`
-	Governments           []RetailGovernment           `json:"governments"`
-	PollutionTriggerLists []RetailPollutionTriggerList `json:"pollution_trigger_lists"`
-	PollutionModel        RetailPollutionModel         `json:"pollution_model"`
-	Calendar              RetailCalendar               `json:"calendar"`
-	Constants             RetailConstants              `json:"constants"`
-	AI                    RetailAILists                `json:"ai"`
+	Units                       []RetailUnit                 `json:"units"`
+	Advances                    []RetailAdvance              `json:"advances"`
+	Ages                        []RetailAge                  `json:"ages,omitempty"`
+	Feats                       []RetailFeat                 `json:"feats,omitempty"`
+	Wonders                     []RetailWonder               `json:"wonders"`
+	Buildings                   []RetailBuilding             `json:"buildings"`
+	TerrainImprovements         []RetailTerrainImprovement   `json:"terrain_improvements"`
+	Terrains                    []RetailTerrain              `json:"terrains"`
+	Governments                 []RetailGovernment           `json:"governments"`
+	PollutionTriggerLists       []RetailPollutionTriggerList `json:"pollution_trigger_lists"`
+	PollutionModel              RetailPollutionModel         `json:"pollution_model"`
+	Calendar                    RetailCalendar               `json:"calendar"`
+	StartingAdvanceDifficulties []StartingAdvanceDifficulty  `json:"starting_advance_difficulties"`
+	Constants                   RetailConstants              `json:"constants"`
+	AI                          RetailAILists                `json:"ai"`
 }
 
 type RetailUnit struct {
@@ -304,6 +305,11 @@ func LoadRetailRulesFromDirectory(directory string) (RetailRules, error) {
 	}
 	var result RetailRules
 	diffPath := filepath.Join(directory, "DiffDB.txt")
+	profiles, err := loadRetailStartingAdvanceDifficulties(diffPath)
+	if err != nil {
+		return RetailRules{}, err
+	}
+	result.StartingAdvanceDifficulties = profiles
 	pollutionModel, err := loadRetailPollutionModel(diffPath)
 	if err != nil {
 		return RetailRules{}, err
@@ -400,6 +406,13 @@ func LoadRetailRulesFromDirectory(directory string) (RetailRules, error) {
 		return RetailRules{}, err
 	}
 	result.AI = ai
+	for _, profile := range result.StartingAdvanceDifficulties {
+		for _, choice := range profile.Chances {
+			if _, ok := result.Advance(choice.AdvanceID); !ok {
+				return RetailRules{}, importError(ErrorMalformedValue, diffPath, 1, "ADVANCE_CHANCES", "starting grant references an unknown advance")
+			}
+		}
+	}
 	return result, nil
 }
 

@@ -14,6 +14,7 @@ import (
 func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 	runtime := RuntimeRules{
 		Family:               "retail",
+		StartingAdvances:     projectStartingAdvances(db.StartingAdvanceDifficulties),
 		CompatibilityVersion: CTP2CompatibilityVersion,
 		ContentHash:          "retail-catalog-projection",
 		Victory:              []RuntimeVictory{{ID: "bloodlust_conquest"}, {ID: "diplomatic_world_union"}, {ID: "score_2300"}, {ID: "science_gaia_controller"}},
