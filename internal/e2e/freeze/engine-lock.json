@@ -27,11 +27,15 @@
     },
     {
       "path": "internal/game/player_endpoints.go",
-      "sha256": "f4f9f48493b871099abc73270d4191c9b872936d04cc7006089cc12d80648c96"
+      "sha256": "5b0511b891aa351c276f30f78c406cb7d30d082dc0c07546651d23a2d33daca0"
     },
     {
       "path": "internal/game/start_gameplay.go",
-      "sha256": "a80dfdfcb198aeed7dcfe0dbadf0e6b46553fa4e9537570799ef5250a6b8d76f"
+      "sha256": "70ba39323f227daec64f96abfa0ffc2b078d7d5f7fe3e4e610e078d4a51410da"
+    },
+    {
+      "path": "internal/game/starting_advances.go",
+      "sha256": "161241bb779be791bce3eaf76df2c3436cb70f1455958fbe7cdd8f2ee16ce23e"
     },
     {
       "path": "internal/game/world_contract_stubs.go",
@@ -79,7 +83,7 @@
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "20090ed7149675a6cb89bdc4268697486b5d5830b79f40179e844dc9e06889d5"
+      "sha256": "55fdfd795a3b28772d03683d81c8e7b5f2987b11028f194c8945097b63a7c649"
     },
     {
       "path": "internal/gameplay/engine/forecasts.go",
@@ -138,6 +142,10 @@
       "sha256": "c86c4e0baad3decbc66ecb57f1ce9914b56f21ee9d3cd14ad67a6bcf434a49e5"
     },
     {
+      "path": "internal/gameplay/engine/starting_advances.go",
+      "sha256": "dfc50aedd29c0ba7ffff0274e63d4cf27dbd9d805fbbb88855984420b4468567"
+    },
+    {
       "path": "internal/gameplay/engine/turns/turns.go",
       "sha256": "d418914a7d89cd29813623328aaab78d8ba65221c94c49edef6ef83664af6efe"
     },
@@ -167,7 +175,11 @@
     },
     {
       "path": "internal/gameplay/rules/retail_catalog.go",
-      "sha256": "bc0fbfaec93d5c97bc1dba780965ee8f20718e066d244002206c6ca6fff3d13f"
+      "sha256": "8707930cc78ec281f3bc28bde1e1976db4bfc1a9db1e1b407eb1a032200236eb"
+    },
+    {
+      "path": "internal/gameplay/rules/retail_difficulty.go",
+      "sha256": "fc942110cc151ea3ca4e7f71dfe3309934d3bf8f5b3854493689ce6156b31b55"
     },
     {
       "path": "internal/gameplay/rules/retail_pollution.go",
@@ -179,7 +191,7 @@
     },
     {
       "path": "internal/gameplay/rules/retail_runtime.go",
-      "sha256": "8c24eea60066f1d403db37492792ea12942843e14f47486df26db6bebbf14f11"
+      "sha256": "113348a8d9223fe84f95872800335e24aa82e04e06edf3bcf3765e6dd5d202aa"
     },
     {
       "path": "internal/gameplay/rules/rules.go",
@@ -187,7 +199,11 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "fc9512e2f12d8186470fae4f56ec7dc43facfe1fd2982325d47b9c85172c3726"
+      "sha256": "200dcecb77a52e20486881eeb092f16838761c24b322c3f2e6a390962a3c62af"
+    },
+    {
+      "path": "internal/gameplay/rules/starting_advances.go",
+      "sha256": "3dfee8105a6fdb16f11d8652d67b607add9e74994c5e20a4b64e18e988338ded"
     },
     {
       "path": "internal/gameplay/service/ai.go",
@@ -235,7 +251,7 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "a297854b3767011fa1a6e692c4ce09b58e3650d24212ae43e46ee2f214440b0f"
+      "sha256": "f7f1ac7bb5e7376a9189aba6579cb2e06809fd1a6df4989ee0e4dc5ab2dc394c"
     },
     {
       "path": "internal/runtime/runtime.go",
