@@ -85,7 +85,7 @@ func identifiedQueue(city City) (City, error) {
 // in pinned games. Even legacy queue-production requests cannot redefine rules.
 func canonicalProductionItem(runtime *rules.RuntimeRules, id string) (ProductionItem, error) {
 	if runtime == nil {
-		return ProductionItem{}, errors.New("canonical production rules are unavailable")
+		return ProductionItem{}, productionFailure("content_unavailable", "canonical production rules are unavailable")
 	}
 	item := ProductionItem{ID: id}
 	if production, ok := runtime.ProductionDefinition(id); ok {
@@ -102,7 +102,7 @@ func canonicalProductionItem(runtime *rules.RuntimeRules, id string) (Production
 	}
 	unit, hasUnit := runtime.Unit(id)
 	if item.Kind == ProductionUnit && !hasUnit {
-		return ProductionItem{}, errors.New("production unit definition is unavailable")
+		return ProductionItem{}, productionFailure("content_unavailable", "production unit definition is unavailable")
 	}
 	if hasUnit {
 		item.Kind = ProductionUnit
@@ -124,15 +124,21 @@ func canonicalProductionItem(runtime *rules.RuntimeRules, id string) (Production
 		item.Cost = 1
 	}
 	if err := validateProductionItem(item); err != nil {
-		return ProductionItem{}, errors.New("production content is unavailable")
+		return ProductionItem{}, productionFailure("content_unavailable", "production content is unavailable")
 	}
 	return item, nil
 }
 
 func editProduction(state *State, actor string, payload EditProductionPayload, runtime *rules.RuntimeRules) error {
 	city, ok := cityByID(*state, payload.CityID)
-	if !ok || city.OwnerID != actor || payload.Entries == nil || len(payload.Entries) > MaxProductionQueueEntries {
-		return errors.New("production edit is invalid")
+	if !ok || city.OwnerID != actor {
+		return productionFailure("queue_identity", "production city identity is invalid")
+	}
+	if payload.Entries == nil {
+		return productionFailure("queue_shape", "production entries must be an explicit array")
+	}
+	if len(payload.Entries) > MaxProductionQueueEntries {
+		return productionFailure("queue_capacity", "production queue is full")
 	}
 	identified, err := identifiedQueue(*city)
 	if err != nil {
@@ -150,14 +156,14 @@ func editProduction(state *State, actor string, payload EditProductionPayload, r
 	used := make(map[string]bool, len(payload.Entries))
 	for _, selection := range payload.Entries {
 		if (selection.EntryID == "") == (selection.ItemID == "") {
-			return errors.New("queue selection requires exactly one identity")
+			return productionFailure("queue_shape", "queue selection requires exactly one identity")
 		}
 		var item ProductionItem
 		if selection.EntryID != "" {
 			var found bool
 			item, found = existing[selection.EntryID]
 			if !found || used[selection.EntryID] {
-				return errors.New("queue entry is missing or duplicated")
+				return productionFailure("queue_identity", "queue entry is missing or duplicated")
 			}
 			used[selection.EntryID] = true
 		} else {

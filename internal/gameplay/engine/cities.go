@@ -769,7 +769,11 @@ func validateProductionAppend(state State, actor string, city City, item Product
 		return ProductionItem{}, productionFailure("queue_capacity", "production queue is full")
 	}
 	if err := productionEligibility(state, actor, city, &item, runtime); err != nil {
-		return ProductionItem{}, err
+		var failure *ProductionError
+		if errors.As(err, &failure) {
+			return ProductionItem{}, err
+		}
+		return ProductionItem{}, &ProductionError{Code: "production_prerequisite", Detail: err}
 	}
 	return item, nil
 }
@@ -782,7 +786,7 @@ func productionEligibility(state State, actor string, city City, input *Producti
 			return err
 		}
 		if payload.Item.Kind != "" && payload.Item.Kind != canonical.Kind {
-			return errors.New("production kind does not match rules")
+			return productionFailure("queue_shape", "production kind does not match rules")
 		}
 		payload.Item = canonical
 	}

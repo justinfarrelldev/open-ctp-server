@@ -56,11 +56,15 @@ type Result struct {
 }
 
 type Error struct {
-	Status  int
-	Message string
+	Status        int
+	Message       string // private; HTTP must use PublicRejection
+	Code          string
+	CorrelationID string
+	Cause         error
 }
 
 func (e *Error) Error() string { return e.Message }
+func (e *Error) Unwrap() error { return e.Cause }
 func StatusCode(err error) int {
 	var target *Error
 	if errors.As(err, &target) {
@@ -83,7 +87,8 @@ func New(commandStore *store.Store, sources engine.Sources) *Service {
 // input; no actor, combat result, visibility, or RNG authority is accepted from CommandRequest.
 // ExecuteCommand is the only accepted human gameplay mutation path. The session is server-authenticated
 // input; no actor, combat result, visibility, or RNG authority is accepted from CommandRequest.
-func (s *Service) ExecuteCommand(ctx context.Context, session *auth.Session, request CommandRequest) (Result, error) {
+func (s *Service) ExecuteCommand(ctx context.Context, session *auth.Session, request CommandRequest) (result Result, err error) {
+	defer func() { err = attachDiagnostic(err, request) }()
 	if err := validateRequest(ctx, session, request); err != nil {
 		return Result{}, err
 	}
@@ -150,7 +155,7 @@ func (s *Service) executeControllerCommand(ctx context.Context, request CommandR
 	receipt, err := findReceipt(tx, request.GameID, player.ID, request.IdempotencyKey)
 	if err == nil {
 		if receipt.PayloadSHA256 != payloadSHA {
-			return Result{}, commandError(409, "idempotency key was already used with a different payload")
+			return Result{}, codedError(409, "idempotency_conflict", "idempotency key was already used with a different payload")
 		}
 		result, err := decodeStoredResult(receipt.ResultJSON)
 		if err != nil {
@@ -173,14 +178,14 @@ func (s *Service) executeControllerCommand(ctx context.Context, request CommandR
 		return Result{}, err
 	}
 	if aggregate.Revision != request.ExpectedRevision {
-		return Result{}, commandError(409, "gameplay revision is stale")
+		return Result{}, codedError(409, "revision_conflict", "gameplay revision is stale")
 	}
 	state, err := engine.DecodeCanonicalStateJSON(aggregate.CanonicalStateJSON)
 	if err != nil {
 		return Result{}, commandError(422, "gameplay state is invalid")
 	}
 	if state.Revision != aggregate.Revision || state.EventSequence != aggregate.LastEventSequence {
-		return Result{}, commandError(409, "gameplay state revision is stale")
+		return Result{}, codedError(409, "revision_conflict", "gameplay state revision is stale")
 	}
 	actorID := strconv.FormatInt(player.ID, 10)
 	if actorAccountID != nil {
@@ -201,7 +206,7 @@ func (s *Service) executeControllerCommand(ctx context.Context, request CommandR
 	}
 	next, engineEvents, applied, err := engine.Apply(state, engine.Command{SchemaVersion: engine.CommandSchemaV1, ID: request.CommandID, ActorPlayerID: actorID, IdempotencyKey: request.IdempotencyKey, Type: request.Type, Payload: canonicalPayload(request.Payload)}, rulesPin(aggregate.Ruleset), s.sources)
 	if err != nil {
-		return Result{}, commandError(422, "gameplay command is invalid: "+err.Error())
+		return Result{}, engineRejection(err)
 	}
 	next, err = visibility.Update(next)
 	if err != nil {
@@ -237,7 +242,7 @@ func (s *Service) executeControllerCommand(ctx context.Context, request CommandR
 	}
 	if err := store.PersistCommandInTx(tx, aggregate.Revision, after, receipt, persistedEvents, exploration...); err != nil {
 		if errors.Is(err, store.ErrStaleRevision) {
-			return Result{}, commandError(409, "gameplay revision is stale")
+			return Result{}, codedError(409, "revision_conflict", "gameplay revision is stale")
 		}
 		return Result{}, fmt.Errorf("persisting gameplay command: %w", err)
 	}
@@ -358,7 +363,7 @@ func validateAuthority(state engine.State, actorID, controller, commandType stri
 			return nil
 		}
 		if len(state.Phase.ActivePlayerOrder) == 0 || state.Phase.ActivePlayerIndex < 0 || state.Phase.ActivePlayerIndex >= len(state.Phase.ActivePlayerOrder) || state.Phase.ActivePlayerOrder[state.Phase.ActivePlayerIndex] != actorID {
-			return commandError(422, "command is not allowed in this phase")
+			return codedError(422, "phase_restricted", "command is not allowed in this phase")
 		}
 		return nil
 	}

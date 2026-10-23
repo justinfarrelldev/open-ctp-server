@@ -234,7 +234,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	result, err := h.executor.ExecuteCommand(r.Context(), session, service.CommandRequest{GameID: gameID, ExpectedRevision: req.ExpectedRevision, IdempotencyKey: req.IdempotencyKey, CommandID: req.CommandID, Type: definition.kind, Payload: req.Payload})
 	if err != nil {
-		writeError(w, service.StatusCode(err))
+		writeRejection(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -263,12 +263,17 @@ func writeBodyError(w http.ResponseWriter, err error) {
 }
 
 func writeError(w http.ResponseWriter, status int) {
+	writeRejection(w, &service.Error{Status: status})
+}
+
+func writeRejection(w http.ResponseWriter, err error) {
+	status := service.StatusCode(err)
 	if status < 400 || status > 599 {
 		status = http.StatusInternalServerError
 	}
+	rejection := service.PublicRejection(err)
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Gameplay-Correlation-ID", rejection.CorrelationID)
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(struct {
-		Error string `json:"error"`
-	}{Error: "gameplay request rejected"})
+	_ = json.NewEncoder(w).Encode(rejection)
 }
