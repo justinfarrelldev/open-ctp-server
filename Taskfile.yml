@@ -2,6 +2,9 @@ version: '3'
 
 tasks:
   run:
+    env:
+      OPEN_CTP_RULES_MODE: retail
+      OPEN_CTP_RETAIL_GAMEDATA: /home/justi/Projects/ctp-client/ctp2/ctp2_data/default/gamedata
     cmds:
       - echo Starting dev server...
       - air
