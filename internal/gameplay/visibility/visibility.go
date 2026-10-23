@@ -26,22 +26,23 @@ const (
 )
 
 type TileProjection struct {
-	ID           string                  `json:"id"`
-	X            int                     `json:"x"`
-	Y            int                     `json:"y"`
-	Terrain      string                  `json:"terrain"`
-	River        *bool                   `json:"river,omitempty"`
-	GoodID       *string                 `json:"good_id,omitempty"`
-	Ruin         *bool                   `json:"ruin,omitempty"`
-	OwnerID      *string                 `json:"owner_id,omitempty"`
-	Yields       *engine.TileYield       `json:"yields,omitempty"`
-	YieldContext string                  `json:"yield_context,omitempty"`
-	MovementCost *int                    `json:"movement_cost,omitempty"`
-	Pollution    int                     `json:"pollution,omitempty"`
-	Stale        bool                    `json:"stale"`
-	Observed     int                     `json:"observed_turn"`
-	Planning     *TilePlanning           `json:"planning,omitempty"`
-	Overlays     []TileOverlayProjection `json:"overlays,omitempty"`
+	ID            string                  `json:"id"`
+	X             int                     `json:"x"`
+	Y             int                     `json:"y"`
+	Terrain       string                  `json:"terrain"`
+	River         *bool                   `json:"river,omitempty"`
+	RiverGeometry *engine.RiverGeometry   `json:"river_geometry,omitempty"`
+	GoodID        *string                 `json:"good_id,omitempty"`
+	Ruin          *bool                   `json:"ruin,omitempty"`
+	OwnerID       *string                 `json:"owner_id,omitempty"`
+	Yields        *engine.TileYield       `json:"yields,omitempty"`
+	YieldContext  string                  `json:"yield_context,omitempty"`
+	MovementCost  *int                    `json:"movement_cost,omitempty"`
+	Pollution     int                     `json:"pollution,omitempty"`
+	Stale         bool                    `json:"stale"`
+	Observed      int                     `json:"observed_turn"`
+	Planning      *TilePlanning           `json:"planning,omitempty"`
+	Overlays      []TileOverlayProjection `json:"overlays,omitempty"`
 }
 
 type TileOverlayProjection struct {

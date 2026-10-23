@@ -10,8 +10,9 @@ import (
 // It is canonical-side only: callers MUST gate Tile reads by current visibility.
 // Remembered display facts belong in FogObservation, never in a new hidden read.
 type Inspector struct {
-	state   State
-	runtime *rules.RuntimeRules
+	state       State
+	runtime     *rules.RuntimeRules
+	coordinates map[[2]int]Tile
 }
 
 // NewInspector compiles the same pinned runtime used by command execution once.
@@ -20,7 +21,11 @@ func NewInspector(state State) (*Inspector, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Inspector{state: state, runtime: runtime}, nil
+	coordinates := make(map[[2]int]Tile, len(state.Tiles))
+	for _, tile := range state.Tiles {
+		coordinates[[2]int{tile.X, tile.Y}] = tile
+	}
+	return &Inspector{state: state, runtime: runtime, coordinates: coordinates}, nil
 }
 
 // TileYield is an inspectable tile's pre-city-policy output. All three values are
@@ -41,11 +46,12 @@ type ObservedOverlay struct {
 // TileInspection is a last-observable snapshot. MovementCost is general terrain
 // cost, not unit access, occupancy, domain legality or current enemy ZOC.
 type TileInspection struct {
-	Yields       *TileYield        `json:"yields,omitempty"`
-	YieldContext string            `json:"yield_context,omitempty"`
-	MovementCost *int              `json:"movement_cost,omitempty"`
-	Pollution    int               `json:"pollution"`
-	Overlays     []ObservedOverlay `json:"overlays,omitempty"`
+	RiverGeometry *RiverGeometry    `json:"river_geometry,omitempty"`
+	Yields        *TileYield        `json:"yields,omitempty"`
+	YieldContext  string            `json:"yield_context,omitempty"`
+	MovementCost  *int              `json:"movement_cost,omitempty"`
+	Pollution     int               `json:"pollution"`
+	Overlays      []ObservedOverlay `json:"overlays,omitempty"`
 }
 
 // Tile returns only display facts derived from the actual effective engine rules.
@@ -55,7 +61,7 @@ func (i *Inspector) Tile(tileID string) *TileInspection {
 	if !ok {
 		return nil
 	}
-	result := &TileInspection{Pollution: tile.Pollution, YieldContext: "terrain"}
+	result := &TileInspection{Pollution: tile.Pollution, YieldContext: "terrain", RiverGeometry: i.riverGeometry(tile)}
 	yield, err := terrainYieldWithRuntime(i.state, tileID, i.runtime)
 	if _, city := cityByTile(i.state, tileID); city {
 		result.YieldContext = "city-center"
