@@ -61,6 +61,7 @@ func TestTaskFiveExecutionSemanticsRemainGreen(t *testing.T) {
 	if first != second || first != restarted {
 		t.Fatalf("Task 5 execution artifacts differ: first=%+v second=%+v restarted=%+v", first, second, restarted)
 	}
+	t.Logf("observed row 1 winner=%s reason=%s state=%s events=%s", first.TerminalWinner, first.TerminalReason, first.StateHash, first.EventHash)
 	if len(restartEvents) != 1 || restartEvents[0] != (AcceptanceRestartEvent{Point: AcceptanceRestartAfterDurableRound}) {
 		t.Fatalf("conquest restart events = %+v, want one durable-round restart", restartEvents)
 	}
@@ -201,7 +202,7 @@ func TestAcceptanceFixturesAreCatalogIndependentAndPinned(t *testing.T) {
 	if one.Name == two.Name || one.HumanPolicy.Name() == two.HumanPolicy.Name() {
 		t.Fatal("acceptance fixtures are not independently pinned")
 	}
-	if one.ExpectedStateHash != "a9878b7cc94891af589a933b5972b8606617d2d67cb44e9e7a6a964a6b0ca09a" || one.ExpectedEventHash != "f1be2d24e7625eb85b878869250b90ed4e2889dcd2a45bc2c5f2c629530bf327" {
+	if one.ExpectedStateHash != "f2010f98bfecc115cdb5c50e353d9162f6209227ab2274750ba5277a3db4adde" || one.ExpectedEventHash != "a89e09960deb540892de258d834cc64e26f7454d9bb6d26947e52752b5520f12" {
 		t.Fatal("row one accepted artifacts changed")
 	}
 	for _, config := range []AcceptanceConfig{one, two} {

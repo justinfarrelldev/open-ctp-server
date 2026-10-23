@@ -1922,6 +1922,7 @@ func scanPublicEvents(ctx context.Context, transport *HTTPExplorationTransport, 
 	var id int64
 	var event string
 	scanner := bufio.NewScanner(response.Body)
+	scanner.Buffer(make([]byte, 4096), maxPublicSSELineBytes)
 	for scanner.Scan() {
 		line := scanner.Text()
 		switch {

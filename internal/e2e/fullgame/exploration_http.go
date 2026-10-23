@@ -19,6 +19,10 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/visibility"
 )
 
+// Match the onboarding HTTP viewer's existing bounded frame allowance. Real
+// observed worlds (including explicit empty influence) exceed Scanner's 64KiB.
+const maxPublicSSELineBytes = 16 << 20
+
 type HTTPExplorationTransport struct {
 	BaseURL           string
 	Client            *http.Client
@@ -71,6 +75,7 @@ func (t *HTTPExplorationTransport) Bootstrap(ctx context.Context, cursor int64) 
 	var id int64
 	var name, data string
 	scanner := bufio.NewScanner(response.Body)
+	scanner.Buffer(make([]byte, 4096), maxPublicSSELineBytes)
 	for scanner.Scan() {
 		line := scanner.Text()
 		switch {
