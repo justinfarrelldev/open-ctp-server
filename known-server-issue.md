@@ -19,15 +19,122 @@ records. This delivery is **server only**; no client code or live games changed.
 - [x] Document atomic-append versus whole-edit boundaries and queued-versus-executed
   semantics without weakening validation or inventing forecast turns.
 
-**The original live click was not reproduced, and no claim is made that changing
-only the server fixes the client's catalog-as-permission or rejection UI defects.**
 The investigation below is preserved as a historical baseline: its statements
 about missing fields/old source behavior are superseded by the contracts above.
 
+## Established cause: retail game 58 has zero eligible units
+
+Read-only inspection identified the actual retail game: game **58**, revision
+**16**, turn **3**, rules hash
+`bda7a80d3ffc921ac70b7a8f7e7ce684486ec4d8b570ecb38ebd001c0006dec7`.
+The human-owned city `client-city-settler-127-1` has population **1**, an empty
+queue, and its nation has **no discovered advances and no selected research**.
+
+An isolated offline reproduction fed this exact persisted canonical snapshot into
+`engine.Apply` and submitted the client's atomic `edit-production` shape once for
+each of the pin's **72 unit definitions**, without changing the database/game:
+
+- **68** reject with `production prerequisite: missing prerequisite or obsolete content`.
+  Specifically, Warrior requires `ADVANCE_TOOLMAKING`, and Hoplite requires
+  `ADVANCE_BRONZE_WORKING`; neither is known.
+- **3** city-entity definitions reject with `production prerequisite: CantBuild unit`.
+- **1**, Settler, rejects with `city population is insufficient` at population one.
+- **0** unit additions succeed. This is not an unsupported atomic command shape,
+  a synthetic-name problem, or evidence that the engine rejects every valid unit.
+
+Positive control: changing **only the isolated in-memory nation's discoveries**
+to include `ADVANCE_TOOLMAKING` makes the same `edit-production` request for
+`UNIT_WARRIOR` succeed and produce one authoritative queue entry. No live research,
+production, revision, files, or server configuration was modified by the test.
+
+**Causal chain:** the client lists the entire retail catalog instead of current
+city eligibility → every listed unit is unavailable in this particular state →
+the engine correctly rejects those additions → the client presents rejection as
+resynchronization. The old generic HTTP rejection hid the useful reason. The
+server's new complete options contract can truthfully report complete-empty here;
+the client must consume it rather than enable every catalog row. That first
+replay alone did not establish whether the empty starting discoveries were
+intentional. The startup/source follow-up below now establishes the omitted
+retail starting-grant initialization. Researching the requisite advance or
+legitimately growing the city changes eligibility; never grant them client-side.
+
+Evidence: `/tmp/ctp-retail-cause-probe_test.go` and its temporary Go overlay,
+compiled against server `a27b65a`; passing `TestDiagnosticRetailCityAppendCause`
+reports `units=72 accepted=[]` and the positive control. The snapshot was streamed
+from a **READ ONLY** database transaction into the offline test's stdin, not saved
+as a fixture or queried by the test. The probe performs no network or file writes.
+No server source/test file was changed: the temporary overlay only supplies the
+external diagnostic harness. This is an engine reproduction using the actual
+persisted state, not a claim to have captured the historical HTTP click.
+
+## Confirmed startup omission: default advances are never initialized
+
+Follow-up at unchanged server `a27b65a` confirms this is not normal released CTP2
+starting behavior. Read-only database inspection of the newer **retail game59**
+(pin `4f526dec4a160f1d715f446177e699105170f88a56001c94c225f380ca6a7d1c`)
+shows the human nation still has **no discoveries, research target or stored age**
+at revision16/turn3. Its first city has population1 and no queue. Crucially, the
+persisted founding receipt at **revision2** already returned
+`production_options: {status: "complete", items: []}` for that city. This proves
+all production choices were empty immediately after founding, not just hidden
+while another player was acting. Later pass receipts correctly say `unavailable`
+for phase restrictions; those are a separate state.
+
+### Exact server startup path
+
+- `internal/game/start_gameplay.go::initialGameplayState` (around lines124–201)
+  appends nations at line171 with only ID, PublicWorks and Gold. It creates starter
+  units, validates and calls `visibility.Update`, but grants no starting discoveries
+  and selects no initial human research.
+- `internal/gameplay/engine/lifecycle.go::GrantStartingAgeAdvances` (around920–951)
+  exists, but a repository-wide reference search finds **no production caller**:
+  only its definition and `advance_age_task94_test.go` call it. Its age/current
+  research initialization therefore never reaches the actual game-start path.
+- Calling this helper alone is **not** a complete ancient-start fix: it grants
+  advances strictly from ages earlier than the starting age. It does not implement
+  the original first-age difficulty-based `ADVANCE_CHANCES` grants.
+- The current retail importer reads DiffDB time scale/pollution fields, but no
+  starting-grant `ADVANCE_CHANCES`/`MAX_HUMAN_ADVANCES`/`MAX_AI_ADVANCES` policy is
+  projected into the runtime or applied at startup.
+
+### Released-source comparison
+
+`$CTPCLIENT/ctp2_source/ctp2_code/gs/gameobj/Player.cpp::Player` calls
+`Player::InitPlayer`; that initialization (around505–575) consumes the selected difficulty's advance chances: human versus
+AI chances and caps, with unconditional grants for chances >=100. For later starts
+it grants earlier-age discoveries. It then calls `ResetCanResearch` and selects an
+initial research target. `gs/database/DiffDB.cpp` parses the human/AI chance pair.
+
+Both the bundled and selected GOG `ctp2_data/default/gamedata/DiffDB.txt` specify
+`ADVANCE_TOOLMAKING 100 100` in **all six difficulty blocks** (around127,273,423,
+573,722,873). Toolmaking is therefore guaranteed at an ordinary ancient start,
+not something the human must research before being allowed a first Warrior.
+Other initial advances are difficulty/chance-dependent; do not grant all of them
+unconditionally or treat this as a demand for a client-side random roll.
+
+### Required server repair and immediate workaround
+
+Initialize the actual startup path from an explicit pinned starting-age/difficulty
+policy: guaranteed and deterministic chance/cap grants, earlier-age grants for
+later starts, and an initial legal research target. Preserve server authority,
+transactional persistence, deterministic RNG/replay and human/AI distinctions.
+Add startup integration regressions, not only helper tests: a first-age human
+starts with Toolmaking and a legal research target, and its freshly founded
+population-one city advertises/accepts Warrior while still rejecting Settler;
+cover all six difficulty profiles, later-age starts and restart/idempotent state.
+Do not silently rewrite existing saves as part of new-game initialization.
+
+Until repaired, selecting **Toolmaking** manually in Science and completing it
+unlocks Warrior. Waiting alone does not discover it when the human research target
+is empty. Settler separately requires population growth above one. The previous
+in-memory positive control already verified that Toolmaking alone permits the
+same atomic Warrior Add. No server source/configuration or game was changed by
+this follow-up; only this diagnostic report was updated.
+
 ## Original investigation status and scope
 
-**Confirmed source-level contract gaps at the investigated baseline; the exact
-cause of the reported live “none of the units can be added” failure was not established.**
+**Historical baseline:** source-level contract gaps were established first;
+the game-specific zero-eligibility cause is now reproduced above.
 
 The report follows the switch from synthetic to retail rules: the client lists
 retail units, but pressing Build → Add appears to resynchronize rather than add
