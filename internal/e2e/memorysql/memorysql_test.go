@@ -530,7 +530,7 @@ func TestDriverEmptyStoreQueriesFailClosedWithoutFabricatedRows(t *testing.T) {
 	assertNoRows("SELECT name FROM account WHERE id = $1", int64(99))
 	assertNoRows("SELECT id, closed_at FROM lobbies WHERE id = $1", int64(99))
 	assertNoRows("SELECT game_id FROM world_snapshots WHERE game_id = $1", int64(99))
-	assertNoRows("SELECT revision, canonical_state_json FROM world_turn_states WHERE game_id = $1 AND state_schema_version = 1", int64(99))
+	assertNoRows("SELECT revision, last_event_sequence, canonical_state_json FROM world_turn_states WHERE game_id = $1 AND state_schema_version = 1", int64(99))
 	assertNoRows("SELECT last_event_sequence, canonical_state_json FROM world_turn_states WHERE game_id = $1 AND state_schema_version = 1", int64(99))
 	assertNoRows("SELECT canonical_state_json::text FROM world_turn_states WHERE game_id = $1 AND state_schema_version = 1", int64(99))
 	assertNoRows("SELECT game_id, actor_player_id, idempotency_key, payload_sha256, result_json::text AS result_json, resulting_revision, resulting_event_sequence FROM gameplay_command_receipts WHERE game_id = $1 AND actor_player_id = $2 AND idempotency_key = $3", int64(99), int64(1), "missing")

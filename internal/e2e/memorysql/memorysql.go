@@ -271,12 +271,12 @@ func (c *conn) query(query string, args []driver.NamedValue) (driver.Rows, error
 		gameID := intArg(args, 0)
 		values := gameplayEventRows(c.store.events, gameID, -1, true)
 		return &rows{columns: []string{"event_id", "payload_json"}, values: values}, nil
-	case "select revision, canonical_state_json from world_turn_states where game_id = $1 and state_schema_version = 1":
+	case "select revision, last_event_sequence, canonical_state_json from world_turn_states where game_id = $1 and state_schema_version = 1":
 		turn, ok := c.store.turns[intArg(args, 0)]
 		if !ok || intArgFromValue(turn[9]) != 1 {
-			return &rows{columns: []string{"revision", "canonical_state_json"}}, nil
+			return &rows{columns: []string{"revision", "last_event_sequence", "canonical_state_json"}}, nil
 		}
-		return &rows{columns: []string{"revision", "canonical_state_json"}, values: [][]driver.Value{{turn[10], turn[12]}}}, nil
+		return &rows{columns: []string{"revision", "last_event_sequence", "canonical_state_json"}, values: [][]driver.Value{{turn[10], turn[11], turn[12]}}}, nil
 	case "select last_event_sequence, canonical_state_json from world_turn_states where game_id = $1 and state_schema_version = 1":
 		turn, ok := c.store.turns[intArg(args, 0)]
 		if !ok || intArgFromValue(turn[9]) != 1 {

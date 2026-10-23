@@ -202,7 +202,7 @@ func TestStreamResumeExpiredCursorResyncAndNeverLeaksCanonicalPayload(t *testing
 	}
 
 	mock.ExpectQuery("SELECT min\\(sequence\\)").WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"min"}).AddRow(int64(5)))
-	mock.ExpectQuery("SELECT revision, canonical_state_json").WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"revision", "canonical_state_json"}).AddRow(int64(8), `{"hidden_entity_id":"enemy-99","coordinates":[7,8]}`))
+	mock.ExpectQuery("SELECT revision, last_event_sequence, canonical_state_json").WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"revision", "last_event_sequence", "canonical_state_json"}).AddRow(int64(8), int64(8), `{"hidden_entity_id":"enemy-99","coordinates":[7,8]}`))
 	items, err := stream.Resume(context.Background(), viewer, 2, projector)
 	if err != nil {
 		t.Fatalf("Resume() error = %v", err)

@@ -143,7 +143,7 @@ const eventsAfterCursorQuery = `SELECT game_id, sequence, revision, ordinal, eve
 FROM gameplay_events
 WHERE game_id = $1 AND sequence > $2
 ORDER BY sequence ASC`
-const snapshotForResyncQuery = `SELECT revision, canonical_state_json
+const snapshotForResyncQuery = `SELECT revision, last_event_sequence, canonical_state_json
 FROM world_turn_states
 WHERE game_id = $1 AND state_schema_version = 1`
 
@@ -223,9 +223,9 @@ func (s *Store) Terminal(ctx context.Context, viewer Viewer, projector Projector
 }
 
 func (s *Store) resync(ctx context.Context, viewer Viewer, projector Projector) ([]SSEEvent, error) {
-	var revision int64
+	var revision, cursor int64
 	var canonicalState []byte
-	if err := s.db.QueryRowxContext(ctx, snapshotForResyncQuery, viewer.GameID).Scan(&revision, &canonicalState); err != nil {
+	if err := s.db.QueryRowxContext(ctx, snapshotForResyncQuery, viewer.GameID).Scan(&revision, &cursor, &canonicalState); err != nil {
 		return nil, fmt.Errorf("reading gameplay state for resync: %w", err)
 	}
 	projection, err := projector.ProjectSnapshot(viewer, canonicalState)
@@ -234,12 +234,13 @@ func (s *Store) resync(ctx context.Context, viewer Viewer, projector Projector) 
 	}
 	data, err := json.Marshal(struct {
 		CurrentRevision int64           `json:"current_revision"`
+		EventCursor     int64           `json:"event_cursor"`
 		Snapshot        json.RawMessage `json:"snapshot"`
-	}{CurrentRevision: revision, Snapshot: projection})
+	}{CurrentRevision: revision, EventCursor: cursor, Snapshot: projection})
 	if err != nil {
 		return nil, fmt.Errorf("encoding gameplay resync: %w", err)
 	}
-	return []SSEEvent{{ID: revision, Name: "resync", Data: data}}, nil
+	return []SSEEvent{{ID: cursor, Name: "resync", Data: data}}, nil
 }
 
 // ParseLastEventID accepts only an empty string or a base-10 nonnegative sequence.

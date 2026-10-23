@@ -154,7 +154,7 @@ func writeProjectedItems(w http.ResponseWriter, items []SSEEvent, cursor int64) 
 		if err := writeSSEEvent(w, item); err != nil {
 			return cursor, false
 		}
-		if item.Name != "resync" && item.ID > cursor {
+		if item.ID > cursor {
 			cursor = item.ID
 		}
 	}

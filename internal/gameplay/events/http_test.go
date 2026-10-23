@@ -80,7 +80,7 @@ func TestHandlerWritesOnlyProjectedSSEBytes(t *testing.T) {
 	mock.ExpectQuery(`SELECT \* FROM sessions`).WithArgs(int64(22)).WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).AddRow(int64(22), 4, now, now.Add(time.Hour)))
 	mock.ExpectQuery("SELECT id, account_id FROM game_players").WithArgs(int64(9), 4).WillReturnRows(sqlmock.NewRows([]string{"id", "account_id"}).AddRow(int64(42), int64(4)))
 	mock.ExpectQuery("SELECT min\\(sequence\\)").WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"min"}).AddRow(int64(1)))
-	mock.ExpectQuery(regexp.QuoteMeta(snapshotForResyncQuery)).WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"revision", "canonical_state_json"}).AddRow(int64(1), `{"terminal":{"ended":false}}`))
+	mock.ExpectQuery(regexp.QuoteMeta(snapshotForResyncQuery)).WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"revision", "last_event_sequence", "canonical_state_json"}).AddRow(int64(1), int64(1), `{"terminal":{"ended":false}}`))
 	mock.ExpectQuery("SELECT last_event_sequence, canonical_state_json").WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"last_event_sequence", "canonical_state_json"}).AddRow(int64(1), `{"terminal":{"ended":false}}`))
 
 	req := httptest.NewRequest(http.MethodGet, "/game/9/events?session_id=22", nil)
@@ -90,7 +90,7 @@ func TestHandlerWritesOnlyProjectedSSEBytes(t *testing.T) {
 	if writer.Code != http.StatusOK || writer.Header().Get("Content-Type") != "text/event-stream" {
 		t.Fatalf("status=%d headers=%v", writer.Code, writer.Header())
 	}
-	if !strings.Contains(body, "id: 1\nevent: resync\ndata: {\"current_revision\":1,\"snapshot\":{\"visible\":\"snapshot\"}}\n\n") {
+	if !strings.Contains(body, "id: 1\nevent: resync\ndata: {\"current_revision\":1,\"event_cursor\":1,\"snapshot\":{\"visible\":\"snapshot\"}}\n\n") {
 		t.Fatalf("unexpected SSE body: %q", body)
 	}
 	if strings.Contains(body, "enemy-99") || strings.Contains(body, "coordinates") {
@@ -203,7 +203,7 @@ func TestHandlerWritesCurrentProjectedResync(t *testing.T) {
 	now := time.Now()
 	mock.ExpectQuery(`SELECT \* FROM sessions`).WithArgs(int64(22)).WillReturnRows(sqlmock.NewRows([]string{"id", "account_id", "created_at", "expires_at"}).AddRow(int64(22), 4, now, now.Add(time.Hour)))
 	mock.ExpectQuery("SELECT id, account_id FROM game_players").WithArgs(int64(9), 4).WillReturnRows(sqlmock.NewRows([]string{"id", "account_id"}).AddRow(int64(42), int64(4)))
-	mock.ExpectQuery(regexp.QuoteMeta(snapshotForResyncQuery)).WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"revision", "canonical_state_json"}).AddRow(int64(3), `{"terminal":{"ended":false}}`))
+	mock.ExpectQuery(regexp.QuoteMeta(snapshotForResyncQuery)).WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"revision", "last_event_sequence", "canonical_state_json"}).AddRow(int64(3), int64(3), `{"terminal":{"ended":false}}`))
 	mock.ExpectQuery("SELECT last_event_sequence, canonical_state_json").WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"last_event_sequence", "canonical_state_json"}).AddRow(int64(3), `{"terminal":{"ended":false}}`))
 
 	request := httptest.NewRequest(http.MethodGet, "/game/9/events?session_id=22", nil)
