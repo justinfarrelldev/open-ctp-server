@@ -3,6 +3,8 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 
@@ -12,13 +14,24 @@ import (
 	"github.com/justinfarrelldev/open-ctp-server/internal/world"
 )
 
+func startingAdvanceGameDataRoot(t *testing.T) string {
+	t.Helper()
+	if root := os.Getenv("CTPCLIENT"); root != "" {
+		original := filepath.Join(root, "ctp2", "ctp2_data", "default", "gamedata")
+		if _, err := os.Stat(filepath.Join(original, "Units.txt")); err == nil {
+			return original
+		}
+	}
+	return localRetailGameDataRoot(t)
+}
+
 func startingAdvanceSnapshot() world.WorldSnapshot {
 	return world.WorldSnapshot{Config: world.WorldConfig{StartingSettlers: 1, StartingGold: 100}, Turn: world.MutableTurnState{RNGState: 987654321}, Tiles: []world.WorldTile{{X: 0, Y: 0, Terrain: "plains"}, {X: 10, Y: 0, Terrain: "plains"}}, Spawns: []world.PlayerSpawn{{AccountID: 7, X: 0, Y: 0}, {AccountID: 8, X: 10, Y: 0}}}
 }
 
 func TestRetailLaterAgeStartupAndPinnedSelectionValidation(t *testing.T) {
 	t.Setenv(retailRulesModeEnv, "retail")
-	t.Setenv(retailGameDataEnv, localRetailGameDataRoot(t))
+	t.Setenv(retailGameDataEnv, startingAdvanceGameDataRoot(t))
 	defaultPin, err := serverRuntimePin()
 	if err != nil {
 		t.Fatal(err)
@@ -91,7 +104,7 @@ func TestStartingAdvanceStreamsArePlayerLocalAndSeeded(t *testing.T) {
 
 func TestRetailActualStartupEnablesFirstWarriorAtEveryDifficulty(t *testing.T) {
 	t.Setenv(retailRulesModeEnv, "retail")
-	t.Setenv(retailGameDataEnv, localRetailGameDataRoot(t))
+	t.Setenv(retailGameDataEnv, startingAdvanceGameDataRoot(t))
 	for _, difficulty := range []string{"beginner", "easy", "medium", "hard", "very-hard", "impossible"} {
 		t.Run(difficulty, func(t *testing.T) {
 			pin, err := serverRuntimePinForSetupRules(fmt.Sprintf(`["difficulty:%s"]`, difficulty))
