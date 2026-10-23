@@ -245,16 +245,17 @@ type TileOverlay struct {
 // Tile is canonical server terrain/access input for unit transitions. Coordinates
 // are used only to validate submitted adjacent path steps.
 type Tile struct {
-	ID        string `json:"id"`
-	X         int    `json:"x"`
-	Y         int    `json:"y"`
-	Terrain   string `json:"terrain"`
-	River     bool   `json:"river,omitempty"`
-	GoodID    string `json:"good_id,omitempty"`
-	OwnerID   string `json:"owner_id,omitempty"`
-	Open      bool   `json:"open"`
-	Pollution int    `json:"pollution,omitempty"`
-	Ruin      *Ruin  `json:"ruin,omitempty"`
+	InfluenceCityID string `json:"influence_city_id,omitempty"`
+	ID              string `json:"id"`
+	X               int    `json:"x"`
+	Y               int    `json:"y"`
+	Terrain         string `json:"terrain"`
+	River           bool   `json:"river,omitempty"`
+	GoodID          string `json:"good_id,omitempty"`
+	OwnerID         string `json:"owner_id,omitempty"`
+	Open            bool   `json:"open"`
+	Pollution       int    `json:"pollution,omitempty"`
+	Ruin            *Ruin  `json:"ruin,omitempty"`
 }
 
 type Unit struct {
@@ -348,6 +349,7 @@ type PeaceMovementState struct {
 }
 
 type Nation struct {
+	CivilizationID       string              `json:"civilization_id,omitempty"`
 	ID                   string              `json:"id"`
 	Effects              []Effect            `json:"effects,omitempty"`
 	Advances             []string            `json:"advances,omitempty"`
@@ -426,6 +428,7 @@ type TradeRoute struct {
 }
 
 type Player struct {
+	ColorIndex      *int   `json:"color_index,omitempty"`
 	ID              string `json:"id"`
 	NationID        string `json:"nation_id"`
 	Lifecycle       string `json:"lifecycle"`
@@ -481,22 +484,23 @@ type TurnPolicyState struct {
 // FogObservation contains only facts observed by this player. Nil metadata means
 // unknown (including legacy saves), never a request to backfill hidden authority.
 type FogObservation struct {
-	PlayerID       string          `json:"player_id"`
-	TileID         string          `json:"tile_id"`
-	Turn           int             `json:"turn"`
-	Terrain        string          `json:"terrain"`
-	River          *bool           `json:"river,omitempty"`
-	GoodID         *string         `json:"good_id,omitempty"`
-	Ruin           *bool           `json:"ruin,omitempty"`
-	OwnerID        *string         `json:"owner_id,omitempty"`
-	Inspection     *TileInspection `json:"inspection,omitempty"`
-	CityID         string          `json:"city_id,omitempty"`
-	CityOwnerID    string          `json:"city_owner_id,omitempty"`
-	CityName       string          `json:"city_name,omitempty"`
-	CityTypeID     string          `json:"city_type_id,omitempty"`
-	CityPopulation *int            `json:"city_population,omitempty"`
-	CityArt        *CityArt        `json:"city_art,omitempty"`
-	CityEffects    []Effect        `json:"city_effects,omitempty"`
+	InfluenceCityID *string         `json:"influence_city_id,omitempty"`
+	PlayerID        string          `json:"player_id"`
+	TileID          string          `json:"tile_id"`
+	Turn            int             `json:"turn"`
+	Terrain         string          `json:"terrain"`
+	River           *bool           `json:"river,omitempty"`
+	GoodID          *string         `json:"good_id,omitempty"`
+	Ruin            *bool           `json:"ruin,omitempty"`
+	OwnerID         *string         `json:"owner_id,omitempty"`
+	Inspection      *TileInspection `json:"inspection,omitempty"`
+	CityID          string          `json:"city_id,omitempty"`
+	CityOwnerID     string          `json:"city_owner_id,omitempty"`
+	CityName        string          `json:"city_name,omitempty"`
+	CityTypeID      string          `json:"city_type_id,omitempty"`
+	CityPopulation  *int            `json:"city_population,omitempty"`
+	CityArt         *CityArt        `json:"city_art,omitempty"`
+	CityEffects     []Effect        `json:"city_effects,omitempty"`
 }
 
 type RNGDomainState struct {
@@ -713,6 +717,7 @@ func applyValidatedMutation(state *State, command Command, runtime *rules.Runtim
 				exploreRuin(state, unit.OwnerID, unit.TileID, runtime)
 			}
 		}
+		refreshCityInfluence(state, runtime)
 		pruneMovementOrders(state)
 	}
 	return eventType, eventPayload, combatResult, err
@@ -1066,6 +1071,9 @@ func ValidateState(state State) error {
 		return err
 	}
 	if err := validateCityState(state); err != nil {
+		return err
+	}
+	if err := validateCityTerritory(state); err != nil {
 		return err
 	}
 	if err := validateSpecialState(state); err != nil {

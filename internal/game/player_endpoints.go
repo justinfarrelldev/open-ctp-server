@@ -558,6 +558,9 @@ func startGame(w http.ResponseWriter, r *http.Request, db *sqlx.DB, store *auth.
 		if errors.Is(err, errStartingAdvanceSetup) {
 			return writeGameStatusError(w, http.StatusBadRequest, errStartingAdvanceSetup.Error())
 		}
+		if errors.Is(err, errCivilizationSetup) {
+			return writeGameStatusError(w, http.StatusBadRequest, errCivilizationSetup.Error())
+		}
 		if errors.Is(err, world.ErrWorldAlreadyExists) {
 			return writeGameStatusError(w, http.StatusConflict, err.Error())
 		}

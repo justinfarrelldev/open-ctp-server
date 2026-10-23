@@ -151,12 +151,13 @@ func exploreRuin(state *State, playerID, tileID string, runtime *rules.RuntimeRu
 		if _, exists := cityByTile(*state, tileID); !exists && (tile.OwnerID == "" || tile.OwnerID == playerID) {
 			id := "ruin-city:" + tileID
 			if _, exists := cityByID(*state, id); !exists {
-				city := City{ID: id, Name: defaultCityName(*state, playerID), OwnerID: playerID, FounderID: playerID, TileID: tileID, Population: 1, Goods: cityGoodsInRadius(*state, tileID)}
+				city := City{ID: id, Name: defaultCityName(*state, playerID, runtime), OwnerID: playerID, FounderID: playerID, TileID: tileID, Population: 1, Goods: cityGoodsInRadius(*state, tileID)}
 				if starter, ok := runtime.Unit(runtime.Starter.TypeID); ok {
 					city.TypeID = starter.SettleCityTypeID
 				}
 				seedStartingAgeCityBuildings(*state, &city, runtime)
 				state.Cities = append(state.Cities, city)
+				initializeCityTerritory(state, city, runtime)
 				notice.RewardKind = "city"
 				notice.CityID = id
 			}

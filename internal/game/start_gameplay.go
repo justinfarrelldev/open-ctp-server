@@ -135,6 +135,10 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 	if err != nil {
 		return engine.State{}, fmt.Errorf("compile server runtime rules: %w", err)
 	}
+	// Stable palette slots must not depend on SQL/roster input order, and this
+	// constructor must not reorder its caller's player slice.
+	players = append([]GamePlayer(nil), players...)
+	sort.Slice(players, func(i, j int) bool { return players[i].AccountID < players[j].AccountID })
 	spawnTileIDs := make(map[int64]string, len(snapshot.Spawns))
 	for _, spawn := range snapshot.Spawns {
 		spawnTileIDs[spawn.AccountID] = tileID(spawn.X, spawn.Y)
@@ -163,7 +167,7 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 		}
 		state.Tiles = append(state.Tiles, engine.Tile{ID: tileID(tile.X, tile.Y), X: tile.X, Y: tile.Y, Terrain: terrain, River: tile.River, GoodID: tile.GoodID, Ruin: ruin, Open: true})
 	}
-	for _, player := range players {
+	for index, player := range players {
 		playerID := fmt.Sprintf("account-%d", player.AccountID)
 		if _, ok := spawnTileIDs[player.AccountID]; !ok {
 			return engine.State{}, fmt.Errorf("missing generated spawn for account %d", player.AccountID)
@@ -173,8 +177,25 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 			return engine.State{}, err
 		}
 		state.Phase.ActivePlayerOrder = append(state.Phase.ActivePlayerOrder, playerID)
-		state.Players = append(state.Players, engine.Player{ID: playerID, NationID: "nation-" + playerID, Lifecycle: engine.PlayerActive, Controller: controller})
-		state.Nations = append(state.Nations, engine.Nation{ID: "nation-" + playerID, PublicWorks: snapshot.Config.StartingGold, Gold: snapshot.Config.StartingGold})
+		state.Players = append(state.Players, engine.Player{ID: playerID, NationID: "nation-" + playerID, Lifecycle: engine.PlayerActive, Controller: controller, ColorIndex: &index})
+		nation := engine.Nation{ID: "nation-" + playerID, PublicWorks: snapshot.Config.StartingGold, Gold: snapshot.Config.StartingGold}
+		country := strings.TrimSpace(player.Country)
+		if country == "" {
+			for _, spawn := range snapshot.Spawns {
+				if spawn.AccountID == player.AccountID {
+					country = strings.TrimSpace(spawn.Country)
+					break
+				}
+			}
+		}
+		if runtime.CityNaming != nil && country != "" {
+			civilization, ok := runtime.CityNaming.Resolve(country)
+			if !ok {
+				return engine.State{}, errCivilizationSetup
+			}
+			nation.CivilizationID = civilization.ID
+		}
+		state.Nations = append(state.Nations, nation)
 	}
 	for _, player := range players {
 		playerID := fmt.Sprintf("account-%d", player.AccountID)

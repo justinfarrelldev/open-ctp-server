@@ -14,6 +14,8 @@ import (
 func ProjectRetailRuntime(db RetailRules) RuntimeRules {
 	runtime := RuntimeRules{
 		Family:               "retail",
+		CityNaming:           cloneCityNaming(db.CityNaming),
+		CityTerritory:        cloneCityTerritory(db.CityTerritory),
 		StartingAdvances:     projectStartingAdvances(db.StartingAdvanceDifficulties),
 		CompatibilityVersion: CTP2CompatibilityVersion,
 		ContentHash:          "retail-catalog-projection",

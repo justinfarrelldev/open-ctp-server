@@ -624,6 +624,7 @@ func captureCityAt(state *State, actorID, tileID string, runtimes ...*rules.Runt
 			if recapturedByFounder {
 				applyCityRecapturedFeat(state, actorID, runtime)
 			}
+			transferCityTerritory(state, cityID, actorID, runtime)
 			return cityID
 		}
 	}

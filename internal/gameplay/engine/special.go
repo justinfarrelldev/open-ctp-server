@@ -906,6 +906,7 @@ func removeCityByID(state *State, cityID string) {
 		if state.Cities[index].ID == cityID {
 			state.Cities = append(state.Cities[:index], state.Cities[index+1:]...)
 			state.TradeRoutes = removeTradeRoutesTouchingCity(state.TradeRoutes, cityID)
+			refreshCityInfluence(state, nil)
 			return
 		}
 	}

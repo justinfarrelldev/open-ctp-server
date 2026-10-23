@@ -593,7 +593,7 @@ func foundCity(state *State, actor string, payload FoundCityPayload, runtimeOpti
 		return errors.New("found city unit and city id are required")
 	}
 	if payload.Name == "" {
-		payload.Name = defaultCityName(*state, actor)
+		payload.Name = defaultCityName(*state, actor, runtime)
 	}
 	name, err := normalizedCityName(payload.Name)
 	if err != nil {
@@ -629,6 +629,7 @@ func foundCity(state *State, actor string, payload FoundCityPayload, runtimeOpti
 			break
 		}
 	}
+	initializeCityTerritory(state, city, runtime)
 	return nil
 }
 

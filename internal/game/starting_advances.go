@@ -11,6 +11,7 @@ import (
 )
 
 var errStartingAdvanceSetup = errors.New("starting advance difficulty/age settings are invalid")
+var errCivilizationSetup = errors.New("selected country is not available in the pinned retail civilization catalog")
 
 func configureRetailStartingAdvances(runtime *rules.RuntimeRules, options []string) error {
 	if runtime.StartingAdvances == nil {

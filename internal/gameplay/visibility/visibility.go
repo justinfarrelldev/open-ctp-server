@@ -26,23 +26,24 @@ const (
 )
 
 type TileProjection struct {
-	ID            string                  `json:"id"`
-	X             int                     `json:"x"`
-	Y             int                     `json:"y"`
-	Terrain       string                  `json:"terrain"`
-	River         *bool                   `json:"river,omitempty"`
-	RiverGeometry *engine.RiverGeometry   `json:"river_geometry,omitempty"`
-	GoodID        *string                 `json:"good_id,omitempty"`
-	Ruin          *bool                   `json:"ruin,omitempty"`
-	OwnerID       *string                 `json:"owner_id,omitempty"`
-	Yields        *engine.TileYield       `json:"yields,omitempty"`
-	YieldContext  string                  `json:"yield_context,omitempty"`
-	MovementCost  *int                    `json:"movement_cost,omitempty"`
-	Pollution     int                     `json:"pollution,omitempty"`
-	Stale         bool                    `json:"stale"`
-	Observed      int                     `json:"observed_turn"`
-	Planning      *TilePlanning           `json:"planning,omitempty"`
-	Overlays      []TileOverlayProjection `json:"overlays,omitempty"`
+	InfluenceCityID *string                 `json:"influence_city_id,omitempty"`
+	ID              string                  `json:"id"`
+	X               int                     `json:"x"`
+	Y               int                     `json:"y"`
+	Terrain         string                  `json:"terrain"`
+	River           *bool                   `json:"river,omitempty"`
+	RiverGeometry   *engine.RiverGeometry   `json:"river_geometry,omitempty"`
+	GoodID          *string                 `json:"good_id,omitempty"`
+	Ruin            *bool                   `json:"ruin,omitempty"`
+	OwnerID         *string                 `json:"owner_id,omitempty"`
+	Yields          *engine.TileYield       `json:"yields,omitempty"`
+	YieldContext    string                  `json:"yield_context,omitempty"`
+	MovementCost    *int                    `json:"movement_cost,omitempty"`
+	Pollution       int                     `json:"pollution,omitempty"`
+	Stale           bool                    `json:"stale"`
+	Observed        int                     `json:"observed_turn"`
+	Planning        *TilePlanning           `json:"planning,omitempty"`
+	Overlays        []TileOverlayProjection `json:"overlays,omitempty"`
 }
 
 type TileOverlayProjection struct {
@@ -207,27 +208,30 @@ type ActionProjection struct {
 }
 
 type Projection struct {
-	Revision         int64                     `json:"revision"`
-	Turn             int                       `json:"turn"`
-	Tiles            []TileProjection          `json:"tiles"`
-	Units            []UnitProjection          `json:"units"`
-	Cities           []CityProjection          `json:"cities"`
-	TradeRoutes      []TradeRouteProjection    `json:"trade_routes,omitempty"`
-	Research         *ResearchProjection       `json:"research,omitempty"`
-	Diplomacy        *DiplomacyProjection      `json:"diplomacy,omitempty"`
-	Rules            *RulesProjection          `json:"rules,omitempty"`
-	CityReports      []engine.CityReport       `json:"city_reports,omitempty"`
-	Notifications    []engine.Notification     `json:"notifications,omitempty"`
-	MovementOrders   []engine.MovementOrder    `json:"movement_orders,omitempty"`
-	Statistics       []engine.StatisticsSample `json:"statistics,omitempty"`
-	LegalActions     []ActionProjection        `json:"legal_actions,omitempty"`
-	ActionIntents    []ActionProjection        `json:"action_intents,omitempty"`
-	Contract         *ContractProjection       `json:"contract"`
-	EmbassyPlayerIDs []string                  `json:"embassy_player_ids,omitempty"`
-	PlanningStatus   string                    `json:"planning_status,omitempty"`
-	World            *WorldProjection          `json:"world,omitempty"`
-	Calendar         *engine.CalendarDisplay   `json:"calendar,omitempty"`
-	TurnContext      *TurnContext              `json:"turn_context"`
+	ViewerPlayerID   string                       `json:"viewer_player_id"`
+	Players          []PlayerIdentity             `json:"players"`
+	CityNaming       *engine.CityNamingSuggestion `json:"city_naming,omitempty"`
+	Revision         int64                        `json:"revision"`
+	Turn             int                          `json:"turn"`
+	Tiles            []TileProjection             `json:"tiles"`
+	Units            []UnitProjection             `json:"units"`
+	Cities           []CityProjection             `json:"cities"`
+	TradeRoutes      []TradeRouteProjection       `json:"trade_routes,omitempty"`
+	Research         *ResearchProjection          `json:"research,omitempty"`
+	Diplomacy        *DiplomacyProjection         `json:"diplomacy,omitempty"`
+	Rules            *RulesProjection             `json:"rules,omitempty"`
+	CityReports      []engine.CityReport          `json:"city_reports,omitempty"`
+	Notifications    []engine.Notification        `json:"notifications,omitempty"`
+	MovementOrders   []engine.MovementOrder       `json:"movement_orders,omitempty"`
+	Statistics       []engine.StatisticsSample    `json:"statistics,omitempty"`
+	LegalActions     []ActionProjection           `json:"legal_actions,omitempty"`
+	ActionIntents    []ActionProjection           `json:"action_intents,omitempty"`
+	Contract         *ContractProjection          `json:"contract"`
+	EmbassyPlayerIDs []string                     `json:"embassy_player_ids,omitempty"`
+	PlanningStatus   string                       `json:"planning_status,omitempty"`
+	World            *WorldProjection             `json:"world,omitempty"`
+	Calendar         *engine.CalendarDisplay      `json:"calendar,omitempty"`
+	TurnContext      *TurnContext                 `json:"turn_context"`
 }
 
 // Update records only what each player can currently observe. The returned state
@@ -252,7 +256,7 @@ func Update(state engine.State) (engine.State, error) {
 			if !ok {
 				continue
 			}
-			observation := engine.FogObservation{PlayerID: playerID, TileID: tile.ID, Turn: state.Phase.Turn, Terrain: engine.EffectiveTerrain(state, tile.ID), River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), Ruin: ruinPresence(tile), OwnerID: copyValue(&tile.OwnerID), Inspection: inspector.Tile(tile.ID)}
+			observation := engine.FogObservation{PlayerID: playerID, TileID: tile.ID, Turn: state.Phase.Turn, Terrain: engine.EffectiveTerrain(state, tile.ID), River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), Ruin: ruinPresence(tile), OwnerID: copyValue(&tile.OwnerID), InfluenceCityID: copyValue(&tile.InfluenceCityID), Inspection: inspector.Tile(tile.ID)}
 			if city, ok := cities[tile.ID]; ok {
 				observation.CityID = city.ID
 				observation.CityOwnerID = city.OwnerID
@@ -300,6 +304,9 @@ func Project(state engine.State, playerID string) (Projection, error) {
 		return Projection{}, err
 	}
 	result := Projection{Revision: state.Revision, Turn: state.Phase.Turn, PlanningStatus: planningStatus(state, playerID), Rules: rulesProjection(state), World: worldProjection(state), Calendar: inspector.Calendar()}
+	result.ViewerPlayerID = playerID
+	result.Players = playerIdentities(state)
+	result.CityNaming = inspector.CityNaming(playerID)
 	viewerNationID := nationForPlayer(state, playerID)
 	for _, nation := range state.Nations {
 		if nation.ID != viewerNationID {
@@ -332,13 +339,13 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	}
 	for _, tile := range state.Tiles {
 		if visible[tile.ID] {
-			projected := TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: engine.EffectiveTerrain(state, tile.ID), River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), Ruin: ruinPresence(tile), OwnerID: copyValue(&tile.OwnerID), Observed: state.Phase.Turn, Planning: planning[tile.ID]}
+			projected := TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: engine.EffectiveTerrain(state, tile.ID), River: copyValue(&tile.River), GoodID: copyValue(&tile.GoodID), Ruin: ruinPresence(tile), OwnerID: copyValue(&tile.OwnerID), InfluenceCityID: copyValue(&tile.InfluenceCityID), Observed: state.Phase.Turn, Planning: planning[tile.ID]}
 			applyInspection(&projected, inspector.Tile(tile.ID))
 			result.Tiles = append(result.Tiles, projected)
 			continue
 		}
 		if observation, ok := memory[tile.ID]; ok {
-			projected := TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: observation.Terrain, River: copyValue(observation.River), GoodID: copyValue(observation.GoodID), Ruin: copyValue(observation.Ruin), OwnerID: copyValue(observation.OwnerID), Stale: true, Observed: observation.Turn}
+			projected := TileProjection{ID: tile.ID, X: tile.X, Y: tile.Y, Terrain: observation.Terrain, River: copyValue(observation.River), GoodID: copyValue(observation.GoodID), Ruin: copyValue(observation.Ruin), OwnerID: copyValue(observation.OwnerID), InfluenceCityID: copyValue(observation.InfluenceCityID), Stale: true, Observed: observation.Turn}
 			applyInspection(&projected, observation.Inspection)
 			result.Tiles = append(result.Tiles, projected)
 			if observation.CityID != "" {
@@ -1312,6 +1319,9 @@ func positiveProjectedRushBuyCoefficient(value float64) float64 {
 }
 
 func projectedCitySuggestion(projection Projection, playerID string) string {
+	if projection.CityNaming != nil {
+		return projection.CityNaming.SuggestedName
+	}
 	names := make([]string, 0)
 	for _, city := range projection.Cities {
 		if city.OwnerID == playerID && !city.Stale {

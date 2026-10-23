@@ -28,6 +28,8 @@ type RetailRules struct {
 	StartingAdvanceDifficulties []StartingAdvanceDifficulty  `json:"starting_advance_difficulties"`
 	Constants                   RetailConstants              `json:"constants"`
 	AI                          RetailAILists                `json:"ai"`
+	CityNaming                  *RuntimeCityNaming           `json:"city_naming,omitempty"`
+	CityTerritory               *RuntimeCityTerritory        `json:"city_territory,omitempty"`
 }
 
 type RetailUnit struct {
@@ -310,6 +312,14 @@ func LoadRetailRulesFromDirectory(directory string) (RetailRules, error) {
 		return RetailRules{}, err
 	}
 	result.StartingAdvanceDifficulties = profiles
+	result.CityNaming, err = loadRetailCityNaming(directory)
+	if err != nil {
+		return RetailRules{}, err
+	}
+	result.CityTerritory, err = loadRetailCityTerritory(directory)
+	if err != nil {
+		return RetailRules{}, err
+	}
 	pollutionModel, err := loadRetailPollutionModel(diffPath)
 	if err != nil {
 		return RetailRules{}, err
