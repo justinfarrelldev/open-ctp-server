@@ -18,8 +18,8 @@ func TestEngineLock(t *testing.T) {
 	if err := Validate(root, lock); err != nil {
 		t.Fatal(err)
 	}
-	if len(lock.Entries) != 69 {
-		t.Fatalf("manifest entry count = %d, want 69", len(lock.Entries))
+	if len(lock.Entries) != 77 {
+		t.Fatalf("manifest entry count = %d, want 77", len(lock.Entries))
 	}
 	if len(lock.CampaignWriteAllowlist) == 0 {
 		t.Fatal("campaign write allowlist is empty")

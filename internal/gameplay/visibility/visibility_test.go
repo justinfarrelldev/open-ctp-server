@@ -1012,6 +1012,7 @@ func TestSSEResyncAndTerminalUseViewerProjection(t *testing.T) {
 	}
 	state.Terminal = engine.TerminalState{Ended: true, Reason: "complete", WinningPlayerID: "a"}
 	state.Revision = 8
+	state.EventSequence = 8
 	canonical := mustStateJSON(t, state)
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -1022,7 +1023,7 @@ func TestSSEResyncAndTerminalUseViewerProjection(t *testing.T) {
 	projector := NewProjector("a")
 	viewer := events.Viewer{GameID: 9, PlayerID: 1}
 	mock.ExpectQuery("SELECT min\\(sequence\\)").WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"min"}).AddRow(5))
-	mock.ExpectQuery("SELECT revision, canonical_state_json").WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"revision", "canonical_state_json"}).AddRow(8, canonical))
+	mock.ExpectQuery("SELECT revision, last_event_sequence, canonical_state_json").WithArgs(int64(9)).WillReturnRows(sqlmock.NewRows([]string{"revision", "last_event_sequence", "canonical_state_json"}).AddRow(8, 8, canonical))
 	items, err := stream.Resume(context.Background(), viewer, 1, projector)
 	if err != nil {
 		t.Fatal(err)

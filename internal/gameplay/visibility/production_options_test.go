@@ -69,6 +69,34 @@ func TestProductionOptionsCompleteAppendAndReadOnly(t *testing.T) {
 	}
 }
 
+func TestProductionOptionsRespectPlanningQueuedAndClosedStates(t *testing.T) {
+	for _, mode := range []string{"simultaneous", "hybrid"} {
+		for _, status := range []string{"open", "queued", "closed"} {
+			state := productionOptionsState(t)
+			state.Phase.Mode = mode
+			state.Policy.Stage = "planning"
+			if status == "queued" {
+				state.Policy.Queue = []engine.TurnPolicyCommand{{Kind: "action", ActorID: "a", CommandID: "queued", IdempotencyKey: "key", Payload: []byte(`{}`)}}
+			}
+			if status == "closed" {
+				state.Policy.EarlyEnds = []string{"a"}
+			}
+			p, err := Project(state, "a")
+			if err != nil {
+				t.Fatal(err)
+			}
+			options := p.Cities[0].ProductionOptions
+			want := "unavailable"
+			if status == "open" {
+				want = "complete"
+			}
+			if options == nil || options.Status != want {
+				t.Fatalf("%s/%s: %+v", mode, status, options)
+			}
+		}
+	}
+}
+
 func TestProductionOptionsUnavailableIsNotCompleteEmpty(t *testing.T) {
 	state := productionOptionsState(t)
 	state.Phase.ActivePlayerIndex = 1

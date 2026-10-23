@@ -1,9 +1,22 @@
 package visibility
 
 import (
+	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine/turns"
 	"testing"
 )
+
+func TestTerminalTurnContextDropsActingIdentity(t *testing.T) {
+	state := clientMetadataState()
+	state.Terminal = engine.TerminalState{Ended: true, Reason: "bloodlust_conquest", WinningPlayerID: "a"}
+	p, err := Project(state, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.TurnContext.Status != "ended" || p.TurnContext.ActivePlayerID != "" || len(p.LegalActions) != 0 {
+		t.Fatalf("terminal actor/action leaked: %+v", p.TurnContext)
+	}
+}
 
 func TestTurnContextIsPublicRevisionBoundAndDoesNotInventResolutionProgress(t *testing.T) {
 	for _, tc := range []struct {

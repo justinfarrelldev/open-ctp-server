@@ -104,7 +104,7 @@ func TestCatalogRowFourMatchesAcceptedTaskNineArtifacts(t *testing.T) {
 	if row.Restart.Point != AcceptanceRestartAfterCompletedTurn || row.Restart.CompletedTurn != 12 {
 		t.Fatalf("catalog row 4 restart = %#v, want completed turn 12", row.Restart)
 	}
-	if row.Observed.Winner != "account-1" || row.Observed.StateHash != "eaf7533a03a1d7efee31f1e0f2ad960f0d1d1f79f09b09bae0597be243812fa9" || row.Observed.EventHash != "4b0c590d1b1acce527e4e405f8f122b3e0302adf7f29f963ef0d8179204963a2" {
+	if row.Observed.Winner != "account-1" || row.Observed.StateHash != "3ca58fdb6f56418cc563a304c80b7ba9dbf130b6389abf567fb55e60c224fe70" || row.Observed.EventHash != "92b12d93879c424da2972b6ab5aed5550a8dc59e503537a0c541602278a670cb" {
 		t.Fatalf("catalog row 4 observed artifacts drift: %#v", row.Observed)
 	}
 }
@@ -165,7 +165,7 @@ func TestCatalogRowSixDeclaresLongTurnContinuityScoreReachability(t *testing.T) 
 	if row.Restart.Point != AcceptanceRestartAfterCompletedTurn || row.Restart.CompletedTurn != 12 {
 		t.Fatalf("catalog row 6 restart = %#v, want completed turn 12", row.Restart)
 	}
-	if row.Observed.Winner != "account-1" || row.Observed.StateHash != "5292b679fa07ec631929e4f4eb36805d89abe2ba00c2ccb2dbe0430c616477b5" || row.Observed.EventHash != "b8e31801117572d3cdb441fc16eb3d4eb42d409a953fe74761637573a5017282" {
+	if row.Observed.Winner != "account-1" || row.Observed.StateHash != "e0ecead22e517140b8f946e72c13d2abb555d517e38d096d46f7f6b9cf8a1703" || row.Observed.EventHash != "69a60af7df3896008160d0d50e389fad3de32cb5754f1da4c98ee835fd0b67d7" {
 		t.Fatalf("catalog row 6 observed artifacts drift: %#v", row.Observed)
 	}
 }
@@ -193,7 +193,7 @@ func TestCatalogRowSevenDeclaresDelayedSimultaneousScienceGaiaReachability(t *te
 	if row.Restart.Point != AcceptanceRestartAfterCompletedTurn || row.Restart.CompletedTurn != 12 {
 		t.Fatalf("catalog row 7 restart = %#v, want completed turn 12", row.Restart)
 	}
-	if row.Observed.Winner != "account-1" || row.Observed.StateHash != "07748024b48a172300b3f220c5d69842b2f4927e491741fcb1576b9b697e1ec2" || row.Observed.EventHash != "242730d9ee70eece9caaae4a9245b3d104ea5a0ad483058c5cffd0ca5a16b278" {
+	if row.Observed.Winner != "account-1" || row.Observed.StateHash != "91116985cb5795ce5844a0aad1e46be1f363bc0494c5065435e22be631b3fe08" || row.Observed.EventHash != "19335904c44fe48855da0219a6ef4c2fbbb05cea2b666cf7f8612fcf19523531" {
 		t.Fatalf("catalog row 7 observed artifacts drift: %#v", row.Observed)
 	}
 }
