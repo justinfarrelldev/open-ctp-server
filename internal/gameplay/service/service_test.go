@@ -151,6 +151,10 @@ func TestExecuteCommandRejectsPostCombatCityMoveWhenGameEnded(t *testing.T) {
 
 func TestExecuteCommandCommitsOnceAndReplaysStoredBytes(t *testing.T) {
 	svc, mock := newMockService(t)
+	var timings []CommandTiming
+	svc.ObserveCommand = func(metric CommandTiming) { timings = append(timings, metric) }
+	clock := time.Unix(0, 0)
+	svc.now = func() time.Time { clock = clock.Add(time.Millisecond); return clock }
 	state := testState()
 	mock.ExpectBegin()
 	expectIdentity(mock, "human")
@@ -180,6 +184,14 @@ func TestExecuteCommandCommitsOnceAndReplaysStoredBytes(t *testing.T) {
 	}
 	if string(replayed.Receipt) != string(result.Receipt) {
 		t.Fatalf("replay differs: %s != %s", replayed.Receipt, result.Receipt)
+	}
+	if len(timings) != 2 || timings[0].Engine <= 0 || timings[0].Visibility <= 0 || timings[0].Persistence <= 0 || timings[1].Engine != 0 || timings[1].Outcome != "replayed" {
+		t.Fatalf("ambiguous command timings: %+v", timings)
+	}
+	for _, metric := range timings {
+		if metric.Total != metric.Admission+metric.Engine+metric.Visibility+metric.Persistence || metric.CommandSHA256 == "" {
+			t.Fatalf("unbounded/inconsistent timings: %+v", metric)
+		}
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	auth "github.com/justinfarrelldev/open-ctp-server/internal/auth"
@@ -75,12 +76,14 @@ func StatusCode(err error) int {
 func commandError(status int, message string) error { return &Error{Status: status, Message: message} }
 
 type Service struct {
-	store   *store.Store
-	sources engine.Sources
+	store          *store.Store
+	sources        engine.Sources
+	now            func() time.Time
+	ObserveCommand func(CommandTiming)
 }
 
 func New(commandStore *store.Store, sources engine.Sources) *Service {
-	return &Service{store: commandStore, sources: sources}
+	return &Service{store: commandStore, sources: sources, now: time.Now, ObserveCommand: logCommandTiming}
 }
 
 // ExecuteCommand is the only accepted gameplay mutation path. The session is server-authenticated
@@ -114,10 +117,21 @@ func (s *Service) ExecuteAICommand(ctx context.Context, actorPlayerID string, re
 	})
 }
 
-func (s *Service) executeControllerCommand(ctx context.Context, request CommandRequest, controller string, actorAccountID *int64, lockActor func(*sqlx.Tx) (lockedPlayer, error)) (Result, error) {
+func (s *Service) executeControllerCommand(ctx context.Context, request CommandRequest, controller string, actorAccountID *int64, lockActor func(*sqlx.Tx) (lockedPlayer, error)) (result Result, resultErr error) {
 	if s == nil || s.store == nil {
 		return Result{}, fmt.Errorf("gameplay command service is not configured")
 	}
+	meter := newCommandMeter(s.now, request)
+	outcome := "accepted"
+	defer func() {
+		if resultErr != nil {
+			outcome = PublicRejection(resultErr).Code
+		}
+		metric := meter.finish(outcome)
+		if s.ObserveCommand != nil {
+			s.ObserveCommand(metric)
+		}
+	}()
 	tx, err := s.store.BeginCommand()
 	if err != nil {
 		return Result{}, fmt.Errorf("beginning gameplay command: %w", err)
@@ -165,6 +179,7 @@ func (s *Service) executeControllerCommand(ctx context.Context, request CommandR
 			return Result{}, fmt.Errorf("finalizing replayed gameplay command: %w", err)
 		}
 		committed = true
+		outcome = "replayed"
 		return result, nil
 	}
 	if !errors.Is(err, sql.ErrNoRows) {
@@ -200,14 +215,17 @@ func (s *Service) executeControllerCommand(ctx context.Context, request CommandR
 	// Preserve pre-transition sight as well as post-transition sight. This also
 	// safely upgrades legacy saves with empty/incomplete memory, but only for
 	// cells currently visible before this command, never hidden backfills.
+	meter.step(&meter.metric.Visibility)
 	state, err = visibility.Update(state)
 	if err != nil {
 		return Result{}, fmt.Errorf("recording pre-command visibility: %w", err)
 	}
+	meter.step(&meter.metric.Engine)
 	next, engineEvents, applied, err := engine.Apply(state, engine.Command{SchemaVersion: engine.CommandSchemaV1, ID: request.CommandID, ActorPlayerID: actorID, IdempotencyKey: request.IdempotencyKey, Type: request.Type, Payload: canonicalPayload(request.Payload)}, rulesPin(aggregate.Ruleset), s.sources)
 	if err != nil {
 		return Result{}, engineRejection(err)
 	}
+	meter.step(&meter.metric.Visibility)
 	next, err = visibility.Update(next)
 	if err != nil {
 		return Result{}, fmt.Errorf("updating gameplay visibility: %w", err)
@@ -216,11 +234,12 @@ func (s *Service) executeControllerCommand(ctx context.Context, request CommandR
 	if err != nil {
 		return Result{}, fmt.Errorf("projecting gameplay result: %w", err)
 	}
+	meter.step(&meter.metric.Persistence)
 	nextJSON, err := engine.CanonicalStateJSON(next)
 	if err != nil {
 		return Result{}, fmt.Errorf("encoding gameplay state: %w", err)
 	}
-	result := Result{Revision: applied.Revision, ReceiptID: request.IdempotencyKey, EventCursor: applied.EventSequence, ViewerProjection: projection, Combat: applied.Combat, Terminal: next.Terminal.Ended}
+	result = Result{Revision: applied.Revision, ReceiptID: request.IdempotencyKey, EventCursor: applied.EventSequence, ViewerProjection: projection, Combat: applied.Combat, Terminal: next.Terminal.Ended}
 	resultJSON, err := json.Marshal(result)
 	if err != nil {
 		return Result{}, fmt.Errorf("encoding gameplay result: %w", err)

@@ -225,6 +225,7 @@ type Projection struct {
 	PlanningStatus   string                    `json:"planning_status,omitempty"`
 	World            *WorldProjection          `json:"world,omitempty"`
 	Calendar         *engine.CalendarDisplay   `json:"calendar,omitempty"`
+	TurnContext      *TurnContext              `json:"turn_context"`
 }
 
 // Update records only what each player can currently observe. The returned state
@@ -400,6 +401,7 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	}
 	result.LegalActions = legalActions(state, result, playerID)
 	result.ActionIntents = movementIntents(state, result, playerID)
+	result.TurnContext = turnContext(state)
 	result.Contract = contractProjection(result)
 	return result, nil
 }

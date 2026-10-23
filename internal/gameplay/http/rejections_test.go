@@ -21,6 +21,9 @@ func TestCommandRejectionHasSafeCodeAndCorrelation(t *testing.T) {
 	if body["code"] != "command_invalid" || body["correlation_id"] == "" || body["message"] == "" || body["error"] != "gameplay request rejected" {
 		t.Fatalf("opaque rejection: %v", body)
 	}
+	if !strings.Contains(recorder.Header().Get("Server-Timing"), "gameplay;dur=") {
+		t.Error("missing gateway duration")
+	}
 	if recorder.Header().Get("X-Gameplay-Correlation-ID") != body["correlation_id"] {
 		t.Fatal("missing correlation header")
 	}

@@ -5,10 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
 	"github.com/justinfarrelldev/open-ctp-server/internal/gameplay/engine"
@@ -232,7 +234,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+	started := time.Now()
 	result, err := h.executor.ExecuteCommand(r.Context(), session, service.CommandRequest{GameID: gameID, ExpectedRevision: req.ExpectedRevision, IdempotencyKey: req.IdempotencyKey, CommandID: req.CommandID, Type: definition.kind, Payload: req.Payload})
+	w.Header().Set("Server-Timing", fmt.Sprintf("gameplay;dur=%.3f", float64(time.Since(started))/float64(time.Millisecond)))
+	w.Header().Set("Cache-Control", "no-store")
 	if err != nil {
 		writeRejection(w, err)
 		return

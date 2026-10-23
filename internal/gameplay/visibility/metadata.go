@@ -20,6 +20,7 @@ func contractProjection(projection Projection) *ContractProjection {
 	return &ContractProjection{Version: 2, Features: map[string]bool{
 		"fog_metadata": true, "tile_inspection": true, "atomic_production_queue": true,
 		"production_options": true, "observed_river_geometry": true,
+		"turn_context": true, "live_resolution_progress": false, "unit_route_preview": false,
 		"city_orders": true, "retained_sleep": true, "research_goals": true,
 		"coordinate_move_intents": movement, "calendar": projection.Calendar != nil,
 		"production_notifications": true, "own_statistics_history": true,
