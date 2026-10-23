@@ -868,14 +868,15 @@ func ServerOwnedSyntheticRuleset(victoryEvaluatorIDs ...string) (Ruleset, error)
 		{Kind: "endgame", ID: "ENDGAME_UNION_VECTOR", Tags: map[string]string{"TurnsToActivate": "0"}},
 		{Kind: "building", ID: "IMPROVE_SYNTHETIC", Tags: map[string]string{"Description": "IMPROVE_SYNTHETIC"}},
 		// Synthetic rules explicitly cover every generated terrain family. These
-		// are bounded test rules, not retail yields; never flatten desert goods
-		// onto plains at startup simply because a terrain definition is missing.
-		{Kind: "terrain", ID: "desert", Tags: map[string]string{"MovementCost": "1", "MovementDomains": "amphibious,land"}},
-		{Kind: "terrain", ID: "grassland", Tags: map[string]string{"MovementCost": "1", "MovementDomains": "amphibious,land"}},
-		{Kind: "terrain", ID: "mountain", Tags: map[string]string{"MovementCost": "3", "MovementDomains": "amphibious,land"}},
-		{Kind: "terrain", ID: "swamp", Tags: map[string]string{"MovementCost": "2", "MovementDomains": "amphibious,land"}},
-		{Kind: "terrain", ID: "tundra", Tags: map[string]string{"MovementCost": "2", "MovementDomains": "amphibious,land"}},
-		{Kind: "terrain", ID: "shelf", Tags: map[string]string{"MovementCost": "1", "MovementDomains": "amphibious,sea"}},
+		// are bounded test rules, not retail yields. Land output retains the old
+		// flattened-plains economy; shelf retains the old ocean economy. Never
+		// flatten desert goods onto plains just because a definition is missing.
+		{Kind: "terrain", ID: "desert", Tags: map[string]string{"MovementCost": "1", "MovementDomains": "amphibious,land", "Food": "2", "Production": "3", "Gold": "1"}},
+		{Kind: "terrain", ID: "grassland", Tags: map[string]string{"MovementCost": "1", "MovementDomains": "amphibious,land", "Food": "2", "Production": "3", "Gold": "1"}},
+		{Kind: "terrain", ID: "mountain", Tags: map[string]string{"MovementCost": "3", "MovementDomains": "amphibious,land", "Food": "2", "Production": "3", "Gold": "1"}},
+		{Kind: "terrain", ID: "swamp", Tags: map[string]string{"MovementCost": "2", "MovementDomains": "amphibious,land", "Food": "2", "Production": "3", "Gold": "1"}},
+		{Kind: "terrain", ID: "tundra", Tags: map[string]string{"MovementCost": "2", "MovementDomains": "amphibious,land", "Food": "2", "Production": "3", "Gold": "1"}},
+		{Kind: "terrain", ID: "shelf", Tags: map[string]string{"MovementCost": "1", "MovementDomains": "amphibious,sea", "Food": "1", "Gold": "2"}},
 		{Kind: "terrain", ID: "forest", Tags: map[string]string{"MovementCost": "2", "MovementDomains": "amphibious,land"}},
 		{Kind: "terrain", ID: "ocean", Tags: map[string]string{"MovementCost": "1", "MovementDomains": "amphibious,sea"}},
 		{Kind: "terrain", ID: "plains", Tags: map[string]string{"MovementCost": "1", "MovementDomains": "amphibious,land"}},
