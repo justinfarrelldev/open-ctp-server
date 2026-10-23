@@ -35,7 +35,7 @@ func TestProductionActionsIncludeUnlockedRuntimeBuildings(t *testing.T) {
 		}},
 	}
 
-	actions := productionActions(engine.State{}, projection, "player-a")
+	actions := canonicalProductionActions(t, projection, "player-a")
 	for _, action := range actions {
 		if action.Command != engine.CommandQueueProduction || action.TargetID != "IMPROVE_GRANARY" {
 			continue
@@ -59,13 +59,40 @@ func TestProductionActionsHideUnitsNeedingAbsentCityGood(t *testing.T) {
 		Cities: []CityProjection{{ID: "city-a", OwnerID: "player-a", TileID: "tile-a"}},
 		Rules:  &RulesProjection{Units: []rules.RuntimeUnitDefinition{{ID: "UNIT_COFFEE_EXPORTER", Domain: engine.DomainLand, Movement: 1, Health: 1, ProductionCost: 10, NeedsCityGoodID: "GOOD_COFFEE"}}},
 	}
-	if hasProductionAction(productionActions(engine.State{}, projection, "player-a"), "UNIT_COFFEE_EXPORTER") {
+	if hasProductionAction(canonicalProductionActions(t, projection, "player-a"), "UNIT_COFFEE_EXPORTER") {
 		t.Fatal("city-good-gated unit was projected without the required good")
 	}
 	projection.Cities[0].Goods = []string{"GOOD_COFFEE"}
-	if !hasProductionAction(productionActions(engine.State{}, projection, "player-a"), "UNIT_COFFEE_EXPORTER") {
+	if !hasProductionAction(canonicalProductionActions(t, projection, "player-a"), "UNIT_COFFEE_EXPORTER") {
 		t.Fatal("city-good-gated unit was not projected after the required good was present")
 	}
+}
+
+// Legacy action fixtures now enter through canonical rules and city state rather
+// than testing a second, projection-only approximation of eligibility.
+func canonicalProductionActions(t *testing.T, projection Projection, actor string) []ActionProjection {
+	t.Helper()
+	runtime := rules.RuntimeRules{CompatibilityVersion: rules.CTP2CompatibilityVersion, Starter: rules.RuntimeStarter{Domain: engine.DomainLand, Movement: 1, Health: 1}, Units: projection.Rules.Units, Production: projection.Rules.Production}
+	if len(runtime.Units) == 0 {
+		runtime.Units = []rules.RuntimeUnitDefinition{{ID: "dummy", Domain: engine.DomainLand, Movement: 1, Health: 1}}
+	}
+	if len(runtime.Production) == 0 {
+		runtime.Production = []rules.RuntimeProduction{{ID: runtime.Units[0].ID, Kind: engine.ProductionUnit, Cost: 1}}
+	}
+	state := projectionStateWithRuntime(t, runtime)
+	state.Players[0].ID = actor
+	state.Units[0].OwnerID = actor
+	state.Phase.ActivePlayerOrder[0] = actor
+	state.Cities[0].OwnerID = actor
+	state.Cities[0].Goods = projection.Cities[0].Goods
+	if projection.Research != nil {
+		state.Nations = []engine.Nation{{ID: state.Players[0].NationID, Advances: projection.Research.Advances}}
+	}
+	p, err := Project(state, actor)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return p.LegalActions
 }
 
 func hasProductionAction(actions []ActionProjection, targetID string) bool {

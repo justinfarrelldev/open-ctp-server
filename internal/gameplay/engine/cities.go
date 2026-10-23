@@ -742,9 +742,40 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if !ok || city.OwnerID != actor {
 		return errors.New("city is not owned by actor")
 	}
-	if payload.Item.EntryID != "" || len(city.Queue) >= MaxProductionQueueEntries {
-		return errors.New("production append is invalid")
+	item, err := validateProductionAppend(*state, actor, *city, payload.Item, runtime)
+	if err != nil {
+		return err
 	}
+	identified, err := identifiedQueue(*city)
+	if err != nil {
+		return err
+	}
+	identified.Queue = append(identified.Queue, item)
+	identified, err = identifiedQueue(identified)
+	if err != nil {
+		return err
+	}
+	*city = identified
+	return nil
+}
+
+// validateProductionAppend is shared by execution and read-only inspection. It
+// allocates no queue identities, consumes no sources and never mutates state.
+func validateProductionAppend(state State, actor string, city City, item ProductionItem, runtime *rules.RuntimeRules) (ProductionItem, error) {
+	if item.EntryID != "" {
+		return ProductionItem{}, productionFailure("queue_identity", "production append identity is invalid")
+	}
+	if len(city.Queue) >= MaxProductionQueueEntries {
+		return ProductionItem{}, productionFailure("queue_capacity", "production queue is full")
+	}
+	if err := productionEligibility(state, actor, city, &item, runtime); err != nil {
+		return ProductionItem{}, err
+	}
+	return item, nil
+}
+
+func productionEligibility(state State, actor string, city City, input *ProductionItem, runtime *rules.RuntimeRules) error {
+	payload := QueueProductionPayload{Item: *input}
 	if runtime != nil {
 		canonical, err := canonicalProductionItem(runtime, payload.Item.ID)
 		if err != nil {
@@ -762,43 +793,43 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 	if err := validateProductionItem(payload.Item); err != nil {
 		return err
 	}
-	if err := requireProductionUnlock(*state, *city, payload.Item, runtime); err != nil {
+	if err := requireProductionUnlock(state, city, payload.Item, runtime); err != nil {
 		return err
 	}
 	if productionRemovesPopulation(payload.Item, runtime) && city.Population <= 1 {
 		return errors.New("city population is insufficient")
 	}
-	if payload.Item.Kind == ProductionUnit && (anyActiveWonderEffect(*state, EffectFreeSlaves) || anyActiveWonderEffect(*state, EffectProhibitSlavers)) && productionHasFreeSlavesBlockedEffect(payload.Item, runtime) {
+	if payload.Item.Kind == ProductionUnit && (anyActiveWonderEffect(state, EffectFreeSlaves) || anyActiveWonderEffect(state, EffectProhibitSlavers)) && productionHasFreeSlavesBlockedEffect(payload.Item, runtime) {
 		return errors.New("production prerequisite is not met")
 	}
-	if payload.Item.Kind == ProductionUnit && productionGovernmentMismatch(*state, actor, payload.Item, runtime) {
+	if payload.Item.Kind == ProductionUnit && productionGovernmentMismatch(state, actor, payload.Item, runtime) {
 		return errors.New("production prerequisite is not met")
 	}
-	if payload.Item.Kind == ProductionUnit && !productionCityGoodSatisfied(*state, *city, payload.Item, runtime) {
+	if payload.Item.Kind == ProductionUnit && !productionCityGoodSatisfied(state, city, payload.Item, runtime) {
 		return errors.New("production prerequisite is not met")
 	}
 	if payload.Item.Kind == ProductionUnit && productionHasRuntimeUnitEffect(payload.Item, runtime, EffectHasPopAndCanBuild) {
 		return errors.New("production prerequisite is not met")
 	}
-	if payload.Item.Kind == ProductionUnit && productionHasNuclearAttackEffect(payload.Item, runtime) && NuclearAttacksEliminated(*state, actor) {
+	if payload.Item.Kind == ProductionUnit && productionHasNuclearAttackEffect(payload.Item, runtime) && NuclearAttacksEliminated(state, actor) {
 		return errors.New("production prerequisite is not met")
 	}
-	if payload.Item.Kind == ProductionUnit && productionHasSlaverEffect(payload.Item, runtime) && playerHasUnitEffect(*state, actor, EffectNoSlaves) {
+	if payload.Item.Kind == ProductionUnit && productionHasSlaverEffect(payload.Item, runtime) && playerHasUnitEffect(state, actor, EffectNoSlaves) {
 		return errors.New("production prerequisite is not met")
 	}
-	if payload.Item.Kind == ProductionUnit && productionHasNoSlavesEffect(payload.Item, runtime) && playerHasSlaverUnit(*state, actor) {
+	if payload.Item.Kind == ProductionUnit && productionHasNoSlavesEffect(payload.Item, runtime) && playerHasSlaverUnit(state, actor) {
 		return errors.New("production prerequisite is not met")
 	}
-	if payload.Item.Kind == ProductionUnit && productionHasCreateParkEffect(payload.Item, runtime) && !anyActiveWonderEffect(*state, EffectEnableParkRangers) {
+	if payload.Item.Kind == ProductionUnit && productionHasCreateParkEffect(payload.Item, runtime) && !anyActiveWonderEffect(state, EffectEnableParkRangers) {
 		return errors.New("production prerequisite is not met")
 	}
-	if payload.Item.Kind == ProductionBuilding && productionHasNuclearPlantEffect(payload.Item) && anyActiveWonderEffect(*state, EffectEliminateNukes) {
+	if payload.Item.Kind == ProductionBuilding && productionHasNuclearPlantEffect(payload.Item) && anyActiveWonderEffect(state, EffectEliminateNukes) {
 		return errors.New("production prerequisite is not met")
 	}
-	if payload.Item.Kind == ProductionBuilding && cityHasBuilding(*city, payload.Item.ID) {
+	if payload.Item.Kind == ProductionBuilding && cityHasBuilding(city, payload.Item.ID) {
 		return errors.New("building already exists")
 	}
-	if payload.Item.Kind == ProductionWonder && wonderExists(*state, payload.Item.ID) {
+	if payload.Item.Kind == ProductionWonder && wonderExists(state, payload.Item.ID) {
 		return errors.New("wonder already exists")
 	}
 	for _, item := range city.Queue {
@@ -806,16 +837,7 @@ func queueProduction(state *State, actor string, payload QueueProductionPayload,
 			return errors.New("production item already queued")
 		}
 	}
-	identified, err := identifiedQueue(*city)
-	if err != nil {
-		return err
-	}
-	identified.Queue = append(identified.Queue, payload.Item)
-	identified, err = identifiedQueue(identified)
-	if err != nil {
-		return err
-	}
-	*city = identified
+	*input = payload.Item
 	return nil
 }
 

@@ -101,32 +101,33 @@ type UnitProjection struct {
 }
 
 type CityProjection struct {
-	ID                  string                  `json:"id"`
-	Name                string                  `json:"name,omitempty"`
-	TypeID              string                  `json:"type_id,omitempty"`
-	Art                 *engine.CityArt         `json:"art,omitempty"`
-	OwnerID             string                  `json:"owner_id"`
-	TileID              string                  `json:"tile_id"`
-	Population          int                     `json:"population,omitempty"`
-	Happiness           int                     `json:"happiness,omitempty"`
-	CrimePercent        int                     `json:"crime_percent,omitempty"`
-	OvercrowdingLevel   int                     `json:"overcrowding_level,omitempty"`
-	ConvertedToPlayerID string                  `json:"converted_to_player_id,omitempty"`
-	ConvertedBy         string                  `json:"converted_by,omitempty"`
-	Rioting             bool                    `json:"rioting,omitempty"`
-	Specialists         map[string]int          `json:"specialists,omitempty"`
-	Goods               []string                `json:"goods,omitempty"`
-	Effects             []engine.Effect         `json:"effects,omitempty"`
-	StoredFood          int                     `json:"stored_food,omitempty"`
-	StoredProduction    int                     `json:"stored_production,omitempty"`
-	Queue               []engine.ProductionItem `json:"queue,omitempty"`
-	Buildings           []engine.Building       `json:"buildings,omitempty"`
-	Yields              *engine.Yield           `json:"yields,omitempty"`
-	RushBuyQuote        *engine.RushBuyQuote    `json:"rush_buy_quote,omitempty"`
-	ProductionForecast  *engine.Forecast        `json:"production_forecast,omitempty"`
-	Governor            *engine.GovernorState   `json:"governor,omitempty"`
-	Stale               bool                    `json:"stale"`
-	Observed            int                     `json:"observed_turn"`
+	ID                  string                    `json:"id"`
+	Name                string                    `json:"name,omitempty"`
+	TypeID              string                    `json:"type_id,omitempty"`
+	Art                 *engine.CityArt           `json:"art,omitempty"`
+	OwnerID             string                    `json:"owner_id"`
+	TileID              string                    `json:"tile_id"`
+	Population          int                       `json:"population,omitempty"`
+	Happiness           int                       `json:"happiness,omitempty"`
+	CrimePercent        int                       `json:"crime_percent,omitempty"`
+	OvercrowdingLevel   int                       `json:"overcrowding_level,omitempty"`
+	ConvertedToPlayerID string                    `json:"converted_to_player_id,omitempty"`
+	ConvertedBy         string                    `json:"converted_by,omitempty"`
+	Rioting             bool                      `json:"rioting,omitempty"`
+	Specialists         map[string]int            `json:"specialists,omitempty"`
+	Goods               []string                  `json:"goods,omitempty"`
+	Effects             []engine.Effect           `json:"effects,omitempty"`
+	StoredFood          int                       `json:"stored_food,omitempty"`
+	StoredProduction    int                       `json:"stored_production,omitempty"`
+	Queue               []engine.ProductionItem   `json:"queue,omitempty"`
+	Buildings           []engine.Building         `json:"buildings,omitempty"`
+	Yields              *engine.Yield             `json:"yields,omitempty"`
+	RushBuyQuote        *engine.RushBuyQuote      `json:"rush_buy_quote,omitempty"`
+	ProductionForecast  *engine.Forecast          `json:"production_forecast,omitempty"`
+	ProductionOptions   *engine.ProductionOptions `json:"production_options,omitempty"`
+	Governor            *engine.GovernorState     `json:"governor,omitempty"`
+	Stale               bool                      `json:"stale"`
+	Observed            int                       `json:"observed_turn"`
 }
 
 type ResearchProjection struct {
@@ -388,6 +389,13 @@ func Project(state engine.State, playerID string) (Projection, error) {
 	sort.Slice(result.Cities, func(i, j int) bool { return result.Cities[i].ID < result.Cities[j].ID })
 	sort.Slice(result.TradeRoutes, func(i, j int) bool { return result.TradeRoutes[i].ID < result.TradeRoutes[j].ID })
 	sort.Strings(result.EmbassyPlayerIDs)
+	canEdit := viewerCanAct(state, result, playerID) && result.PlanningStatus != PlanningStatusQueued
+	for index := range result.Cities {
+		city := &result.Cities[index]
+		if !city.Stale {
+			city.ProductionOptions = inspector.ProductionOptions(city.ID, playerID, canEdit)
+		}
+	}
 	result.LegalActions = legalActions(state, result, playerID)
 	result.ActionIntents = movementIntents(state, result, playerID)
 	result.Contract = contractProjection(result)
@@ -1207,10 +1215,6 @@ func productionActions(state engine.State, projection Projection, playerID strin
 		return nil
 	}
 	actions := make([]ActionProjection, 0)
-	known := []string(nil)
-	if projection.Research != nil {
-		known = projection.Research.Advances
-	}
 	for _, city := range projection.Cities {
 		if city.OwnerID != playerID || city.Stale {
 			continue
@@ -1235,48 +1239,14 @@ func productionActions(state engine.State, projection Projection, playerID strin
 				actions = append(actions, action(engine.CommandRushBuy, "rush-buy", city.ID, queued.ID, map[string]string{"city_id": city.ID}, []string{"city_id"}))
 			}
 		}
-		if len(city.Queue) != 0 || projection.Rules == nil {
+		if city.ProductionOptions == nil || city.ProductionOptions.Status != "complete" {
 			continue
 		}
-		built := cityBuildingIDs(city)
-		for _, production := range projection.Rules.Production {
-			if production.ID == "" || production.Kind == engine.ProductionUnit || !allAdvancesSatisfied(known, production.Prerequisites) || !allBuildingsSatisfied(built, production.RequiredBuildings) || !cityProductionPlacementAllowed(projection, city, production) || anyAdvanceSatisfied(known, production.ObsoleteBy) {
-				continue
-			}
-			if production.Kind == engine.ProductionBuilding && built[production.ID] {
-				continue
-			}
-			item := productionActionItem(production)
-			actions = append(actions, action(engine.CommandQueueProduction, "queue-production", city.ID, production.ID, map[string]any{"city_id": city.ID, "item": item}, []string{"city_id", "item"}))
-		}
-		for _, unit := range projection.Rules.Units {
-			if unit.ID == "" || runtimeUnitHasEffect(unit, engine.EffectCantBuild) || unitProductionBlockedByGovernment(projection, unit) || unitProductionBlockedByCityGood(city, unit) || unitProductionBlockedByEliminateNukes(state, playerID, unit) || unitProductionBlockedByExclusiveSlavery(projection, playerID, unit) || !allAdvancesSatisfied(known, unit.Prerequisites) || unitRemovesPopulation(unit) && city.Population <= 1 || anyAdvanceSatisfied(known, unit.ObsoleteBy) {
-				continue
-			}
-			cost := unit.ProductionCost
-			if cost < 1 {
-				cost = 1
-			}
-			item := engine.ProductionItem{ID: unit.ID, Kind: engine.ProductionUnit, Cost: cost, Upkeep: unit.Upkeep}
-			if len(unit.Prerequisites) > 0 {
-				item.Prerequisite = unit.Prerequisites[0]
-			}
-			if len(unit.ObsoleteBy) > 0 {
-				item.ObsoletedBy = unit.ObsoleteBy[0]
-			}
-			actions = append(actions, action(engine.CommandQueueProduction, "queue-production", city.ID, unit.ID, map[string]any{"city_id": city.ID, "item": item}, []string{"city_id", "item"}))
-			break
+		for _, item := range city.ProductionOptions.Items {
+			actions = append(actions, action(engine.CommandQueueProduction, "queue-production", city.ID, item.ID, map[string]any{"city_id": city.ID, "item": item}, []string{"city_id", "item"}))
 		}
 	}
 	return actions
-}
-
-func cityBuildingIDs(city CityProjection) map[string]bool {
-	built := make(map[string]bool, len(city.Buildings))
-	for _, building := range city.Buildings {
-		built[building.ID] = true
-	}
-	return built
 }
 
 func projectedRushBuyCost(projection Projection, city CityProjection, item engine.ProductionItem) int {
@@ -1322,27 +1292,6 @@ func positiveProjectedRushBuyCoefficient(value float64) float64 {
 		return 1
 	}
 	return value
-}
-
-func productionActionItem(production rules.RuntimeProduction) engine.ProductionItem {
-	cost := production.Cost
-	if cost < 1 {
-		cost = 1
-	}
-	item := engine.ProductionItem{ID: production.ID, Kind: production.Kind, Cost: cost, Upkeep: production.Upkeep}
-	if len(production.Prerequisites) > 0 {
-		item.Prerequisite = production.Prerequisites[0]
-	}
-	if len(production.ObsoleteBy) > 0 {
-		item.ObsoletedBy = production.ObsoleteBy[0]
-	}
-	if len(production.Effects) > 0 {
-		item.Effects = make([]engine.Effect, 0, len(production.Effects))
-		for _, effect := range production.Effects {
-			item.Effects = append(item.Effects, engine.Effect{ID: effect.ID, Kind: effect.Kind, Value: effect.Value})
-		}
-	}
-	return item
 }
 
 func unitActions(projection Projection, playerID string) []ActionProjection {
@@ -2171,27 +2120,6 @@ func allAdvancesSatisfied(known, required []string) bool {
 	return true
 }
 
-func unitRemovesPopulation(unit rules.RuntimeUnitDefinition) bool {
-	return runtimeUnitHasEffect(unit, engine.EffectBuildingRemovesPopulation)
-}
-
-func unitProductionBlockedByCityGood(city CityProjection, unit rules.RuntimeUnitDefinition) bool {
-	return unit.NeedsCityGoodID != "" && !containsString(city.Goods, unit.NeedsCityGoodID)
-}
-
-func unitProductionBlockedByEliminateNukes(state engine.State, playerID string, unit rules.RuntimeUnitDefinition) bool {
-	return runtimeUnitHasEffect(unit, engine.EffectNuclearAttack) && engine.NuclearAttacksEliminated(state, playerID)
-}
-
-func stateEffectsContain(effects []engine.Effect, kind string) bool {
-	for _, effect := range effects {
-		if effect.Kind == kind {
-			return true
-		}
-	}
-	return false
-}
-
 func unitProductionBlockedByGovernment(projection Projection, unit rules.RuntimeUnitDefinition) bool {
 	requiredGovernmentIDs := unitRequiredGovernmentIDs(unit)
 	if len(requiredGovernmentIDs) == 0 {
@@ -2208,99 +2136,6 @@ func unitRequiredGovernmentIDs(unit rules.RuntimeUnitDefinition) []string {
 		return []string{unit.RequiredGovernmentID}
 	}
 	return nil
-}
-
-func unitProductionBlockedByExclusiveSlavery(projection Projection, playerID string, unit rules.RuntimeUnitDefinition) bool {
-	if (runtimeUnitHasEffect(unit, engine.EffectSpecialSlaveRaid) || runtimeUnitHasEffect(unit, engine.EffectSpecialSettlerSlaveRaid)) && projectionPlayerHasUnitEffect(projection, playerID, engine.EffectNoSlaves) {
-		return true
-	}
-	if runtimeUnitHasEffect(unit, engine.EffectNoSlaves) && projectionPlayerHasSlaverUnit(projection, playerID) {
-		return true
-	}
-	return false
-}
-
-func projectionPlayerHasUnitEffect(projection Projection, playerID, effectKind string) bool {
-	for _, unit := range projection.Units {
-		if unit.OwnerID == playerID && unitProjectionHasEffect(unit, effectKind) {
-			return true
-		}
-	}
-	return false
-}
-
-func projectionPlayerHasSlaverUnit(projection Projection, playerID string) bool {
-	for _, unit := range projection.Units {
-		if unit.OwnerID == playerID && (unitProjectionHasEffect(unit, engine.EffectSpecialSlaveRaid) || unitProjectionHasEffect(unit, engine.EffectSpecialSettlerSlaveRaid)) {
-			return true
-		}
-	}
-	return false
-}
-
-func unitProjectionHasEffect(unit UnitProjection, kind string) bool {
-	for _, effect := range unit.Effects {
-		if effect.Kind == kind {
-			return true
-		}
-	}
-	return false
-}
-
-func runtimeUnitHasEffect(unit rules.RuntimeUnitDefinition, kind string) bool {
-	for _, effect := range unit.Effects {
-		if effect.Kind == kind {
-			return true
-		}
-	}
-	return false
-}
-
-func cityProductionPlacementAllowed(projection Projection, city CityProjection, production rules.RuntimeProduction) bool {
-	if !production.CantBuildInSea && !production.CantBuildOnLand && !production.CoastalOnly {
-		return true
-	}
-	tiles := projectedTiles(projection)
-	cityTile, ok := tiles[city.TileID]
-	if !ok {
-		return false
-	}
-	isSeaCity := projectedTerrainIsSea(projection, cityTile.Terrain)
-	if production.CantBuildInSea && isSeaCity {
-		return false
-	}
-	if production.CantBuildOnLand && !isSeaCity {
-		return false
-	}
-	if !production.CoastalOnly || isSeaCity {
-		return true
-	}
-	for _, tile := range tiles {
-		if adjacentProjection(cityTile, tile) && projectedTerrainIsSea(projection, tile.Terrain) {
-			return true
-		}
-	}
-	return false
-}
-
-func projectedTerrainIsSea(projection Projection, terrainID string) bool {
-	if terrainID == engine.TerrainOcean {
-		return true
-	}
-	if projection.Rules == nil || projection.Rules.Movement == nil {
-		return false
-	}
-	terrain, ok := projectedRuntimeTerrain(projection.Rules.Movement.Terrains, terrainID)
-	return ok && containsString(terrain.Domains, engine.DomainSea) && !containsString(terrain.Domains, engine.DomainLand)
-}
-
-func allBuildingsSatisfied(built map[string]bool, required []string) bool {
-	for _, id := range required {
-		if !built[id] {
-			return false
-		}
-	}
-	return true
 }
 
 func anyAdvanceSatisfied(known, blocked []string) bool {

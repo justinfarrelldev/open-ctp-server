@@ -18,7 +18,7 @@ func TestAdvanceProductionActionsRequireProjectedAdvance(t *testing.T) {
 		Research: &ResearchProjection{Advances: []string{"ADVANCE_GLOBAL_ECONOMICS"}},
 	}
 
-	actions := productionActions(engine.State{}, projection, "player-a")
+	actions := canonicalProductionActions(t, projection, "player-a")
 	if !hasProductionAction(actions, "CAPITALIZATION") {
 		t.Fatalf("capitalization action missing after enabling advance: %#v", actions)
 	}
