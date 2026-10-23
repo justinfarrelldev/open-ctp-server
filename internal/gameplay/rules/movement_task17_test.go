@@ -14,7 +14,7 @@ func TestTask17RuntimeMovementModelIsClosedAndSorted(t *testing.T) {
 	if !runtime.Movement.OpenAccess || !runtime.Movement.ZOCStopsPath {
 		t.Fatalf("synthetic movement policy must expose open access and path-stopping ZOC: %#v", runtime.Movement)
 	}
-	if got, want := runtime.Movement.Terrains[0].ID, "forest"; got != want {
+	if got, want := runtime.Movement.Terrains[0].ID, "desert"; got != want {
 		t.Fatalf("terrain iteration must be stable: got %q want %q", got, want)
 	}
 	forest, ok := runtime.Movement.Terrain("forest")

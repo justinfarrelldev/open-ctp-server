@@ -201,6 +201,13 @@ type Sources struct {
 	RNG   RNGSource
 }
 
+// GenerationMetadata pins public map/catalog lineage without seeds or geography.
+// Nil legacy metadata stays unknown; loading a save never regenerates its goods.
+type GenerationMetadata struct {
+	GeneratorVersion string `json:"generator_version"`
+	ResourceCatalog  string `json:"resource_catalog,omitempty"`
+}
+
 type RulesPin struct {
 	Version     string          `json:"version"`
 	ContentHash string          `json:"content_hash"`
@@ -533,6 +540,7 @@ type Audit struct {
 type State struct {
 	SchemaVersion    int                  `json:"schema_version"`
 	Rules            RulesPin             `json:"rules"`
+	Generation       *GenerationMetadata  `json:"generation,omitempty"`
 	Revision         int64                `json:"revision"`
 	EventSequence    int64                `json:"event_sequence"`
 	RecalculatedTurn int                  `json:"recalculated_turn,omitempty"`

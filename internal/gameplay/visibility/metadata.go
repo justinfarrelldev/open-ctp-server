@@ -31,12 +31,14 @@ func contractProjection(projection Projection) *ContractProjection {
 // WorldProjection describes the public playable coordinate graph, not hidden
 // terrain or generator inputs. Current engine adjacency does not wrap either axis.
 type WorldProjection struct {
-	MinX   int  `json:"min_x"`
-	MinY   int  `json:"min_y"`
-	Width  int  `json:"width"`
-	Height int  `json:"height"`
-	WrapX  bool `json:"wrap_x"`
-	WrapY  bool `json:"wrap_y"`
+	GeneratorVersion string `json:"generator_version,omitempty"`
+	ResourceCatalog  string `json:"resource_catalog,omitempty"`
+	MinX             int    `json:"min_x"`
+	MinY             int    `json:"min_y"`
+	Width            int    `json:"width"`
+	Height           int    `json:"height"`
+	WrapX            bool   `json:"wrap_x"`
+	WrapY            bool   `json:"wrap_y"`
 }
 
 func worldProjection(state engine.State) *WorldProjection {
@@ -63,7 +65,12 @@ func worldProjection(state engine.State) *WorldProjection {
 	if !widthOK || !heightOK {
 		return nil
 	}
-	return &WorldProjection{MinX: minX, MinY: minY, Width: width, Height: height}
+	result := &WorldProjection{MinX: minX, MinY: minY, Width: width, Height: height}
+	if state.Generation != nil {
+		result.GeneratorVersion = state.Generation.GeneratorVersion
+		result.ResourceCatalog = state.Generation.ResourceCatalog
+	}
+	return result
 }
 
 func worldDimension(low, high int) (int, bool) {

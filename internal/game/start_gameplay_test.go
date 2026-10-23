@@ -40,7 +40,7 @@ func TestInitialGameplayStateDerivesEntitiesFromSnapshot(t *testing.T) {
 	if string(firstJSON) != string(secondJSON) {
 		t.Fatalf("initial state is nondeterministic\n%s\n%s", firstJSON, secondJSON)
 	}
-	if len(first.Tiles) != 3 || first.Tiles[1].Terrain != engine.TerrainOcean {
+	if len(first.Tiles) != 3 || first.Tiles[1].Terrain != "shelf" {
 		t.Fatalf("tiles = %#v", first.Tiles)
 	}
 	if len(first.Players) != 2 || len(first.Nations) != 2 || len(first.Units) != 4 {

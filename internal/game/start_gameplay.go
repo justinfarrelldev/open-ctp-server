@@ -136,6 +136,7 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 	state := engine.State{
 		SchemaVersion: engine.StateSchemaV1,
 		Rules:         pin,
+		Generation:    &engine.GenerationMetadata{GeneratorVersion: snapshot.GeneratorVersion, ResourceCatalog: world.ResourceCatalogForGenerator(snapshot.GeneratorVersion)},
 		Phase:         engine.PhaseState{Mode: style, ModeVersion: "turn-policy-v1", Turn: 1},
 		RNG:           []engine.RNGDomainState{{Domain: engine.RNGDomainCombat, State: 1}, {Domain: engine.RNGDomainSpecialAction, State: 2}, {Domain: engine.RNGDomainAI, State: 3}, {Domain: engine.RNGDomainRiot, State: 4}},
 	}
@@ -147,7 +148,14 @@ func initialGameplayState(snapshot world.WorldSnapshot, style string, pin engine
 			_, valueRoll := next.Intn(10000)
 			ruin = &engine.Ruin{Profile: engine.VillageRuinProfile, TypeRoll: typeRoll, ValueRoll: valueRoll}
 		}
-		state.Tiles = append(state.Tiles, engine.Tile{ID: tileID(tile.X, tile.Y), X: tile.X, Y: tile.Y, Terrain: engineTerrainForRuntime(tile.Terrain, runtime), River: tile.River, GoodID: tile.GoodID, Ruin: ruin, Open: true})
+		terrain := engineTerrainForRuntime(tile.Terrain, runtime)
+		if terrain == "" {
+			return engine.State{}, fmt.Errorf("generated terrain %q is unsupported by pinned rules", tile.Terrain)
+		}
+		if snapshot.GeneratorVersion == world.OriginalGoodsGeneratorVersion && !world.OriginalResourceAllowed(tile.Terrain, tile.GoodID) {
+			return engine.State{}, fmt.Errorf("generated resource is outside pinned original catalog")
+		}
+		state.Tiles = append(state.Tiles, engine.Tile{ID: tileID(tile.X, tile.Y), X: tile.X, Y: tile.Y, Terrain: terrain, River: tile.River, GoodID: tile.GoodID, Ruin: ruin, Open: true})
 	}
 	for _, player := range players {
 		playerID := fmt.Sprintf("account-%d", player.AccountID)
@@ -196,6 +204,12 @@ func engineTerrainForRuntime(terrain string, runtime rules.RuntimeRules) string 
 	if _, ok := runtime.Movement.Terrain("TERRAIN_PLAINS"); ok {
 		return retailEngineTerrain(terrain, runtime)
 	}
+	if _, ok := runtime.Movement.Terrain(terrain); ok {
+		return terrain
+	}
+	if runtime.Movement.Configured {
+		return ""
+	}
 	return engineTerrain(terrain)
 }
 
@@ -216,7 +230,7 @@ func retailEngineTerrain(terrain string, runtime rules.RuntimeRules) string {
 			return candidate
 		}
 	}
-	return "TERRAIN_PLAINS"
+	return ""
 }
 
 func engineTerrain(terrain string) string {
