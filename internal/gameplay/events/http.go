@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/justinfarrelldev/open-ctp-server/internal/auth"
@@ -67,25 +68,42 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	current := r.Header.Get("X-Gameplay-Resync") == "current"
+	var wakeups <-chan struct{}
+	if !current && h.wakeup != nil {
+		// Subscribe BEFORE the first durable read. A commit between reading and
+		// subscribing would otherwise lose its only wakeup until a later turn.
+		var unsubscribe func()
+		wakeups, unsubscribe = h.wakeup.Subscribe(gameID)
+		defer unsubscribe()
+	}
+	mode := "stream"
+	if current {
+		mode = "current"
+	}
+	w.Header().Set("X-Gameplay-Read-Mode", mode)
+	started := time.Now()
+	var items []SSEEvent
+	timing := "initial_read"
+	if current {
+		items, err = h.store.resync(r.Context(), viewer, h.projector)
+		timing = "snapshot"
+	} else {
+		items, err = h.store.Resume(r.Context(), viewer, cursor, h.projector)
+	}
+	w.Header().Set("Server-Timing", fmt.Sprintf("%s;dur=%.3f", timing, float64(time.Since(started))/float64(time.Millisecond)))
+	w.Header().Set("Cache-Control", "no-store")
+	if err != nil || current && len(items) != 1 {
+		http.Error(w, "gameplay event read is unavailable", http.StatusServiceUnavailable)
+		return
+	}
 	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("X-Accel-Buffering", "no")
 	w.WriteHeader(http.StatusOK)
 	flusher.Flush()
 
-	if r.Header.Get("X-Gameplay-Resync") == "current" {
-		if !h.writeResync(w, r, viewer) {
-			return
-		}
-		if h.writeTerminal(w, r, viewer) {
-			flusher.Flush()
-			return
-		}
-		flusher.Flush()
-		return
-	}
-	cursor, ok = h.writeAvailable(w, r, viewer, cursor)
+	cursor, ok = writeProjectedItems(w, items, cursor)
 	if !ok {
 		return
 	}
@@ -94,12 +112,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	flusher.Flush()
-	if h.wakeup == nil {
+	if current || h.wakeup == nil {
 		return
 	}
-	wakeups, unsubscribe := h.wakeup.Subscribe(gameID)
-	var once sync.Once
-	defer once.Do(unsubscribe)
 	for {
 		select {
 		case <-r.Context().Done():
@@ -131,6 +146,10 @@ func (h *Handler) writeAvailable(w http.ResponseWriter, r *http.Request, viewer 
 	if err != nil {
 		return cursor, false
 	}
+	return writeProjectedItems(w, items, cursor)
+}
+
+func writeProjectedItems(w http.ResponseWriter, items []SSEEvent, cursor int64) (int64, bool) {
 	for _, item := range items {
 		if err := writeSSEEvent(w, item); err != nil {
 			return cursor, false
@@ -140,14 +159,6 @@ func (h *Handler) writeAvailable(w http.ResponseWriter, r *http.Request, viewer 
 		}
 	}
 	return cursor, true
-}
-
-func (h *Handler) writeResync(w http.ResponseWriter, r *http.Request, viewer Viewer) bool {
-	items, err := h.store.resync(r.Context(), viewer, h.projector)
-	if err != nil || len(items) != 1 {
-		return false
-	}
-	return writeSSEEvent(w, items[0]) == nil
 }
 
 func (h *Handler) writeTerminal(w http.ResponseWriter, r *http.Request, viewer Viewer) bool {
