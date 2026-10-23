@@ -14,6 +14,7 @@ import (
 const calendarFinalTurn = 48
 
 type RuntimeRules struct {
+	Family               string                                `json:"family,omitempty"`
 	CompatibilityVersion string                                `json:"compatibility_version"`
 	ContentHash          string                                `json:"content_hash"`
 	Victory              []RuntimeVictory                      `json:"victory"`
@@ -597,6 +598,7 @@ func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error
 	}
 
 	runtime := RuntimeRules{
+		Family:               "synthetic",
 		CompatibilityVersion: definition.CompatibilityVersion,
 		ContentHash:          contentHash,
 		Calendar:             RuntimeCalendar{FinalTurn: calendarFinalTurn},

@@ -181,6 +181,7 @@ type DiplomacyProjection struct {
 }
 
 type RulesProjection struct {
+	Family              string                                      `json:"family"`
 	ContentHash         string                                      `json:"content_hash"`
 	GovernorPriorities  []string                                    `json:"governor_priorities,omitempty"`
 	Units               []rules.RuntimeUnitDefinition               `json:"units,omitempty"`
@@ -555,7 +556,12 @@ func rulesProjection(state engine.State) *RulesProjection {
 	}
 	movement := runtime.Movement
 	ai := cloneRuntimeAI(runtime.AI)
+	family := runtime.Family
+	if family != "retail" && family != "synthetic" {
+		family = "unknown"
+	}
 	return &RulesProjection{
+		Family:              family,
 		ContentHash:         runtime.ContentHash,
 		GovernorPriorities:  engine.GovernorPriorities(&runtime),
 		Units:               append([]rules.RuntimeUnitDefinition(nil), runtime.Units...),
