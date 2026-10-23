@@ -28,7 +28,9 @@ type sessionExecutor interface {
 	Exec(query string, args ...any) (sql.Result, error)
 }
 
-// SessionStore handles session-related database operations
+// SessionStore handles session-related database operations. Session IDs are bearer
+// credentials: never log them, Session structs, or raw database errors that may
+// echo query parameters. Return errors privately; diagnostics use fixed labels.
 type SessionStore struct {
 	DB *sqlx.DB
 }
@@ -44,7 +46,7 @@ func NewSessionStore(db *sqlx.DB) *SessionStore {
 func createSession(executor sessionNamedExecutor, accountID int) (*Session, error) {
 	sessionID, err := generateSessionID()
 	if err != nil {
-		log.Printf("Error generating session ID: %v", err)
+		log.Print("Session entropy unavailable")
 		return nil, err
 	}
 
@@ -58,11 +60,10 @@ func createSession(executor sessionNamedExecutor, accountID int) (*Session, erro
 	query := `INSERT INTO sessions (id, account_id, created_at, expires_at) VALUES (:id, :account_id, :created_at, :expires_at)`
 	_, err = executor.NamedExec(query, session)
 	if err != nil {
-		log.Printf("Error creating session for account ID %d: %v", accountID, err)
+		log.Print("Session creation failed")
 		return nil, err
 	}
 
-	log.Printf("Session created: %v", session)
 	return session, nil
 }
 
@@ -70,11 +71,10 @@ func deleteSessionsForAccount(executor sessionExecutor, accountID int64) error {
 	query := `DELETE FROM sessions WHERE account_id = $1`
 	_, err := executor.Exec(query, accountID)
 	if err != nil {
-		log.Printf("Error deleting sessions for account %d: %v", accountID, err)
+		log.Print("Account session deletion failed")
 		return err
 	}
 
-	log.Printf("Sessions deleted for account: %d", accountID)
 	return nil
 }
 
@@ -82,11 +82,10 @@ func deleteSessionsForAccountExcept(executor sessionExecutor, accountID int64, e
 	query := `DELETE FROM sessions WHERE account_id = $1 AND id <> $2`
 	_, err := executor.Exec(query, accountID, exceptSessionID)
 	if err != nil {
-		log.Printf("Error deleting sessions for account %d except session %d: %v", accountID, exceptSessionID, err)
+		log.Print("Other account session deletion failed")
 		return err
 	}
 
-	log.Printf("Sessions deleted for account %d except session %d", accountID, exceptSessionID)
 	return nil
 }
 
@@ -129,14 +128,12 @@ func (s *SessionStore) GetSession(sessionID int64) (*Session, error) {
 	err := s.DB.Get(&session, query, sessionID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("Session not found: %d", sessionID)
 			return nil, nil
 		}
-		log.Printf("Error retrieving session %d: %v", sessionID, err)
+		log.Print("Session lookup failed")
 		return nil, err
 	}
 
-	log.Printf("Session retrieved: %v", session)
 	return &session, nil
 }
 
@@ -155,11 +152,10 @@ func (s *SessionStore) DeleteSession(sessionID int64) error {
 	query := `DELETE FROM sessions WHERE id = $1`
 	_, err := s.DB.Exec(query, sessionID)
 	if err != nil {
-		log.Printf("Error deleting session %d: %v", sessionID, err)
+		log.Print("Session deletion failed")
 		return err
 	}
 
-	log.Printf("Session deleted: %d", sessionID)
 	return nil
 }
 
