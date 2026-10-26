@@ -1,0 +1,12 @@
+# Near-instantaneous authoritative turns
+
+Implement the [investigated causes](../docs/turn-latency-investigation.md), preserving identical commands, AI ranking/action budget/closeout, turn sequencing, upkeep, visibility, durable receipts, event cursors and deterministic results. No local prediction of turn advancement, skipped AI, database resets, hook changes or dependencies.
+
+## Acceptance and implementation batches
+
+1. **Verified rules reuse:** bounded content-addressed canonical/compiled rules caches, defensive ownership of returned values, corruption/hash/version rejection, concurrent isolation and identical cached/uncached results. RED tests first, GREEN implementation, refactor, focused/race tests and offline timing.
+2. **Immediate server scheduling and delivery:** wake AI on committed commands with periodic durable recovery; lightweight scheduling metadata rather than all worlds, unchanged AI order/budget/commands. Negotiate full viewer-safe snapshots over existing authenticated SSE with separate subscription admission from legacy current reads; existing clients retain exact legacy semantics. Subscribe-before-read, complete consistent revision/cursor snapshots, terminal and failures remain safe. RED fake-store/SQL/HTTP regressions, GREEN, refactor and affected contract/replay tests.
+3. **Client integration:** capability-gated immediate snapshot stream; bounded fragmented parsing, full-model reconciliation only, old-server fallback and immutable receipt acknowledgement. Background refresh waiting must never monopolize command execution. Use existing client PLAN.md and linked resync checklist, keep unrelated UI changes untouched. RED in-memory/fake-time regressions, GREEN, refactor, required lint/coverage/hooks as applicable.
+4. **Final review and measurement:** compare original released CTP2 turn chain and exact deterministic state/events/AI submissions; verify visibility, corruption, replay, disconnect and concurrent-order boundaries. Benchmark an unchanged small four-player turn toward <100 ms warm local execution/delivery, report measured scope honestly (no universal network/large-world latency promise). Continue addressing measured bottlenecks rather than declaring reduced seconds sufficient.
+
+Checklist: [instant turns](checklists/instant-turns.md). Each batch is independently reviewable; normal commit hooks remain unchanged. Live games and original assets are read-only; automated tests use injected clocks/state/channels/SQL mocks only and never mutate files or contact live services.

@@ -546,6 +546,12 @@ func (runtime RuntimeRules) EffectIDs() string {
 }
 
 func CanonicalDefinitions(definitions []byte) ([]byte, error) {
+	return canonicalRulesCache.get(definitions, "", func() ([]byte, error) {
+		return canonicalDefinitions(definitions)
+	})
+}
+
+func canonicalDefinitions(definitions []byte) ([]byte, error) {
 	if len(definitions) == 0 || !json.Valid(definitions) {
 		return nil, errors.New("rules definitions are malformed")
 	}
@@ -572,6 +578,12 @@ func CanonicalRuntimeDefinitions(runtime RuntimeRules) ([]byte, string, error) {
 }
 
 func CompileRuntime(definitions []byte, contentHash string) (RuntimeRules, error) {
+	return compiledRulesCache.get(definitions, contentHash, func() (RuntimeRules, error) {
+		return compileRuntime(definitions, contentHash)
+	})
+}
+
+func compileRuntime(definitions []byte, contentHash string) (RuntimeRules, error) {
 	canonical, err := CanonicalDefinitions(definitions)
 	if err != nil {
 		return RuntimeRules{}, err

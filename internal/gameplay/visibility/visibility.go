@@ -2178,13 +2178,11 @@ func planningTiles(state engine.State, playerID string, visible map[string]bool,
 	if len(state.Rules.Definitions) == 0 || string(state.Rules.Definitions) == "null" {
 		return result, nil
 	}
-	var definition struct {
-		CompatibilityVersion string `json:"compatibility_version"`
-	}
-	if err := json.Unmarshal(state.Rules.Definitions, &definition); err != nil {
+	version, err := rules.DefinitionsVersion(state.Rules.Definitions)
+	if err != nil {
 		return nil, err
 	}
-	if definition.CompatibilityVersion != rules.CTP2CompatibilityVersion {
+	if version != rules.CTP2CompatibilityVersion {
 		return result, nil
 	}
 	runtime, err := rules.CompileRuntime(state.Rules.Definitions, state.Rules.ContentHash)
@@ -2288,6 +2286,7 @@ func planMovement(projection Projection, unitID, targetTileID string, pretty boo
 		minimum = min(minimum, engine.MovementRouteCost(engine.Tile{}, engine.Tile{}, tile.Planning.Cost, armyMax, allAir, pretty))
 	}
 	sort.Slice(orderedTiles, func(i, j int) bool { return orderedTiles[i].ID < orderedTiles[j].ID })
+	positions := movementPositionIndex(orderedTiles)
 	if allAir {
 		minimum = min(minimum, 9000)
 	}
@@ -2325,8 +2324,9 @@ func planMovement(projection Projection, unitID, targetTileID string, pretty boo
 			continue
 		}
 		from := tiles[current.tileID]
-		for _, to := range orderedTiles {
-			if !adjacentProjection(from, to) || !to.Planning.Accessible || occupied[to.ID] || !projectedCanEnter(projection, mover, to) {
+		for _, neighbor := range movementNeighborIndices(from, positions) {
+			to := orderedTiles[neighbor]
+			if !to.Planning.Accessible || occupied[to.ID] || !projectedCanEnter(projection, mover, to) {
 				continue
 			}
 			cost := engine.MovementRouteCost(position(from), position(to), to.Planning.Cost, armyMax, allAir, pretty)

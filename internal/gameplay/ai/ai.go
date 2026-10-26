@@ -182,6 +182,12 @@ func PlanWithHistory(input []byte, playerID string, history []ExplorationStep) (
 	if err := json.Unmarshal(input, &projection); err != nil {
 		return nil, err
 	}
+	return planProjection(projection, playerID, history)
+}
+
+// planProjection consumes the same viewer model in memory when the gateway is
+// in-process. Candidate construction/ranking and history remain one shared path.
+func planProjection(projection visibility.Projection, playerID string, history []ExplorationStep) ([]Candidate, error) {
 	visited := visitedDestinations(history)
 	fallbackType := engine.CommandPass
 	if projection.PlanningStatus == visibility.PlanningStatusOpen {
@@ -1810,11 +1816,7 @@ func (d *Driver) Drive(ctx context.Context, gameID int64, playerID string, revis
 
 	result := Result{Revision: revision}
 	for action := 0; action < d.budget; action++ {
-		input, err := d.projections.Projection(ctx, gameID, playerID)
-		if err != nil {
-			return Result{}, err
-		}
-		projection, err := planningCloseout(input)
+		projection, err := d.projectionModel(ctx, gameID, playerID)
 		if err != nil {
 			return Result{}, err
 		}
@@ -1845,7 +1847,7 @@ func (d *Driver) Drive(ctx context.Context, gameID int64, playerID string, revis
 				return Result{}, err
 			}
 		}
-		candidates, err := PlanWithHistory(input, playerID, history)
+		candidates, err := planProjection(projection, playerID, history)
 		if err != nil {
 			return Result{}, err
 		}

@@ -18,7 +18,8 @@ func contractProjection(projection Projection) *ContractProjection {
 	movement := projection.Rules != nil && projection.Rules.Movement != nil && projection.Rules.Movement.Configured
 	governor := projection.Rules != nil && len(projection.Rules.GovernorPriorities) > 0
 	return &ContractProjection{Version: 2, Features: map[string]bool{
-		"fog_metadata": true, "tile_inspection": true, "atomic_production_queue": true,
+		"snapshot_stream": true,
+		"fog_metadata":    true, "tile_inspection": true, "atomic_production_queue": true,
 		"production_options": true, "observed_river_geometry": true,
 		"turn_context": true, "live_resolution_progress": false, "unit_route_preview": false,
 		"city_orders": true, "retained_sleep": true, "research_goals": true,

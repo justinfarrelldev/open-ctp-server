@@ -1238,6 +1238,10 @@ func hashBytes(data []byte) string {
 
 // DecodeCanonicalStateJSON rejects malformed, unknown, and invariant-violating state bytes.
 func DecodeCanonicalStateJSON(data []byte) (State, error) {
+	return decodedStates.decode(data)
+}
+
+func decodeCanonicalStateJSON(data []byte) (State, error) {
 	var state State
 	if err := json.Unmarshal(data, &state); err != nil {
 		return State{}, fmt.Errorf("decode canonical state: %w", err)
@@ -1263,15 +1267,7 @@ func CanonicalEventsJSON(events []Event) ([]byte, error) {
 }
 
 func canonicalClone(state State) (State, error) {
-	canonical, err := CanonicalStateJSON(state)
-	if err != nil {
-		return State{}, err
-	}
-	var cloned State
-	if err := json.Unmarshal(canonical, &cloned); err != nil {
-		return State{}, err
-	}
-	return cloned, nil
+	return cloneOwnedState(state)
 }
 
 func cloneIntMap(input map[string]int) map[string]int {
@@ -1374,6 +1370,9 @@ func cloneStateForNormalization(state State) State {
 		state.Policy.Deadline = &deadline
 	}
 	state.Fog = append([]FogObservation(nil), state.Fog...)
+	for index := range state.Fog {
+		state.Fog[index].CityEffects = append([]Effect(nil), state.Fog[index].CityEffects...)
+	}
 	state.Notifications = append([]Notification(nil), state.Notifications...)
 	state.RNG = append([]RNGDomainState(nil), state.RNG...)
 	state.Deadlines = append([]Deadline(nil), state.Deadlines...)
@@ -1510,10 +1509,8 @@ func hasRuntimeDefinitions(definitions json.RawMessage) bool {
 	if len(definitions) == 0 || string(definitions) == "null" {
 		return false
 	}
-	var header struct {
-		CompatibilityVersion string `json:"compatibility_version"`
-	}
-	return json.Unmarshal(definitions, &header) == nil && header.CompatibilityVersion != ""
+	version, err := rules.DefinitionsVersion(definitions)
+	return err == nil && version != ""
 }
 
 func normalizedDefinitions(definitions json.RawMessage) string {

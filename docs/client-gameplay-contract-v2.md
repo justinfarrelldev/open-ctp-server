@@ -15,8 +15,9 @@ observability.
   `X-Gameplay-Resync: current` returns a finite SSE `resync` response containing
   `current_revision`, durable `event_cursor`, and `snapshot`. Validate that the
   snapshot revision matches the envelope; resume using the durable cursor, not
-  the revision. Resync SSE `id` is the durable event sequence. Normal event
-  streaming remains the invalidation/resume path.
+  the revision. Resync SSE `id` is the durable event sequence. Legacy event
+  streaming remains the invalidation/resume path; negotiated full-model streaming
+  below avoids a second current read for every AI update.
 - On disagreement, show **resynchronizing**, revert tentative presentation, replace
   the full authoritative model from a current viewer snapshot, then resume input.
   Do not patch invented geography into an empty snapshot or read canonical events.
@@ -37,6 +38,39 @@ observability.
 `contract.version` is `2`. `contract.features` identifies supported contracts and
 explicitly unavailable features. A feature flag is not phase/entity authorization:
 consume `legal_actions`, `planning_status` and current revision checks as well.
+
+## Low-latency complete snapshot streaming
+
+When `contract.features.snapshot_stream` is true, a client may subscribe to the
+same authenticated events endpoint with `X-Gameplay-Stream: snapshots-v1` (without
+`X-Gameplay-Resync: current`). The server acknowledges the header and sends a
+complete viewer-projected `resync` at connection time and on committed-state
+wakeups. Each envelope is `{current_revision, event_cursor, snapshot}` and its SSE
+`id` equals `event_cursor`. Both numbers come from the same committed aggregate
+row. Terminal delivery remains viewer-projected. No canonical data/event patch or
+foreign private model is exposed, and subscribing still precedes the initial read.
+
+Subscription connections have an independent 20/minute budget: bootstrap does not
+consume their first token. Legacy subscriptions/current reads keep their original
+shared budget. Healthy full-model updates on an existing connection consume no
+additional HTTP connection admissions. Reconnects remain bounded; durable outbox
+recovery and periodic AI discovery retain restart/missed-wakeup safety.
+
+Clients validate envelope/cursor/revision/turn before delivering complete models.
+They may coalesce intermediate full snapshots, but must never coalesce away own
+receipts/rejections or treat a stream model as a command acknowledgement. Keep
+monotonic revision reconciliation and replace the whole viewer model. The current
+client bounds negotiated snapshot data at 16 MiB; incomplete/oversized/malformed
+models fail closed into safe recovery. Missing capability/header support retains
+legacy invalidation/current behavior instead of inventing locally advanced turns.
+
+Interactive command admission is bounded at 30 requests/second per IP; requests
+still pass every authentication, ownership, phase, revision and transactional
+command check. Rapid ordinary moves/turns need not wait for the former two/second
+limiter. Background reads must not monopolize command submission, even when a
+legacy/fault-recovery read is waiting for its own admission slot.
+
+Performance and unchanged-gameplay evidence: [near-instant turns](instant-turns.md).
 
 ## Fog, independent facts and legacy data
 

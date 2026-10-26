@@ -79,7 +79,7 @@ func main() {
 	})
 	go dispatchGameplayEvents(runtime.Dispatcher)
 	go runGameplayWorker("pending takeover", runtime.PendingTakeovers.RunOnce)
-	go runGameplayWorker("ai driver", runtime.AIWorker.RunOnce)
+	go runtime.AIWorker.Run(context.Background())
 
 	fmt.Printf("\nNow serving on port %d\n", port)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), runtime.Handler)

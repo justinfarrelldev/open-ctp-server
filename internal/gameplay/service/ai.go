@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"strconv"
 	"strings"
 
@@ -40,25 +41,35 @@ func (g *AIGateway) Submit(ctx context.Context, submission ai.Submission) (ai.Su
 // Projection returns exactly the visibility projection used by player-facing reads; canonical state
 // remains inside this adapter and is never passed to the AI driver.
 func (g *AIGateway) Projection(ctx context.Context, gameID int64, playerID string) ([]byte, error) {
-	if g == nil || g.service == nil || g.service.store == nil {
-		return nil, ai.ErrTerminal
-	}
-	accountID := strings.TrimPrefix(playerID, "account-")
-	if accountID == playerID {
-		return nil, commandError(400, "AI actor player is invalid")
-	}
-	if parsed, err := strconv.ParseInt(accountID, 10, 64); err != nil || parsed < 1 {
-		return nil, commandError(400, "AI actor player is invalid")
-	}
-	aggregate, err := g.service.store.ReadAggregate(gameID)
+	projection, err := g.ProjectionModel(ctx, gameID, playerID)
 	if err != nil {
 		return nil, err
 	}
+	return json.Marshal(projection)
+}
+
+// ProjectionModel avoids a JSON round trip inside this process. It uses exactly
+// the same viewer projector; no canonical state or broader knowledge enters AI.
+func (g *AIGateway) ProjectionModel(ctx context.Context, gameID int64, playerID string) (visibility.Projection, error) {
+	if g == nil || g.service == nil || g.service.store == nil {
+		return visibility.Projection{}, ai.ErrTerminal
+	}
+	accountID := strings.TrimPrefix(playerID, "account-")
+	if accountID == playerID {
+		return visibility.Projection{}, commandError(400, "AI actor player is invalid")
+	}
+	if parsed, err := strconv.ParseInt(accountID, 10, 64); err != nil || parsed < 1 {
+		return visibility.Projection{}, commandError(400, "AI actor player is invalid")
+	}
+	aggregate, err := g.service.store.ReadAggregate(gameID)
+	if err != nil {
+		return visibility.Projection{}, err
+	}
 	state, err := engine.DecodeCanonicalStateJSON(aggregate.CanonicalStateJSON)
 	if err != nil {
-		return nil, commandError(422, "gameplay state is invalid: "+err.Error())
+		return visibility.Projection{}, commandError(422, "gameplay state is invalid: "+err.Error())
 	}
-	return visibility.AIInput(state, playerID)
+	return visibility.Project(state, playerID)
 }
 
 // ExplorationHistory reconstructs only this AI actor's accepted movement steps.

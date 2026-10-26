@@ -151,6 +151,16 @@ func TestExecuteCommandRejectsPostCombatCityMoveWhenGameEnded(t *testing.T) {
 
 func TestExecuteCommandCommitsOnceAndReplaysStoredBytes(t *testing.T) {
 	svc, mock := newMockService(t)
+	commits := 0
+	svc.AfterCommit = func(gameID int64) {
+		if gameID != 44 {
+			t.Fatalf("wrong committed game: %d", gameID)
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("wakeup before durable commit: %v", err)
+		}
+		commits++
+	}
 	var timings []CommandTiming
 	svc.ObserveCommand = func(metric CommandTiming) { timings = append(timings, metric) }
 	clock := time.Unix(0, 0)
@@ -181,6 +191,9 @@ func TestExecuteCommandCommitsOnceAndReplaysStoredBytes(t *testing.T) {
 	replayed, err := svc.ExecuteCommand(context.Background(), testSession(), request())
 	if err != nil {
 		t.Fatal(err)
+	}
+	if commits != 2 {
+		t.Fatalf("accepted/replayed durable commands must wake delivery: %d", commits)
 	}
 	if string(replayed.Receipt) != string(result.Receipt) {
 		t.Fatalf("replay differs: %s != %s", replayed.Receipt, result.Receipt)

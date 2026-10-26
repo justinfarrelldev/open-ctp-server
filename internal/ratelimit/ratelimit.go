@@ -50,9 +50,13 @@ func NewLobbyGameLimiter() *limiter.Limiter {
 	return newLimiter(120.0 / 60.0)
 }
 
-// NewGameplayCommandLimiter returns the limiter shared by gameplay mutations.
+// NewGameplayCommandLimiter bounds interactive mutations at 30/second per IP.
+// The old two-per-second budget became an artificial gameplay delay once turns
+// were fast: ordinary successive orders/end-turns immediately entered 429 recovery.
+// Authentication, one-outstanding client command, revision/phase validation and
+// transactional game locks remain unchanged; this is not unlimited admission.
 func NewGameplayCommandLimiter() *limiter.Limiter {
-	return newLimiter(120.0 / 60.0)
+	return newLimiter(30)
 }
 
 // NewLobbySSELimiter returns the limiter used for lobby SSE connections.

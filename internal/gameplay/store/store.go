@@ -61,14 +61,26 @@ WHERE state_schema_version = 1
 	AND (canonical_state_json #>> '{policy,deadline,at_unix}')::bigint <= $1
 ORDER BY deadline_at ASC, game_id ASC`
 
-const StartedGameplayAggregatesQuery = `SELECT
+// Discovery transfers scheduling metadata only, never terrain, fog, rules or
+// unit/city state for unrelated games. The AI still fetches its full authorized
+// projection before choosing a command; these fields confer no execution rights.
+const aiSchedulingSelect = `SELECT
 	state.game_id,
 	state.revision,
-	state.canonical_state_json::text AS canonical_state_json
+	jsonb_build_object(
+		'players', state.canonical_state_json->'players',
+		'phase', state.canonical_state_json->'phase',
+		'policy', jsonb_build_object(
+			'stage', state.canonical_state_json #> '{policy,stage}',
+			'early_ends', state.canonical_state_json #> '{policy,early_ends}'),
+		'terminal', state.canonical_state_json->'terminal'
+	)::text AS canonical_state_json
 FROM world_turn_states AS state
 JOIN games ON games.id = state.game_id
 WHERE state.state_schema_version = 1
-	AND games.status = 'started'
+	AND games.status = 'started'`
+
+const StartedGameplayAggregatesQuery = aiSchedulingSelect + `
 ORDER BY state.game_id ASC`
 
 const selectReceiptQuery = `SELECT

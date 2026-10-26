@@ -73,7 +73,7 @@ func TestProductionMainRunsAutonomousAIWorker(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(contents)
-	if !strings.Contains(text, `runGameplayWorker("ai driver", runtime.AIWorker.RunOnce)`) {
+	if !strings.Contains(text, `go runtime.AIWorker.Run(context.Background())`) {
 		t.Fatal("main.go does not start the autonomous AI worker")
 	}
 }

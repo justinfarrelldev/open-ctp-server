@@ -58,6 +58,10 @@ func New(db *sqlx.DB, config Config) *Runtime {
 	lobbyGameLimiter := newLimiter("lobby-game", ratelimit.NewLobbyGameLimiter)
 	gameplayCommandLimiter := newLimiter("gameplay-command", ratelimit.NewGameplayCommandLimiter)
 	lobbySSELimiter := newLimiter("lobby-sse", ratelimit.NewLobbySSELimiter)
+	// One persistent snapshot subscription has its own connection budget; a
+	// bootstrap/current read must not consume its first token. Legacy clients
+	// keep the existing shared lobby-SSE admission without a contract change.
+	snapshotStreamLimiter := newLimiter("gameplay-snapshot-stream", ratelimit.NewLobbySSELimiter)
 	healthLimiter := newLimiter("health", ratelimit.NewHealthLimiter)
 	limit := func(limiter *limiter.Limiter, handler http.HandlerFunc) http.Handler {
 		return tollbooth.LimitFuncHandler(limiter, handler)
@@ -96,7 +100,15 @@ func New(db *sqlx.DB, config Config) *Runtime {
 	eventHandler := gameplayevents.NewHandler(db, sessions, visibility.NewProjector(), broker)
 	mux.Handle("POST /game/{game_id}/combat", limit(gameplayCommandLimiter, combatHandler.ServeHTTP))
 	mux.Handle("POST /game/{game_id}/{command}", limit(gameplayCommandLimiter, commandHandler.ServeHTTP))
-	mux.Handle("GET /game/{game_id}/events", limit(lobbySSELimiter, eventHandler.ServeHTTP))
+	legacyEvents := limit(lobbySSELimiter, eventHandler.ServeHTTP)
+	snapshotEvents := limit(snapshotStreamLimiter, eventHandler.ServeHTTP)
+	mux.Handle("GET /game/{game_id}/events", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Gameplay-Stream") == "snapshots-v1" && r.Header.Get("X-Gameplay-Resync") != "current" {
+			snapshotEvents.ServeHTTP(w, r)
+		} else {
+			legacyEvents.ServeHTTP(w, r)
+		}
+	}))
 	mux.Handle("GET /world/{game_id}", limit(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) { game.GetWorldHandler(w, r, db, sessions) }))
 	mux.Handle("GET /world/{game_id}/space", limit(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) { game.GetWorldSpaceLayerHandler(w, r, db, sessions) }))
 	mux.Handle("GET /world/{game_id}/ratings", limit(lobbyGameLimiter, func(w http.ResponseWriter, r *http.Request) { game.GetWorldRatingsHandler(w, r, db, sessions) }))
@@ -123,6 +135,14 @@ func New(db *sqlx.DB, config Config) *Runtime {
 	pendingTakeovers.AfterCommit = dispatcher.DispatchOnce
 	aiDriver := ai.NewDriver(gateway, gateway, ai.Config{ActionBudget: 1, History: gateway, Observe: config.ObserveAICommand, CloseoutAfterAction: true})
 	aiWorker := gameplayservice.NewAIWorker(commandStore, aiDriver)
-	aiWorker.AfterCommit = dispatcher.DispatchOnce
+	// Do not await global outbox draining between AI players. Every accepted
+	// command already publishes a commit hint below; the standalone durable
+	// dispatcher still recovers missed hints and marks delivery asynchronously.
+	service.AfterCommit = func(gameID int64) {
+		// These are latency hints AFTER commit. SSE rereads committed rows and
+		// the durable outbox remains available for retry/restart delivery.
+		broker.Publish(gameID)
+		aiWorker.Notify(gameID)
+	}
 	return &Runtime{Handler: mux, Dispatcher: dispatcher, Deadlines: deadlines, PendingTakeovers: pendingTakeovers, AIDriver: aiDriver, AIWorker: aiWorker}
 }

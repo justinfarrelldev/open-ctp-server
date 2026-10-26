@@ -33,10 +33,11 @@ type AIWorker struct {
 	driver      aiTurnDriver
 	MaxDrives   int
 	AfterCommit func(context.Context) error
+	queue       aiWakeQueue
 }
 
 func NewAIWorker(store startedAggregateFinder, driver aiTurnDriver) *AIWorker {
-	return &AIWorker{store: store, driver: driver, MaxDrives: defaultAIWorkerDriveBudget}
+	return &AIWorker{store: store, driver: driver, MaxDrives: defaultAIWorkerDriveBudget, queue: newAIWakeQueue()}
 }
 
 func (w *AIWorker) RunOnce(ctx context.Context) error {
@@ -60,6 +61,13 @@ func (w *AIWorker) RunOnce(ctx context.Context) error {
 		}
 		candidate := due[0]
 		result, err := w.driver.Drive(ctx, candidate.GameID, candidate.PlayerID, candidate.Revision)
+		if result.Commands > 0 {
+			// Re-read this game's durable scheduling state for its next player.
+			// FIFO hints let other committed games make progress between drives.
+			if _, ok := w.store.(targetedAggregateFinder); ok {
+				w.Notify(candidate.GameID)
+			}
+		}
 		if result.Commands > 0 && w.AfterCommit != nil {
 			if dispatchErr := w.AfterCommit(ctx); dispatchErr != nil {
 				return fmt.Errorf("dispatching AI gameplay events for game %d player %q: %w", candidate.GameID, candidate.PlayerID, dispatchErr)
@@ -79,6 +87,29 @@ func (w *AIWorker) RunOnce(ctx context.Context) error {
 }
 
 func (w *AIWorker) findDuePlayers() ([]dueAIPlayer, error) {
+	if targeted, ok := w.store.(targetedAggregateFinder); ok {
+		for gameID := w.takePending(); gameID > 0; gameID = w.takePending() {
+			aggregate, err := targeted.FindGameplaySchedulingAggregate(gameID)
+			if err != nil {
+				return nil, err
+			}
+			if aggregate.GameID == 0 {
+				continue
+			} // removed/ended between notification and read
+			var state engine.State
+			if err := json.Unmarshal(aggregate.CanonicalStateJSON, &state); err != nil {
+				return nil, err
+			}
+			state.Revision = aggregate.Revision
+			if due := dueAIPlayersForState(gameID, state); len(due) > 0 {
+				return due, nil
+			}
+			// A completed human turn needs no scan of unrelated worlds.
+			if !w.queue.hasPending() {
+				return nil, nil
+			}
+		}
+	}
 	aggregates, err := w.store.FindStartedGameplayAggregates()
 	if err != nil {
 		return nil, err

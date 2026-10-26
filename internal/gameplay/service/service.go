@@ -80,6 +80,9 @@ type Service struct {
 	sources        engine.Sources
 	now            func() time.Time
 	ObserveCommand func(CommandTiming)
+	// AfterCommit is a nonblocking latency hint, configured before serving. It
+	// cannot authorize mutations and runs only after a durable commit/replay.
+	AfterCommit func(gameID int64)
 }
 
 func New(commandStore *store.Store, sources engine.Sources) *Service {
@@ -140,6 +143,8 @@ func (s *Service) executeControllerCommand(ctx context.Context, request CommandR
 	defer func() {
 		if !committed {
 			_ = tx.Rollback()
+		} else if s.AfterCommit != nil {
+			s.AfterCommit(request.GameID)
 		}
 	}()
 	game, err := lockGame(tx, request.GameID)

@@ -69,6 +69,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	current := r.Header.Get("X-Gameplay-Resync") == "current"
+	// Opt-in only: legacy event streams retain their durable metadata contract.
+	// Full models are always projected for this authenticated viewer, never
+	// reconstructed from event payloads or cached across different viewers.
+	snapshots := !current && r.Header.Get("X-Gameplay-Stream") == "snapshots-v1"
+	if snapshots {
+		w.Header().Set("X-Gameplay-Stream", "snapshots-v1")
+	}
 	var wakeups <-chan struct{}
 	if !current && h.wakeup != nil {
 		// Subscribe BEFORE the first durable read. A commit between reading and
@@ -85,7 +92,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	started := time.Now()
 	var items []SSEEvent
 	timing := "initial_read"
-	if current {
+	if current || snapshots {
 		items, err = h.store.resync(r.Context(), viewer, h.projector)
 		timing = "snapshot"
 	} else {
@@ -124,7 +131,16 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			var wrote bool
-			cursor, wrote = h.writeAvailable(w, r, viewer, cursor)
+			if snapshots {
+				var latest []SSEEvent
+				latest, err = h.store.resync(r.Context(), viewer, h.projector)
+				if err != nil {
+					return
+				}
+				cursor, wrote = writeProjectedItems(w, latest, cursor)
+			} else {
+				cursor, wrote = h.writeAvailable(w, r, viewer, cursor)
+			}
 			if !wrote || h.writeTerminal(w, r, viewer) {
 				return
 			}

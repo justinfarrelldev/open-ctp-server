@@ -51,7 +51,7 @@
     },
     {
       "path": "internal/gameplay/ai/ai.go",
-      "sha256": "ae775c038c89028c74ba864858987fd30630de63a5f02e461673c716a4d192bf"
+      "sha256": "5d36128baf4e5ba70385af792da784a19f0c4b0510978de6b0a0db1552f8d39c"
     },
     {
       "path": "internal/gameplay/ai/defender_research.go",
@@ -60,6 +60,10 @@
     {
       "path": "internal/gameplay/ai/production_choices.go",
       "sha256": "bcf75b82cbed8681439289e1c557eeac4335db2063fe0e4bb01b7a5f0ed29716"
+    },
+    {
+      "path": "internal/gameplay/ai/projection_model.go",
+      "sha256": "191c928b0df84b3f24d09aba92ff5fadfe1e98e87f80f438dacc756062ee9f7d"
     },
     {
       "path": "internal/gameplay/combat/http.go",
@@ -86,12 +90,16 @@
       "sha256": "976a68b14a25e6dc6419b68030c450d1be58eb9031fcc0bdffa9a0ff845ece5d"
     },
     {
+      "path": "internal/gameplay/engine/decode_cache.go",
+      "sha256": "36b5c78601ce9e5d906e768932a195b149ba7a196412d42a043a248dd0758c6e"
+    },
+    {
       "path": "internal/gameplay/engine/diplomacy.go",
       "sha256": "495d83eb8c2df5fa26b3531194c0c40cef1c71f82d241961ab51cf9daded62fe"
     },
     {
       "path": "internal/gameplay/engine/engine.go",
-      "sha256": "2e1b663d5c9b1de326c916e12581fd9fda5953a3e60d6c2bd49bd71daf462811"
+      "sha256": "4c114f5992471d099ee0e3ea608e761476125b6048eb0356fd922d74ec63b415"
     },
     {
       "path": "internal/gameplay/engine/forecasts.go",
@@ -128,6 +136,10 @@
     {
       "path": "internal/gameplay/engine/movement_route.go",
       "sha256": "104303cf1c0ada19f536e3ab4d242bd098b37c46a2813b734af3c5a849469922"
+    },
+    {
+      "path": "internal/gameplay/engine/owned_state.go",
+      "sha256": "cfa07ebc8cc4b756a8f728999efe9cdd807b083e973de468f3e964afacade594"
     },
     {
       "path": "internal/gameplay/engine/policy_state.go",
@@ -187,11 +199,15 @@
     },
     {
       "path": "internal/gameplay/events/http.go",
-      "sha256": "502d084038997230929a6781726d54573cc8b29a3cc27dee490e7f4ac392a561"
+      "sha256": "c5526db2e21de1c2f51d18ae53db9d91c63f75eb435af8bb6882b3e50abf1e69"
     },
     {
       "path": "internal/gameplay/http/http.go",
       "sha256": "17fa361a2f38fced013471f19cdeaf9771749498c98a368b32c45445d092cb7f"
+    },
+    {
+      "path": "internal/gameplay/rules/cache.go",
+      "sha256": "85dff662b3751ddb3a9f709f1c58356fca84a42fbdd4162708dd37b4554d662b"
     },
     {
       "path": "internal/gameplay/rules/calendar.go",
@@ -204,6 +220,10 @@
     {
       "path": "internal/gameplay/rules/city_territory.go",
       "sha256": "839bf5bd44b42f1aaaab4619b83caf5dab515486fe544e3181eeacb2ba4c24ee"
+    },
+    {
+      "path": "internal/gameplay/rules/definitions.go",
+      "sha256": "02073e056a96f40edcd5025e834f82db45f458513402ce0f8401f43af5684d80"
     },
     {
       "path": "internal/gameplay/rules/retail_catalog.go",
@@ -235,7 +255,7 @@
     },
     {
       "path": "internal/gameplay/rules/runtime.go",
-      "sha256": "f9ea7fecb323e9a9500f460e87fe673904790d33fd159290f21e16f59d97104e"
+      "sha256": "d73049a50386b279d11e8c3e2d3290e2355a0b94b06aa5be4532daaed8885fc3"
     },
     {
       "path": "internal/gameplay/rules/starting_advances.go",
@@ -243,11 +263,15 @@
     },
     {
       "path": "internal/gameplay/service/ai.go",
-      "sha256": "26a529824c572235e37d80aef9d60d7373fe002d354457c918f7f21d8517b764"
+      "sha256": "644abff9e73dd9a36a099c23f4e68a3a6119b402d84c2cbba0aa43a620df0b04"
+    },
+    {
+      "path": "internal/gameplay/service/ai_wakeup.go",
+      "sha256": "c8d7ad990dad3ca966c207a220d400001b9bfab658897eb148f406c3cb048a29"
     },
     {
       "path": "internal/gameplay/service/ai_worker.go",
-      "sha256": "f42d9c97a7e6b6eb42a7ee1597f634efe31550dfea37655227baf2053ee4ece9"
+      "sha256": "a77e0896dc41da43164c647f8a29ccec74223c8b30c1337ff2e4472bb86215af"
     },
     {
       "path": "internal/gameplay/service/deadline.go",
@@ -259,7 +283,7 @@
     },
     {
       "path": "internal/gameplay/service/service.go",
-      "sha256": "899c0106c36ea52931104f20850b8c7e44b783f88dd83d878a8689efd7f4914c"
+      "sha256": "21f28bd140a0e26a2387fd1da1270e8a2d5dc44225ca384bbfc8648546a66a38"
     },
     {
       "path": "internal/gameplay/service/takeover.go",
@@ -270,8 +294,12 @@
       "sha256": "74ab4de0860ae3e2e74611e1810882c49b2a57905af681673e60db638ef9a3cf"
     },
     {
+      "path": "internal/gameplay/store/ai_scheduling.go",
+      "sha256": "fd71d57bd0920c262b967544db6483f4413c6f86d6835c697d138ed6357e6b8b"
+    },
+    {
       "path": "internal/gameplay/store/store.go",
-      "sha256": "81faa46c34211f58c9276aabb62c52458b234e3b2b5f73745bfc2aff990cb082"
+      "sha256": "6a6478ba34736fce63221b372eda85a34d80070cbe3b79e9c434553db3a50a3e"
     },
     {
       "path": "internal/gameplay/visibility/governors.go",
@@ -279,11 +307,15 @@
     },
     {
       "path": "internal/gameplay/visibility/metadata.go",
-      "sha256": "33e29099530c270e3ab139a445f0c58cf1ff614112d54487049381522c8973e4"
+      "sha256": "49a715b6b6177ebf402592ee2f396b24e9a2878326d5502d133fa528b4dfd737"
     },
     {
       "path": "internal/gameplay/visibility/movement.go",
       "sha256": "07efd7b98b3ff19cd718bebf8a238ad2ff439a7cb4e523f5d29e4f0eab5fa93f"
+    },
+    {
+      "path": "internal/gameplay/visibility/movement_neighbors.go",
+      "sha256": "63c9c7b316dc63a987ea7e0e2a9e7f4889431e150a6867c0ebca36fca2673169"
     },
     {
       "path": "internal/gameplay/visibility/player_identity.go",
@@ -295,11 +327,11 @@
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "8758c4df5de283c959208afa3fb8bcb10de8596a0704d521c0693a7dc6703167"
+      "sha256": "caf34b10853ccbfe7a28bcb4fc5eb0fe8d0385a5a52d95251a241c322a1d2d32"
     },
     {
       "path": "internal/runtime/runtime.go",
-      "sha256": "82f171d84e377620ba931436c02c134399fa48123b9735b4678fcb7c74d8fc9d"
+      "sha256": "f368f85cb680fa70f8bbbe64f545d48d7b1d43ac635903a535fdc5ad08007e15"
     },
     {
       "path": "internal/world/config.go",
@@ -351,7 +383,7 @@
     },
     {
       "path": "main.go",
-      "sha256": "540c2f62f4edef2848f1325f72d0511338f85c9086b0a56e2fb42af2783b90b2"
+      "sha256": "bd4a838a71c561824d08bdd7aaa02bdf27bd59bc6613d59e47e00bac2ab03ee8"
     },
     {
       "path": "supabase/migrations/20260719120000_gameplay_persistence_task2.sql",

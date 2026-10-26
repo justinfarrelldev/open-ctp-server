@@ -150,6 +150,8 @@ func (c *conn) query(query string, args []driver.NamedValue) (driver.Rows, error
 	c.store.mu.Lock()
 	defer c.store.mu.Unlock()
 	switch normalized {
+	case normalize(aiSchedulingSQL + " ORDER BY state.game_id ASC"), normalize(aiSchedulingSQL + " AND state.game_id = $1"):
+		return c.aiSchedulingRows(len(args) > 0, args)
 	case "select state.game_id, state.revision, player.value->>'id' as player_id from world_turn_states as state join games on games.id = state.game_id cross join lateral jsonb_array_elements(state.canonical_state_json->'players') as player(value) where state.state_schema_version = 1 and games.status = 'started' and coalesce(player.value->>'controller', '') = 'human' and coalesce(player.value->>'takeover_pending', 'false') = 'true' order by state.game_id asc, player_id asc":
 		values := make([][]driver.Value, 0)
 		for gameID, turn := range c.store.turns {
