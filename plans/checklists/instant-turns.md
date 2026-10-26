@@ -20,8 +20,8 @@ Plan: [instant turns](../instant-turns.md). Results/limits: [evidence](../../doc
 - [x] Existing client PLAN/checklist updated; unrelated font work left untouched.
 - [x] RED: missing full-snapshot/admission/worker helpers, malformed diagnostic privacy and late optional-read failure; strict fragmented bounds/metadata, receipt ordering and legacy behavior.
 - [x] GREEN: immediate capability-gated subscription, full-model mailbox/coalescing and independent background/command transports; no second current read on healthy path.
-- [x] REFACTOR/review: bounded memory/channels, shutdown, monotonic state, receipt-only acknowledgement and serialized completion generation prevent same-revision/stale failure races without locks during network waits.
-- [x] Isolated client branch `perf/instant-turns`, commit `48687bb`: required lint-fix/strict lint,72 focused tests, valid86.60% LLVM line coverage. All832 library tests pass;37 image-fixture failures were rerun after adding only a missing read-only reference symlink, reusing unchanged valid mappings. Normal unmodified commit hook passes832 library+21 integration tests and native build.
+- [x] REFACTOR/review: bounded memory/channels, shutdown, monotonic state, receipt-only acknowledgement and serialized completion generation prevent same-revision/stale failure races without locks during network waits. Held-ledger/full-channel SDL race reproduced RED and fixed by nonblocking try_lock mailbox polling; model remains retained for another frame.
+- [x] Isolated client branch `perf/instant-turns`, commits `48687bb` + `5cc0bd4`: required lint-fix/strict lint, focused regressions and fresh final833-test/86.58% LLVM line coverage pass. Initial37 image-fixture failures were repaired using only a missing read-only reference symlink; no old mappings reused after the final source change. Both normal unmodified commit hooks pass; final hook runs833 library+21 integration tests and native build.
 
 ## Integration
 - [x] Original released EndTurnButton/director/NewTurnCount/Player and A* chain reviewed; no AI/turn/upkeep/physics/authority/UI/scaling change.
