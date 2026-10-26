@@ -3121,6 +3121,7 @@ func completeUnitProduction(state *State, city *City, item ProductionItem, runti
 		Domain:             definition.Domain,
 		Movement:           definition.Movement,
 		MaxMovement:        definition.Movement,
+		FirstMove:          NewFirstMove(runtime),
 		Fuel:               definition.MaxFuel,
 		MaxFuel:            definition.MaxFuel,
 		CargoCapacity:      definition.TransportCapacity,

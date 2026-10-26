@@ -268,6 +268,7 @@ type Unit struct {
 	Domain                 string   `json:"domain,omitempty"`
 	Movement               int      `json:"movement,omitempty"`
 	MaxMovement            int      `json:"max_movement,omitempty"`
+	FirstMove              *bool    `json:"first_move,omitempty"`
 	Fuel                   int      `json:"fuel,omitempty"`
 	MaxFuel                int      `json:"max_fuel,omitempty"`
 	CargoCapacity          int      `json:"cargo_capacity,omitempty"`
@@ -937,7 +938,10 @@ func refreshStarterMovement(state *State, runtime *rules.RuntimeRules) {
 	for index := range state.Units {
 		if state.Units[index].TransportID == "" {
 			healUnitFromTerrainImprovements(state, &state.Units[index])
+		}
+		if state.Units[index].TransportID == "" || runtime.Movement.RetailMovementVersion == 1 {
 			state.Units[index].Movement = refreshedUnitMovement(*state, state.Units[index], runtime.Starter.Movement)
+			state.Units[index].FirstMove = NewFirstMove(runtime)
 		}
 	}
 }
@@ -1291,6 +1295,12 @@ func cloneStateForNormalization(state State) State {
 		}
 	}
 	state.Units = append([]Unit(nil), state.Units...)
+	for index := range state.Units {
+		if state.Units[index].FirstMove != nil {
+			value := *state.Units[index].FirstMove
+			state.Units[index].FirstMove = &value
+		}
+	}
 	for index := range state.Units {
 		state.Units[index].CargoDomains = append([]string(nil), state.Units[index].CargoDomains...)
 		state.Units[index].CargoClasses = append([]string(nil), state.Units[index].CargoClasses...)

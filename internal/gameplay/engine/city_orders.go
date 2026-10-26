@@ -90,6 +90,7 @@ func disbandCity(state *State, actor string, payload CityIdentityPayload, runtim
 		return errors.New("city disband could not create a settler")
 	}
 	state.Units[len(state.Units)-1].Movement = 0
+	consumeFirstMove(&state.Units[len(state.Units)-1])
 	for index := range state.Wonders {
 		if state.Wonders[index].CityID == city.ID {
 			state.Wonders[index].Destroyed = true

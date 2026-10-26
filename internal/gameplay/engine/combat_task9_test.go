@@ -430,8 +430,9 @@ func TestRetailActiveDefenseInterceptsBombardment(t *testing.T) {
 
 func TestRetailBombardDamagesVisibleTargetAtRange(t *testing.T) {
 	state := combatState()
+	ready := true
 	state.Units = []Unit{
-		{ID: "bombarder", OwnerID: "player-a", TileID: "a", Movement: 1, Ranged: 100, BombardRange: 2, BombRounds: 1, Strength: 4, Armor: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "can-land", Kind: EffectCanAttackLand}}},
+		{ID: "bombarder", OwnerID: "player-a", TileID: "a", Movement: 1, FirstMove: &ready, Ranged: 100, BombardRange: 2, BombRounds: 1, Strength: 4, Armor: 1, Health: 10, MaxHealth: 10, Effects: []Effect{{ID: "can-land", Kind: EffectCanAttackLand}}},
 		{ID: "target", OwnerID: "player-b", TileID: "retreat", Domain: DomainLand, Defense: 1, Strength: 1, Armor: 2, Health: 4, MaxHealth: 4},
 	}
 	state.Armies = nil
@@ -450,7 +451,7 @@ func TestRetailBombardDamagesVisibleTargetAtRange(t *testing.T) {
 		t.Fatalf("target after bombard = %+v ok=%v", target, ok)
 	}
 	bombarder, ok := unitByID(next, "bombarder")
-	if !ok || bombarder.Movement != 0 {
+	if !ok || bombarder.Movement != 0 || bombarder.FirstMove == nil || *bombarder.FirstMove {
 		t.Fatalf("bombarder movement after bombard = %+v ok=%v", bombarder, ok)
 	}
 }

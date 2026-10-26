@@ -141,6 +141,7 @@ func exploreRuin(state *State, playerID, tileID string, runtime *rules.RuntimeRu
 				}
 				unit.Health = unit.MaxHealth
 				unit.Movement = refreshedUnitMovement(*state, unit, definition.Movement)
+				unit.FirstMove = NewFirstMove(runtime)
 				state.Units = append(state.Units, unit)
 				notice.RewardKind = "unit"
 				notice.UnitID = id

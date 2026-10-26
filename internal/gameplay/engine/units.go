@@ -286,6 +286,7 @@ func applyUnitDefinition(unit *Unit, definition rules.RuntimeUnitDefinition) {
 	unit.TypeID = definition.ID
 	unit.Domain = definition.Domain
 	unit.Movement = 0
+	consumeFirstMove(unit)
 	unit.MaxMovement = definition.Movement
 	unit.Fuel = definition.MaxFuel
 	unit.MaxFuel = definition.MaxFuel
@@ -355,6 +356,7 @@ func spaceLaunch(state *State, actorID string, payload spaceLaunchPayload) error
 	}
 	unit.TileID = ""
 	unit.Movement = 0
+	consumeFirstMove(unit)
 	unit.Fortified = false
 	unit.InSpace = true
 	unit.ReentryTileID = payload.TargetTileID
@@ -489,39 +491,49 @@ func moveUnit(state *State, actorID string, payload moveUnitPayload, runtime *ru
 			movers = append(movers, member)
 		}
 	}
-	remaining := unit.Movement
+	// Simulate each member separately, then commit only after the entire path
+	// validates. A slow member's allowance must not be borrowed from the leader.
+	budgets := make([]Unit, len(movers))
+	for i, mover := range movers {
+		budgets[i] = *mover
+	}
 	visitedColumns := []int{from.X}
 	for index, tileID := range payload.Path {
 		to, ok := tileByID(*state, tileID)
-		if !ok || !adjacent(from, to) || !canAccessTile(runtime, actorID, to) || !domainCanEnter(runtime, domains, EffectiveTerrain(*state, to.ID)) || occupiedByEnemy(*state, actorID, to.ID) {
+		if !ok || !adjacent(from, to) || !canEnterMovementTile(*state, runtime, actorID, movers, domains, to) {
 			return ErrObstructed
 		}
 		cost, ok := terrainCost(*state, runtime, to.ID)
 		if !ok {
 			return ErrObstructed
 		}
-		if remaining < cost {
-			return ErrObstructed
+		for i := range budgets {
+			member := &budgets[i]
+			first := member.FirstMove
+			if runtime.Movement.RetailMovementVersion != 1 {
+				first = nil
+			}
+			memberCost := UnitStepCost(runtime.Movement.RetailMovementVersion, member.Domain, cost)
+			remaining, admitted := MovementRemaining(member.Movement, memberCost, first)
+			if !admitted || (member.MaxFuel > 0 && member.Fuel < memberCost) {
+				return ErrObstructed
+			}
+			member.Movement = remaining
+			consumeFirstMove(member)
+			if member.MaxFuel > 0 {
+				member.Fuel -= memberCost
+			}
 		}
-		remaining -= cost
 		visitedColumns = append(visitedColumns, to.X)
 		if !moversIgnoreZOC(movers) && inEnemyZOC(*state, runtime, actorID, to.ID, domains) && index != len(payload.Path)-1 {
 			return ErrObstructed
 		}
 		from = to
 	}
-	spent := unit.Movement - remaining
-	for _, mover := range movers {
-		if mover.Movement < spent || (mover.MaxFuel > 0 && mover.Fuel < spent) {
-			return ErrObstructed
-		}
-	}
-	for _, mover := range movers {
-		mover.TileID, mover.Movement, mover.Fortified = from.ID, mover.Movement-spent, false
+	for i, mover := range movers {
+		mover.TileID, mover.Movement, mover.Fortified = from.ID, budgets[i].Movement, false
+		mover.FirstMove, mover.Fuel = budgets[i].FirstMove, budgets[i].Fuel
 		mover.Asleep = false
-		if mover.MaxFuel > 0 {
-			mover.Fuel -= spent
-		}
 		recordCircumnavigationColumns(state, mover, visitedColumns, runtime)
 	}
 	captureCityAt(state, actorID, from.ID, runtime)
@@ -807,21 +819,26 @@ func disembark(state *State, actorID string, payload disembarkPayload, runtime *
 	transport, ok := unitByID(*state, unit.TransportID)
 	to, found := tileByID(*state, payload.TileID)
 	from, originFound := tileByID(*state, transport.TileID)
-	if !ok || !found || !originFound || !adjacent(from, to) || !canAccessTile(runtime, actorID, to) || !domainCanEnter(runtime, []string{unit.Domain}, EffectiveTerrain(*state, to.ID)) || occupiedByEnemy(*state, actorID, to.ID) || stackCount(*state, to.ID) >= maxArmySize {
+	if !ok || !found || !originFound || !adjacent(from, to) || !canEnterMovementTile(*state, runtime, actorID, []*Unit{unit}, []string{unit.Domain}, to) || stackCount(*state, to.ID) >= maxArmySize {
 		return ErrObstructed
 	}
 	cost, ok := terrainCost(*state, runtime, to.ID)
 	if !ok {
 		return ErrObstructed
 	}
-	if unit.Movement < cost {
+	first := unit.FirstMove
+	if runtime.Movement.RetailMovementVersion != 1 {
+		first = nil
+	}
+	remainingMovement, admitted := MovementRemaining(unit.Movement, UnitStepCost(runtime.Movement.RetailMovementVersion, unit.Domain, cost), first)
+	if !admitted {
 		return ErrObstructed
 	}
-	remainingMovement := unit.Movement - cost
 	if !cargoKeepsMovementAfterDisembark(*unit, *transport) {
 		remainingMovement = 0
 	}
 	unit.TransportID, unit.TileID, unit.Movement = "", to.ID, remainingMovement
+	consumeFirstMove(unit)
 	return nil
 }
 
@@ -1108,9 +1125,6 @@ func adjacent(a, b Tile) bool {
 	}
 	return (dx != 0 || dy != 0) && dx <= 1 && dy <= 1
 }
-func canAccessTile(runtime *rules.RuntimeRules, actorID string, tile Tile) bool {
-	return runtime != nil && runtime.Movement.Configured && (tile.OwnerID == "" || tile.OwnerID == actorID || (runtime.Movement.OpenAccess && tile.Open))
-}
 func supportedDomain(domain string) bool {
 	return domain == DomainLand || domain == DomainSea || domain == DomainAmphibious || domain == DomainAir || domain == DomainSpace
 }
@@ -1226,22 +1240,13 @@ func movementDomains(state State, unit Unit) []string {
 	if unit.ArmyID != "" {
 		if army, ok := armyByID(&state, unit.ArmyID); ok {
 			for _, id := range army.UnitIDs {
-				if other, ok := unitByID(state, id); ok {
-					domains = intersectDomains(domains, []string{other.Domain})
+				if other, ok := unitByID(state, id); ok && !containsString(domains, other.Domain) {
+					domains = append(domains, other.Domain)
 				}
 			}
 		}
 	}
 	return domains
-}
-func intersectDomains(left, right []string) []string {
-	result := make([]string, 0, len(left))
-	for _, candidate := range left {
-		if containsString(right, candidate) {
-			result = append(result, candidate)
-		}
-	}
-	return result
 }
 func moversIgnoreZOC(movers []*Unit) bool {
 	if len(movers) == 0 {

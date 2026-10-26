@@ -1474,7 +1474,7 @@ func embassyCandidates(projection visibility.Projection, playerID string, visite
 				if target.Stale || !adjacent(target, cityTile) {
 					continue
 				}
-				path, err := visibility.Plan(projection, unit.ID, target.ID)
+				path, err := visibility.PlanForAI(projection, unit.ID, target.ID)
 				if err != nil || len(path) == 0 {
 					continue
 				}
@@ -1507,7 +1507,7 @@ func explorationCandidates(projection visibility.Projection, playerID string, vi
 	home, hasHomeCity := ownVisibleCityTile(projection, playerID)
 	candidates := make([]Candidate, 0, 1)
 	for _, unit := range projection.Units {
-		if unit.OwnerID != playerID || unit.Movement < 1 {
+		if unit.OwnerID != playerID || !engine.HasMovementAllowance(unit.Movement, unit.FirstMove) {
 			continue
 		}
 		homeY, hasHome := visibleCityY(projection, playerID)
@@ -1516,7 +1516,7 @@ func explorationCandidates(projection visibility.Projection, playerID string, vi
 			if tile.Stale || tile.ID == unit.TileID {
 				continue
 			}
-			path, err := visibility.Plan(projection, unit.ID, tile.ID)
+			path, err := visibility.PlanForAI(projection, unit.ID, tile.ID)
 			if err != nil || len(path) == 0 {
 				continue
 			}

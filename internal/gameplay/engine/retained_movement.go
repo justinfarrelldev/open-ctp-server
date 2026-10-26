@@ -192,18 +192,8 @@ func advanceMovementOrder(state *State, order *MovementOrder, runtime *rules.Run
 			movementOrderNotice(state, *order, "completed")
 			return false
 		}
-		x, y := from.X+direction(from.X, order.TargetX), from.Y+direction(from.Y, order.TargetY)
-		var to Tile
-		found := false
-		for _, tile := range state.Tiles {
-			if tile.X == x && tile.Y == y {
-				to = tile
-				found = true
-				break
-			}
-		}
-		unit, _ := unitByID(*state, order.UnitID)
-		if !found || !canAccessTile(runtime, order.PlayerID, to) || !domainCanEnter(runtime, movementDomains(*state, *unit), EffectiveTerrain(*state, to.ID)) || occupiedByEnemy(*state, order.PlayerID, to.ID) {
+		to, found := nextMovementStep(*state, *order, runtime)
+		if !found {
 			break
 		}
 		cost, ok := terrainCost(*state, runtime, to.ID)
@@ -213,9 +203,14 @@ func advanceMovementOrder(state *State, order *MovementOrder, runtime *rules.Run
 		canAfford, impossible := true, false
 		for _, id := range order.UnitIDs {
 			member, _ := unitByID(*state, id)
-			if member.Movement < cost {
+			cost := UnitStepCost(runtime.Movement.RetailMovementVersion, member.Domain, cost)
+			first := member.FirstMove
+			if runtime.Movement.RetailMovementVersion != 1 {
+				first = nil
+			}
+			if _, admitted := MovementRemaining(member.Movement, cost, first); !admitted {
 				canAfford = false
-				if refreshedUnitMovement(*state, *member, runtime.Starter.Movement) < cost {
+				if runtime.Movement.RetailMovementVersion != 1 && refreshedUnitMovement(*state, *member, runtime.Starter.Movement) < cost {
 					impossible = true
 				}
 			}
@@ -251,16 +246,6 @@ func advanceMovementOrder(state *State, order *MovementOrder, runtime *rules.Run
 	}
 	movementOrderNotice(state, *order, "stopped")
 	return false
-}
-
-func direction(from, to int) int {
-	if from < to {
-		return 1
-	}
-	if from > to {
-		return -1
-	}
-	return 0
 }
 
 func movementOrderNotice(state *State, order MovementOrder, status string) {

@@ -330,6 +330,7 @@ func applyBombard(state *State, command Command, sources Sources, runtime *rules
 	}
 	if unit.Health <= 0 {
 		unit.Movement--
+		consumeFirstMove(unit)
 		removeUnitAndCargo(state, unit.ID)
 		payloadJSON, _ := json.Marshal(struct {
 			UnitID            string `json:"unit_id"`
@@ -357,6 +358,7 @@ func applyBombard(state *State, command Command, sources Sources, runtime *rules
 	}
 	counterBombardHits := counterBombard(state, sources, unit, livingCombatUnits(bombardTargets(*state, command.ActorPlayerID, payload.TargetTileID)), runtime)
 	unit.Movement--
+	consumeFirstMove(unit)
 	destroyed := 0
 	for _, target := range bombardTargets(*state, command.ActorPlayerID, payload.TargetTileID) {
 		if target.Health <= 0 {
@@ -401,6 +403,7 @@ func bombardUndefendedCity(state *State, actorID string, unit *Unit, targetTile 
 		populationKilled = 1
 	}
 	unit.Movement--
+	consumeFirstMove(unit)
 	if unit.Health <= 0 || hasEffect(unit.Effects, EffectSingleUse) {
 		removeUnitAndCargo(state, unit.ID)
 	}

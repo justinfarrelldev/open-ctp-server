@@ -237,11 +237,14 @@ type RuntimeGovernmentDefinition struct {
 }
 
 type RuntimeMovement struct {
-	Configured       bool             `json:"configured"`
-	PolicyConfigured bool             `json:"-"`
-	OpenAccess       bool             `json:"open_access"`
-	ZOCStopsPath     bool             `json:"zoc_stops_path"`
-	Terrains         []RuntimeTerrain `json:"terrains"`
+	// RetailMovementVersion 1 enables released foreign-terrain and first-move rules.
+	// Zero preserves immutable legacy pins.
+	RetailMovementVersion int              `json:"retail_movement_version,omitempty"`
+	Configured            bool             `json:"configured"`
+	PolicyConfigured      bool             `json:"-"`
+	OpenAccess            bool             `json:"open_access"`
+	ZOCStopsPath          bool             `json:"zoc_stops_path"`
+	Terrains              []RuntimeTerrain `json:"terrains"`
 }
 
 type RuntimeTerrain struct {
@@ -282,6 +285,9 @@ func (movement RuntimeMovement) Terrain(id string) (RuntimeTerrain, bool) {
 }
 
 func (terrain RuntimeTerrain) Allows(domain string) bool {
+	if domain == "amphibious" && (terrain.Allows("land") || terrain.Allows("sea")) {
+		return true
+	}
 	index := sort.SearchStrings(terrain.Domains, domain)
 	return index < len(terrain.Domains) && terrain.Domains[index] == domain
 }
@@ -732,6 +738,9 @@ func compileRuntimeProjectionDefinitions(definitions []byte, contentHash string)
 }
 
 func validateRuntimeProjection(runtime RuntimeRules) error {
+	if runtime.Movement.RetailMovementVersion < 0 || runtime.Movement.RetailMovementVersion > 1 {
+		return errors.New("unsupported retail movement version")
+	}
 	if err := ValidateStartingAdvances(runtime); err != nil {
 		return err
 	}
@@ -756,7 +765,7 @@ func validateRuntimeProjection(runtime RuntimeRules) error {
 	}
 	seenUnits := make(map[string]struct{}, len(runtime.Units))
 	for _, unit := range runtime.Units {
-		if unit.ID == "" || unit.Domain == "" || unit.Movement < 1 || unit.Health < 1 {
+		if unit.ID == "" || unit.Domain == "" || unit.Movement < 0 || unit.Health < 1 {
 			return fmt.Errorf("runtime unit %q is malformed", unit.ID)
 		}
 		if _, exists := seenUnits[unit.ID]; exists {

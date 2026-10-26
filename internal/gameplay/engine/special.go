@@ -1746,6 +1746,7 @@ func spendSpecialMove(unit *Unit, runtime ...*rules.RuntimeRules) error {
 		return errors.New("special action is not authorized")
 	}
 	unit.Movement -= cost
+	consumeFirstMove(unit)
 	return nil
 }
 func rngValue(state State, domain string) uint64 {

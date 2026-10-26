@@ -139,7 +139,10 @@ func advanceRound(state *State, runtime *rules.RuntimeRules) {
 		state.Units[index].UsedActiveDefense = false
 		if state.Units[index].TransportID == "" {
 			healUnitFromTerrainImprovements(state, &state.Units[index])
+		}
+		if state.Units[index].TransportID == "" || runtime.Movement.RetailMovementVersion == 1 {
 			state.Units[index].Movement = refreshedUnitMovement(*state, state.Units[index], runtime.Starter.Movement)
+			state.Units[index].FirstMove = NewFirstMove(runtime)
 		}
 		if state.Units[index].MaxFuel > 0 && unitCanRefuel(*state, state.Units[index]) {
 			state.Units[index].Fuel = state.Units[index].MaxFuel
@@ -504,6 +507,9 @@ func playerPollutionTotals(state State) []int64 {
 
 func refreshedUnitMovement(state State, unit Unit, fallback int) int {
 	movement := fallback
+	if unit.MaxMovement == 0 && hasEffect(unit.Effects, EffectHasPopAndCanBuild) {
+		return 0
+	}
 	if unit.MaxMovement > 0 {
 		movement = unit.MaxMovement
 	}

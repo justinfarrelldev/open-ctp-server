@@ -72,6 +72,7 @@ type UnitProjection struct {
 	Domain             string          `json:"domain,omitempty"`
 	Movement           int             `json:"movement,omitempty"`
 	MaxMovement        int             `json:"max_movement,omitempty"`
+	FirstMove          *bool           `json:"first_move,omitempty"`
 	CargoCapacity      int             `json:"cargo_capacity,omitempty"`
 	CargoDomains       []string        `json:"cargo_domains,omitempty"`
 	CargoClasses       []string        `json:"cargo_classes,omitempty"`
@@ -361,6 +362,10 @@ func Project(state engine.State, playerID string) (Projection, error) {
 			}
 			if unit.OwnerID == playerID {
 				projected.Domain, projected.Movement, projected.MaxMovement = unit.Domain, unit.Movement, unit.MaxMovement
+				if unit.FirstMove != nil {
+					ready := *unit.FirstMove
+					projected.FirstMove = &ready
+				}
 				projected.Veteran = unit.Veteran
 				projected.Asleep = unit.Asleep
 				projected.CargoCapacity = unit.CargoCapacity
@@ -708,7 +713,7 @@ func movementIntents(state engine.State, projection Projection, playerID string)
 			continue
 		}
 		intents = append(intents, action(engine.CommandSetMovementOrder, "set-movement-order", unit.ID, "", map[string]string{"unit_id": unit.ID}, []string{"unit_id", "target_x", "target_y"}))
-		if unit.Movement > 0 {
+		if engine.HasMovementAllowance(unit.Movement, unit.FirstMove) {
 			intents = append(intents, action(engine.CommandMoveUnit, "move", unit.ID, "", map[string]string{"unit_id": unit.ID}, []string{"unit_id", "target_x", "target_y"}))
 		}
 	}
@@ -1585,7 +1590,7 @@ func createParkActions(projection Projection, tiles map[string]TileProjection, u
 }
 
 func moveActions(projection Projection, tiles map[string]TileProjection, unit UnitProjection) []ActionProjection {
-	if unit.TileID == "" || unit.Movement < 1 || unit.Domain == "" {
+	if unit.TileID == "" || unit.Domain == "" {
 		return nil
 	}
 	origin, ok := tiles[unit.TileID]
@@ -1600,7 +1605,7 @@ func moveActions(projection Projection, tiles map[string]TileProjection, unit Un
 	}
 	actions := make([]ActionProjection, 0)
 	for _, tile := range projection.Tiles {
-		if tile.Stale || tile.ID == unit.TileID || tile.Planning == nil || !tile.Planning.Accessible || tile.Planning.Cost > unit.Movement || !containsString(tile.Planning.Domains, unit.Domain) || occupied[tile.ID] || !adjacentProjection(origin, tile) {
+		if tile.Stale || tile.ID == unit.TileID || tile.Planning == nil || !tile.Planning.Accessible || !projectedStepAffordable(projection, unit, tile.Planning.Cost, nil) || !projectedCanEnter(projection, unit, tile) || occupied[tile.ID] || !adjacentProjection(origin, tile) {
 			continue
 		}
 		actions = append(actions, action(engine.CommandMoveUnit, "move", unit.ID, tile.ID, map[string]any{"unit_id": unit.ID, "path": []string{tile.ID}}, []string{"unit_id", "path"}))
@@ -1668,12 +1673,12 @@ func projectedUnitCargoClasses(unit UnitProjection) []string {
 func disembarkActions(projection Projection, tiles map[string]TileProjection, units map[string]UnitProjection, unit UnitProjection) []ActionProjection {
 	transport, ok := units[unit.TransportID]
 	origin, tileOK := tiles[transport.TileID]
-	if !ok || !tileOK || unit.Movement < 1 || unit.Domain == "" {
+	if !ok || !tileOK || !engine.HasMovementAllowance(unit.Movement, unit.FirstMove) || unit.Domain == "" {
 		return nil
 	}
 	actions := make([]ActionProjection, 0)
 	for _, tile := range projection.Tiles {
-		if tile.Stale || tile.Planning == nil || !tile.Planning.Accessible || tile.Planning.EnemyZOC || !containsString(tile.Planning.Domains, unit.Domain) || !adjacentProjection(origin, tile) {
+		if tile.Stale || tile.Planning == nil || !tile.Planning.Accessible || tile.Planning.EnemyZOC || !projectedCanEnter(projection, unit, tile) || !projectedStepAffordable(projection, unit, tile.Planning.Cost, nil) || !adjacentProjection(origin, tile) {
 			continue
 		}
 		actions = append(actions, action(engine.CommandDisembark, "disembark", unit.ID, tile.ID, map[string]string{"unit_id": unit.ID, "tile_id": tile.ID}, []string{"unit_id", "tile_id"}))
@@ -1763,78 +1768,7 @@ func projectedTileDistance(left, right TileProjection) int {
 }
 
 func unitVisibleToPlayer(state engine.State, playerID string, visible map[string]bool, unit engine.Unit) bool {
-	if unit.OwnerID == playerID {
-		return true
-	}
-	if !visible[unit.TileID] {
-		return false
-	}
-	if effectHasKind(unit.Effects, engine.EffectInvisibleForGlobeSat) && playerHasGlobalRadar(state, playerID) && !visibleTilesWithoutGlobalRadar(state)[playerID][unit.TileID] {
-		return false
-	}
-	submarine := effectHasKind(unit.Effects, engine.EffectSubmarine)
-	stealth := effectHasKind(unit.Effects, engine.EffectStealth)
-	if !submarine && !stealth {
-		return true
-	}
-	if submarine && unitDetectedByPlayer(state, playerID, unit.TileID, engine.EffectCanAttackUnderwater) {
-		return true
-	}
-	return stealth && unitDetectedByPlayer(state, playerID, unit.TileID, engine.EffectCanSeeStealth)
-}
-
-func unitDetectedByPlayer(state engine.State, playerID, tileID string, detectorEffect string) bool {
-	target, ok := tileByID(state.Tiles, tileID)
-	if !ok {
-		return false
-	}
-	for _, unit := range state.Units {
-		if unit.OwnerID != playerID || unit.TileID == "" || unit.TransportID != "" || !effectHasKind(unit.Effects, detectorEffect) {
-			continue
-		}
-		origin, ok := tileByID(state.Tiles, unit.TileID)
-		if !ok {
-			continue
-		}
-		radius := defaultSightRadius
-		if unit.VisibilityRange > radius {
-			radius = unit.VisibilityRange
-		}
-		if abs(origin.X-target.X)+abs(origin.Y-target.Y) <= radius {
-			return true
-		}
-	}
-	for _, overlay := range state.Overlays {
-		if overlay.OwnerID != playerID || overlay.TileID == "" || overlay.Remaining > 0 || overlay.Kind != "improvement" || !overlayCanSee(overlay, detectorEffect) {
-			continue
-		}
-		origin, ok := tileByID(state.Tiles, overlay.TileID)
-		if !ok {
-			continue
-		}
-		radius := overlay.VisionRange
-		if overlay.RadarRange > radius {
-			radius = overlay.RadarRange
-		}
-		if radius < defaultSightRadius {
-			radius = defaultSightRadius
-		}
-		if abs(origin.X-target.X)+abs(origin.Y-target.Y) <= radius {
-			return true
-		}
-	}
-	return false
-}
-
-func overlayCanSee(overlay engine.TileOverlay, detectorEffect string) bool {
-	switch detectorEffect {
-	case engine.EffectCanAttackUnderwater:
-		return containsString(overlay.CanSee, "Underwater")
-	case engine.EffectCanSeeStealth:
-		return containsString(overlay.CanSee, "Stealth")
-	default:
-		return containsString(overlay.CanSee, "Standard")
-	}
+	return engine.MovementUnitVisible(state, playerID, visible, unit)
 }
 
 func effectHasKind(effects []engine.Effect, kind string) bool {
@@ -2275,7 +2209,7 @@ func planningTiles(state engine.State, playerID string, visible map[string]bool,
 		result[tile.ID] = &TilePlanning{
 			Cost:       *cost,
 			Domains:    append([]string(nil), terrain.Domains...),
-			Accessible: tile.OwnerID == "" || tile.OwnerID == playerID || (runtime.Movement.OpenAccess && tile.Open),
+			Accessible: engine.CanAccessMovementTerrain(state, &runtime, playerID, tile),
 		}
 	}
 	if !runtime.Movement.ZOCStopsPath {
@@ -2296,7 +2230,17 @@ func planningTiles(state engine.State, playerID string, visible map[string]bool,
 	return result, nil
 }
 
+// Plan uses released human UnitAstar "pretty path" preferences.
 func Plan(projection Projection, unitID, targetTileID string) ([]string, error) {
+	return planMovement(projection, unitID, targetTileID, true)
+}
+
+// PlanForAI uses the same A* without the human-only directional discount.
+func PlanForAI(projection Projection, unitID, targetTileID string) ([]string, error) {
+	return planMovement(projection, unitID, targetTileID, false)
+}
+
+func planMovement(projection Projection, unitID, targetTileID string, pretty bool) ([]string, error) {
 	var mover UnitProjection
 	foundMover := false
 	occupied := make(map[string]bool)
@@ -2315,7 +2259,7 @@ func Plan(projection Projection, unitID, targetTileID string) ([]string, error) 
 	}
 	tiles := make(map[string]TileProjection, len(projection.Tiles))
 	for _, tile := range projection.Tiles {
-		if tile.Stale || tile.Planning == nil || tile.Planning.Cost < 1 || !contains(tile.Planning.Domains, mover.Domain) {
+		if tile.Stale || tile.Planning == nil || tile.Planning.Cost < 1 || !projectedDomainAllows(tile.Planning.Domains, mover.Domain) {
 			continue
 		}
 		tiles[tile.ID] = tile
@@ -2326,15 +2270,47 @@ func Plan(projection Projection, unitID, targetTileID string) ([]string, error) 
 	if _, ok := tiles[targetTileID]; !ok {
 		return nil, errors.New("planner target is not currently visible")
 	}
-	type node struct {
-		tileID string
-		spent  int
-		path   []string
+	armyMax, allAir := int(^uint(0)>>1), true
+	for _, member := range projectedMovers(projection, mover) {
+		allowance := member.MaxMovement
+		if allowance < 1 {
+			allowance = max(1, member.Movement)
+		}
+		armyMax = min(armyMax, allowance)
+		allAir = allAir && member.Domain == engine.DomainAir
 	}
-	queue := []node{{tileID: mover.TileID}}
+	corrected := projection.Rules != nil && projection.Rules.Movement != nil && projection.Rules.Movement.RetailMovementVersion == 1
+	position := func(tile TileProjection) engine.Tile { return engine.Tile{X: tile.X, Y: tile.Y} }
+	minimum := int(^uint(0) >> 1)
+	orderedTiles := make([]TileProjection, 0, len(tiles))
+	for _, tile := range tiles {
+		orderedTiles = append(orderedTiles, tile)
+		minimum = min(minimum, engine.MovementRouteCost(engine.Tile{}, engine.Tile{}, tile.Planning.Cost, armyMax, allAir, pretty))
+	}
+	sort.Slice(orderedTiles, func(i, j int) bool { return orderedTiles[i].ID < orderedTiles[j].ID })
+	if allAir {
+		minimum = min(minimum, 9000)
+	}
+	// Legacy pins preserve their original route selection as well as budgets.
+	if !corrected {
+		minimum = 0
+	}
+	estimate := func(tile TileProjection) int {
+		return engine.MovementRouteEstimate(position(tile), position(tiles[targetTileID]), minimum)
+	}
+	type node struct {
+		tileID   string
+		spent    int
+		estimate int
+		path     []string
+	}
+	queue := []node{{tileID: mover.TileID, estimate: estimate(tiles[mover.TileID])}}
 	best := map[string]int{mover.TileID: 0}
 	for len(queue) > 0 {
 		sort.Slice(queue, func(i, j int) bool {
+			if queue[i].estimate != queue[j].estimate {
+				return queue[i].estimate < queue[j].estimate
+			}
 			if queue[i].spent == queue[j].spent {
 				return queue[i].tileID < queue[j].tileID
 			}
@@ -2345,13 +2321,20 @@ func Plan(projection Projection, unitID, targetTileID string) ([]string, error) 
 		if current.tileID == targetTileID {
 			return current.path, nil
 		}
+		if best[current.tileID] != current.spent {
+			continue
+		}
 		from := tiles[current.tileID]
-		for _, to := range tiles {
-			if !adjacentProjection(from, to) || !to.Planning.Accessible || occupied[to.ID] {
+		for _, to := range orderedTiles {
+			if !adjacentProjection(from, to) || !to.Planning.Accessible || occupied[to.ID] || !projectedCanEnter(projection, mover, to) {
 				continue
 			}
-			spent := current.spent + to.Planning.Cost
-			if spent > mover.Movement || (to.Planning.EnemyZOC && to.ID != targetTileID) {
+			cost := engine.MovementRouteCost(position(from), position(to), to.Planning.Cost, armyMax, allAir, pretty)
+			if !corrected {
+				cost = to.Planning.Cost * 100
+			}
+			spent := current.spent + cost
+			if !projectedStepAffordable(projection, mover, to.Planning.Cost, current.path) || (to.Planning.EnemyZOC && to.ID != targetTileID) {
 				continue
 			}
 			if previous, seen := best[to.ID]; seen && previous <= spent {
@@ -2359,7 +2342,7 @@ func Plan(projection Projection, unitID, targetTileID string) ([]string, error) 
 			}
 			best[to.ID] = spent
 			path := append(append([]string(nil), current.path...), to.ID)
-			queue = append(queue, node{tileID: to.ID, spent: spent, path: path})
+			queue = append(queue, node{tileID: to.ID, spent: spent, estimate: spent + estimate(to), path: path})
 		}
 	}
 	return nil, errors.New("no legal visible route")
@@ -2386,11 +2369,6 @@ func PlanKnown(projection Projection, unitID, targetTileID string) ([]string, er
 		tile.Planning = &planning
 	}
 	return Plan(known, unitID, targetTileID)
-}
-
-func contains(items []string, value string) bool {
-	index := sort.SearchStrings(items, value)
-	return index < len(items) && items[index] == value
 }
 
 func adjacentProjection(left, right TileProjection) bool {
@@ -2468,46 +2446,10 @@ func visibleTiles(state engine.State) map[string]map[string]bool {
 	return visibleTilesFor(state, true)
 }
 
-func visibleTilesWithoutGlobalRadar(state engine.State) map[string]map[string]bool {
-	return visibleTilesFor(state, false)
-}
-
 func visibleTilesFor(state engine.State, includeGlobalRadar bool) map[string]map[string]bool {
 	result := make(map[string]map[string]bool)
 	for _, player := range state.Players {
-		result[player.ID] = make(map[string]bool)
-	}
-	for _, unit := range state.Units {
-		radius := defaultSightRadius
-		if unit.VisibilityRange > radius {
-			radius = unit.VisibilityRange
-		}
-		addSight(result[unit.OwnerID], state, unit.TileID, radius)
-	}
-	for _, city := range state.Cities {
-		addSight(result[city.OwnerID], state, city.TileID, defaultSightRadius)
-	}
-	for _, overlay := range state.Overlays {
-		if overlay.OwnerID == "" || overlay.TileID == "" || overlay.Remaining > 0 || overlay.Kind != "improvement" {
-			continue
-		}
-		radius := overlay.VisionRange
-		if overlay.RadarRange > radius {
-			radius = overlay.RadarRange
-		}
-		if overlay.ListeningPost && radius < defaultSightRadius {
-			radius = defaultSightRadius
-		}
-		if radius > 0 {
-			addSight(result[overlay.OwnerID], state, overlay.TileID, radius)
-		}
-	}
-	for _, player := range state.Players {
-		if includeGlobalRadar && playerHasGlobalRadar(state, player.ID) {
-			for _, tile := range state.Tiles {
-				result[player.ID][tile.ID] = true
-			}
-		}
+		result[player.ID] = engine.MovementSight(state, player.ID, includeGlobalRadar)
 	}
 	return result
 }
@@ -2550,46 +2492,9 @@ func wonderActiveForPlayer(state engine.State, wonder engine.Wonder, playerID st
 	}
 	return true
 }
-func addSight(visible map[string]bool, state engine.State, origin string, radius int) {
-	from, ok := tileByID(state.Tiles, origin)
-	if !ok {
-		return
-	}
-	for _, tile := range state.Tiles {
-		distance := abs(tile.X-from.X) + abs(tile.Y-from.Y)
-		if distance > radius || !hasLOS(state, from, tile) {
-			continue
-		}
-		visible[tile.ID] = true
-	}
-}
-func hasLOS(state engine.State, from, to engine.Tile) bool {
-	x, y := from.X, from.Y
-	dx, dy := sign(to.X-from.X), sign(to.Y-from.Y)
-	for x != to.X || y != to.Y {
-		x += dx
-		y += dy
-		if x == to.X && y == to.Y {
-			return true
-		}
-		tile, ok := tileAt(state.Tiles, x, y)
-		if !ok || engine.EffectiveTerrain(state, tile.ID) == engine.TerrainForest {
-			return false
-		}
-	}
-	return true
-}
 func tileByID(tiles []engine.Tile, id string) (engine.Tile, bool) {
 	for _, tile := range tiles {
 		if tile.ID == id {
-			return tile, true
-		}
-	}
-	return engine.Tile{}, false
-}
-func tileAt(tiles []engine.Tile, x, y int) (engine.Tile, bool) {
-	for _, tile := range tiles {
-		if tile.X == x && tile.Y == y {
 			return tile, true
 		}
 	}
@@ -2625,15 +2530,6 @@ func abs(value int) int {
 		return -value
 	}
 	return value
-}
-func sign(value int) int {
-	if value < 0 {
-		return -1
-	}
-	if value > 0 {
-		return 1
-	}
-	return 0
 }
 
 func containsString(items []string, value string) bool {
