@@ -536,7 +536,7 @@ func executeContinuityAcceptance(ctx context.Context, scenario AcceptanceConfig,
 	}
 	aiCommands, err := runMixedControllerCampaign(ctx, &scheduler)
 	if err != nil {
-		return Artifacts{}, err
+		return Artifacts{}, fmt.Errorf("continuity campaign: %w", err)
 	}
 	if telemetry.Unknown != nil {
 		return Artifacts{}, fmt.Errorf("memorysql rejected production query: %w", telemetry.Unknown)
@@ -803,61 +803,7 @@ func resolveContinuityPreparationCommands(scenario AcceptanceConfig, projection 
 	if len(units) < 3 {
 		return nil, false, fmt.Errorf("row 03 continuity script requires three visible owned units, got %d", len(units))
 	}
-	occupiedTiles := make(map[string]bool, len(units))
-	for _, unit := range units {
-		occupiedTiles[unit.TileID] = true
-	}
-	if len(occupiedTiles) >= 3 {
-		return nil, false, nil
-	}
-	candidateTiles := make([]visibility.TileProjection, 0, len(public.Tiles))
-	for _, tile := range public.Tiles {
-		if tile.Stale || tile.Planning == nil || !tile.Planning.Accessible || occupiedTiles[tile.ID] {
-			continue
-		}
-		candidateTiles = append(candidateTiles, tile)
-	}
-	sort.Slice(candidateTiles, func(i, j int) bool { return candidateTiles[i].ID < candidateTiles[j].ID })
-	usedTiles := make(map[string]bool, len(occupiedTiles))
-	for tileID := range occupiedTiles {
-		usedTiles[tileID] = true
-	}
-	keptTile := make(map[string]bool, len(occupiedTiles))
-	commands := make([]ScriptCommand, 0, len(units)-1)
-	for _, unit := range units {
-		if len(usedTiles) >= 3 {
-			break
-		}
-		if !keptTile[unit.TileID] {
-			keptTile[unit.TileID] = true
-			continue
-		}
-		firstStep := ""
-		for _, tile := range candidateTiles {
-			path, err := visibility.Plan(public, unit.ID, tile.ID)
-			if err != nil || len(path) == 0 {
-				continue
-			}
-			if usedTiles[path[0]] {
-				continue
-			}
-			firstStep = path[0]
-			break
-		}
-		if firstStep == "" {
-			return nil, false, errors.New("row 03 continuity preparation could not find distinct accessible city sites")
-		}
-		payload, err := json.Marshal(map[string]any{"unit_id": unit.ID, "path": []string{firstStep}})
-		if err != nil {
-			return nil, false, err
-		}
-		commands = append(commands, ScriptCommand{Command: "move", ActorRole: "human-1", Payload: payload})
-		usedTiles[firstStep] = true
-	}
-	if len(usedTiles) < 3 {
-		return nil, false, errors.New("row 03 continuity preparation did not produce three distinct owned city sites")
-	}
-	return commands, len(commands) > 0, nil
+	return prepareContinuityCitySites(public, units[:3])
 }
 
 func resolveContinuityLeaveCommands(path string, projection []byte, playerID string) ([]ScriptCommand, error) {
@@ -1261,10 +1207,11 @@ func driveScriptedHuman(ctx context.Context, client onboarding.HTTPClient, scena
 	if err := json.Unmarshal(projection, &planning); err != nil {
 		return 0, fmt.Errorf("decode public projection for %s: %w", playerID, err)
 	}
+	if planning.PlanningStatus == visibility.PlanningStatusClosed || (planning.TurnContext != nil && planning.TurnContext.Status == "acting" && planning.TurnContext.ActivePlayerID != playerID) {
+		return 0, nil
+	}
 	if scriptMode != humanScriptNone && scenario.HumanPolicy.Name() != string(HumanPolicyContinuity) && (scriptProgress[playerID] > 0 || scripted[playerID]) {
 		switch planning.PlanningStatus {
-		case visibility.PlanningStatusClosed:
-			return 0, nil
 		case visibility.PlanningStatusQueued:
 			if scriptMode == humanScriptOnly {
 				return 0, nil

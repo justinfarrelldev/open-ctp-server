@@ -1077,7 +1077,7 @@ func TestTask12ProjectionIncludesRulesAndLegalActionMetadata(t *testing.T) {
 	state.Rules = engine.RulesPin{Version: ruleset.CompatibilityVersion, ContentHash: ruleset.ContentHash, Definitions: ruleset.CanonicalJSON}
 	state.Tiles = []engine.Tile{
 		{ID: "home", X: 0, Y: 0, Terrain: engine.TerrainPlains, Open: true},
-		{ID: "site", X: 1, Y: 0, Terrain: engine.TerrainPlains, Open: true},
+		{ID: "site", X: 3, Y: 0, Terrain: engine.TerrainPlains, Open: true},
 		{ID: "forest", X: 0, Y: 1, Terrain: engine.TerrainForest, Open: true, Pollution: 1},
 		{ID: "enemy", X: 1, Y: 1, Terrain: engine.TerrainPlains, Open: true},
 	}

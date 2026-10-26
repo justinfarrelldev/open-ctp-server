@@ -71,9 +71,9 @@ func TestIdleProductionOutranksRoutineExploration(t *testing.T) {
 	}
 }
 
-func TestPlannerDoesNotTryFoundingInsideForeignNationalTerritory(t *testing.T) {
-	foreign := "other"
-	p := visibility.Projection{Units: []visibility.UnitProjection{{ID: "settler", OwnerID: "ai", TileID: "site", Domain: engine.DomainLand, Effects: []engine.Effect{{Kind: engine.EffectSettler}}}}, Tiles: []visibility.TileProjection{{ID: "site", OwnerID: &foreign}}}
+func TestPlannerDoesNotTryFoundingInsideForeignCityInfluence(t *testing.T) {
+	foreign, cityID := "other", "foreign-city"
+	p := visibility.Projection{Units: []visibility.UnitProjection{{ID: "settler", OwnerID: "ai", TileID: "site", Domain: engine.DomainLand, Effects: []engine.Effect{{Kind: engine.EffectSettler}}}}, Tiles: []visibility.TileProjection{{ID: "site", OwnerID: &foreign, InfluenceCityID: &cityID}}}
 	raw, _ := json.Marshal(p)
 	candidates, err := Plan(raw, "ai")
 	if err != nil {
@@ -81,7 +81,7 @@ func TestPlannerDoesNotTryFoundingInsideForeignNationalTerritory(t *testing.T) {
 	}
 	for _, c := range candidates {
 		if c.Type == engine.CommandFoundCity {
-			t.Fatalf("planner loops on a claimed foreign site: %+v", c)
+			t.Fatalf("planner loops on existing city influence: %+v", c)
 		}
 	}
 }

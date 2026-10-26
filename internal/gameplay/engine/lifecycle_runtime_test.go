@@ -53,6 +53,7 @@ func TestRuntimeRulesNaturalVictoryTransitions(t *testing.T) {
 			want:         "score_2300",
 			startingTurn: 46,
 			run: func(t *testing.T, state State) State {
+				state.Tiles[1].X = 2 // distinct, non-adjacent founding sites
 				state.Units = []Unit{
 					{ID: "settler-a", OwnerID: "player-a", TileID: "tile-a", Domain: DomainLand, Movement: 2, Effects: []Effect{{ID: "settler", Kind: EffectSettler}}},
 					{ID: "settler-b", OwnerID: "player-b", TileID: "tile-b", Domain: DomainLand, Movement: 2, Effects: []Effect{{ID: "settler", Kind: EffectSettler}}},

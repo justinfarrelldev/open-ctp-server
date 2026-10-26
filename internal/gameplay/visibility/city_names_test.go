@@ -8,7 +8,7 @@ import (
 )
 
 func TestFoundCitySuggestionNeverContainsEntityIDOrForeignName(t *testing.T) {
-	p := Projection{Units: []UnitProjection{{ID: "account-123-unit-settler-technical", OwnerID: "a", TileID: "t0", Effects: []engine.Effect{{ID: "settler", Kind: engine.EffectSettler}}}}, Cities: []CityProjection{{ID: "foreign", OwnerID: "b", Name: "City 1"}}}
+	p := Projection{Tiles: []TileProjection{{ID: "t0"}}, Units: []UnitProjection{{ID: "account-123-unit-settler-technical", OwnerID: "a", TileID: "t0", Effects: []engine.Effect{{ID: "settler", Kind: engine.EffectSettler}}}}, Cities: []CityProjection{{ID: "foreign", OwnerID: "b", Name: "City 1"}}}
 	for _, action := range unitActions(p, "a") {
 		if action.Command == engine.CommandFoundCity {
 			var payload engine.FoundCityPayload

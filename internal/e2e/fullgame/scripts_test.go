@@ -88,7 +88,7 @@ func TestMilitaryScriptRebindsArmyIDPerBoundHuman(t *testing.T) {
 			t.Fatal(err)
 		}
 		var payload struct {
-			ArmyID string   `json:"army_id"`
+			ArmyID  string   `json:"army_id"`
 			UnitIDs []string `json:"unit_ids"`
 		}
 		if err := json.Unmarshal(resolved[0].Payload, &payload); err != nil {
@@ -111,9 +111,9 @@ func TestResolveContinuityPreparationCommandsSpreadsStackedRowThreeSettlers(t *t
 	scenario := AcceptanceConfig{Rules: AcceptanceRulesFixture{HumanScript: "scripts/score-resignation-continuity.json"}}
 	projection, err := json.Marshal(visibility.Projection{
 		Units: []visibility.UnitProjection{
-			{ID: "settler-a", OwnerID: "account-7", TileID: "tile-2", Domain: "land", Movement: 2},
-			{ID: "settler-b", OwnerID: "account-7", TileID: "tile-2", Domain: "land", Movement: 2},
-			{ID: "settler-c", OwnerID: "account-7", TileID: "tile-2", Domain: "land", Movement: 2},
+			{ID: "settler-a", OwnerID: "account-7", TileID: "tile-3", Domain: "land", Movement: 2},
+			{ID: "settler-b", OwnerID: "account-7", TileID: "tile-3", Domain: "land", Movement: 2},
+			{ID: "settler-c", OwnerID: "account-7", TileID: "tile-3", Domain: "land", Movement: 2},
 		},
 		Tiles: []visibility.TileProjection{
 			{ID: "tile-1", X: 0, Y: 0, Terrain: "plains", Planning: &visibility.TilePlanning{Cost: 1, Domains: []string{"land"}, Accessible: true}},
@@ -134,7 +134,7 @@ func TestResolveContinuityPreparationCommandsSpreadsStackedRowThreeSettlers(t *t
 	if !preparing || len(commands) != 2 {
 		t.Fatalf("preparation = %v commands=%#v, want two spread moves", preparing, commands)
 	}
-	want := []string{`{"path":["tile-1"],"unit_id":"settler-b"}`, `{"path":["tile-3"],"unit_id":"settler-c"}`}
+	want := []string{`{"path":["tile-2","tile-1"],"unit_id":"settler-b"}`, `{"path":["tile-10","tile-20"],"unit_id":"settler-c"}`}
 	for index, command := range commands {
 		if command.Command != "move" {
 			t.Fatalf("command %d = %q, want move", index, command.Command)
@@ -143,9 +143,8 @@ func TestResolveContinuityPreparationCommandsSpreadsStackedRowThreeSettlers(t *t
 			t.Fatalf("command %d payload = %s, want %s", index, command.Payload, want[index])
 		}
 	}
-	if strings.Contains(string(commands[1].Payload), `"tile-10"`) {
-		t.Fatalf("non-adjacent accessible target leaked as a direct hop: %s", commands[1].Payload)
-	}
+	// The full paths contain intermediate tiles; no non-adjacent direct hop
+	// is fabricated to satisfy the newly enforced city spacing restriction.
 }
 
 func TestResolveContinuityLeaveCommandsQueuesThreeDistinctCitiesBeforeLeave(t *testing.T) {

@@ -26,7 +26,10 @@ func civilizationNameState(t *testing.T) State {
 func TestDefaultFoundingUsesPinnedCivilizationNamesAndOnlyOwnCollisions(t *testing.T) {
 	for _, foreign := range []string{"Rome", "Rome1", "Secret"} {
 		state := civilizationNameState(t)
-		state.Cities = []City{{ID: "foreign", Name: foreign, OwnerID: "player-b", TileID: "b"}}
+		// Naming collisions must not depend on a foreign city, but the new
+		// settlement must still be outside its occupied/adjacent site.
+		state.Tiles = append(state.Tiles, Tile{ID: "foreign-site", X: 10, Terrain: TerrainPlains})
+		state.Cities = []City{{ID: "foreign", Name: foreign, OwnerID: "player-b", TileID: "foreign-site"}}
 		if err := foundCity(&state, "player-a", FoundCityPayload{UnitID: "settler-a", CityID: "home"}); err != nil {
 			t.Fatal(err)
 		}

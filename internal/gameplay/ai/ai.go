@@ -224,7 +224,7 @@ func planProjection(projection visibility.Projection, playerID string, history [
 			continue
 		}
 		isSettler := hasEffect(unit.Effects, engine.EffectSettler)
-		if unit.ArmyID == "" && unit.TransportID == "" && unit.TileID != "" && isSettler && !cityTiles[unit.TileID] && projectedFoundingSiteAvailable(projection, playerID, unit.TileID) && (ownedCityCount == 0 || expansionEnabled && ownedCityCount < 3) {
+		if unit.ArmyID == "" && unit.TransportID == "" && unit.TileID != "" && isSettler && !cityTiles[unit.TileID] && visibility.FoundingSiteAvailable(projection, unit.TileID) && (ownedCityCount == 0 || expansionEnabled && ownedCityCount < 3) {
 			candidates = append(candidates, candidate(engine.CommandFoundCity, unit.ID, unit.TileID, 900, map[string]string{"unit_id": unit.ID, "city_id": "ai-city-" + unit.ID, "name": ""}))
 		}
 		if unit.ArmyID == "" && unit.TransportID == "" && unit.TileID != "" && (!isSettler || !expansionEnabled) {
@@ -238,18 +238,6 @@ func planProjection(projection visibility.Projection, playerID string, history [
 	candidates = append(candidates, productionCandidates(projection, playerID)...)
 	sort.Slice(candidates, func(i, j int) bool { return Compare(candidates[i], candidates[j]) < 0 })
 	return candidates, nil
-}
-
-func projectedFoundingSiteAvailable(projection visibility.Projection, playerID, tileID string) bool {
-	for _, city := range projection.Cities {
-		if city.TileID == tileID && !city.Stale {
-			return false
-		}
-	}
-	if tile, ok := projectedTileByID(projection, tileID); ok && tile.OwnerID != nil && *tile.OwnerID != "" && *tile.OwnerID != playerID {
-		return false
-	}
-	return true
 }
 
 func projectedUnitCanFortify(effects []engine.Effect) bool {

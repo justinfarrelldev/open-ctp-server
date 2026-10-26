@@ -51,7 +51,7 @@
     },
     {
       "path": "internal/gameplay/ai/ai.go",
-      "sha256": "5d36128baf4e5ba70385af792da784a19f0c4b0510978de6b0a0db1552f8d39c"
+      "sha256": "50561a24871dbdff5000ff69b08d2ec957323f79d8b86f1899fe9cfa496b7c8a"
     },
     {
       "path": "internal/gameplay/ai/defender_research.go",
@@ -71,7 +71,7 @@
     },
     {
       "path": "internal/gameplay/engine/cities.go",
-      "sha256": "0abd15becbd9da4d8a3866282fcdb089e09a7c40d7bb7a62075863b549239f19"
+      "sha256": "91c50bce554a11b1f7b3640ccc053f27888c242ecef08ae2af57e8c827167e1b"
     },
     {
       "path": "internal/gameplay/engine/city_names.go",
@@ -172,6 +172,10 @@
     {
       "path": "internal/gameplay/engine/ruins.go",
       "sha256": "dc60485769b34e4e9d0a1045e41877800da5dd0c340a0806543878c3aca1b19c"
+    },
+    {
+      "path": "internal/gameplay/engine/settlement_site.go",
+      "sha256": "f7fe7a61a753e34df21fc28843f237a3129577bcb9e5a55430743dfd210e7030"
     },
     {
       "path": "internal/gameplay/engine/special.go",
@@ -322,12 +326,16 @@
       "sha256": "3023796704e8f5183f2875e3b0e9956544d121eee63a3571965a60d4cb6fc1b4"
     },
     {
+      "path": "internal/gameplay/visibility/settlement_site.go",
+      "sha256": "dae8ba71a12c52867c8b82f1f6c2fb4c8620ae0f099ad0a1f8998b9972ed722b"
+    },
+    {
       "path": "internal/gameplay/visibility/turn_context.go",
       "sha256": "69ae149c2f9cb53bbf9432ebcc18632e3e4c93050d9b0ddc34034d91992d1448"
     },
     {
       "path": "internal/gameplay/visibility/visibility.go",
-      "sha256": "caf34b10853ccbfe7a28bcb4fc5eb0fe8d0385a5a52d95251a241c322a1d2d32"
+      "sha256": "263a0b05348d2f76e9cdd519d58e4d7f355af2c434a56b6436cec58295d2895d"
     },
     {
       "path": "internal/runtime/runtime.go",

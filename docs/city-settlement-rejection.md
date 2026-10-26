@@ -1,5 +1,7 @@
 # Game97: advertised settlement is rejected
 
+**Repair status:** implemented in [city-settlement-parity.md](city-settlement-parity.md). The report below records the pre-fix investigation and its historical results; it is not a description of current enforcement.
+
 ## Conclusion
 
 This is a **server settlement-rule bug plus an advertised-action mismatch**, not a malformed client payload or a regression introduced by the turn-performance changes.

@@ -608,13 +608,8 @@ func foundCity(state *State, actor string, payload FoundCityPayload, runtimeOpti
 		return errors.New("unit cannot found a city")
 	}
 	tile, ok := tileByID(*state, unit.TileID)
-	if !ok || tile.OwnerID != "" && tile.OwnerID != actor {
-		return errors.New("city site is not owned by founding player")
-	}
-	for _, city := range state.Cities {
-		if city.TileID == unit.TileID {
-			return errors.New("city site is occupied")
-		}
+	if !ok || !foundingSiteAvailable(*state, tile) {
+		return errors.New("city site is unavailable")
 	}
 	tileID := unit.TileID
 	cityTypeID := unit.SettleCityTypeID

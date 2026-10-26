@@ -1362,7 +1362,7 @@ func unitActions(projection Projection, playerID string) []ActionProjection {
 		if unit.TileID != "" && !unit.Fortified && projectedUnitCanFortify(unit.Effects) {
 			actions = append(actions, action(engine.CommandFortify, "fortify", unit.ID, unit.TileID, map[string]string{"unit_id": unit.ID}, []string{"unit_id"}))
 		}
-		if unit.ArmyID == "" && unit.TileID != "" && hasEffect(unit.Effects, engine.EffectSettler) && !cityOnTile(projection, unit.TileID) {
+		if unit.ArmyID == "" && unit.TileID != "" && hasEffect(unit.Effects, engine.EffectSettler) && foundingSiteAvailable(projection, tiles, unit.TileID) {
 			actions = append(actions, action(engine.CommandFoundCity, "found-city", unit.ID, unit.TileID, map[string]string{"unit_id": unit.ID, "city_id": "client-city-" + unit.ID, "name": projectedCitySuggestion(projection, playerID)}, []string{"unit_id", "city_id", "name"}))
 		}
 		actions = append(actions, upgradeActions(projection, unit)...)

@@ -383,8 +383,9 @@ func TestTask10FoundCityConsumesSettlerAndRejectsIllegalSite(t *testing.T) {
 	}
 	foreign := task10State()
 	foreign.Units[0].TileID = "c"
+	foreign.Cities = []City{{ID: "existing", OwnerID: "player-b", TileID: "c"}}
 	if _, _, _, err := Apply(foreign, Command{SchemaVersion: CommandSchemaV1, ID: "bad-site", ActorPlayerID: "player-a", Type: CommandFoundCity, Payload: []byte(`{"unit_id":"settler-a","city_id":"bad","name":"Bad"}`)}, foreign.Rules, fixtureSources()); err == nil {
-		t.Fatal("foreign city site must fail closed")
+		t.Fatal("occupied foreign city site must fail closed")
 	}
 }
 

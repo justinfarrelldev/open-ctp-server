@@ -1,0 +1,9 @@
+# City settlement site parity
+
+Fix the game97 rejection without changing live data, immutable rules pins, client authority, or unrelated mechanics. Follow red → green → refactor and commit with the unchanged hook.
+
+1. RED: regress foreign national territory without city influence (allowed), own/foreign influence (blocked), occupied/adjacent cities, and existing unit/identity/phase safeguards. Exercise legacy/synthetic and territory-configured pins, atomic consumption, territory initialization, replay, advertised payload execution, AI choices, and viewer privacy.
+2. GREEN: replace the national-owner prohibition with a shared, read-only site policy derived from released `UnitData::Settle` and `Player::CreateCity`. National ownership alone is irrelevant; any recorded city influence or existing/adjacent city blocks settlement. Preserve the bounded server map geometry and all existing command safeguards. Missing legacy influence/radius metadata must not be invented or backfilled.
+3. Align legal-action site filtering and AI candidate site checks using only current viewer-projected facts. Missing/stale site data cannot authorize a site; hidden/stale cities must not become a new action-filtering oracle. Authoritative execution still checks the complete state. Keep generic public rejection handling; do not expose hidden city IDs.
+4. Refactor shared logic and review the entire changed path against released source. This is a settlement **site** repair, not a rewrite of settler terrain capabilities, movement rules, army management, diplomacy, or naming.
+5. Run focused and full Go tests, affected race tests, vet/build, formatting/diff checks, refresh the production freeze manifest, update investigation documentation/checklist, and make an atomic commit. Record verification limitations honestly. No live gameplay writes or client edits.

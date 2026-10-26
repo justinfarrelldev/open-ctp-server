@@ -488,9 +488,12 @@ func TestMixedControllerSchedulerReusesRestartedPublicBaseURLForContinuityTakeov
 }
 
 func TestExecuteContinuityAcceptanceCompletesLongTurnThreeCityContinuityOpener(t *testing.T) {
+	// The old catalog seed depended on adjacent founding. With legal spacing
+	// it reaches a score tie, not a terminal within this bounded test. Keep a
+	// deterministic non-tied fixture without weakening terminal assertions.
 	config := AcceptanceConfig{
 		Name:               "fullgame-06-long_turn-score_2300",
-		Seed:               seedBase + 6,
+		Seed:               seedBase + 0x906,
 		TurnMode:           "long_turn",
 		Slots:              slotPlan([]string{humanController, aiController}),
 		World:              AcceptanceWorldFixture{MapSize: "duel", Climate: "cold", Wetness: 90},
